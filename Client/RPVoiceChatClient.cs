@@ -1,6 +1,8 @@
 ﻿using NAudio.Wave;
+using rpvoicechat.Client.Utils;
 using System;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using Vintagestory.API.Client;
 
 namespace rpvoicechat
@@ -26,13 +28,20 @@ namespace rpvoicechat
             clientChannel = clientApi.Network.GetChannel("rpvoicechat")
                 .SetMessageHandler<ConnectionPacket>(OnHandshakeRecieved);
 
+            // Custom keybindings
+            GlobalKeyboardHook keyboardHook = new GlobalKeyboardHook();
+            keyboardHook.KeyDown += OnKeyDown;
+            keyboardHook.KeyUp += OnKeyUp;
+
             // Add a new keybinding
             clientApi.Input.RegisterHotKey("voiceVolume", "Change voice volume", GlKeys.N, HotkeyType.GUIOrOtherControls);
             clientApi.Input.RegisterHotKey("changeMic", "Cycle microphone", GlKeys.N, HotkeyType.GUIOrOtherControls, true);
+            clientApi.Input.RegisterHotKey("toggleMute", "Toggle mute", GlKeys.M, HotkeyType.GUIOrOtherControls);
 
             // Add hotkey handler
             clientApi.Input.SetHotKeyHandler("voiceVolume", ChangeVoiceVolume);
             clientApi.Input.SetHotKeyHandler("changeMic", ChangeMic);
+            clientApi.Input.SetHotKeyHandler("toggleMute", ToggleMute);
 
             // Initialize the socket client
             socketClient = new RPVoiceChatSocketClient(clientApi);
@@ -45,6 +54,22 @@ namespace rpvoicechat
 
         }
 
+        private void OnKeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.CapsLock)
+            {
+                audioInputManager.TogglePushToTalk(false);
+            }
+        }
+
+        private void OnKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.CapsLock)
+            {
+                audioInputManager.TogglePushToTalk(true);
+            }
+        }
+
 
         private void OnHandshakeRecieved(ConnectionPacket packet)
         {
@@ -55,6 +80,12 @@ namespace rpvoicechat
             audioInputManager.StartRecording();
 
             clientApi.Logger.Debug("[RPVoiceChat] Handshake recieved");
+        }
+
+        private bool ToggleMute(KeyCombination t1)
+        {
+            audioInputManager.ToggleMute();
+            return true;
         }
 
         // Function to change the voice volume
