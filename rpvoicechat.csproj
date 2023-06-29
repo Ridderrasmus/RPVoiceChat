@@ -128,28 +128,31 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Client\Audio\RPAudioOutputManager.cs" />
-    <Compile Include="Client\Gui\RPHudVoiceIcon.cs" />
-    <Compile Include="Client\Utils\KeyboardUtils.cs" />
-    <Compile Include="Common\Utils\AudioUtils.cs" />
-    <Compile Include="Common\Items\ItemVoiceTransciever.cs" />
+    <Compile Include="src\Client\Audio\RPAudioOutputManager.cs" />
+    <Compile Include="src\Client\Gui\RPHudVoiceIcon.cs" />
+    <Compile Include="src\Client\Utils\KeyboardUtils.cs" />
+    <Compile Include="src\Common\RPVoiceChatConfig.cs" />
+    <Compile Include="src\Common\Utils\AudioUtils.cs" />
+    <Compile Include="src\Common\Items\ItemVoiceTransciever.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Client\Audio\RPAudioInputManager.cs" />
-    <Compile Include="Common\Utils\RPPackets.cs" />
-    <Compile Include="Client\RPVoiceChatClient.cs" />
-    <Compile Include="Common\RPVoiceChatCommon.cs" />
-    <Compile Include="Server\RPVoiceChatServer.cs" />
-    <Compile Include="Client\Networking\RPVoiceChatSocketClient.cs" />
-    <Compile Include="Common\Networking\RPVoiceChatSocketCommon.cs" />
-    <Compile Include="Server\Networking\RPVoiceChatSocketServer.cs" />
-    <Compile Include="Common\Utils\RPWaveFormat.cs" />
+    <Compile Include="src\Client\Audio\RPAudioInputManager.cs" />
+    <Compile Include="src\Common\Utils\RPPackets.cs" />
+    <Compile Include="src\Client\RPVoiceChatClient.cs" />
+    <Compile Include="src\Common\RPVoiceChatCommon.cs" />
+    <Compile Include="src\Server\RPVoiceChatServer.cs" />
+    <Compile Include="src\Client\Networking\RPVoiceChatSocketClient.cs" />
+    <Compile Include="src\Common\Networking\RPVoiceChatSocketCommon.cs" />
+    <Compile Include="src\Server\Networking\RPVoiceChatSocketServer.cs" />
+    <Compile Include="src\Common\Utils\RPWaveFormat.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
     <None Include="modinfo.json" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="assets\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>

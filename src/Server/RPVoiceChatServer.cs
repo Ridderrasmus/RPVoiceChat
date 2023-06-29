@@ -12,6 +12,7 @@ namespace rpvoicechat
         RPVoiceChatSocketServer socketServer;
         public override void StartServerSide(ICoreServerAPI api)
         {
+            base.StartServerSide(api);
             serverApi = api;
 
             // Register serverside connection to the the network channel

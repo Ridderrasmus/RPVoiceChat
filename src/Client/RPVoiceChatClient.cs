@@ -20,6 +20,7 @@ namespace rpvoicechat
 
         public override void StartClientSide(ICoreClientAPI api)
         {
+            base.StartClientSide(api);
             clientApi = api;
 
             // Register game tick listener
