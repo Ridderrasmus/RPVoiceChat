@@ -1,0 +1,11 @@
+{
+  "type": "code",
+  "modid": "rpvoicechat",
+  "name": "RP Voice Chat",
+  "authors": [ "Ridderrasmus" ],
+  "description": "Proximity voice chat mod.",
+  "version": "1.0.0",
+  "dependencies": {
+    "game": "1.18.5"
+  }
+}
