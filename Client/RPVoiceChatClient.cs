@@ -11,6 +11,7 @@ namespace rpvoicechat
     {
         IClientNetworkChannel clientChannel;
         ICoreClientAPI clientApi;
+        HudElement hudElement;
         RPAudioInputManager audioInputManager;
         RPAudioOutputManager audioOutputManager;
         RPVoiceChatSocketClient socketClient;
@@ -22,7 +23,7 @@ namespace rpvoicechat
             clientApi = api;
 
             // Register game tick listener
-            //listenerId = api.Event.RegisterGameTickListener(OnGameTick, 20);
+            clientApi.Event.RegisterGameTickListener(OnGameTick, 20);
 
             // Register clientside connection to the network channel
             clientChannel = clientApi.Network.GetChannel("rpvoicechat")
@@ -50,8 +51,22 @@ namespace rpvoicechat
             // Initialize the audio output manager
             audioOutputManager = new RPAudioOutputManager(clientApi);
 
+            // Initialize the hud element
+            clientApi.Gui.CreateCompo("rpvoicechatdialog", new ElementBounds())
+
             clientApi.Logger.Debug("[RPVoiceChat] Client started");
 
+        }
+
+        private void OnHandshakeRecieved(ConnectionPacket packet)
+        {
+            socketClient.ConnectToServer(packet.serverIp);
+
+            // Initialize the audio input manager
+            audioInputManager = new RPAudioInputManager(socketClient, clientApi);
+            audioInputManager.StartRecording();
+
+            clientApi.Logger.Debug("[RPVoiceChat] Handshake recieved");
         }
 
         private void OnKeyUp(object sender, KeyEventArgs e)
@@ -68,18 +83,6 @@ namespace rpvoicechat
             {
                 audioInputManager.TogglePushToTalk(true);
             }
-        }
-
-
-        private void OnHandshakeRecieved(ConnectionPacket packet)
-        {
-            socketClient.ConnectToServer(packet.serverIp);
-
-            // Initialize the audio input manager
-            audioInputManager = new RPAudioInputManager(socketClient, clientApi);
-            audioInputManager.StartRecording();
-
-            clientApi.Logger.Debug("[RPVoiceChat] Handshake recieved");
         }
 
         private bool ToggleMute(KeyCombination t1)
@@ -107,23 +110,20 @@ namespace rpvoicechat
 
         private void OnGameTick(float dt)
         {
+            if (audioInputManager == null) return;
+
             // If the player is in singleplayer or the player is null, return
-            if (clientApi.IsSinglePlayer || clientApi.World.Player == null) return;
+            //if (clientApi.IsSinglePlayer || clientApi.World.Player == null) return;
 
             // Check if the player is in a world
-            if (clientApi.World == null) return;
+            //if (clientApi.World == null) return;
 
             // If the player is recording audio show the audio icon
             if (audioInputManager.isRecording)
             {
                 // Get the player characters voice type (Trumpet, Tuba, etc.)
-
-                
-
-
-
-                string sound = clientApi.World.Player.Entity.talkUtil.soundName.GetName();
-                clientApi.ShowChatMessage("Sound is: " + sound);
+                string voiceSound = clientApi.World.Player.Entity.talkUtil.soundName.GetName();
+                clientApi.ShowChatMessage("Voice sound is: " + voiceSound);
             }
 
         }

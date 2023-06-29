@@ -129,6 +129,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Client\Audio\RPAudioOutputManager.cs" />
+    <Compile Include="Client\Gui\RPHudVoiceIcon.cs" />
     <Compile Include="Client\Utils\KeyboardUtils.cs" />
     <Compile Include="Common\Utils\AudioUtils.cs" />
     <Compile Include="Common\Items\ItemVoiceTransciever.cs" />
