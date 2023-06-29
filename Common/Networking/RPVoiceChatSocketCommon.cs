@@ -45,11 +45,6 @@ namespace rpvoicechat
                             var socketServer = (RPVoiceChatSocketServer)this;
                             socketServer.AddClientConnection(packet.playerUid, remoteEP);
                         }
-                        else
-                        {
-                            int empty = 1 + 1;
-
-                        }
                     }
                     catch (Exception ex)
                     {
