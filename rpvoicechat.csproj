@@ -72,6 +72,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include=".gitignore" />
     <Content Include="modinfo.json" />
   </ItemGroup>
   <ItemGroup>
