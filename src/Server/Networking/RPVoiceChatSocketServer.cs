@@ -17,18 +17,45 @@ namespace rpvoicechat
         // Dictionary of connected clients
         ConcurrentDictionary<string, EndPoint> clients = new ConcurrentDictionary<string, EndPoint>();
 
+        public event Action<PlayerAudioPacket> OnServerAudioPacketReceived;
+
         public RPVoiceChatSocketServer(ICoreServerAPI serverApi)
         {
             this.serverApi = serverApi;
             this.IsServer = true;
+            this.RemoteEndPoint = new IPEndPoint(IPAddress.Any, 0);
         }
 
         public async Task StartAsync()
         {
-            serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            serverSocket.Bind(new IPEndPoint(IPAddress.Any, port));
+            StartListening();
+        }
 
-            StartListening(this, serverSocket);
+        private void StartListening()
+        {
+            Task.Run(() =>
+            {
+                byte[] buffer = new byte[bufferSize];
+
+                serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+                serverSocket.Bind(new IPEndPoint(IPAddress.Any, port));
+
+                while (true)
+                {
+                    EndPoint remoteEP = new IPEndPoint(IPAddress.Any, 0);
+                    int receivedBytes = serverSocket.ReceiveFrom(buffer, ref remoteEP);
+
+                    byte[] receivedData = new byte[receivedBytes];
+                    Array.Copy(buffer, 0, receivedData, 0, receivedBytes);
+
+                    PlayerAudioPacket packet = DeserializePacket(receivedData);
+
+                    // Invoke the event
+                    OnServerAudioPacketReceived?.Invoke(packet);
+
+                    AddClientConnection(packet.playerUid, remoteEP);
+                }
+            });
         }
 
         public async Task StopAsync()
@@ -67,7 +94,6 @@ namespace rpvoicechat
         // Public method to send a message to a specific client using the playeruid as the key
         public void SendToClient(string playerUid, byte[] buffer)
         {
-
             EndPoint client;
             if (!clients.TryGetValue(playerUid, out client)) return;
 

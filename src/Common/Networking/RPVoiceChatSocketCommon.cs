@@ -17,42 +17,7 @@ namespace rpvoicechat
         protected Socket clientSocket { get; set; }
         protected Socket serverSocket { get; set; }
         public bool IsServer { get; set; }
-
-        public event Action<PlayerAudioPacket> OnAudioPacketReceived;
-
-        public void StartListening(RPVoiceChatSocketCommon socketClass, Socket socket)
-        {
-            Task.Run(() =>
-            {
-                byte[] buffer = new byte[bufferSize];
-                while (true)
-                {
-                    try
-                    {
-                        EndPoint remoteEP = new IPEndPoint(IPAddress.Any, 0);
-                        int receivedBytes = socket.ReceiveFrom(buffer, ref remoteEP);
-
-                        byte[] receivedData = new byte[receivedBytes];
-                        Array.Copy(buffer, 0, receivedData, 0, receivedBytes);
-
-                        PlayerAudioPacket packet = DeserializePacket(receivedData);
-
-                        OnAudioPacketReceived?.Invoke(packet);
-
-
-                        if (socketClass.IsServer)
-                        {
-                            var socketServer = (RPVoiceChatSocketServer)this;
-                            socketServer.AddClientConnection(packet.playerUid, remoteEP);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        throw ex;
-                    }
-                }
-            });
-        }
+        public EndPoint RemoteEndPoint { get; set; } = null;
 
         private async Task SendAudioPacket(PlayerAudioPacket packet)
         {

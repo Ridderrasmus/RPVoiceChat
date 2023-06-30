@@ -17,29 +17,25 @@ namespace rpvoicechat
 
             // Register serverside connection to the the network channel
             serverChannel = serverApi.Network.GetChannel("rpvoicechat");
-            //    .SetMessageHandler<PlayerAudioPacket>(OnAudioRecieved);
 
-            //
+            // Register event listener
             serverApi.Event.PlayerNowPlaying += OnPlayerCreate;
 
             // Sockets
             socketServer = new RPVoiceChatSocketServer(serverApi);
             Task.Run(() => socketServer.StartAsync());
-            socketServer.OnAudioPacketReceived += Server_PacketReceived;
-
-            serverApi.Logger.Debug("[RPVoiceChat] Server started");
+            socketServer.OnServerAudioPacketReceived += Server_PacketReceived;
         }
 
         private void Server_PacketReceived(PlayerAudioPacket packet)
-
         {
             foreach (var player in serverApi.World.AllOnlinePlayers)
             {
+                if (player.PlayerUID == packet.playerUid) continue;
+
                 if (player.Entity.Pos.DistanceTo(packet.audioPos) > (int)packet.voiceLevel) continue;
 
                 socketServer.SendToClient(player.PlayerUID, packet);
-
-                serverApi.Logger.Debug("[RPVoiceChat] Sending audio to " + player.PlayerName);
             }
         }
 

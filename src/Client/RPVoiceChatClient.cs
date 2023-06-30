@@ -47,13 +47,12 @@ namespace rpvoicechat
 
             // Initialize the socket client
             socketClient = new RPVoiceChatSocketClient(clientApi);
-            socketClient.OnAudioPacketReceived += OnAudioReceived;
+            socketClient.OnClientAudioPacketReceived += OnAudioReceived;
 
             // Initialize the audio output manager
             audioOutputManager = new RPAudioOutputManager(clientApi);
 
             // Initialize the hud element
-            clientApi.Gui.CreateCompo("rpvoicechatdialog", new ElementBounds())
 
             clientApi.Logger.Debug("[RPVoiceChat] Client started");
 
@@ -113,12 +112,6 @@ namespace rpvoicechat
         {
             if (audioInputManager == null) return;
 
-            // If the player is in singleplayer or the player is null, return
-            //if (clientApi.IsSinglePlayer || clientApi.World.Player == null) return;
-
-            // Check if the player is in a world
-            //if (clientApi.World == null) return;
-
             // If the player is recording audio show the audio icon
             if (audioInputManager.isRecording)
             {
@@ -132,7 +125,6 @@ namespace rpvoicechat
         // When client recieves audio data from the server
         public void OnAudioReceived(PlayerAudioPacket packet)
         {
-            clientApi.Logger.Debug("[RPVoiceChat - Client] Audio recieved");
             audioOutputManager.HandleAudioPacket(packet);
         }
     }

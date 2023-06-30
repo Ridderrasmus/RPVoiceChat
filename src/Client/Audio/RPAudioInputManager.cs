@@ -28,7 +28,9 @@ namespace rpvoicechat
         public bool isRecording = false;
         public bool isMuted = false;
         public bool isPushToTalkActive = false;
-        public float inputThreshold = 0.001f;
+        public float inputThreshold = 0.0005f;
+        private int ignoreThresholdCounter = 0;
+        private const int ignoreThresholdLimit = 5;
         public ActivationMode CurrentActivationMode { get; private set; } = ActivationMode.VoiceActivation;
         public VisualsState CurrentVisualsState { get; private set; } = VisualsState.Empty;
 
@@ -71,12 +73,23 @@ namespace rpvoicechat
             // If the amplitude is below the threshold, return
             if (CurrentActivationMode == ActivationMode.VoiceActivation && amplitude < inputThreshold)
             {
-                CurrentVisualsState = VisualsState.Empty;
-                return;
+                if (ignoreThresholdCounter > 0)
+                {
+                    ignoreThresholdCounter--;
+                }
+                else
+                {
+                    CurrentVisualsState = VisualsState.Empty;
+                    return;
+                }
+            }
+            else
+            {
+                ignoreThresholdCounter = ignoreThresholdLimit; // Reset the counter when amplitude is above the threshold
             }
 
             // Create a new audio packet
-            PlayerAudioPacket packet = new PlayerAudioPacket() { audioData = args.Buffer, audioPos = clientApi.World.Player.Entity.Pos.XYZ, playerUid = clientApi.World.Player.PlayerUID };
+            PlayerAudioPacket packet = new PlayerAudioPacket() { audioData = args.Buffer, audioPos = clientApi.World.Player.Entity.Pos.XYZ, playerUid = clientApi.World.Player.PlayerUID, voiceLevel = voiceLevel };
             
             socket.SendAudioPacket(packet);
             CurrentVisualsState = VisualsState.Talking;

@@ -10,8 +10,9 @@ namespace rpvoicechat
 {
     public class RPVoiceChatSocketClient : RPVoiceChatSocketCommon
     {
+        public event Action<PlayerAudioPacket> OnClientAudioPacketReceived;
+
         private ICoreClientAPI clientApi;
-        private IPEndPoint serverEndPoint = null;
         private WaveInEvent waveIn;
         public bool isInitialized = false;
 
@@ -26,28 +27,52 @@ namespace rpvoicechat
             IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, 0); // 0 lets the OS pick a free port
             clientSocket.Bind(localEndPoint);
 
+            
+
             Task.Run(() => StartAsync());
         }
 
         public async Task StartAsync()
         {
-            StartListening(this, clientSocket);
+            StartListening();
+        }
+
+        public void StartListening()
+        {
+            Task.Run(() =>
+            {
+                byte[] buffer = new byte[bufferSize];
+                while (RemoteEndPoint == null) { }
+                while (true)
+                {
+                    EndPoint remoteEP = RemoteEndPoint;
+                    int receivedBytes = clientSocket.ReceiveFrom(buffer, ref remoteEP);
+
+                    byte[] receivedData = new byte[receivedBytes];
+                    Array.Copy(buffer, 0, receivedData, 0, receivedBytes);
+
+                    PlayerAudioPacket packet = DeserializePacket(receivedData);
+
+                    // Invoke the event
+                    OnClientAudioPacketReceived?.Invoke(packet);
+                }
+            });
         }
 
         public void ConnectToServer(string serverAddress)
         {
-            serverEndPoint = new IPEndPoint(IPAddress.Parse(serverAddress), port);
+            RemoteEndPoint = new IPEndPoint(IPAddress.Parse(serverAddress), port);
         }
 
         public void SendAudioPacket(PlayerAudioPacket packet)
         {
             byte[] buffer = SerializePacket(packet);
-            clientSocket.SendTo(buffer, serverEndPoint);
+            clientSocket.SendTo(buffer, RemoteEndPoint);
         }
 
         private void OnAudioRecorded(object sender, WaveInEventArgs e)
         {
-            if (serverEndPoint == null) return;
+            if (RemoteEndPoint == null) return;
 
             byte[] buffer = e.Buffer;
 

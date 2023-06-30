@@ -1,11 +1,11 @@
 ﻿using Concentus.Structs;
 using Concentus.Enums;
-using ProtoBuf;
 using System;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
+using ProtoBuf;
 
 namespace rpvoicechat
 {
@@ -146,8 +146,6 @@ namespace rpvoicechat
         // Encode audio samples from a short array
         internal static byte[] EncodeAudio(short[] buffer)
         {
-            //return ConvertShortsToBytes(buffer);
-
             // Define the maximum size for the encoded data
             int maxEncodedSize = 4000; // Arbitrary number, you may need to adjust.
             byte[] encodedBuffer = new byte[maxEncodedSize];
@@ -165,8 +163,6 @@ namespace rpvoicechat
         // Decode audio samples from a byte array
         internal static byte[] DecodeAudio(byte[] encodedBuffer)
         {
-            //return encodedBuffer;
-            
             // Get the length of the encoded data
             int encodedLength = encodedBuffer.Length;
 
