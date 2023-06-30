@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{FC0A6716-F6CA-4669-8DFD-DADE5C89EE0E}</ProjectGuid>
+    <ProjectGuid>{58CDEDA0-B154-4CC7-82FD-FEAD4A052BEA}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>rpvoicechat</RootNamespace>
@@ -16,7 +16,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\mods\</OutputPath>
+    <OutputPath>$(ProjectDir)\bin</OutputPath>
     <IntermediateOutputPath>..\..\obj\Debug\rpvoicechat\</IntermediateOutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -25,22 +25,15 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\mods\</OutputPath>
+    <OutputPath>$(ProjectDir)\bin</OutputPath>
     <IntermediateOutputPath>..\..\obj\Release\rpvoicechat\</IntermediateOutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Concentus, Version=1.1.6.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Concentus.1.1.7\lib\portable-net45+win+wpa81+wp80\Concentus.dll</HintPath>
-    </Reference>
     <Reference Include="NAudio, Version=1.10.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\NAudio.1.10.0\lib\net35\NAudio.dll</HintPath>
-    </Reference>
-    <Reference Include="protobuf-net, Version=2.1.0.0, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Games\Vintagestory\Lib\protobuf-net.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -73,30 +66,38 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="src\Client\RPVoiceChatClient.cs" />
-    <Compile Include="src\Client\Audio\RPAudioInputManager.cs" />
-    <Compile Include="src\Client\Audio\RPAudioOutputManager.cs" />
-    <Compile Include="src\Client\Gui\RPHudVoiceIcon.cs" />
-    <Compile Include="src\Client\Networking\RPVoiceChatSocketClient.cs" />
-    <Compile Include="src\Client\Utils\KeyboardUtils.cs" />
-    <Compile Include="src\Common\RPVoiceChatCommon.cs" />
-    <Compile Include="src\Config\RPVoiceChatConfig.cs" />
-    <Compile Include="src\Common\Items\ItemVoiceTransciever.cs" />
-    <Compile Include="src\Common\Networking\RPVoiceChatSocketCommon.cs" />
-    <Compile Include="src\Common\Utils\AudioUtils.cs" />
-    <Compile Include="src\Common\Utils\RPPackets.cs" />
-    <Compile Include="src\Common\Utils\RPWaveFormat.cs" />
-    <Compile Include="src\Config\ModConfig.cs" />
-    <Compile Include="src\Server\RPVoiceChatServer.cs" />
-    <Compile Include="src\Server\Networking\RPVoiceChatSocketServer.cs" />
+    <Content Include="modinfo.json" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="assets\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="src\Client\Audio\RPAudioInputManager.cs" />
+    <Compile Include="src\Client\Audio\RPAudioOutputManager.cs" />
+    <Compile Include="src\Client\Gui\RPHudVoiceIcon.cs" />
+    <Compile Include="src\Client\Networking\RPVoiceChatSocketClient.cs" />
+    <Compile Include="src\Client\RPVoiceChatClient.cs" />
+    <Compile Include="src\Client\Utils\KeyboardUtils.cs" />
+    <Compile Include="src\Common\Items\ItemVoiceTransciever.cs" />
+    <Compile Include="src\Common\Networking\RPVoiceChatSocketCommon.cs" />
+    <Compile Include="src\Common\RPVoiceChatCommon.cs" />
+    <Compile Include="src\Common\Utils\AudioUtils.cs" />
+    <Compile Include="src\Common\Utils\RPPackets.cs" />
+    <Compile Include="src\Common\Utils\RPWaveFormat.cs" />
+    <Compile Include="src\Config\ModConfig.cs" />
+    <Compile Include="src\Config\RPVoiceChatConfig.cs" />
+    <Compile Include="src\Server\Networking\RPVoiceChatSocketServer.cs" />
+    <Compile Include="src\Server\RPVoiceChatServer.cs" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>
+copy "$(TargetPath)" "$(ProjectDir)" 
+copy "$(TargetDir)\$(TargetName).pdb" "$(ProjectDir)" 
     </PostBuildEvent>
   </PropertyGroup>
 </Project>
