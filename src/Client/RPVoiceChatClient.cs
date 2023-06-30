@@ -116,8 +116,8 @@ namespace rpvoicechat
             if (audioInputManager.isRecording)
             {
                 // Get the player characters voice type (Trumpet, Tuba, etc.)
-                string voiceSound = clientApi.World.Player.Entity.talkUtil.soundName.GetName();
-                clientApi.ShowChatMessage("Voice sound is: " + voiceSound);
+                //string voiceSound = clientApi.World.Player.Entity.talkUtil.soundName.GetName();
+                //clientApi.ShowChatMessage("Voice sound is: " + voiceSound);
             }
 
         }
