@@ -81,12 +81,13 @@
     <Compile Include="src\Client\Networking\RPVoiceChatSocketClient.cs" />
     <Compile Include="src\Client\Utils\KeyboardUtils.cs" />
     <Compile Include="src\Common\RPVoiceChatCommon.cs" />
-    <Compile Include="src\Common\RPVoiceChatConfig.cs" />
+    <Compile Include="src\Config\RPVoiceChatConfig.cs" />
     <Compile Include="src\Common\Items\ItemVoiceTransciever.cs" />
     <Compile Include="src\Common\Networking\RPVoiceChatSocketCommon.cs" />
     <Compile Include="src\Common\Utils\AudioUtils.cs" />
     <Compile Include="src\Common\Utils\RPPackets.cs" />
     <Compile Include="src\Common\Utils\RPWaveFormat.cs" />
+    <Compile Include="src\Config\ModConfig.cs" />
     <Compile Include="src\Server\RPVoiceChatServer.cs" />
     <Compile Include="src\Server\Networking\RPVoiceChatSocketServer.cs" />
   </ItemGroup>

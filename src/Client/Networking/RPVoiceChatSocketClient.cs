@@ -21,6 +21,8 @@ namespace rpvoicechat
             this.IsServer = false;
             this.clientApi = clientApi;
 
+            port = int.Parse(clientApi.World.Config.GetString("rpvoicechat:port", "52525"));
+
             clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
             // Bind the socket to a local port

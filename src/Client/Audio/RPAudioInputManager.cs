@@ -30,6 +30,7 @@ namespace rpvoicechat
         public bool isPushToTalkActive = false;
         public float inputThreshold = 0.0005f;
         private int ignoreThresholdCounter = 0;
+        private readonly object recordingLock = new object();
         private const int ignoreThresholdLimit = 5;
         public ActivationMode CurrentActivationMode { get; private set; } = ActivationMode.VoiceActivation;
         public VisualsState CurrentVisualsState { get; private set; } = VisualsState.Empty;
@@ -43,7 +44,7 @@ namespace rpvoicechat
             waveIn.WaveFormat = new WaveFormatMono();
             waveIn.BufferMilliseconds = 20;
             waveIn.DataAvailable += OnAudioRecorded;
-            StartRecording();
+            ToggleRecording();
         }
 
         private void OnAudioRecorded(object sender, WaveInEventArgs args)
@@ -95,18 +96,42 @@ namespace rpvoicechat
             CurrentVisualsState = VisualsState.Talking;
         }
 
-        public void StartRecording()
+        public bool ToggleRecording()
         {
-            if (isRecording) return;
-            isRecording = true;
-            waveIn.StartRecording();
+            lock (recordingLock)
+            {
+                return ToggleRecording(!isRecording);
+            }
         }
 
-        public void StopRecording()
+        public bool ToggleRecording(bool mode)
         {
-            if (!isRecording) return;
-            isRecording = false;
-            waveIn.StopRecording();
+            lock (recordingLock)
+            {
+                if (isRecording == mode) return mode;
+            
+                try 
+                {
+                    if (mode)
+                    {
+                        waveIn.StopRecording();
+                    }
+                    else
+                    {
+                        waveIn.StartRecording();
+                    }
+
+                    isRecording = mode;
+                
+                }
+                catch (InvalidOperationException e)
+                {
+
+                }
+
+
+                return isRecording;
+            }
         }
 
         public void SetInputDevice(int deviceIndex)
@@ -116,7 +141,7 @@ namespace rpvoicechat
 
         public WaveInCapabilities CycleInputDevice()
         {
-            StopRecording();
+            ToggleRecording(false);
             int deviceCount = WaveIn.DeviceCount;
             int currentDevice = waveIn.DeviceNumber;
             int nextDevice = currentDevice + 1;
@@ -127,7 +152,7 @@ namespace rpvoicechat
             }
 
             SetInputDevice(nextDevice);
-            StartRecording();
+            ToggleRecording(true);
 
             
 
@@ -154,7 +179,7 @@ namespace rpvoicechat
 
         public void ToggleMute()
         {
-            throw new NotImplementedException();
+            isMuted = !isMuted;
         }
 
         public void TogglePushToTalk(bool isActive)

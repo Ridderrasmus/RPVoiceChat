@@ -24,6 +24,8 @@ namespace rpvoicechat
             this.serverApi = serverApi;
             this.IsServer = true;
             this.RemoteEndPoint = new IPEndPoint(IPAddress.Any, 0);
+
+            port = int.Parse(serverApi.World.Config.GetString("rpvoicechat:port", "52525"));
         }
 
         public async Task StartAsync()
@@ -33,6 +35,7 @@ namespace rpvoicechat
 
         private void StartListening()
         {
+            serverApi.Logger.Debug("Server started with port: " + port);
             Task.Run(() =>
             {
                 byte[] buffer = new byte[bufferSize];

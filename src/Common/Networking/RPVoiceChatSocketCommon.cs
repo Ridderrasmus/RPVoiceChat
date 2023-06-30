@@ -11,7 +11,7 @@ namespace rpvoicechat
     public class RPVoiceChatSocketCommon
     {
         public int bufferSize = 2048;
-        public int port = 12345;
+        public int port = 52525;
         public ICoreServerAPI serverApi { get; set; }
         public ICoreClientAPI clientApi { get; set; }
         protected Socket clientSocket { get; set; }

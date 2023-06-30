@@ -35,9 +35,9 @@ using Vintagestory.API.Common;
 // by using the '*' as shown below:
 [assembly: AssemblyVersion("1.0.*")]
 
-[assembly: ModInfo( "rpvoicechat", "rpvoicechat",
+[assembly: ModInfo( "RP Voice Chat", "rpvoicechat",
     Version = "1.0.0",
-    Description = "To be added",
-    Authors = new[] { "Unkown" })]
+    Description = "A proximity voice chat",
+    Authors = new[] { "Ridderrasmus" })]
 
  [assembly: ModDependency("game")]

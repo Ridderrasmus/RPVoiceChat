@@ -36,13 +36,15 @@ namespace rpvoicechat
             keyboardHook.KeyUp += OnKeyUp;
 
             // Add a new keybinding
-            clientApi.Input.RegisterHotKey("voiceVolume", "Change voice volume", GlKeys.N, HotkeyType.GUIOrOtherControls);
-            clientApi.Input.RegisterHotKey("changeMic", "Cycle microphone", GlKeys.N, HotkeyType.GUIOrOtherControls, true);
-            clientApi.Input.RegisterHotKey("toggleMute", "Toggle mute", GlKeys.M, HotkeyType.GUIOrOtherControls);
+            clientApi.Input.RegisterHotKey("voiceVolume", "Voice: Change voice volume", GlKeys.N, HotkeyType.GUIOrOtherControls);
+            clientApi.Input.RegisterHotKey("changeMic", "Voice: Cycle microphone", GlKeys.N, HotkeyType.GUIOrOtherControls, true);
+            clientApi.Input.RegisterHotKey("changeActivation", "Voice: Cycle activation mode", GlKeys.N, HotkeyType.GUIOrOtherControls, false, true);
+            clientApi.Input.RegisterHotKey("toggleMute", "Voice: Toggle mute", GlKeys.M, HotkeyType.GUIOrOtherControls, false, false, true);
 
             // Add hotkey handler
             clientApi.Input.SetHotKeyHandler("voiceVolume", ChangeVoiceVolume);
             clientApi.Input.SetHotKeyHandler("changeMic", ChangeMic);
+            clientApi.Input.SetHotKeyHandler("changeActivation", ChangeActivation);
             clientApi.Input.SetHotKeyHandler("toggleMute", ToggleMute);
 
             // Initialize the socket client
@@ -64,9 +66,24 @@ namespace rpvoicechat
 
             // Initialize the audio input manager
             audioInputManager = new RPAudioInputManager(socketClient, clientApi);
-            audioInputManager.StartRecording();
 
             clientApi.Logger.Debug("[RPVoiceChat] Handshake recieved");
+        }
+
+        private bool ChangeActivation(KeyCombination t1)
+        {
+            if (audioInputManager.CurrentActivationMode == RPAudioInputManager.ActivationMode.VoiceActivation)
+            {
+                audioInputManager.SetActivationMode(RPAudioInputManager.ActivationMode.PushToTalk);
+                clientApi.ShowChatMessage("Activation mode: Push to talk");
+            }
+            else
+            {
+                audioInputManager.SetActivationMode(RPAudioInputManager.ActivationMode.VoiceActivation);
+                clientApi.ShowChatMessage("Activation mode: Voice activation");
+            }
+
+            return true;
         }
 
         private void OnKeyUp(object sender, KeyEventArgs e)
@@ -88,6 +105,8 @@ namespace rpvoicechat
         private bool ToggleMute(KeyCombination t1)
         {
             audioInputManager.ToggleMute();
+            if (audioInputManager.isMuted) clientApi.ShowChatMessage("Microphone muted");
+            else clientApi.ShowChatMessage("Microphone unmuted");
             return true;
         }
 
