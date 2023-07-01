@@ -15,6 +15,7 @@ namespace rpvoicechat
         private ICoreClientAPI clientApi;
         private WaveInEvent waveIn;
         public bool isInitialized = false;
+        public int localPort = 0;
 
         public RPVoiceChatSocketClient(ICoreClientAPI clientApi) 
         {
@@ -28,37 +29,42 @@ namespace rpvoicechat
             // Bind the socket to a local port
             IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, 0); // 0 lets the OS pick a free port
             clientSocket.Bind(localEndPoint);
+            localPort = ((IPEndPoint)clientSocket.LocalEndPoint).Port;
 
             
 
-            Task.Run(() => StartAsync());
-        }
-
-        public async Task StartAsync()
-        {
-            StartListening();
+            Task.Run(() => StartListening());
         }
 
         public void StartListening()
         {
-            Task.Run(() =>
+            byte[] buffer = new byte[bufferSize];
+            while (RemoteEndPoint == null) { }
+            while (true)
             {
-                byte[] buffer = new byte[bufferSize];
-                while (RemoteEndPoint == null) { }
-                while (true)
+                EndPoint remoteEP = RemoteEndPoint;
+                int receivedBytes = clientSocket.ReceiveFrom(buffer, ref remoteEP);
+
+
+                byte[] receivedData = new byte[receivedBytes];
+                Array.Copy(buffer, 0, receivedData, 0, receivedBytes);
+
+                // TODO: Move deserialization to the invoked method
+
+                try
                 {
-                    EndPoint remoteEP = RemoteEndPoint;
-                    int receivedBytes = clientSocket.ReceiveFrom(buffer, ref remoteEP);
-
-                    byte[] receivedData = new byte[receivedBytes];
-                    Array.Copy(buffer, 0, receivedData, 0, receivedBytes);
-
                     PlayerAudioPacket packet = DeserializePacket(receivedData);
-
+                    
                     // Invoke the event
                     OnClientAudioPacketReceived?.Invoke(packet);
                 }
-            });
+                catch (Exception e)
+                {
+                    //clientApi.Logger.Error(e.Message);
+                    continue;
+                }
+
+            }
         }
 
         public void ConnectToServer(string serverAddress)
@@ -72,18 +78,6 @@ namespace rpvoicechat
             clientSocket.SendTo(buffer, RemoteEndPoint);
         }
 
-        private void OnAudioRecorded(object sender, WaveInEventArgs e)
-        {
-            if (RemoteEndPoint == null) return;
-
-            byte[] buffer = e.Buffer;
-
-            PlayerAudioPacket packet = new PlayerAudioPacket();
-            packet.playerUid = clientApi.World.Player.PlayerUID;
-            packet.audioData = buffer;
-
-            SendAudioPacket(packet);
-        }
 
         public void Close()
         {

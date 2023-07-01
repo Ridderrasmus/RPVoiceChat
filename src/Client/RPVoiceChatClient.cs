@@ -4,6 +4,7 @@ using System;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Vintagestory.API.Client;
+using Vintagestory.API.Common;
 
 namespace rpvoicechat
 {
@@ -25,6 +26,7 @@ namespace rpvoicechat
 
             // Register game tick listener
             clientApi.Event.RegisterGameTickListener(OnGameTick, 20);
+            clientApi.Event.PlayerLeave += OnPlayerLeave;
 
             // Register clientside connection to the network channel
             clientChannel = clientApi.Network.GetChannel("rpvoicechat")
@@ -56,13 +58,23 @@ namespace rpvoicechat
 
             // Initialize the hud element
 
+
             clientApi.Logger.Debug("[RPVoiceChat] Client started");
 
+
+        }
+
+        private void OnPlayerLeave(IClientPlayer byPlayer)
+        {
+            if (byPlayer != clientApi.World.Player) return;
+
+            socketClient.Close();
         }
 
         private void OnHandshakeRecieved(ConnectionPacket packet)
         {
-            socketClient.ConnectToServer(packet.serverIp);
+            clientChannel.SendPacket(new ConnectionPacket() { packetIp = GetPublicIp(), packetPort = socketClient.localPort });
+            socketClient.ConnectToServer(packet.packetIp);
 
             // Initialize the audio input manager
             audioInputManager = new RPAudioInputManager(socketClient, clientApi);
@@ -137,6 +149,10 @@ namespace rpvoicechat
                 // Get the player characters voice type (Trumpet, Tuba, etc.)
                 //string voiceSound = clientApi.World.Player.Entity.talkUtil.soundName.GetName();
                 //clientApi.ShowChatMessage("Voice sound is: " + voiceSound);
+
+                // Do talking animation
+                //clientApi.World.Player.Entity.AnimManager.StartAnimation();
+                
             }
 
         }

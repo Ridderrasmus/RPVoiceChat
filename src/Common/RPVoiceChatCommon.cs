@@ -1,3 +1,4 @@
+using System.Net;
 using Vintagestory.API.Common;
 
 namespace rpvoicechat
@@ -21,6 +22,11 @@ namespace rpvoicechat
             // Item registry (Not used yet)
             api.RegisterItemClass("ItemVoiceTransciever", typeof(ItemVoiceTransciever));
 
+        }
+
+        public string GetPublicIp()
+        {
+            return new WebClient().DownloadString("https://ipv4.icanhazip.com/").Replace("\n", "");
         }
     }
 }

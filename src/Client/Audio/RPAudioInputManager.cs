@@ -1,4 +1,5 @@
-﻿using NAudio.Wave;
+﻿using NAudio;
+using NAudio.Wave;
 using System;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
@@ -13,7 +14,7 @@ namespace rpvoicechat
             PushToTalk
         }
 
-        public enum VisualsState
+        public enum TalkingState
         {
             Empty,
             Talking,
@@ -29,11 +30,12 @@ namespace rpvoicechat
         public bool isMuted = false;
         public bool isPushToTalkActive = false;
         public float inputThreshold = 0.0005f;
+        private bool canSwitchDevice = true;
         private int ignoreThresholdCounter = 0;
         private readonly object recordingLock = new object();
         private const int ignoreThresholdLimit = 5;
         public ActivationMode CurrentActivationMode { get; private set; } = ActivationMode.VoiceActivation;
-        public VisualsState CurrentVisualsState { get; private set; } = VisualsState.Empty;
+        public TalkingState CurrentTalkingState { get; private set; } = TalkingState.Empty;
 
         public RPAudioInputManager(RPVoiceChatSocketClient socket, ICoreClientAPI clientAPI)
         {
@@ -44,7 +46,7 @@ namespace rpvoicechat
             waveIn.WaveFormat = new WaveFormatMono();
             waveIn.BufferMilliseconds = 20;
             waveIn.DataAvailable += OnAudioRecorded;
-            ToggleRecording();
+            waveIn.StartRecording();
         }
 
         private void OnAudioRecorded(object sender, WaveInEventArgs args)
@@ -52,19 +54,19 @@ namespace rpvoicechat
             // If player is in the pause menu, return
             if (clientApi.IsGamePaused)
             {
-                CurrentVisualsState = VisualsState.Empty;
+                CurrentTalkingState = TalkingState.Empty;
                 return;
             }
 
             if (isMuted)
             {
-                CurrentVisualsState = VisualsState.Muted;
+                CurrentTalkingState = TalkingState.Muted;
                 return;
             }
 
             if (CurrentActivationMode == ActivationMode.PushToTalk && !isPushToTalkActive)
             { 
-                CurrentVisualsState = VisualsState.Empty;
+                CurrentTalkingState = TalkingState.Empty;
                 return;
             }
             
@@ -80,7 +82,7 @@ namespace rpvoicechat
                 }
                 else
                 {
-                    CurrentVisualsState = VisualsState.Empty;
+                    CurrentTalkingState = TalkingState.Empty;
                     return;
                 }
             }
@@ -91,45 +93,42 @@ namespace rpvoicechat
 
             // Create a new audio packet
             PlayerAudioPacket packet = new PlayerAudioPacket() { audioData = args.Buffer, audioPos = clientApi.World.Player.Entity.Pos.XYZ, playerUid = clientApi.World.Player.PlayerUID, voiceLevel = voiceLevel };
-            
+
             socket.SendAudioPacket(packet);
-            CurrentVisualsState = VisualsState.Talking;
+            CurrentTalkingState = TalkingState.Talking;
         }
 
+        // Returns the success of the method
         public bool ToggleRecording()
         {
             lock (recordingLock)
             {
-                return ToggleRecording(!isRecording);
+                return (ToggleRecording(!isRecording) == !isRecording);
             }
         }
 
+        // Returns the recording status
         public bool ToggleRecording(bool mode)
         {
+            if (!canSwitchDevice) return isRecording;
+            canSwitchDevice = false;
             lock (recordingLock)
             {
                 if (isRecording == mode) return mode;
             
-                try 
-                {
-                    if (mode)
-                    {
-                        waveIn.StopRecording();
-                    }
-                    else
-                    {
-                        waveIn.StartRecording();
-                    }
-
-                    isRecording = mode;
                 
-                }
-                catch (InvalidOperationException e)
+                if (mode)
                 {
-
+                    waveIn.StopRecording();
+                }
+                else
+                {
+                    waveIn.StartRecording();
                 }
 
+                isRecording = mode;
 
+                canSwitchDevice = true;
                 return isRecording;
             }
         }

@@ -12,17 +12,12 @@ namespace rpvoicechat
     {
         public int bufferSize = 2048;
         public int port = 52525;
-        public ICoreServerAPI serverApi { get; set; }
-        public ICoreClientAPI clientApi { get; set; }
+
         protected Socket clientSocket { get; set; }
         protected Socket serverSocket { get; set; }
         public bool IsServer { get; set; }
         public EndPoint RemoteEndPoint { get; set; } = null;
 
-        private async Task SendAudioPacket(PlayerAudioPacket packet)
-        {
-
-        }
 
         internal byte[] SerializePacket(PlayerAudioPacket packet)
         {

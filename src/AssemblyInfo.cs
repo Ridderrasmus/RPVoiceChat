@@ -12,6 +12,7 @@ using Vintagestory.API.Common;
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("")]
 [assembly: AssemblyCopyright("")]
+
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

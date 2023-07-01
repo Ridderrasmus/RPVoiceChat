@@ -19,6 +19,8 @@ namespace rpvoicechat
 
         public event Action<PlayerAudioPacket> OnServerAudioPacketReceived;
 
+
+
         public RPVoiceChatSocketServer(ICoreServerAPI serverApi)
         {
             this.serverApi = serverApi;
@@ -28,47 +30,44 @@ namespace rpvoicechat
             port = int.Parse(serverApi.World.Config.GetString("rpvoicechat:port", "52525"));
         }
 
-        public async Task StartAsync()
-        {
-            StartListening();
-        }
-
-        private void StartListening()
+        public void StartListening()
         {
             serverApi.Logger.Debug("Server started with port: " + port);
-            Task.Run(() =>
-            {
-                byte[] buffer = new byte[bufferSize];
 
+            byte[] buffer = new byte[bufferSize];
+            EndPoint remoteEP= new IPEndPoint(IPAddress.Any, 0);
+
+            try 
+            { 
                 serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
                 serverSocket.Bind(new IPEndPoint(IPAddress.Any, port));
+            }
+            catch (Exception e)
+            {
+                serverApi.Logger.Error("Failed to bind to port: " + port);
+                serverApi.Logger.Error(e.Message);
+                return;
+            }
 
-                while (true)
-                {
-                    EndPoint remoteEP = new IPEndPoint(IPAddress.Any, 0);
-                    int receivedBytes = serverSocket.ReceiveFrom(buffer, ref remoteEP);
+            while (true)
+            {
+                int receivedBytes = serverSocket.ReceiveFrom(buffer, ref remoteEP);
 
-                    byte[] receivedData = new byte[receivedBytes];
-                    Array.Copy(buffer, 0, receivedData, 0, receivedBytes);
+                byte[] receivedData = new byte[receivedBytes];
+                Array.Copy(buffer, 0, receivedData, 0, receivedBytes);
 
-                    PlayerAudioPacket packet = DeserializePacket(receivedData);
+                PlayerAudioPacket packet = DeserializePacket(receivedData);
 
-                    // Invoke the event
-                    OnServerAudioPacketReceived?.Invoke(packet);
+                // Invoke the event
+                OnServerAudioPacketReceived?.Invoke(packet);
 
-                    AddClientConnection(packet.playerUid, remoteEP);
-                }
-            });
-        }
-
-        public async Task StopAsync()
-        {
-            serverSocket?.Close();
+                AddClientConnection(packet.playerUid, remoteEP);
+            }
         }
 
         public bool AddClientConnection(string playerUid, EndPoint endPoint)
         {
-            if (playerUid == null || endPoint == null) return false;
+            if (string.IsNullOrEmpty(playerUid) || endPoint == null) return false;
 
             if (clients.ContainsKey(playerUid)) return false;
             
@@ -77,7 +76,7 @@ namespace rpvoicechat
             return true;
         }
 
-        private EndPoint RemoveClientConnection(string playerUid)
+        public EndPoint RemoveClientConnection(string playerUid)
         {
             EndPoint endPoint;
             clients.TryRemove(playerUid, out endPoint);

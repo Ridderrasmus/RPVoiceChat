@@ -12,6 +12,7 @@ namespace rpvoicechat
     public class ConnectionPacket
     {
         public string playerUid;
-        public string serverIp;
+        public string packetIp;
+        public int packetPort;
     }
 }
