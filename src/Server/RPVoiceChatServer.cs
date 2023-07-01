@@ -48,7 +48,7 @@ namespace rpvoicechat
         {
             foreach (var player in serverApi.World.AllOnlinePlayers)
             {
-                //if (player.PlayerUID == packet.playerUid) continue;
+                if (player.PlayerUID == packet.playerUid) continue;
                 if (player.Entity.Pos.DistanceTo(packet.audioPos) > (int)packet.voiceLevel) continue;
 
                 socketServer.SendToClient(player.PlayerUID, packet);
