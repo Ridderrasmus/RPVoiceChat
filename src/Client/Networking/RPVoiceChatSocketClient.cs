@@ -2,7 +2,6 @@
 using System.Net.Sockets;
 using System.Net;
 using Vintagestory.API.Client;
-using NAudio.Wave;
 using Vintagestory.API.Common;
 using System;
 
@@ -13,7 +12,6 @@ namespace rpvoicechat
         public event Action<PlayerAudioPacket> OnClientAudioPacketReceived;
 
         private ICoreClientAPI clientApi;
-        private WaveInEvent waveIn;
         public bool isInitialized = false;
         public int localPort = 0;
 
@@ -54,6 +52,7 @@ namespace rpvoicechat
                 try
                 {
                     PlayerAudioPacket packet = DeserializePacket(receivedData);
+                    //packet.audioData = AudioUtils.DecodeAudio(packet.audioData);
                     
                     // Invoke the event
                     OnClientAudioPacketReceived?.Invoke(packet);
@@ -74,7 +73,12 @@ namespace rpvoicechat
 
         public void SendAudioPacket(PlayerAudioPacket packet)
         {
+            //packet.audioData = AudioUtils.EncodeAudio(packet.audioData);
             byte[] buffer = SerializePacket(packet);
+            if (buffer.Length > bufferSize)
+            {
+                throw new Exception("Packet size is too large: " + buffer.Length);
+            }
             clientSocket.SendTo(buffer, RemoteEndPoint);
         }
 
@@ -82,8 +86,8 @@ namespace rpvoicechat
         public void Close()
         {
             // Release resources
-            waveIn.StopRecording();
-            waveIn.Dispose();
+            //ca.StopRecording();
+            //waveIn.Dispose();
             clientSocket.Close();
         }
 

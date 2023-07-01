@@ -1,10 +1,16 @@
-﻿using NAudio.Wave;
+﻿
+using NAudio.Wave;
 using rpvoicechat.Client.Utils;
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
+using Vintagestory.API.Util;
 
 namespace rpvoicechat
 {
@@ -16,6 +22,7 @@ namespace rpvoicechat
         RPAudioInputManager audioInputManager;
         RPAudioOutputManager audioOutputManager;
         RPVoiceChatSocketClient socketClient;
+        VoiceLevel voiceLevel = VoiceLevel.Normal;
 
 
 
@@ -133,15 +140,33 @@ namespace rpvoicechat
 
         private bool ChangeMic(KeyCombination t1)
         {
-            WaveInCapabilities device = audioInputManager.CycleInputDevice();
-            clientApi.ShowChatMessage("Microphone set to " + device.ProductName);
+            if (audioInputManager == null) return true;
+            if (!audioInputManager.canSwitchDevice) return true;
 
+            audioInputManager.canSwitchDevice = false;
+            WaveInCapabilities deviceName = audioInputManager.CycleInputDevice();
+            clientApi.ShowChatMessage("Microphone set to " + deviceName.ProductName);
+
+            audioInputManager.canSwitchDevice = true;
             return true;
         }
 
         private void OnGameTick(float dt)
         {
             if (audioInputManager == null) return;
+
+            audioInputManager.playersNearby = GetPlayersInRange((int)voiceLevel);
+            ConcurrentDictionary<string, PlayerAudioSource> audioSources = new ConcurrentDictionary<string, PlayerAudioSource>();
+            foreach (IPlayer player in GetPlayersInRange((int)VoiceLevel.Shout))
+            {
+                BlockSelection blockSel = new BlockSelection();
+                EntitySelection entitySel = new EntitySelection();
+                clientApi.World.RayTraceForSelection(player.Entity.Pos.XYZ, clientApi.World.Player.Entity.Pos.XYZ, ref blockSel, ref entitySel);
+
+                audioOutputManager.SetPlayerMuffled(player.PlayerUID, !(blockSel == null));
+                audioOutputManager.UpdatePlayerSource(player.PlayerUID, player.Entity.Pos.XYZ);
+            }
+            
 
             // If the player is recording audio show the audio icon
             if (audioInputManager.isRecording)
@@ -161,6 +186,14 @@ namespace rpvoicechat
         public void OnAudioReceived(PlayerAudioPacket packet)
         {
             audioOutputManager.HandleAudioPacket(packet);
+        }
+
+
+
+
+        private IPlayer[] GetPlayersInRange(int distance)
+        {
+            return clientApi.World.Player.Entity.World.GetPlayersAround(clientApi.World.Player.Entity.Pos.XYZ, distance, distance);
         }
     }
 }

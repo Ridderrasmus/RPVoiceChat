@@ -10,7 +10,7 @@ namespace rpvoicechat
 {
     public class RPVoiceChatSocketCommon
     {
-        public int bufferSize = 2048;
+        public int bufferSize = 4096;
         public int port = 52525;
 
         protected Socket clientSocket { get; set; }

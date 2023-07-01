@@ -37,13 +37,18 @@ namespace rpvoicechat
         private void OnHandshakeReceived(IServerPlayer fromPlayer, ConnectionPacket packet)
         {
             socketServer.AddClientConnection(fromPlayer.PlayerUID, new IPEndPoint(IPAddress.Parse(packet.packetIp), packet.packetPort));
+            serverApi.Logger.Debug("Handshake received from " + fromPlayer.PlayerUID + " with ip " + packet.packetIp + ":" + packet.packetPort);
+            foreach (var client in socketServer.clients)
+            {
+                serverApi.Logger.Debug("Client: " + client.Key + " " + client.Value.ToString());
+            }
         }
 
         private void Server_PacketReceived(PlayerAudioPacket packet)
         {
             foreach (var player in serverApi.World.AllOnlinePlayers)
             {
-                if (player.PlayerUID == packet.playerUid) continue;
+                //if (player.PlayerUID == packet.playerUid) continue;
                 if (player.Entity.Pos.DistanceTo(packet.audioPos) > (int)packet.voiceLevel) continue;
 
                 socketServer.SendToClient(player.PlayerUID, packet);

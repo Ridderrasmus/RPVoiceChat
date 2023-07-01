@@ -1,18 +1,19 @@
-﻿using NAudio.Wave;
+﻿
 
+using NAudio.Wave;
 
 namespace rpvoicechat
 {
 
-    public class PlayerWaveOut : WaveOut
-    {
-        public PlayerWaveOut(BufferedWaveProvider bufferedWaveProvider) : base()
-        {
-            bufferedWaveProvider.DiscardOnBufferOverflow = true;
-            this.Init(bufferedWaveProvider);
-            this.Play();
-        }
-    }
+    //public class PlayerWaveOut : WaveOut
+    //{
+    //    public PlayerWaveOut(BufferedWaveProvider bufferedWaveProvider) : base()
+    //    {
+    //        bufferedWaveProvider.DiscardOnBufferOverflow = true;
+    //        this.Init(bufferedWaveProvider);
+    //        this.Play();
+    //    }
+    //}
     
 
     public class WaveFormatMono : WaveFormat
@@ -26,7 +27,7 @@ namespace rpvoicechat
 
     public class WaveFormatStereo : WaveFormat
     {
-        public WaveFormatStereo() : base(AudioUtils.sampleRate, 2)
+        public WaveFormatStereo() : base(AudioUtils.sampleRate, 16, 2)
         {
 
         }

@@ -7,12 +7,15 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
 using ProtoBuf;
+using System.Security.Cryptography.X509Certificates;
+using Vintagestory.API.Util;
+using OpenTK.Audio.OpenAL;
 
 namespace rpvoicechat
 {
     public class AudioUtils
     {
-        public static readonly int sampleRate = 48000;
+        public static readonly int sampleRate = 24000;
         public OpusEncoder encoder;
         public OpusDecoder decoder;
         private static readonly AudioUtils _instance = new AudioUtils();
@@ -28,63 +31,9 @@ namespace rpvoicechat
         {
         }
 
-        // Method to make positional audio
-        public static short[] MakePositionalAudio(EntityPos listenerEntityPos, Vec3d soundPos, byte[] audioData, VoiceLevel voiceLevel)
+        public static byte[] ApplyMuffling(byte[] audioData)
         {
-            // Get listeners position
-            Vec3d listenerPos = listenerEntityPos.XYZ;
-            float listenerFacing = listenerEntityPos.Yaw;
-
-            // Get the relative position from the audio source to the listener
-            Vec3d relativePos = soundPos - listenerPos;
-
-            // Calculate the dot product of the relative position and the listeners facing
-            double dotProduct = relativePos.X * Math.Cos(listenerFacing) + relativePos.Z * Math.Sin(listenerFacing);
-
-            // Calculate the panning value based on dot product
-            double panning = GameMath.Clamp(dotProduct, -1.0, 1.0);
-
-            // Calculate distance between source and listener
-            double distance = relativePos.Length();
-
-            // Define max distance based on voiceLevel
-            int voiceLevelInt = (int)voiceLevel;
-            double maxDistance = Convert.ToDouble(voiceLevelInt);
-
-            // Calculate the volume scaling factor based on distance
-            double volumeScaling = Math.Max(0, 1 - distance / maxDistance);
-
-            // Adjust the left and right channels based on panning
-            short[] audioSamples = AudioUtils.ConvertBytesToShorts(audioData);
-            short[] stereoSamples = new short[audioSamples.Length * 2];
-            for (int i = 0; i < audioSamples.Length; i++)
-            {
-                short sample = audioSamples[i];
-                stereoSamples[i * 2] = (short)(sample * (1 - panning) * volumeScaling);
-                stereoSamples[i * 2 + 1] = (short)(sample * (1 + panning) * volumeScaling);
-            }
-
-
-            return stereoSamples;
-        }
-
-        public static short[] ApplyMuffling(short[] audioData, IClientWorldAccessor world, Vec3d soundPos)
-        {
-            Vec3d listenerPos = world.Player.Entity.Pos.XYZ;
-
-            // Raycast between the source and listener and return first entity and block that is hit
-            BlockSelection blockSel = new BlockSelection();
-            EntitySelection entitySel = new EntitySelection();
-            world.RayTraceForSelection(new Vec3d(soundPos.X, soundPos.Y + 0.5, soundPos.Z), new Vec3d(listenerPos.X, listenerPos.Y + 0.5, listenerPos.Z), ref blockSel, ref entitySel);
-
-            // If either a block or entity is hit muffle the audio
-            if (blockSel != null || entitySel != null)
-            {
-                // Muffle the audio
-                audioData = ApplyLowPassFilter(audioData, 1000, sampleRate);
-            }
-
-            return audioData;
+            return ConvertShortsToBytes(ApplyLowPassFilter(ConvertBytesToShorts(audioData), 1000, sampleRate));
         }
         
         // Apply a low pass filter to audio samples
@@ -105,21 +54,22 @@ namespace rpvoicechat
         }
 
         // Calculate the amplitude of audio samples
-        public static float CalculateAmplitude(byte[] buffer, int bytesRecorded)
+        public static double CalculateAmplitude(byte[] buffer, int bytesRecorded)
         {
+
+            // Convert to 16-bit samples.
+            short[] samples = new short[buffer.Length / 2];
+            Buffer.BlockCopy(buffer, 0, samples, 0, buffer.Length);
+
+            // Calculate RMS amplitude.
             double sum = 0;
-            for (int i = 0; i < bytesRecorded; i += 2)
+            foreach (var sample in samples)
             {
-                // Convert bytes to 16-bit signed integer
-                short sample = (short)((buffer[i + 1] << 8) | buffer[i]);
-                sum += Math.Abs(sample); // Add the absolute value of amplitude
+                sum += sample * sample;
             }
-
-            // Calculate average amplitude
-            double avg = sum / (bytesRecorded / 2);
-
-            // Normalize to [0,1]
-            return (float)(avg / short.MaxValue);
+            double rms = Math.Sqrt(sum / samples.Length);
+            
+            return rms;
         }
 
         // Shockingly, convert bytes to shorts
@@ -133,7 +83,7 @@ namespace rpvoicechat
         // Shockingly, convert shorts to bytes
         public static byte[] ConvertShortsToBytes(short[] audioData)
         {
-            byte[] output = new byte[audioData.Length * 2];
+            byte[] output = new byte[Math.Min(audioData.Length * 2, 2048)];
             Buffer.BlockCopy(audioData, 0, output, 0, output.Length);
             return output;
         }
@@ -148,11 +98,11 @@ namespace rpvoicechat
         internal static byte[] EncodeAudio(short[] buffer)
         {
             // Define the maximum size for the encoded data
-            int maxEncodedSize = 4000; // Arbitrary number, you may need to adjust.
+            int maxEncodedSize = 2048; // Arbitrary number, you may need to adjust.
             byte[] encodedBuffer = new byte[maxEncodedSize];
 
             // Encode the audio samples
-            int encodedLength = Instance.encoder.Encode(buffer, 0, buffer.Length, encodedBuffer, 0, encodedBuffer.Length);
+            int encodedLength = Instance.encoder.Encode(buffer, 0, 2048, encodedBuffer, 0, encodedBuffer.Length);
 
             // Resize the output array to match the actual size of the encoded data
             byte[] output = new byte[encodedLength];
@@ -198,12 +148,26 @@ namespace rpvoicechat
         public AudioSource audioSource;
     }
 
+    public class PlayerAudioSource
+    {
+        public Vec3d audioPos;
+        public bool isMuffled;
+        public int sourceNum;
+
+        public PlayerAudioSource(Vec3d audioPos, bool isMuffled)
+        {
+            this.audioPos = audioPos;
+            this.isMuffled = isMuffled;
+            this.sourceNum = AL.GenSource();
+        }
+    }
+
     // Enum for voice levels
     public enum VoiceLevel
     {
-        Whisper = 10,
-        Normal = 20,
-        Shout = 50
+        Whisper = 5,
+        Normal = 15,
+        Shout = 30
     }
 
     // Enum for audio source

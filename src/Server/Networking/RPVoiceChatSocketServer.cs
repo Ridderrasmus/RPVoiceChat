@@ -15,11 +15,9 @@ namespace rpvoicechat
         private ICoreServerAPI serverApi;
 
         // Dictionary of connected clients
-        ConcurrentDictionary<string, EndPoint> clients = new ConcurrentDictionary<string, EndPoint>();
+        public ConcurrentDictionary<string, EndPoint> clients = new ConcurrentDictionary<string, EndPoint>();
 
         public event Action<PlayerAudioPacket> OnServerAudioPacketReceived;
-
-
 
         public RPVoiceChatSocketServer(ICoreServerAPI serverApi)
         {
@@ -57,6 +55,7 @@ namespace rpvoicechat
                 Array.Copy(buffer, 0, receivedData, 0, receivedBytes);
 
                 PlayerAudioPacket packet = DeserializePacket(receivedData);
+                //packet.audioData = AudioUtils.DecodeAudio(packet.audioData);
 
                 // Invoke the event
                 OnServerAudioPacketReceived?.Invoke(packet);
