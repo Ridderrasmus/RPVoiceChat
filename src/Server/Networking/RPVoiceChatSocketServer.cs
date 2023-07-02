@@ -24,13 +24,11 @@ namespace rpvoicechat
             this.serverApi = serverApi;
             this.IsServer = true;
             this.RemoteEndPoint = new IPEndPoint(IPAddress.Any, 0);
-
-            port = int.Parse(serverApi.World.Config.GetString("rpvoicechat:port", "52525"));
         }
 
         public void StartListening()
         {
-            serverApi.Logger.Debug("Server started with port: " + port);
+            serverApi.Logger.Debug("Server started with port: " + RPModSettings.serverPort);
 
             byte[] buffer = new byte[bufferSize];
             EndPoint remoteEP= new IPEndPoint(IPAddress.Any, 0);
@@ -38,11 +36,11 @@ namespace rpvoicechat
             try 
             { 
                 serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                serverSocket.Bind(new IPEndPoint(IPAddress.Any, port));
+                serverSocket.Bind(new IPEndPoint(IPAddress.Any, RPModSettings.serverPort));
             }
             catch (Exception e)
             {
-                serverApi.Logger.Error("Failed to bind to port: " + port);
+                serverApi.Logger.Error("Failed to bind to port: " + RPModSettings.serverPort);
                 serverApi.Logger.Error(e.Message);
                 return;
             }

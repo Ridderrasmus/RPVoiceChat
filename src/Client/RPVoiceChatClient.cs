@@ -1,6 +1,8 @@
 ﻿
 using NAudio.Wave;
+using rpvoicechat.Client.Gui;
 using rpvoicechat.Client.Utils;
+using rpvoicechat.src.Client.Gui;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -18,11 +20,13 @@ namespace rpvoicechat
     {
         IClientNetworkChannel clientChannel;
         ICoreClientAPI clientApi;
-        HudElement hudElement;
+
         RPAudioInputManager audioInputManager;
         RPAudioOutputManager audioOutputManager;
         RPVoiceChatSocketClient socketClient;
         VoiceLevel voiceLevel = VoiceLevel.Normal;
+        RPMainConfig mainConfig;
+        RPVoiceHudIcon hudIcon;
 
 
 
@@ -32,29 +36,31 @@ namespace rpvoicechat
             clientApi = api;
 
             // Register game tick listener
-            clientApi.Event.RegisterGameTickListener(OnGameTick, 20);
+            clientApi.Event.RegisterGameTickListener(OnGameTick, 100);
             clientApi.Event.PlayerLeave += OnPlayerLeave;
+            clientApi.Event.LevelFinalize += OnLevelFinalize;
+
+
+            
 
             // Register clientside connection to the network channel
             clientChannel = clientApi.Network.GetChannel("rpvoicechat")
                 .SetMessageHandler<ConnectionPacket>(OnHandshakeRecieved);
 
-            // Custom keybindings
-            GlobalKeyboardHook keyboardHook = new GlobalKeyboardHook();
-            keyboardHook.KeyDown += OnKeyDown;
-            keyboardHook.KeyUp += OnKeyUp;
 
             // Add a new keybinding
             clientApi.Input.RegisterHotKey("voiceVolume", "Voice: Change voice volume", GlKeys.N, HotkeyType.GUIOrOtherControls);
             clientApi.Input.RegisterHotKey("changeMic", "Voice: Cycle microphone", GlKeys.N, HotkeyType.GUIOrOtherControls, true);
-            clientApi.Input.RegisterHotKey("changeActivation", "Voice: Cycle activation mode", GlKeys.N, HotkeyType.GUIOrOtherControls, false, true);
             clientApi.Input.RegisterHotKey("toggleMute", "Voice: Toggle mute", GlKeys.M, HotkeyType.GUIOrOtherControls, false, false, true);
+            clientApi.Input.RegisterHotKey("voiceConfigMenu", "Voice: Open config menu", GlKeys.P, HotkeyType.GUIOrOtherControls);
+            clientApi.Input.RegisterHotKey("ptt", "Voice: Push to talk", GlKeys.CapsLock, HotkeyType.GUIOrOtherControls);
+            
 
             // Add hotkey handler
             clientApi.Input.SetHotKeyHandler("voiceVolume", ChangeVoiceVolume);
             clientApi.Input.SetHotKeyHandler("changeMic", ChangeMic);
-            clientApi.Input.SetHotKeyHandler("changeActivation", ChangeActivation);
             clientApi.Input.SetHotKeyHandler("toggleMute", ToggleMute);
+            clientApi.Input.SetHotKeyHandler("voiceConfigMenu", OpenConfigMenu);
 
             // Initialize the socket client
             socketClient = new RPVoiceChatSocketClient(clientApi);
@@ -62,13 +68,18 @@ namespace rpvoicechat
 
             // Initialize the audio output manager
             audioOutputManager = new RPAudioOutputManager(clientApi);
+            audioInputManager = new RPAudioInputManager(socketClient, clientApi);
 
-            // Initialize the hud element
-
+            mainConfig = new RPMainConfig(clientApi, audioInputManager);
 
             clientApi.Logger.Debug("[RPVoiceChat] Client started");
 
 
+        }
+
+        private void OnLevelFinalize()
+        {
+            hudIcon = new RPVoiceHudIcon(clientApi);
         }
 
         private void OnPlayerLeave(IClientPlayer byPlayer)
@@ -81,50 +92,22 @@ namespace rpvoicechat
         private void OnHandshakeRecieved(ConnectionPacket packet)
         {
             clientChannel.SendPacket(new ConnectionPacket() { packetIp = GetPublicIp(), packetPort = socketClient.localPort });
-            socketClient.ConnectToServer(packet.packetIp);
-
-            // Initialize the audio input manager
-            audioInputManager = new RPAudioInputManager(socketClient, clientApi);
+            socketClient.ConnectToServer(packet.packetIp, packet.packetPort);
+            audioInputManager.CreateNewCapture();
 
             clientApi.Logger.Debug("[RPVoiceChat] Handshake recieved");
         }
 
-        private bool ChangeActivation(KeyCombination t1)
-        {
-            if (audioInputManager.CurrentActivationMode == RPAudioInputManager.ActivationMode.VoiceActivation)
-            {
-                audioInputManager.SetActivationMode(RPAudioInputManager.ActivationMode.PushToTalk);
-                clientApi.ShowChatMessage("Activation mode: Push to talk");
-            }
-            else
-            {
-                audioInputManager.SetActivationMode(RPAudioInputManager.ActivationMode.VoiceActivation);
-                clientApi.ShowChatMessage("Activation mode: Voice activation");
-            }
 
-            return true;
-        }
-
-        private void OnKeyUp(object sender, KeyEventArgs e)
+        private bool OpenConfigMenu(KeyCombination t1)
         {
-            if (e.KeyCode == Keys.CapsLock)
-            {
-                audioInputManager.TogglePushToTalk(false);
-            }
-        }
-
-        private void OnKeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.CapsLock)
-            {
-                audioInputManager.TogglePushToTalk(true);
-            }
+            return mainConfig.TryOpen();
         }
 
         private bool ToggleMute(KeyCombination t1)
         {
-            audioInputManager.ToggleMute();
-            if (audioInputManager.isMuted) clientApi.ShowChatMessage("Microphone muted");
+            RPModSettings.IsMuted = !RPModSettings.IsMuted;
+            if (RPModSettings.IsMuted) clientApi.ShowChatMessage("Microphone muted");
             else clientApi.ShowChatMessage("Microphone unmuted");
             return true;
         }
@@ -155,9 +138,9 @@ namespace rpvoicechat
         {
             if (audioInputManager == null) return;
 
-            audioInputManager.playersNearby = GetPlayersInRange((int)voiceLevel);
+            IPlayer[] players = GetPlayersInRange((int)voiceLevel);
             ConcurrentDictionary<string, PlayerAudioSource> audioSources = new ConcurrentDictionary<string, PlayerAudioSource>();
-            foreach (IPlayer player in GetPlayersInRange((int)VoiceLevel.Shout))
+            foreach (IPlayer player in players)
             {
                 BlockSelection blockSel = new BlockSelection();
                 EntitySelection entitySel = new EntitySelection();
@@ -166,7 +149,7 @@ namespace rpvoicechat
                 audioOutputManager.SetPlayerMuffled(player.PlayerUID, !(blockSel == null));
                 audioOutputManager.UpdatePlayerSource(player.PlayerUID, player.Entity.Pos.XYZ);
             }
-            
+            audioInputManager.playersNearby = players;
 
             // If the player is recording audio show the audio icon
             if (audioInputManager.isRecording)
@@ -179,6 +162,8 @@ namespace rpvoicechat
                 //clientApi.World.Player.Entity.AnimManager.StartAnimation();
                 
             }
+
+             //audioInputManager.TogglePushToTalk(clientApi.Input.KeyboardKeyState[clientApi.Input.GetHotKeyByCode("ptt").CurrentMapping.KeyCode]);
 
         }
 

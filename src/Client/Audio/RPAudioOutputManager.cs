@@ -12,7 +12,7 @@ namespace rpvoicechat
     {
         ICoreClientAPI clientApi;
         private ConcurrentDictionary<string, PlayerAudioSource> _playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
-
+        private AudioContext _audioContext = new AudioContext();
 
         public RPAudioOutputManager(ICoreClientAPI clientApi)
         {
@@ -22,7 +22,6 @@ namespace rpvoicechat
 
         public void HandleAudioPacket(PlayerAudioPacket packet)
         {
-
             PlayAudioForPlayer(packet);
         }
 

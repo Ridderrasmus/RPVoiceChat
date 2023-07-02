@@ -8,16 +8,19 @@ using System.Linq;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Util;
 
 namespace rpvoicechat
 {
+    public enum ActivationMode
+    {
+        VoiceActivation,
+        PushToTalk
+    }
+
+
     public class RPAudioInputManager
     {
-        public enum ActivationMode
-        {
-            VoiceActivation,
-            PushToTalk
-        }
 
         public enum TalkingState
         {
@@ -28,7 +31,6 @@ namespace rpvoicechat
         }
 
         WaveInEvent capture;
-        private int currentInputDeviceIndex = 0;
 
         RPVoiceChatSocketClient socket;
         private ICoreClientAPI clientApi;
@@ -36,12 +38,11 @@ namespace rpvoicechat
         public bool isRecording = false;
         public bool canSwitchDevice = true;
         public bool isMuted = false;
-        public bool isPushToTalkActive = false;
-        public double inputThreshold = 0.0005f;
+        public bool keyDownPTT = false;
+        public int inputThreshold = 40;
         public IPlayer[] playersNearby;
 
         private int ignoreThresholdCounter = 0;
-        private object recordingLock;
         private const int ignoreThresholdLimit = 20;
 
         
@@ -53,7 +54,9 @@ namespace rpvoicechat
             this.socket = socket;
             this.clientApi = clientAPI;
 
-            capture = CreateNewCapture();
+            RPModSettings.PushToTalkEnabled = false;
+            RPModSettings.IsMuted = isMuted;
+            RPModSettings.InputThreshold = inputThreshold;
 
         }
 
@@ -70,23 +73,23 @@ namespace rpvoicechat
                 return;
             }
 
-            if (isMuted)
-            {
-                CurrentTalkingState = TalkingState.Muted;
+            if (RPModSettings.IsMuted)
                 return;
-            }
 
-            if (CurrentActivationMode == ActivationMode.PushToTalk && !isPushToTalkActive)
+
+            if (RPModSettings.PushToTalkEnabled && !clientApi.Input.KeyboardKeyState[clientApi.Input.GetHotKeyByCode("ptt").CurrentMapping.KeyCode])
             { 
                 CurrentTalkingState = TalkingState.Empty;
                 return;
             }
 
             // Get the amplitude of the audio
-            double amplitude = AudioUtils.CalculateAmplitude(buffer, validBytes);
+            int amplitude = AudioUtils.CalculateAmplitude(buffer, validBytes);
+
+            //clientApi.Logger.Debug("Amplitude: " + amplitude);
 
             // If the amplitude is below the threshold, return
-            if (CurrentActivationMode == ActivationMode.VoiceActivation && amplitude < inputThreshold)
+            if (!RPModSettings.PushToTalkEnabled && amplitude < RPModSettings.InputThreshold)
             {
                 if (ignoreThresholdCounter > 0)
                 {
@@ -104,7 +107,7 @@ namespace rpvoicechat
             }
 
             
-            if (playersNearby != null && playersNearby.Length < 1)
+            if (playersNearby?.Length < 1)
             {
                 CurrentTalkingState = TalkingState.Talking;
                 return;
@@ -121,10 +124,7 @@ namespace rpvoicechat
         // Returns the success of the method
         public bool ToggleRecording()
         {
-            lock (recordingLock)
-            {
-                return (ToggleRecording(!isRecording) == !isRecording);
-            }
+            return (ToggleRecording(!isRecording) == !isRecording);
         }
 
         // Returns the recording status
@@ -132,25 +132,22 @@ namespace rpvoicechat
         {
             if (!canSwitchDevice) return isRecording;
             canSwitchDevice = false;
-            lock (recordingLock)
+            if (isRecording == mode) return mode;
+
+
+            if (mode)
             {
-                if (isRecording == mode) return mode;
-
-
-                if (mode)
-                {
-                    capture.StopRecording();
-                }
-                else
-                {
-                    capture.StartRecording();
-                }
-
-                isRecording = mode;
-
-                canSwitchDevice = true;
-                return isRecording;
+                capture.StopRecording();
             }
+            else
+            {
+                capture.StartRecording();
+            }
+
+            isRecording = mode;
+
+            canSwitchDevice = true;
+            return isRecording;
         }
 
 
@@ -175,7 +172,7 @@ namespace rpvoicechat
         {
             if (isRecording)
             {
-                capture.StopRecording();
+                capture?.StopRecording();
             }
             capture?.Dispose();
 
@@ -192,9 +189,29 @@ namespace rpvoicechat
             return newCapture;
         }
 
-        private WaveInEvent CreateNewCapture()
+        public WaveInEvent CreateNewCapture()
         {
             return CreateNewCapture(0);
+        }
+
+        public int GetInputDeviceCount()
+        {
+            return WaveIn.DeviceCount;
+        }
+
+        public string GetInputDeviceName()
+        {
+            return WaveIn.GetCapabilities(capture.DeviceNumber).ProductName;
+        }
+
+        public string[] GetInputDeviceNames()
+        {
+            List<string> deviceNames = new List<string>();
+            for (int i = 0; i < WaveIn.DeviceCount; i++)
+            {
+                deviceNames.Add(WaveIn.GetCapabilities(i).ProductName);
+            }
+            return deviceNames.ToArray();
         }
 
 
@@ -217,19 +234,20 @@ namespace rpvoicechat
             return voiceLevel;
         }
 
-        public void ToggleMute()
+        public string[] GetInputDeviceIds()
         {
-            isMuted = !isMuted;
+            string[] deviceIds = new string[WaveIn.DeviceCount];
+            for (int i = 0; i < WaveIn.DeviceCount; i++)
+            {
+                deviceIds[i] = i.ToString();
+            }
+            return deviceIds;
         }
 
-        public void TogglePushToTalk(bool isActive)
+        internal void SetInputDevice(string deviceId)
         {
-            isPushToTalkActive = isActive;
-        }
-
-        public void SetActivationMode(ActivationMode mode)
-        {
-            CurrentActivationMode = mode;
+            int device = deviceId.ToInt(0);
+            capture = CreateNewCapture(device);
         }
     }
 }

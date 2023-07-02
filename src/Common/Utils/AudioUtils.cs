@@ -54,7 +54,7 @@ namespace rpvoicechat
         }
 
         // Calculate the amplitude of audio samples
-        public static double CalculateAmplitude(byte[] buffer, int bytesRecorded)
+        public static int CalculateAmplitude(byte[] buffer, int bytesRecorded)
         {
 
             // Convert to 16-bit samples.
@@ -62,14 +62,14 @@ namespace rpvoicechat
             Buffer.BlockCopy(buffer, 0, samples, 0, buffer.Length);
 
             // Calculate RMS amplitude.
-            double sum = 0;
+            int sum = 0;
             foreach (var sample in samples)
             {
                 sum += sample * sample;
             }
-            double rms = Math.Sqrt(sum / samples.Length);
+            int rms = (int)Math.Sqrt(sum / samples.Length);
             
-            return rms;
+            return Math.Max(Math.Min(rms / 10, 100), 0);
         }
 
         // Shockingly, convert bytes to shorts
