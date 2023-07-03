@@ -8,56 +8,42 @@ using System.Linq;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 
 namespace rpvoicechat
 {
-    public enum ActivationMode
+    
+
+
+    public class MicrophoneManager
     {
-        VoiceActivation,
-        PushToTalk
-    }
-
-
-    public class RPAudioInputManager
-    {
-
-        public enum TalkingState
-        {
-            Empty,
-            Talking,
-            Muted,
-            Deafened
-        }
+        ICoreClientAPI capi;
 
         WaveInEvent capture;
 
-        RPVoiceChatSocketClient socket;
-        private ICoreClientAPI clientApi;
         private VoiceLevel voiceLevel = VoiceLevel.Normal;
-        public bool isRecording = false;
+        public bool isGamePaused = false;
         public bool canSwitchDevice = true;
         public bool isMuted = false;
         public bool keyDownPTT = false;
-        public int inputThreshold = 40;
+        public bool pushToTalkEnabled = false;
+        public int inputThreshold = 20;
         public IPlayer[] playersNearby;
 
+        private bool isRecording = false;
         private int ignoreThresholdCounter = 0;
-        private const int ignoreThresholdLimit = 20;
+        private const int ignoreThresholdLimit = 8;
 
-        
         public ActivationMode CurrentActivationMode { get; private set; } = ActivationMode.VoiceActivation;
-        public TalkingState CurrentTalkingState { get; private set; } = TalkingState.Empty;
+        public string CurrentInputDevice { get; internal set; }
 
-        public RPAudioInputManager(RPVoiceChatSocketClient socket, ICoreClientAPI clientAPI)
+        public event Action<byte[], VoiceLevel> OnBufferRecorded;
+
+        public MicrophoneManager(ICoreClientAPI capi)
         {
-            this.socket = socket;
-            this.clientApi = clientAPI;
-
-            RPModSettings.PushToTalkEnabled = false;
-            RPModSettings.IsMuted = isMuted;
-            RPModSettings.InputThreshold = inputThreshold;
-
+            this.capi = capi;
+            capture = CreateNewCapture(0);
         }
 
         private void OnAudioRecorded(object sender, WaveInEventArgs e)
@@ -66,30 +52,36 @@ namespace rpvoicechat
             byte[] buffer = new byte[validBytes];
             Array.Copy(e.Buffer, buffer, validBytes);
 
+
+
             // If player is in the pause menu, return
-            if (clientApi.IsGamePaused)
-            {
-                CurrentTalkingState = TalkingState.Empty;
-                return;
-            }
-
-            if (RPModSettings.IsMuted)
+            if (capi.IsGamePaused)
                 return;
 
-
-            if (RPModSettings.PushToTalkEnabled && !clientApi.Input.KeyboardKeyState[clientApi.Input.GetHotKeyByCode("ptt").CurrentMapping.KeyCode])
-            { 
-                CurrentTalkingState = TalkingState.Empty;
+            if (capi.World == null)
                 return;
-            }
+
+            if (capi.World.Player == null)
+                return;
+
+            if (capi.World.Player.Entity == null)
+                return;
+
+            if (!capi.World.Player.Entity.Alive || capi.World.Player.Entity.AnimManager.IsAnimationActive("sleep"))
+                return;
+
+            if (isMuted)
+                return;
+
+            keyDownPTT = capi.Input.KeyboardKeyState[capi.Input.GetHotKeyByCode("voicechatPTT").CurrentMapping.KeyCode];
+            if (pushToTalkEnabled && !keyDownPTT)
+                return;
 
             // Get the amplitude of the audio
             int amplitude = AudioUtils.CalculateAmplitude(buffer, validBytes);
 
-            //clientApi.Logger.Debug("Amplitude: " + amplitude);
-
             // If the amplitude is below the threshold, return
-            if (!RPModSettings.PushToTalkEnabled && amplitude < RPModSettings.InputThreshold)
+            if (!pushToTalkEnabled && amplitude < inputThreshold)
             {
                 if (ignoreThresholdCounter > 0)
                 {
@@ -97,7 +89,6 @@ namespace rpvoicechat
                 }
                 else
                 {
-                    CurrentTalkingState = TalkingState.Empty;
                     return;
                 }
             }
@@ -106,18 +97,13 @@ namespace rpvoicechat
                 ignoreThresholdCounter = ignoreThresholdLimit; // Reset the counter when amplitude is above the threshold
             }
 
-            
-            if (playersNearby?.Length < 1)
-            {
-                CurrentTalkingState = TalkingState.Talking;
+
+#if !DEBUG
+            if (playersNearby?.Length <= 1)
                 return;
-            }
-
-            // Create a new audio packet
-            PlayerAudioPacket packet = new PlayerAudioPacket() { audioData = buffer, audioPos = clientApi.World.Player.Entity.Pos.XYZ, playerUid = clientApi.World.Player.PlayerUID, voiceLevel = voiceLevel };
-
-            socket.SendAudioPacket(packet);
-            CurrentTalkingState = TalkingState.Talking;
+#endif
+            buffer = AudioUtils.HandleAudioPeaking(buffer);
+            OnBufferRecorded?.Invoke(buffer, voiceLevel);
         }
 
 
@@ -133,7 +119,6 @@ namespace rpvoicechat
             if (!canSwitchDevice) return isRecording;
             canSwitchDevice = false;
             if (isRecording == mode) return mode;
-
 
             if (mode)
             {
@@ -153,7 +138,7 @@ namespace rpvoicechat
 
         public WaveInCapabilities CycleInputDevice()
         {
-            
+
             int deviceCount = WaveIn.DeviceCount;
             int currentDevice = capture.DeviceNumber;
             int nextDevice = currentDevice + 1;
@@ -181,7 +166,7 @@ namespace rpvoicechat
             WaveInEvent newCapture = new WaveInEvent();
             newCapture.DeviceNumber = deviceIndex;
             newCapture.WaveFormat = customWaveFormat;
-            newCapture.BufferMilliseconds = 20;
+            newCapture.BufferMilliseconds = 30;
             newCapture.DataAvailable += OnAudioRecorded;
 
             newCapture.StartRecording();
@@ -220,13 +205,13 @@ namespace rpvoicechat
         {
             if (voiceLevel == VoiceLevel.Normal)
             {
-                voiceLevel = VoiceLevel.Shout;
+                voiceLevel = VoiceLevel.Shouting;
             }
-            else if (voiceLevel == VoiceLevel.Shout)
+            else if (voiceLevel == VoiceLevel.Shouting)
             {
-                voiceLevel = VoiceLevel.Whisper;
+                voiceLevel = VoiceLevel.Whispering;
             }
-            else if (voiceLevel == VoiceLevel.Whisper)
+            else if (voiceLevel == VoiceLevel.Whispering)
             {
                 voiceLevel = VoiceLevel.Normal;
             }

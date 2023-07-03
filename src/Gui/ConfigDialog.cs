@@ -1,31 +1,29 @@
-﻿using NAudio.CoreAudioApi;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Util;
 
-namespace rpvoicechat.Client.Gui
+namespace rpvoicechat
 {
-    public abstract class RPConfigDialog : GuiDialog
+    public abstract class ConfigDialog : GuiDialog
     {
 
         private bool _isSetup;
 
         protected List<ConfigOption> ConfigOptions = new List<ConfigOption>();
 
-        public RPAudioInputManager _audioInputManager;
-        
+        public MicrophoneManager _audioInputManager;
+
         public class ConfigOption
         {
             public ActionConsumable AdvancedAction;
             public string SwitchKey;
             public string SliderKey;
             public string DropdownKey;
-            
+
             public string Text;
 
             public Action<bool> ToggleAction;
@@ -40,9 +38,9 @@ namespace rpvoicechat.Client.Gui
         }
 
 
-        public RPConfigDialog(ICoreClientAPI capi) : base(capi)
+        public ConfigDialog(ICoreClientAPI capi) : base(capi)
         {
-            
+
         }
 
         protected void RegisterOption(ConfigOption option)
@@ -55,7 +53,7 @@ namespace rpvoicechat.Client.Gui
             _isSetup = true;
 
             var dialogBounds = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.CenterMiddle);
-            
+
             const int switchSize = 20;
             const int switchPadding = 10;
             const double sliderWidth = 200.0;
@@ -67,7 +65,7 @@ namespace rpvoicechat.Client.Gui
             var bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
             bgBounds.BothSizing = ElementSizing.FitToChildren;
 
-            var composer = capi.Gui.CreateCompo("rphudvoiceicon", dialogBounds)
+            var composer = capi.Gui.CreateCompo("rphudmenu", dialogBounds)
                 .AddShadedDialogBG(bgBounds)
                 .AddDialogTitleBar("RP VC Config Menu", OnTitleBarCloseClicked)
                 .BeginChildElements(bgBounds);
@@ -89,7 +87,7 @@ namespace rpvoicechat.Client.Gui
                 {
                     composer.AddSwitch(option.ToggleAction, switchBounds, option.SwitchKey, switchSize);
                 }
-                else if(option.DropdownKey != null)
+                else if (option.DropdownKey != null)
                 {
                     composer.AddDropDown(option.DropdownValues, option.DropdownNames, 0, option.DropdownSelect, textBounds);
                 }
@@ -110,7 +108,7 @@ namespace rpvoicechat.Client.Gui
         {
             if (!_isSetup)
                 SetupDialog();
-            
+
             var success = base.TryOpen();
             if (!success)
                 return false;
@@ -129,9 +127,9 @@ namespace rpvoicechat.Client.Gui
         public override string ToggleKeyCombinationCode => null;
     }
 
-    public class RPMainConfig : RPConfigDialog
+    public class MainConfig : ConfigDialog
     {
-        public RPMainConfig(ICoreClientAPI capi, RPAudioInputManager audioInputManager) : base(capi)
+        public MainConfig(ICoreClientAPI capi, MicrophoneManager audioInputManager) : base(capi)
         {
 
             _audioInputManager = audioInputManager;
@@ -172,37 +170,37 @@ namespace rpvoicechat.Client.Gui
 
         protected override void RefreshValues()
         {
-            if(!IsOpened())
+            if (!IsOpened())
                 return;
 
-            SingleComposer.GetSwitch("togglePushToTalk").On = RPModSettings.PushToTalkEnabled;
-            SingleComposer.GetSwitch("muteMicrophone").On = RPModSettings.IsMuted;
-            SingleComposer.GetSlider("inputThreshold").SetValues(RPModSettings.InputThreshold, 0, 100, 1);
+            SingleComposer.GetSwitch("togglePushToTalk").On = _audioInputManager.pushToTalkEnabled;
+            SingleComposer.GetSwitch("muteMicrophone").On = _audioInputManager.isMuted;
+            SingleComposer.GetSlider("inputThreshold").SetValues(_audioInputManager.inputThreshold, 0, 100, 1);
             //SingleComposer.GetDropDown("inputDevice").SetSelectedIndex((RPModSettings.CurrentInputDevice).ToInt(0));
         }
 
         private void changeInputDevice(string deviceId, bool selected)
         {
-            RPModSettings.CurrentInputDevice = deviceId;
+            _audioInputManager.CurrentInputDevice = deviceId;
             _audioInputManager.SetInputDevice(deviceId);
         }
 
         private bool slideInputThreshold(int threshold)
         {
-            RPModSettings.InputThreshold = threshold;
-            
+            _audioInputManager.inputThreshold = threshold;
+
 
             return true;
         }
 
         private void toggleMuted(bool enabled)
         {
-            RPModSettings.IsMuted = enabled;
+            _audioInputManager.isMuted = enabled;
         }
 
         private void togglePushToTalk(bool enabled)
         {
-            RPModSettings.PushToTalkEnabled = enabled;
+            _audioInputManager.pushToTalkEnabled = enabled;
         }
     }
 }

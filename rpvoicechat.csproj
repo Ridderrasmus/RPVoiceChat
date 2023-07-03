@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{58CDEDA0-B154-4CC7-82FD-FEAD4A052BEA}</ProjectGuid>
+    <ProjectGuid>{B9171499-A07E-4B2F-A61D-DDB0C60F261D}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>rpvoicechat</RootNamespace>
@@ -32,15 +32,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Concentus, Version=1.1.6.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>libs\Concentus.dll</HintPath>
+    <Reference Include="Lidgren.Network, Version=2012.1.7.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Lidgren.Network.1.0.2\lib\net451\Lidgren.Network.dll</HintPath>
     </Reference>
     <Reference Include="NAudio, Version=1.10.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>libs\NAudio.dll</HintPath>
+      <HintPath>..\..\packages\NAudio.1.10.0\lib\net35\NAudio.dll</HintPath>
     </Reference>
-    <Reference Include="OpenTK">
+    <Reference Include="OpenTK, Version=3.3.2.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\Games\Vintagestory\Lib\OpenTK.dll</HintPath>
     </Reference>
     <Reference Include="protobuf-net, Version=2.1.0.0, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
@@ -79,32 +78,29 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="modinfo.json" />
-    <Compile Include="src\AssemblyInfo.cs" />
-    <Compile Include="src\Client\Gui\RPVoiceHudIcon.cs" />
-    <Compile Include="src\Client\RPVoiceChatClient.cs" />
-    <Compile Include="src\Client\Audio\RPAudioInputManager.cs" />
-    <Compile Include="src\Client\Audio\RPAudioOutputManager.cs" />
-    <Compile Include="src\Client\Gui\RPConfigDialog.cs" />
-    <Compile Include="src\Client\Networking\RPVoiceChatSocketClient.cs" />
-    <Compile Include="src\Client\Utils\KeyboardUtils.cs" />
-    <Compile Include="src\Common\RPModSettings.cs" />
-    <Compile Include="src\Common\RPVoiceChatCommon.cs" />
-    <Compile Include="src\Common\Items\ItemVoiceTransciever.cs" />
-    <Compile Include="src\Common\Networking\RPVoiceChatSocketCommon.cs" />
-    <Compile Include="src\Common\Utils\AudioUtils.cs" />
-    <Compile Include="src\Common\Utils\RPPackets.cs" />
-    <Compile Include="src\Common\Utils\RPWaveFormat.cs" />
-    <Compile Include="src\Config\ModConfig.cs" />
-    <Compile Include="src\Config\RPVoiceChatConfig.cs" />
-    <Compile Include="src\Server\RPVoiceChatServer.cs" />
-    <Compile Include="src\Server\Networking\RPVoiceChatSocketServer.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include=".ignore" />
+    <Compile Include="src\Audio\AudioOutputManager.cs" />
+    <Compile Include="src\Gui\ConfigDialog.cs" />
+    <Compile Include="src\RPVoiceChatServer.cs" />
+    <Compile Include="src\RPVoiceChatClient.cs" />
+    <Compile Include="src\Utils\AudioPacket.cs" />
+    <Compile Include="src\Utils\Enums\ActivationMode.cs" />
+    <Compile Include="src\Utils\Enums\VoiceLevel.cs" />
+    <Compile Include="src\Utils\PlayerAudioSource.cs" />
+    <Compile Include="src\Utils\WaveFormatMono.cs" />
+    <Compile Include="src\Utils\AudioUtils.cs" />
+    <Compile Include="src\Audio\MicrophoneManager.cs" />
+    <Compile Include="src\Networking\RPVoiceChatSocketClient.cs" />
+    <Compile Include="src\Networking\RPVoiceChatSocketCommon.cs" />
+    <Compile Include="src\Networking\RPVoiceChatSocketServer.cs" />
+    <Compile Include="src\RPVoiceChatMod.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="assets\rpvoicechat\textures\gui\" />
+    <Folder Include="assets\" />
     <Folder Include="libs\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
