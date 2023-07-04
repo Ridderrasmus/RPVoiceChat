@@ -23,7 +23,7 @@ namespace rpvoicechat
             client.Start();
             port = client.Port;
 
-            capi.Logger.Notification("RPVoiceChat client started on port " + port);
+            capi.Logger.Notification("[RPVoiceChat - Client] Started on port " + port);
         }
 
         public void ConnectToServer(string address, int port)
@@ -34,6 +34,7 @@ namespace rpvoicechat
             if (port < 0 || port > 65535)
                 throw new ArgumentException("Port must be between 0 and 65535");
 
+            capi.Logger.Notification($"[RPVoiceChat - Client] Connecting to voice chat server {address}:{port} ");
             client.Connect(address, port);
 
             OnClientConnected?.Invoke(this, null);

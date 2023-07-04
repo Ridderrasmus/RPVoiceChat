@@ -45,9 +45,10 @@ namespace rpvoicechat
             MainConfig configGui = new MainConfig(capi, micManager);
 
             // Set up keybinds
-            capi.Input.RegisterHotKey("voicechatMenu", "Voice: Config menu", GlKeys.P, HotkeyType.GUIOrOtherControls);
-            capi.Input.RegisterHotKey("voicechatCycleDevice", "Voice: Switch input device", GlKeys.N, HotkeyType.GUIOrOtherControls, true);
-            capi.Input.RegisterHotKey("voicechatPTT", "Voice: Push to talk", GlKeys.CapsLock, HotkeyType.GUIOrOtherControls);
+            capi.Input.RegisterHotKey("voicechatMenu", "RPVoice: Config menu", GlKeys.P, HotkeyType.GUIOrOtherControls);
+            capi.Input.RegisterHotKey("voicechatCycleDevice", "RPVoice: Switch input device", GlKeys.N, HotkeyType.GUIOrOtherControls, true);
+            capi.Input.RegisterHotKey("voicechatVoiceLevel", "RPVoice: Change voice volume", GlKeys.Tab, HotkeyType.GUIOrOtherControls, false, false, true);
+            capi.Input.RegisterHotKey("voicechatPTT", "RPVoice: Push to talk", GlKeys.CapsLock, HotkeyType.GUIOrOtherControls);
 
             // Set up keybind event handlers
             capi.Input.SetHotKeyHandler("voicechatMenu", (t1) => 
@@ -59,7 +60,14 @@ namespace rpvoicechat
             capi.Input.SetHotKeyHandler("voicechatCycleDevice", (t1) =>
             {
                 var mic = micManager.CycleInputDevice();
-                capi.ShowChatMessage("Voice: Input device set to " + mic.ProductName);
+                capi.ShowChatMessage("RPVoice: Input device set to " + mic.ProductName);
+                return true;
+            });
+
+            capi.Input.SetHotKeyHandler("voicechatVoiceLevel", (t1) =>
+            {
+                var level = micManager.CycleVoiceLevel();
+                capi.ShowChatMessage("RPVoice: Voice level set to " + level.ToString());
                 return true;
             });
 
@@ -98,17 +106,17 @@ namespace rpvoicechat
             micManager.isGamePaused = capi.IsGamePaused;
             micManager.playersNearby = capi.World.GetPlayersAround(capi.World.Player.Entity.Pos.XYZ, (int)VoiceLevel.Shouting + 10, (int)VoiceLevel.Shouting);
 
-#if !DEBUG
+
             if (micManager.playersNearby.Count() <= 1)
                 return;
-#endif
+
 
             foreach (var player in micManager.playersNearby)
             {
-#if !DEBUG
+
                 if (player.PlayerUID == capi.World.Player.PlayerUID)
                     continue;
-#endif
+
                 BlockSelection blockSelection = new BlockSelection();
                 EntitySelection entitySelection = new EntitySelection();
                 capi.World.RayTraceForSelection(player.Entity.Pos.XYZ, capi.World.Player.Entity.Pos.XYZ, ref blockSelection, ref entitySelection);
@@ -129,6 +137,7 @@ namespace rpvoicechat
         private void OnConnectionInfo(ConnectionInfo packet)
         {
             if (packet == null) return;
+            capi.Logger.Debug($"[RPVoiceChat - Client] Received connection info from server {packet.Address}:{packet.Port}");
             client.ConnectToServer(packet.Address, packet.Port);
         }
     }

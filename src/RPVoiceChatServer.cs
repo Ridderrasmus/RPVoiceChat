@@ -25,7 +25,7 @@ namespace rpvoicechat.src
             while (server == null) { }
 
             string address = server.GetPublicIPAddress();
-            int port = server.GetLocalPort();
+            int port = server.GetPort();
             sapi.Network.GetChannel("rpvoicechat").SendPacket(new ConnectionInfo()
             {
                 Address = address,

@@ -98,10 +98,10 @@ namespace rpvoicechat
             }
 
 
-#if !DEBUG
+
             if (playersNearby?.Length <= 1)
                 return;
-#endif
+
             buffer = AudioUtils.HandleAudioPeaking(buffer);
             OnBufferRecorded?.Invoke(buffer, voiceLevel);
         }
