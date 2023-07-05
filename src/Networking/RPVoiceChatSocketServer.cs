@@ -1,52 +1,74 @@
 ﻿using Lidgren.Network;
+using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using Vintagestory.API.Server;
 
 namespace rpvoicechat
 {
     public class RPVoiceChatSocketServer : RPVoiceChatSocketCommon
     {
-
-        NetServer server;
+        public NetServer server;
         private long totalPacketSize = 0;
         private long totalPacketCount = 0;
+
+        private Dictionary<string, NetConnection> connections = new Dictionary<string, NetConnection>();
 
         public RPVoiceChatSocketServer(ICoreServerAPI sapi)
         {
             this.sapi = sapi;
             config.EnableUPnP = true;
+            config.EnableMessageType(NetIncomingMessageType.NatIntroductionSuccess);
             config.EnableMessageType(NetIncomingMessageType.DiscoveryRequest);
+            config.EnableMessageType(NetIncomingMessageType.DiscoveryResponse);
+            config.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
+            config.EnableMessageType(NetIncomingMessageType.ConnectionLatencyUpdated);
+            config.EnableMessageType(NetIncomingMessageType.StatusChanged);
+            config.Port = port;
+
 
             server = new NetServer(config);
+
             server.Start();
 
-            if(server.UPnP.ForwardPort(port, "Vintage Story Voice Chat"))
+            port = server.Port;
+            if (server.UPnP.ForwardPort(port, "Vintage Story Voice Chat"))
                 sapi.Logger.Notification("[RPVoiceChat - Server] UPnP successful.");
             else
                 sapi.Logger.Warning("[RPVoiceChat - Server] UPnP failed.");
-            port = server.Port;
 
 
             OnMessageReceived += RPVoiceChatSocketServer_OnMessageReceived;
+            OnConnectionApprovalMessage += RPVoiceChatSocketServer_OnConnectionApprovalMessage;
             OnDiscoveryRequestReceived += RPVoiceChatSocketServer_OnDiscoveryRequestReceived;
 
             StartListening(server);
 
-            Task.Run(() =>
-            {
-                TcpListener listener = new TcpListener(IPAddress.Any, port);
-                listener.Start();
-
-                while (true)
-                {
-                    TcpClient client = listener.AcceptTcpClient();
-                    client.Close();
-                }
-            });
-
             sapi.Logger.Notification("[RPVoiceChat - Server] Started on port " + port);
+        }
+
+        private void RPVoiceChatSocketServer_OnConnectionApprovalMessage(object sender, NetIncomingMessage e)
+        {
+            sapi?.Logger.Notification("[RPVoiceChat - Server] Connection from: " + e.SenderEndPoint.Address.ToString());
+
+            string[] msgString = e.ReadString().Split(' ');
+            string msgKey = msgString[0];
+            string msgUID = msgString[1];
+
+            // If it's the below string, accept the connection
+            if (msgKey == "RPVoiceChat")
+            {
+                e.SenderConnection.Approve();
+                connections.Add(msgUID, e.SenderConnection);
+            }
+            else
+            {
+                // Otherwise, reject it
+                e.SenderConnection.Deny();
+            }
         }
 
         private void RPVoiceChatSocketServer_OnDiscoveryRequestReceived(object sender, NetIncomingMessage e)
@@ -56,28 +78,47 @@ namespace rpvoicechat
 
         private void RPVoiceChatSocketServer_OnMessageReceived(object sender, NetIncomingMessage e)
         {
-            SendAudioToAllClients(AudioPacket.ReadFromMessage(e));
+            SendAudioToAllClientsInRange(AudioPacket.ReadFromMessage(e));
         }
 
-        public void SendAudioToAllClients(AudioPacket packet)
+        public void SendAudioToAllClientsInRange(AudioPacket packet)
         {
-            NetOutgoingMessage message = server.CreateMessage();
-            packet.WriteToMessage(message);
-            server.SendToAll(message, NetDeliveryMethod.UnreliableSequenced);
+            foreach (var connection in connections)
+            {
+                // If the player is too far away, don't send the packet
+                if (sapi.World.PlayerByUid(connection.Key).Entity.Pos.DistanceTo(sapi.World.PlayerByUid(packet.PlayerId).Entity.Pos.XYZ) > (int)packet.voiceLevel)
+                    continue;
 
-            totalPacketSize += message.LengthBytes;
-            totalPacketCount++;
+                SendAudioToClient(packet, connection.Value);
+            }
         }
 
         public void SendAudioToClient(AudioPacket packet, NetConnection client)
         {
             NetOutgoingMessage message = server.CreateMessage();
             packet.WriteToMessage(message);
-            server.SendMessage(message, client, NetDeliveryMethod.UnreliableSequenced);
+            server.SendMessage(message, client, deliveryMethod);
 
             totalPacketSize += message.LengthBytes;
             totalPacketCount++;
         }
+        public void SendAudioToClient(AudioPacket packet, string uid)
+        {
+            NetConnection connection;
+            if(connections.TryGetValue(uid, out connection))
+                SendAudioToClient(packet, connection);
+        }
+
+        public void AddClientToDictionary(string uid, NetConnection connection)
+        {
+            connections.Add(uid, connection);
+        }
+
+        public void RemoveClientFromDictionary(string uid)
+        {
+            connections.Remove(uid);
+        }
+
 
         public void Close()
         {

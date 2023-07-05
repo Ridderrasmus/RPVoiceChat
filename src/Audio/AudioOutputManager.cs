@@ -14,13 +14,13 @@ namespace rpvoicechat
 {
     public class AudioOutputManager
     {
-        ICoreClientAPI clientApi;
+        ICoreClientAPI capi;
         private ConcurrentDictionary<string, PlayerAudioSource> _playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
 
 
-        public AudioOutputManager(ICoreClientAPI clientApi)
+        public AudioOutputManager(ICoreClientAPI capi)
         {
-            this.clientApi = clientApi;
+            this.capi = capi;
         }
 
         public void HandleAudioPacket(AudioPacket packet)
@@ -28,10 +28,14 @@ namespace rpvoicechat
             string playerUid = packet.PlayerId;
             byte[] audioData = packet.AudioData;
 
-            
 
             if (_playerSources.TryGetValue(playerUid, out PlayerAudioSource source))
             {
+                float dist = (float)Math.Max((double)capi.World.Player.Entity.Pos.DistanceTo(capi.World.PlayerByUid(playerUid).Entity.Pos.XYZ), 0.1);
+                float linearVolume = 1 - (dist / (float)packet.voiceLevel);
+                float percievedVolume = LinearToPerceivedVolume(linearVolume);
+                source.Volume = percievedVolume;
+
                 if(source.IsMuffled)
                     audioData = AudioUtils.ApplyMuffling(audioData);
 
@@ -42,6 +46,17 @@ namespace rpvoicechat
                 }
             }
             
+        }
+
+        private float LinearToPerceivedVolume(float linearVolume)
+        {
+            // Convert linear amplitude to decibels
+            float dB = linearVolume > 0 ? 20.0f * (float)Math.Log10(linearVolume) : -144.0f;
+
+            // Convert decibels back to linear amplitude
+            float perceivedVolume = (float)Math.Pow(10.0f, dB / 20.0f);
+
+            return perceivedVolume;
         }
 
         public void SetPlayerMuffled(string playerUid, bool isMuffled)
@@ -77,7 +92,7 @@ namespace rpvoicechat
 
         public void UpdatePlayerSource(string playerUid, Vec3d newPosition)
         {
-            if (newPosition.DistanceTo(clientApi.World.Player.Entity.Pos.XYZ) > ((float)VoiceLevel.Shouting + 10))
+            if (newPosition.DistanceTo(capi.World.Player.Entity.Pos.XYZ) > ((float)VoiceLevel.Shouting + 10))
             {
                 RemovePlayer(playerUid);
                 return;
@@ -92,6 +107,7 @@ namespace rpvoicechat
             if (_playerSources.TryGetValue(playerUid, out PlayerAudioSource source))
             {
                 AL.Source(source.SourceNum, ALSource3f.Position, (float)newPosition.X, (float)newPosition.Y, (float)newPosition.Z);
+                
             }
         }
 
@@ -99,6 +115,8 @@ namespace rpvoicechat
         {
             foreach (var playerSource in _playerSources.Values)
             {
+
+
                 // Check if there's any audio data in the player's queue
                 int queuedBuffers;
                 AL.GetSource(playerSource.SourceNum, ALGetSourcei.BuffersQueued, out queuedBuffers);
@@ -107,6 +125,14 @@ namespace rpvoicechat
                     AL.GetSource(playerSource.SourceNum, ALGetSourcei.BuffersQueued, out queuedBuffers);
                     // Get next audio data from player's queue
                     byte[] audioData = playerSource.AudioQueue.Dequeue();
+
+                    // Check if the player was obstructed during this
+                    if (playerSource.IsMuffled)
+                    {
+                        audioData = AudioUtils.ApplyMuffling(audioData);
+                    }
+
+                    AL.Source(playerSource.SourceNum, ALSourcef.Gain, playerSource.Volume);
 
                     // Create a new buffer and load the audio data into it
                     int buffer = AL.GenBuffer();

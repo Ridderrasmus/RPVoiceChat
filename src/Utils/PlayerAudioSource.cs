@@ -15,6 +15,7 @@ namespace rpvoicechat
         public int SourceNum { get; set; }
         public int BufferNum { get; set; }
         public Queue<byte[]> AudioQueue { get; set; }
+        public float Volume { get; internal set; }
 
         public PlayerAudioSource(Vec3d audioPos, bool isMuffled)
         {

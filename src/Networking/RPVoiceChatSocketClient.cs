@@ -5,48 +5,51 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using System;
 using Lidgren.Network;
+using System.Windows.Forms;
 
 namespace rpvoicechat
 {
     public class RPVoiceChatSocketClient : RPVoiceChatSocketCommon
     {
-        NetClient client;
+        public NetClient client;
 
         public event EventHandler OnClientConnected;
         public event EventHandler OnClientDisconnected;
 
+        private string serverAddress;
+        private int serverPort;
+
         public RPVoiceChatSocketClient(ICoreClientAPI capi)
         {
             this.capi = capi;
-            
+
             client = new NetClient(config);
-            client.Start();
+
             port = client.Port;
+            client.Start();
+
+            StartListening(client);
 
             capi.Logger.Notification("[RPVoiceChat - Client] Started on port " + port);
         }
 
         public void ConnectToServer(string address, int port)
         {
-            if (string.IsNullOrEmpty(address))
-                throw new ArgumentException("Address cannot be null or empty");
+            string clientUID = capi?.World.Player.PlayerUID;
+            while (clientUID == null) { clientUID = capi?.World.Player.PlayerUID; }
+            serverAddress = address;
+            serverPort = port;
+            NetOutgoingMessage hail = client.CreateMessage("RPVoiceChat " + clientUID);
+            client.Connect(serverAddress, serverPort, hail);
             
-            if (port < 0 || port > 65535)
-                throw new ArgumentException("Port must be between 0 and 65535");
-
-            capi.Logger.Notification($"[RPVoiceChat - Client] Connecting to voice chat server {address}:{port} ");
-            client.Connect(address, port);
-
-            OnClientConnected?.Invoke(this, null);
-            StartListening(client);
-
+            OnClientConnected.Invoke(this, null);
         }
 
         public void SendAudioToServer(AudioPacket packet)
         {
             NetOutgoingMessage msg = client.CreateMessage();
             packet.WriteToMessage(msg);
-            client.SendMessage(msg, NetDeliveryMethod.UnreliableSequenced);
+            client.SendMessage(msg, deliveryMethod);
         }
 
         public void Close()
@@ -54,5 +57,6 @@ namespace rpvoicechat
             client.Disconnect("Disconnecting");
             client.Shutdown("Client shutting down");
         }
+
     }
 }

@@ -16,10 +16,13 @@ namespace rpvoicechat
         public ICoreClientAPI capi;
         public ICoreServerAPI sapi;
 
+        protected NetDeliveryMethod deliveryMethod = NetDeliveryMethod.ReliableSequenced;
         public NetPeerConfiguration config = new NetPeerConfiguration("RPVoiceChat");
         public int port = 52525;
 
+
         public event EventHandler<NetIncomingMessage> OnMessageReceived;
+        public event EventHandler<NetIncomingMessage> OnConnectionApprovalMessage;
         public event EventHandler<NetIncomingMessage> OnDiscoveryRequestReceived;
         public event EventHandler<NetIncomingMessage> OnDiscoveryResponseReceived;
 
@@ -34,6 +37,7 @@ namespace rpvoicechat
                 // Loop forever
                 while (true)
                 {
+
                     // Read any messages from the server
                     NetIncomingMessage message;
                     while ((message = peer.ReadMessage()) != null)
@@ -50,6 +54,12 @@ namespace rpvoicechat
                             case NetIncomingMessageType.DiscoveryResponse:
                                 // Just print the IP of the server
                                 OnDiscoveryResponseReceived?.Invoke(this, message);
+                                break;
+
+                            case NetIncomingMessageType.ConnectionApproval:
+                                // Read the first byte of the packet
+                                OnConnectionApprovalMessage?.Invoke(this, message);
+                                
                                 break;
 
                             case NetIncomingMessageType.Data:

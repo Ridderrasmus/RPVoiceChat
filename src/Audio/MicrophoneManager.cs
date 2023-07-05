@@ -79,7 +79,6 @@ namespace rpvoicechat
 
             // Get the amplitude of the audio
             int amplitude = AudioUtils.CalculateAmplitude(buffer, validBytes);
-
             // If the amplitude is below the threshold, return
             if (!pushToTalkEnabled && amplitude < inputThreshold)
             {

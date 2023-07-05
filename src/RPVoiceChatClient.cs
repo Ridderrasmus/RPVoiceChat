@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 
 namespace rpvoicechat
 {
@@ -28,7 +29,7 @@ namespace rpvoicechat
 
             // Add voice chat client event handlers
             client.OnMessageReceived += (sender, msg) =>
-            {
+            { 
                 audioOutputManager.HandleAudioPacket(AudioPacket.ReadFromMessage(msg));
             };
             client.OnClientConnected += VoiceClientConnected;
@@ -86,7 +87,6 @@ namespace rpvoicechat
 
             micManager.OnBufferRecorded += (buffer, voiceLevel) =>
             {
-
                 AudioPacket packet = new AudioPacket()
                 {
                     PlayerId = capi.World.Player.PlayerUID,
@@ -137,8 +137,8 @@ namespace rpvoicechat
         private void OnConnectionInfo(ConnectionInfo packet)
         {
             if (packet == null) return;
-            capi.Logger.Debug($"[RPVoiceChat - Client] Received connection info from server {packet.Address}:{packet.Port}");
             client.ConnectToServer(packet.Address, packet.Port);
+            capi.Logger.Debug($"[RPVoiceChat - Client] Connected to server {packet.Address}:{packet.Port}");
         }
     }
 }
