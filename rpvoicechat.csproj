@@ -90,6 +90,7 @@
     <Compile Include="src\Utils\Enums\VoiceLevel.cs" />
     <Compile Include="src\Utils\ModConfig.cs" />
     <Compile Include="src\Utils\PlayerAudioSource.cs" />
+    <Compile Include="src\Utils\PlayerListener.cs" />
     <Compile Include="src\Utils\WaveFormatMono.cs" />
     <Compile Include="src\Utils\AudioUtils.cs" />
     <Compile Include="src\Audio\MicrophoneManager.cs" />
@@ -97,6 +98,7 @@
     <Compile Include="src\Networking\RPVoiceChatSocketCommon.cs" />
     <Compile Include="src\Networking\RPVoiceChatSocketServer.cs" />
     <Compile Include="src\RPVoiceChatMod.cs" />
+    <Compile Include="src\Utils\WaveFormatStereo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

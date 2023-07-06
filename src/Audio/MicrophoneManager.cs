@@ -52,12 +52,10 @@ namespace rpvoicechat
             byte[] buffer = new byte[validBytes];
             Array.Copy(e.Buffer, buffer, validBytes);
 
-
-
             // If player is in the pause menu, return
             if (capi.IsGamePaused)
                 return;
-
+            
             if (capi.World == null)
                 return;
 
@@ -72,7 +70,6 @@ namespace rpvoicechat
 
             if (isMuted)
                 return;
-
             keyDownPTT = capi.Input.KeyboardKeyState[capi.Input.GetHotKeyByCode("voicechatPTT").CurrentMapping.KeyCode];
             if (pushToTalkEnabled && !keyDownPTT)
                 return;
@@ -97,7 +94,7 @@ namespace rpvoicechat
                 ignoreThresholdCounter = ignoreThresholdLimit; // Reset the counter when amplitude is above the threshold
             }
 
-            if (playersNearby)
+            if (!playersNearby)
                 return;
 
             buffer = AudioUtils.HandleAudioPeaking(buffer);

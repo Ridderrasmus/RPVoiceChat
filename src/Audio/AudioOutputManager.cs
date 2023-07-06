@@ -1,193 +1,131 @@
-﻿using OpenTK.Audio.OpenAL;
-using OpenTK.Audio;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using Vintagestory.API.Client;
 using Vintagestory.API.MathTools;
 using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
+using Vintagestory.API.Common;
+using Vintagestory.GameContent;
 
 namespace rpvoicechat
 {
     public class AudioOutputManager
     {
         ICoreClientAPI capi;
-        private ConcurrentDictionary<string, PlayerAudioSource> _playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
+        Vec3d _listenerPos;
+        MixingSampleProvider _mixer;
+        WaveOut waveOut;
 
+
+
+        private Dictionary<string, PlayerAudioSource> _playerSources = new Dictionary<string, PlayerAudioSource>();
 
         public AudioOutputManager(ICoreClientAPI capi)
         {
             this.capi = capi;
+            this._mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(AudioUtils.sampleRate, 2));
+            waveOut = new WaveOut();
+            waveOut.Init(_mixer, true);
+            waveOut.Play();
         }
 
+        public void SetListenerPosition(Vec3d pos)
+        {
+            _listenerPos = pos;
+        }
+
+        // Called when the client receives an audio packet supplying the audio packet
         public void HandleAudioPacket(AudioPacket packet)
         {
-            string playerUid = packet.PlayerId;
-            byte[] audioData = packet.AudioData;
-
-
-            if (_playerSources.TryGetValue(playerUid, out PlayerAudioSource source))
+            if (_playerSources.TryGetValue(packet.PlayerId, out PlayerAudioSource source))
             {
-                float dist = (float)Math.Max((double)capi.World.Player.Entity.Pos.DistanceTo(capi.World.PlayerByUid(playerUid).Entity.Pos.XYZ), 0.1);
-                float linearVolume = 1 - (dist / (float)packet.voiceLevel);
-                float percievedVolume = LinearToPerceivedVolume(linearVolume);
-                source.Volume = percievedVolume;
-
-
-                if (source.IsMuffled)
-                    audioData = AudioUtils.ApplyMuffling(audioData);
-
-
-                if (source.AudioQueue.Count < 10)
-                {
-                    source.AudioQueue.Enqueue(audioData);
-                }
-            }
-            
-        }
-
-        private float LinearToPerceivedVolume(float linearVolume)
-        {
-            // Convert linear amplitude to decibels
-            float dB = linearVolume > 0 ? 20.0f * (float)Math.Log10(linearVolume) : -144.0f;
-
-            // Convert decibels back to linear amplitude
-            float perceivedVolume = (float)Math.Pow(10.0f, dB / 20.0f);
-
-            return perceivedVolume;
-        }
-
-        public void SetPlayerMuffled(string playerUid, bool isMuffled)
-        {
-            if (_playerSources.TryGetValue(playerUid, out PlayerAudioSource source))
-            {
-                source.IsMuffled = isMuffled;
-                _playerSources[playerUid] = source;
+                source.AudioQueue.Enqueue(packet);
             }
         }
 
-
-        public void AddPlayer(string playerUid, Vec3d initialPosition)
+        
+        public void AddPlayer(IPlayer player)
         {
-            // Generate a source for the player
-            PlayerAudioSource source = new PlayerAudioSource(initialPosition, false);
-            AL.Source(source.SourceNum, ALSource3f.Position, (float)initialPosition.X, (float)initialPosition.Y, (float)initialPosition.Z);
-
-            // Store it in the dictionary
-            _playerSources[playerUid] = source;
+            var playerAudioSource = new PlayerAudioSource(player.Entity.Pos.XYZ);
+            _playerSources[player.PlayerUID] = playerAudioSource;
+            _mixer.AddMixerInput(playerAudioSource.Buffer);
         }
 
-        public void RemovePlayer(string playerUid)
+        public void RemovePlayer(IPlayer player)
         {
-            // Delete the source associated with the player
-            if (_playerSources.TryGetValue(playerUid, out PlayerAudioSource source))
+            if (_playerSources.TryGetValue(player.PlayerUID, out PlayerAudioSource source))
             {
-                AL.DeleteBuffer(source.BufferNum);
-                AL.DeleteSource(source.SourceNum);
-                _playerSources.TryRemove(playerUid, out _);
+                _mixer.RemoveMixerInput((ISampleProvider)source.Buffer);
+                _playerSources.Remove(player.PlayerUID);
             }
         }
 
-        public void UpdatePlayerSource(string playerUid, Vec3d newPosition)
+        // Updated every 20 milliseconds per player
+        public void UpdatePlayerSource(IPlayer player)
         {
-            if (newPosition.DistanceTo(capi.World.Player.Entity.Pos.XYZ) > ((float)VoiceLevel.Shouting + 10))
+            if (player.Entity.Pos.DistanceTo(_listenerPos) > ((float)VoiceLevel.Shouting + 10))
             {
-                RemovePlayer(playerUid);
+                RemovePlayer(player);
                 return;
             }
-            else if (!_playerSources.ContainsKey(playerUid))
+            else if (!_playerSources.ContainsKey(player.PlayerUID))
             {
-                AddPlayer(playerUid, newPosition);
-                return;
+                AddPlayer(player);
             }
 
             // Update the source position for the player
-            if (_playerSources.TryGetValue(playerUid, out PlayerAudioSource source))
+            if (_playerSources.TryGetValue(player.PlayerUID, out PlayerAudioSource source))
             {
-                AL.Source(source.SourceNum, ALSource3f.Position, (float)newPosition.X, (float)newPosition.Y, (float)newPosition.Z);
-                
+                // Set the position
+                source.Position = player.Entity.Pos.XYZ;
+
+                // Set muffled state
+                BlockSelection blockSelection = new BlockSelection();
+                EntitySelection entitySelection = new EntitySelection();
+                capi.World.RayTraceForSelection(player.Entity.Pos.XYZ, capi.World.Player.Entity.Pos.XYZ, ref blockSelection, ref entitySelection);
+
+                source.IsMuffled = (blockSelection != null);
+
+                // Set reverberated state
+                Room room = capi.ModLoader.GetModSystem<RoomRegistry>().GetRoomForPosition(new BlockPos().Set(player.Entity.Pos.XYZ));
+                source.IsReverberated = (room.SkylightCount < room.NonSkylightCount) && (room.Location.Volume > 60);
+
             }
         }
 
-        public void UpdateAudio()
+        // Ran every 20 milliseconds
+        public void PlayAudio()
         {
-            foreach (var playerSource in _playerSources.Values)
+            foreach (var source in _playerSources.Values)
             {
-
-
-                // Check if there's any audio data in the player's queue
-                int queuedBuffers;
-                AL.GetSource(playerSource.SourceNum, ALGetSourcei.BuffersQueued, out queuedBuffers);
-                while (playerSource.AudioQueue.Count > 0 && queuedBuffers < 3)
+                while (source.AudioQueue.Count > 0)
                 {
-                    AL.GetSource(playerSource.SourceNum, ALGetSourcei.BuffersQueued, out queuedBuffers);
-                    // Get next audio data from player's queue
-                    byte[] audioData = playerSource.AudioQueue.Dequeue();
+                    var packet = source.AudioQueue.Dequeue();
+                    var audioData = packet.AudioData;
 
-                    // Check if the player was obstructed during this
-                    if (playerSource.IsMuffled)
-                    {
+                    // If the audio is muffled, we need to apply the muffling effect
+                    if (source.IsMuffled)
                         audioData = AudioUtils.ApplyMuffling(audioData);
+
+                    // If the audio is reverberated, we need to apply the reverb effect
+                    if (source.IsReverberated)
+                        audioData = source.ReverbEffect.ApplyReverb(audioData);
+
+                    // If the audio is locational, we need to apply the distance and stereo effects
+                    // Otherwise, we just need to make it stereo
+                    if (source.IsLocational)
+                    {
+                        audioData = AudioUtils.VolumeBasedOnDistance(audioData, _listenerPos.DistanceTo(source.Position), packet.voiceLevel);
+                        audioData = AudioUtils.MakeStereoFromMono(_listenerPos, source.Position, audioData);
+                    }
+                    else
+                    {
+                        audioData = AudioUtils.MakeStereoFromMono(audioData);
                     }
 
-                    AL.Source(playerSource.SourceNum, ALSourcef.Gain, playerSource.Volume);
 
-                    // Create a new buffer and load the audio data into it
-                    int buffer = AL.GenBuffer();
-                    AL.BufferData(buffer, ALFormat.Mono16, audioData, audioData.Length, AudioUtils.sampleRate);
+                    source.Buffer.AddSamples(audioData, 0, audioData.Length);
 
-                    // Queue the buffer to the source
-                    AL.SourceQueueBuffer(playerSource.SourceNum, buffer);
                 }
-
-                // Check if any buffers have finished playing
-                int buffersProcessed;
-                AL.GetSource(playerSource.SourceNum, ALGetSourcei.BuffersProcessed, out buffersProcessed);
-                for (int i = 0; i < buffersProcessed; i++)
-                {
-                    // Unqueue the buffer and delete it
-                    int buffer = AL.SourceUnqueueBuffer(playerSource.SourceNum);
-                    AL.DeleteBuffer(buffer);
-                }
-
-                // Check if the source is not currently playing and there are no more buffers queued
-                int buffersQueued;
-                AL.GetSource(playerSource.SourceNum, ALGetSourcei.BuffersQueued, out buffersQueued);
-                if (AL.GetSourceState(playerSource.SourceNum) != ALSourceState.Playing && buffersQueued == 0)
-                {
-                    // Stop the source
-                    AL.SourceStop(playerSource.SourceNum);
-                }
-                else if (AL.GetSourceState(playerSource.SourceNum) != ALSourceState.Playing)
-                {
-                    // Start playing the source
-                    AL.SourcePlay(playerSource.SourceNum);
-                }
-            }
-        }
-
-        public void ClearAllAudio()
-        {
-            foreach (var playerSource in _playerSources.Values)
-            {
-                // Check if any buffers have been queued
-                int buffersQueued; 
-                AL.GetSource(playerSource.SourceNum, ALGetSourcei.BuffersQueued, out buffersQueued);
-                for (int i = 0; i < buffersQueued; i++)
-                {
-                    // Unqueue the buffer and delete it
-                    int buffer = AL.SourceUnqueueBuffer(playerSource.SourceNum);
-                    AL.DeleteBuffer(buffer);
-                }
-
-                // Clear the player's audio queue
-                playerSource.AudioQueue.Clear();
-
-                // Stop the source
-                AL.SourceStop(playerSource.SourceNum);
             }
         }
     }

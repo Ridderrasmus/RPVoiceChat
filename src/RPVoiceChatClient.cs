@@ -77,8 +77,8 @@ namespace rpvoicechat
 
         private void OnPauseResume(bool isPaused)
         {
-            if (isPaused)
-                audioOutputManager.ClearAllAudio();
+            //if (isPaused)
+            //    audioOutputManager.ClearAllAudio();
         }
 
         private void VoiceClientConnected(object sender, EventArgs e)
@@ -101,40 +101,42 @@ namespace rpvoicechat
         private void OnGameTick(float dt)
         {
 
-            if(micManager == null)
+            if(micManager == null || audioOutputManager == null)
                 return;
 
             micManager.isGamePaused = capi.IsGamePaused;
+
+            audioOutputManager.SetListenerPosition(capi.World.Player.Entity.Pos.XYZ);
 
             List<IPlayer> nearPlayers = new List<IPlayer>();
 
 
             foreach (var player in capi.World.AllOnlinePlayers)
             {
-
+#if !DEBUG
+                // Ignore self
                 if (player.PlayerUID == capi.World.Player.PlayerUID)
                     continue;
-
+#endif
+                // Update player audio source
+                audioOutputManager.UpdatePlayerSource(player);
+                
+                // Ignore players too far away
                 if (player.Entity.Pos.DistanceTo(capi.World.Player.Entity.Pos) > ((int)VoiceLevel.Shouting + 10))
                     continue;
 
-                BlockSelection blockSelection = new BlockSelection();
-                EntitySelection entitySelection = new EntitySelection();
-                capi.World.RayTraceForSelection(player.Entity.Pos.XYZ, capi.World.Player.Entity.Pos.XYZ, ref blockSelection, ref entitySelection);
-
-                audioOutputManager.UpdatePlayerSource(player.PlayerUID, player.Entity.Pos.XYZ);
-                audioOutputManager.SetPlayerMuffled(player.PlayerUID, blockSelection != null);
-
+                // Add player to list of players nearby
                 nearPlayers.Add(player);
             }
 
+            // Determine if players are nearby which determines if we should be transmitting audio
             if (nearPlayers.Count > 0)
                 micManager.playersNearby = true;
             else
                 micManager.playersNearby = false;
 
 
-            audioOutputManager.UpdateAudio();
+            audioOutputManager.PlayAudio();
         }
 
         private void OnPlayerLeaving()
