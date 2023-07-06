@@ -36,7 +36,8 @@ namespace rpvoicechat
                 float percievedVolume = LinearToPerceivedVolume(linearVolume);
                 source.Volume = percievedVolume;
 
-                if(source.IsMuffled)
+
+                if (source.IsMuffled)
                     audioData = AudioUtils.ApplyMuffling(audioData);
 
 

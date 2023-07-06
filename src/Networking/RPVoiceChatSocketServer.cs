@@ -27,6 +27,9 @@ namespace rpvoicechat
             config.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
             config.EnableMessageType(NetIncomingMessageType.ConnectionLatencyUpdated);
             config.EnableMessageType(NetIncomingMessageType.StatusChanged);
+            config.MaximumConnections = 100;
+            config.UseMessageRecycling = true;
+            config.AcceptIncomingConnections = true;
             config.Port = port;
 
 
@@ -85,10 +88,12 @@ namespace rpvoicechat
         {
             foreach (var connection in connections)
             {
+                if (connection.Key == packet.PlayerId)
+                    continue;
+
                 // If the player is too far away, don't send the packet
                 if (sapi.World.PlayerByUid(connection.Key).Entity.Pos.DistanceTo(sapi.World.PlayerByUid(packet.PlayerId).Entity.Pos.XYZ) > (int)packet.voiceLevel)
                     continue;
-
                 SendAudioToClient(packet, connection.Value);
             }
         }

@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Server;
+using Vintagestory.ServerMods.WorldEdit;
 
 namespace rpvoicechat
 {
@@ -28,6 +29,7 @@ namespace rpvoicechat
 
         public RPVoiceChatSocketCommon()
         {
+            config.UseMessageRecycling = true;
         }
 
         public void StartListening(NetPeer peer)
@@ -42,6 +44,9 @@ namespace rpvoicechat
                     NetIncomingMessage message;
                     while ((message = peer.ReadMessage()) != null)
                     {
+                        if (sapi != null)
+                            sapi.Logger.Notification("[RPVoiceChat - Server] Message received: " + peer.ConnectionsCount);
+
                         // Handle different types of messages
                         switch (message.MessageType)
                         {

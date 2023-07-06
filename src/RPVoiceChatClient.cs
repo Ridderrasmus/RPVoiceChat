@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
+using Vintagestory.API.Util;
 
 namespace rpvoicechat
 {
@@ -104,17 +105,17 @@ namespace rpvoicechat
                 return;
 
             micManager.isGamePaused = capi.IsGamePaused;
-            micManager.playersNearby = capi.World.GetPlayersAround(capi.World.Player.Entity.Pos.XYZ, (int)VoiceLevel.Shouting + 10, (int)VoiceLevel.Shouting);
+
+            List<IPlayer> nearPlayers = new List<IPlayer>();
 
 
-            if (micManager.playersNearby.Count() <= 1)
-                return;
-
-
-            foreach (var player in micManager.playersNearby)
+            foreach (var player in capi.World.AllOnlinePlayers)
             {
 
                 if (player.PlayerUID == capi.World.Player.PlayerUID)
+                    continue;
+
+                if (player.Entity.Pos.DistanceTo(capi.World.Player.Entity.Pos) > ((int)VoiceLevel.Shouting + 10))
                     continue;
 
                 BlockSelection blockSelection = new BlockSelection();
@@ -124,7 +125,14 @@ namespace rpvoicechat
                 audioOutputManager.UpdatePlayerSource(player.PlayerUID, player.Entity.Pos.XYZ);
                 audioOutputManager.SetPlayerMuffled(player.PlayerUID, blockSelection != null);
 
+                nearPlayers.Add(player);
             }
+
+            if (nearPlayers.Count > 0)
+                micManager.playersNearby = true;
+            else
+                micManager.playersNearby = false;
+
 
             audioOutputManager.UpdateAudio();
         }

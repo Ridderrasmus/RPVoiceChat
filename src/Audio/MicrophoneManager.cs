@@ -29,7 +29,7 @@ namespace rpvoicechat
         public bool keyDownPTT = false;
         public bool pushToTalkEnabled = false;
         public int inputThreshold = 20;
-        public IPlayer[] playersNearby;
+        public bool playersNearby = false;
 
         private bool isRecording = false;
         private int ignoreThresholdCounter = 0;
@@ -79,6 +79,7 @@ namespace rpvoicechat
 
             // Get the amplitude of the audio
             int amplitude = AudioUtils.CalculateAmplitude(buffer, validBytes);
+
             // If the amplitude is below the threshold, return
             if (!pushToTalkEnabled && amplitude < inputThreshold)
             {
@@ -96,9 +97,7 @@ namespace rpvoicechat
                 ignoreThresholdCounter = ignoreThresholdLimit; // Reset the counter when amplitude is above the threshold
             }
 
-
-
-            if (playersNearby?.Length <= 1)
+            if (playersNearby)
                 return;
 
             buffer = AudioUtils.HandleAudioPeaking(buffer);

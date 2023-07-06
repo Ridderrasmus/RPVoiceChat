@@ -2,8 +2,8 @@
 {
     public enum VoiceLevel
     {
-        Normal = 15,
         Whispering = 5,
+        Normal = 15,
         Shouting = 25
     }
 }
