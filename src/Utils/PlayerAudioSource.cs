@@ -1,5 +1,7 @@
 ﻿using NAudio.Wave;
+using OpenTK.Graphics.OpenGL;
 using rpvoicechat;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Vintagestory.API.MathTools;
 
@@ -11,13 +13,17 @@ public class PlayerAudioSource
 
     public Vec3d Position { get; set; }
 
-    public Queue<AudioPacket> AudioQueue = new Queue<AudioPacket>();
-    public BufferedWaveProvider Buffer = new BufferedWaveProvider(WaveFormat.CreateIeeeFloatWaveFormat(AudioUtils.sampleRate, 2));
-    public ReverbEffect ReverbEffect = new ReverbEffect(100);
+    public ConcurrentQueue<AudioPacket> AudioQueue = new ConcurrentQueue<AudioPacket>();
+    public BufferedWaveProvider Buffer = new BufferedWaveProvider(new WaveFormatStereo());
+    public BufferedWaveProvider ReverbBuffer = new BufferedWaveProvider(new WaveFormatStereo());
+    public ReverbEffect ReverbEffect;
 
     public PlayerAudioSource(Vec3d pos)
     {
         Position = pos;
         Buffer.DiscardOnBufferOverflow = true;
+        ReverbBuffer.DiscardOnBufferOverflow = true;
+        ReverbEffect = new ReverbEffect(500);
     }
+
 }

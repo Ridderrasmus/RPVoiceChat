@@ -1,14 +1,8 @@
 ﻿using Lidgren.Network;
-using ProperVersion;
 using System;
-using System.IO;
-using System.Net;
-using System.Net.Sockets;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Server;
-using Vintagestory.ServerMods.WorldEdit;
 
 namespace rpvoicechat
 {
@@ -44,9 +38,6 @@ namespace rpvoicechat
                     NetIncomingMessage message;
                     while ((message = peer.ReadMessage()) != null)
                     {
-                        if (sapi != null)
-                            sapi.Logger.Notification("[RPVoiceChat - Server] Message received: " + peer.ConnectionsCount);
-
                         // Handle different types of messages
                         switch (message.MessageType)
                         {

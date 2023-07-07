@@ -1,7 +1,12 @@
 ﻿using NAudio.Dsp;
 using NAudio.Wave;
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography;
 using System.Windows.Forms;
+using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
 
 namespace rpvoicechat
@@ -186,35 +191,6 @@ namespace rpvoicechat
             return volumeFactor;
         }
 
-        public static byte[] MakeStereoFromMono(Vec3d position1, Vec3d position2, byte[] monoData)
-        {
-            // Calculate the direction from position1 to position2
-            float direction = CalculateDirectionInRadians(position1, position2);
-
-            // Convert direction to a value between -1 (left) and 1 (right)
-            float pan = (float)Math.Cos(direction);
-
-            // Create a new byte array for the stereo data
-            byte[] stereoData = new byte[monoData.Length * 2];
-
-            // Convert the mono data to stereo data
-            for (int i = 0; i < monoData.Length / 2; i++)
-            {
-                // Get the mono sample
-                short monoSample = BitConverter.ToInt16(monoData, i * 2);
-
-                // Calculate the left and right samples
-                short leftSample = (short)(monoSample * (1 - pan) / 2);
-                short rightSample = (short)(monoSample * (1 + pan) / 2);
-
-                // Store the left and right samples in the stereo data array
-                BitConverter.GetBytes(leftSample).CopyTo(stereoData, i * 4);
-                BitConverter.GetBytes(rightSample).CopyTo(stereoData, i * 4 + 2);
-            }
-
-            return stereoData;
-        }
-
         public static byte[] MakeStereoFromMono(byte[] monoData)
         {
             // Create a new byte array for the stereo data
@@ -234,13 +210,51 @@ namespace rpvoicechat
             return stereoData;
         }
 
-        private static float CalculateDirectionInRadians(Vec3d position1, Vec3d position2)
+        public static byte[] MakeStereoFromMono(byte[] monoData, EntityPos listenerPos, Vec3d audioPos)
+        {
+            // Calculate the direction from position1 to position2
+            float direction = CalculateDirectionInRadians(listenerPos, audioPos);
+
+            // Convert direction to a value between -1 (left) and 1 (right)
+            float pan = (float)Math.Sin(direction);
+
+            // Create a new byte array for the stereo data
+            byte[] stereoData = new byte[monoData.Length * 2];
+
+            // Convert the mono data to stereo data
+            for (int i = 0; i < monoData.Length / 2; i++)
+            {
+                // Get the mono sample
+                short monoSample = BitConverter.ToInt16(monoData, i * 2);
+
+                // Calculate the left and right samples
+                short leftSample = (short)(monoSample * (1 + pan) / 2);
+                short rightSample = (short)(monoSample * (1 - pan) / 2);
+
+                // Store the left and right samples in the stereo data array
+                BitConverter.GetBytes(leftSample).CopyTo(stereoData, i * 4);
+                BitConverter.GetBytes(rightSample).CopyTo(stereoData, i * 4 + 2);
+            }
+
+            return stereoData;
+        }
+
+        public static float CalculateDirectionInRadians(EntityPos listenerPos, Vec3d audioPos)
         {
             // Calculate the difference between the two positions
-            Vec3d difference = position2 - position1;
+            Vec3d difference = listenerPos.XYZ - audioPos;
 
             // Calculate the direction in radians
             float direction = (float)Math.Atan2(difference.Z, -difference.X);
+
+            // Account for the listener yaw
+            direction -= (listenerPos.Yaw + listenerPos.HeadYaw);
+
+            // Ensure the direction is between -pi and pi
+            while (direction < -Math.PI)
+            {
+                direction += (float)(Math.PI * 2);
+            }
 
             return direction;
         }
@@ -252,8 +266,10 @@ namespace rpvoicechat
     {
         private float[] delayBuffer;
         private int delayPosition;
-        
-        public float Decay { get; set; } = 0.6f;
+        private int ChunkSize = (int)(AudioUtils.sampleRate * 2 * 0.02f);
+
+        public float Decay { get; set; } = 0.4f;
+        public ConcurrentQueue<byte[]> ReverbQueue = new ConcurrentQueue<byte[]>();
 
         public ReverbEffect(int delayMilliseconds)
         {
@@ -265,8 +281,9 @@ namespace rpvoicechat
             Array.Resize(ref delayBuffer, AudioUtils.sampleRate * delayMilliseconds / 1000);
         }
 
-        public byte[] ApplyReverb(byte[] input)
+        public void ApplyReverb(byte[] input)
         {
+
             // Convert the byte array to a float array
             float[] floatInput = new float[input.Length / 2];
             for (int i = 0; i < floatInput.Length; i++)
@@ -296,7 +313,23 @@ namespace rpvoicechat
                 BitConverter.GetBytes(sample).CopyTo(output, i * 2);
             }
 
-            return output;
+
+            // Add the reverb echoes to the reverbQueue
+            ReverbQueue.Enqueue(output);
+        }
+
+        public void ProcessAudioStream(byte[] audioStream)
+        {
+            // Split the audio stream into chunks
+            for (int i = 0; i < audioStream.Length; i += ChunkSize)
+            {
+                // Get the next chunk of audio data
+                byte[] chunk = new byte[ChunkSize];
+                Array.Copy(audioStream, i, chunk, 0, ChunkSize);
+
+                // Apply the reverb effect to the chunk
+                ApplyReverb(chunk);
+            }
         }
     }
 }

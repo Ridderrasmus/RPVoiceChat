@@ -5,30 +5,36 @@ using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 using Vintagestory.API.Common;
 using Vintagestory.GameContent;
+using System.Threading.Tasks;
+using System.Net.Sockets;
+using System.Threading;
+using Vintagestory.API.Common.Entities;
+using System.Collections.Concurrent;
 
 namespace rpvoicechat
 {
     public class AudioOutputManager
     {
         ICoreClientAPI capi;
-        Vec3d _listenerPos;
+        EntityPos _listenerPos;
         MixingSampleProvider _mixer;
         WaveOut waveOut;
 
 
 
-        private Dictionary<string, PlayerAudioSource> _playerSources = new Dictionary<string, PlayerAudioSource>();
+        private ConcurrentDictionary<string, PlayerAudioSource> _playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
 
-        public AudioOutputManager(ICoreClientAPI capi)
+        public AudioOutputManager(ICoreClientAPI api)
         {
-            this.capi = capi;
-            this._mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(AudioUtils.sampleRate, 2));
+            capi = api;
+            _mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(AudioUtils.sampleRate, 2));
+            _mixer.ReadFully = true;
             waveOut = new WaveOut();
-            waveOut.Init(_mixer, true);
+            waveOut.Init(_mixer);
             waveOut.Play();
         }
 
-        public void SetListenerPosition(Vec3d pos)
+        public void SetListenerPosition(EntityPos pos)
         {
             _listenerPos = pos;
         }
@@ -47,20 +53,22 @@ namespace rpvoicechat
         {
             var playerAudioSource = new PlayerAudioSource(player.Entity.Pos.XYZ);
             _playerSources[player.PlayerUID] = playerAudioSource;
-            _mixer.AddMixerInput(playerAudioSource.Buffer);
+            _mixer.AddMixerInput(playerAudioSource.Buffer.ToSampleProvider());
+            _mixer.AddMixerInput(playerAudioSource.ReverbBuffer.ToSampleProvider());
         }
 
         public void RemovePlayer(IPlayer player)
         {
             if (_playerSources.TryGetValue(player.PlayerUID, out PlayerAudioSource source))
             {
-                _mixer.RemoveMixerInput((ISampleProvider)source.Buffer);
-                _playerSources.Remove(player.PlayerUID);
+                _mixer.RemoveMixerInput(source.Buffer.ToSampleProvider());
+                _mixer.RemoveMixerInput(source.ReverbBuffer.ToSampleProvider());
+                _playerSources.TryRemove(player.PlayerUID, out PlayerAudioSource val);
             }
         }
 
         // Updated every 20 milliseconds per player
-        public void UpdatePlayerSource(IPlayer player)
+        public async Task UpdatePlayerSource(IPlayer player)
         {
             if (player.Entity.Pos.DistanceTo(_listenerPos) > ((float)VoiceLevel.Shouting + 10))
             {
@@ -77,6 +85,9 @@ namespace rpvoicechat
             {
                 // Set the position
                 source.Position = player.Entity.Pos.XYZ;
+
+                // Set if is locational
+                source.IsLocational = !(source.Position == _listenerPos.XYZ || player.PlayerUID == capi.World.Player.PlayerUID || source.Position == null);
 
                 // Set muffled state
                 BlockSelection blockSelection = new BlockSelection();
@@ -97,9 +108,12 @@ namespace rpvoicechat
         {
             foreach (var source in _playerSources.Values)
             {
+
                 while (source.AudioQueue.Count > 0)
                 {
-                    var packet = source.AudioQueue.Dequeue();
+                    if (!source.AudioQueue.TryDequeue(out AudioPacket packet))
+                        continue;
+
                     var audioData = packet.AudioData;
 
                     // If the audio is muffled, we need to apply the muffling effect
@@ -107,25 +121,57 @@ namespace rpvoicechat
                         audioData = AudioUtils.ApplyMuffling(audioData);
 
                     // If the audio is reverberated, we need to apply the reverb effect
+                    // TODO: Make this work
                     if (source.IsReverberated)
-                        audioData = source.ReverbEffect.ApplyReverb(audioData);
+                        source.ReverbEffect.ProcessAudioStream(audioData);
 
                     // If the audio is locational, we need to apply the distance and stereo effects
                     // Otherwise, we just need to make it stereo
                     if (source.IsLocational)
                     {
                         audioData = AudioUtils.VolumeBasedOnDistance(audioData, _listenerPos.DistanceTo(source.Position), packet.voiceLevel);
-                        audioData = AudioUtils.MakeStereoFromMono(_listenerPos, source.Position, audioData);
+                        audioData = AudioUtils.MakeStereoFromMono(audioData, _listenerPos, source.Position);
                     }
                     else
                     {
                         audioData = AudioUtils.MakeStereoFromMono(audioData);
                     }
 
-
                     source.Buffer.AddSamples(audioData, 0, audioData.Length);
 
                 }
+
+                /*
+                Task.Run(() =>
+                {
+                    var reverbLocation = source.Position;
+                    var muffled = source.IsMuffled;
+                    while (source.ReverbEffect.ReverbQueue.Count > 0)
+                    {
+                        if (!source.ReverbEffect.ReverbQueue.TryDequeue(out var audioData))
+                            continue;
+
+                        // If the audio is muffled, we need to apply the muffling effect
+                        if (muffled)
+                            audioData = AudioUtils.ApplyMuffling(audioData);
+
+
+                        audioData = AudioUtils.VolumeBasedOnDistance(audioData, _listenerPos.DistanceTo(reverbLocation), VoiceLevel.Shouting);
+                        audioData = AudioUtils.MakeStereoFromMono(_listenerPos, reverbLocation, audioData);
+
+
+                        source.ReverbBuffer.AddSamples(audioData, 0, audioData.Length);
+                    }
+                });
+                */
+            }
+        }
+
+        public void ClearAudio()
+        {
+            foreach (var source in _playerSources.Values)
+            {
+                source.Buffer.ClearBuffer();
             }
         }
     }

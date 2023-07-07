@@ -88,10 +88,10 @@ namespace rpvoicechat
         {
             foreach (var connection in connections)
             {
-#if !DEBUG
+
                 if (connection.Key == packet.PlayerId)
                     continue;
-#endif
+
                 // If the player is too far away, don't send the packet
                 if (sapi.World.PlayerByUid(connection.Key).Entity.Pos.DistanceTo(sapi.World.PlayerByUid(packet.PlayerId).Entity.Pos.XYZ) > (int)packet.voiceLevel)
                     continue;

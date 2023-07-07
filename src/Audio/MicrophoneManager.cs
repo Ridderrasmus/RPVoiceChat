@@ -28,12 +28,12 @@ namespace rpvoicechat
         public bool isMuted = false;
         public bool keyDownPTT = false;
         public bool pushToTalkEnabled = false;
-        public int inputThreshold = 20;
+        public int inputThreshold = 40;
         public bool playersNearby = false;
 
         private bool isRecording = false;
         private int ignoreThresholdCounter = 0;
-        private const int ignoreThresholdLimit = 8;
+        private const int ignoreThresholdLimit = 13;
 
         public ActivationMode CurrentActivationMode { get; private set; } = ActivationMode.VoiceActivation;
         public string CurrentInputDevice { get; internal set; }
@@ -51,6 +51,7 @@ namespace rpvoicechat
             int validBytes = e.BytesRecorded;
             byte[] buffer = new byte[validBytes];
             Array.Copy(e.Buffer, buffer, validBytes);
+
 
             // If player is in the pause menu, return
             if (capi.IsGamePaused)
@@ -161,7 +162,7 @@ namespace rpvoicechat
             WaveInEvent newCapture = new WaveInEvent();
             newCapture.DeviceNumber = deviceIndex;
             newCapture.WaveFormat = customWaveFormat;
-            newCapture.BufferMilliseconds = 30;
+            newCapture.BufferMilliseconds = 20;
             newCapture.DataAvailable += OnAudioRecorded;
 
             newCapture.StartRecording();

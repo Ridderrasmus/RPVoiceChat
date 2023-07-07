@@ -77,8 +77,8 @@ namespace rpvoicechat
 
         private void OnPauseResume(bool isPaused)
         {
-            //if (isPaused)
-            //    audioOutputManager.ClearAllAudio();
+            if (isPaused)
+                audioOutputManager.ClearAudio();
         }
 
         private void VoiceClientConnected(object sender, EventArgs e)
@@ -106,20 +106,20 @@ namespace rpvoicechat
 
             micManager.isGamePaused = capi.IsGamePaused;
 
-            audioOutputManager.SetListenerPosition(capi.World.Player.Entity.Pos.XYZ);
+            audioOutputManager.SetListenerPosition(capi.World.Player.Entity.Pos);
 
             List<IPlayer> nearPlayers = new List<IPlayer>();
 
 
             foreach (var player in capi.World.AllOnlinePlayers)
             {
-#if !DEBUG
+
                 // Ignore self
                 if (player.PlayerUID == capi.World.Player.PlayerUID)
                     continue;
-#endif
+
                 // Update player audio source
-                audioOutputManager.UpdatePlayerSource(player);
+                Task.Run(() => audioOutputManager.UpdatePlayerSource(player));
                 
                 // Ignore players too far away
                 if (player.Entity.Pos.DistanceTo(capi.World.Player.Entity.Pos) > ((int)VoiceLevel.Shouting + 10))
