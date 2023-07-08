@@ -88,6 +88,7 @@
     <Compile Include="src\Utils\ConnectionInfo.cs" />
     <Compile Include="src\Utils\Enums\ActivationMode.cs" />
     <Compile Include="src\Utils\Enums\VoiceLevel.cs" />
+    <Compile Include="src\Utils\LocationUtils.cs" />
     <Compile Include="src\Utils\ModConfig.cs" />
     <Compile Include="src\Utils\PlayerAudioSource.cs" />
     <Compile Include="src\Utils\PlayerListener.cs" />

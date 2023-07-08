@@ -10,6 +10,7 @@ using System.Net.Sockets;
 using System.Threading;
 using Vintagestory.API.Common.Entities;
 using System.Collections.Concurrent;
+using rpvoicechat.src.Utils;
 
 namespace rpvoicechat
 {
@@ -51,7 +52,7 @@ namespace rpvoicechat
         
         public void AddPlayer(IPlayer player)
         {
-            var playerAudioSource = new PlayerAudioSource(player.Entity.Pos.XYZ);
+            var playerAudioSource = new PlayerAudioSource(LocationUtils.GetLocationOfPlayer(player));
             _playerSources[player.PlayerUID] = playerAudioSource;
             _mixer.AddMixerInput(playerAudioSource.Buffer.ToSampleProvider());
             _mixer.AddMixerInput(playerAudioSource.ReverbBuffer.ToSampleProvider());
@@ -84,7 +85,7 @@ namespace rpvoicechat
             if (_playerSources.TryGetValue(player.PlayerUID, out PlayerAudioSource source))
             {
                 // Set the position
-                source.Position = player.Entity.Pos.XYZ;
+                source.Position = LocationUtils.GetLocationOfPlayer(player);
 
                 // Set if is locational
                 source.IsLocational = !(source.Position == _listenerPos.XYZ || player.PlayerUID == capi.World.Player.PlayerUID || source.Position == null);
@@ -92,12 +93,12 @@ namespace rpvoicechat
                 // Set muffled state
                 BlockSelection blockSelection = new BlockSelection();
                 EntitySelection entitySelection = new EntitySelection();
-                capi.World.RayTraceForSelection(player.Entity.Pos.XYZ, capi.World.Player.Entity.Pos.XYZ, ref blockSelection, ref entitySelection);
+                capi.World.RayTraceForSelection(source.Position, LocationUtils.GetLocationOfPlayer(capi), ref blockSelection, ref entitySelection);
 
                 source.IsMuffled = (blockSelection != null);
 
                 // Set reverberated state
-                Room room = capi.ModLoader.GetModSystem<RoomRegistry>().GetRoomForPosition(new BlockPos().Set(player.Entity.Pos.XYZ));
+                Room room = capi.ModLoader.GetModSystem<RoomRegistry>().GetRoomForPosition(new BlockPos().Set(source.Position));
                 source.IsReverberated = (room.SkylightCount < room.NonSkylightCount) && (room.Location.Volume > 60);
 
             }
