@@ -20,7 +20,6 @@ namespace rpvoicechat
         public RPVoiceChatSocketServer(ICoreServerAPI sapi)
         {
             this.sapi = sapi;
-            config.EnableUPnP = true;
             config.EnableMessageType(NetIncomingMessageType.NatIntroductionSuccess);
             config.EnableMessageType(NetIncomingMessageType.DiscoveryRequest);
             config.EnableMessageType(NetIncomingMessageType.DiscoveryResponse);
@@ -31,6 +30,7 @@ namespace rpvoicechat
             config.UseMessageRecycling = true;
             config.AcceptIncomingConnections = true;
             config.Port = port;
+            config.EnableUPnP = true;
 
 
             server = new NetServer(config);
@@ -55,8 +55,6 @@ namespace rpvoicechat
 
         private void RPVoiceChatSocketServer_OnConnectionApprovalMessage(object sender, NetIncomingMessage e)
         {
-            sapi?.Logger.Notification("[RPVoiceChat - Server] Connection from: " + e.SenderEndPoint.Address.ToString());
-
             string[] msgString = e.ReadString().Split(' ');
             string msgKey = msgString[0];
             string msgUID = msgString[1];

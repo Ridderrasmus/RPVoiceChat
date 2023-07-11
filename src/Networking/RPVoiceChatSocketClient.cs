@@ -23,6 +23,8 @@ namespace rpvoicechat
         {
             this.capi = capi;
 
+            config.Port = 0;
+
             client = new NetClient(config);
 
             port = client.Port;

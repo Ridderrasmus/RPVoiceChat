@@ -77,11 +77,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="assets\rpvoicechat\textures\gui\harmonica.png" />
+    <Content Include="assets\rpvoicechat\textures\gui\trumpet.png" />
     <Content Include="modinfo.json" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="src\Audio\AudioOutputManager.cs" />
     <Compile Include="src\Gui\ConfigDialog.cs" />
+    <Compile Include="src\Gui\HudIcon.cs" />
     <Compile Include="src\RPVoiceChatServer.cs" />
     <Compile Include="src\RPVoiceChatClient.cs" />
     <Compile Include="src\Utils\AudioPacket.cs" />
@@ -105,7 +108,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="assets\" />
     <Folder Include="libs\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

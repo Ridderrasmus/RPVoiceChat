@@ -6,11 +6,10 @@ using NAudio.Wave.SampleProviders;
 using Vintagestory.API.Common;
 using Vintagestory.GameContent;
 using System.Threading.Tasks;
-using System.Net.Sockets;
-using System.Threading;
 using Vintagestory.API.Common.Entities;
 using System.Collections.Concurrent;
 using rpvoicechat.src.Utils;
+using Vintagestory.API.Util;
 
 namespace rpvoicechat
 {
@@ -30,6 +29,9 @@ namespace rpvoicechat
             capi = api;
             _mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(AudioUtils.sampleRate, 2));
             _mixer.ReadFully = true;
+
+            waveOut = CreateNewWaveOut(0);
+            
             waveOut = new WaveOut();
             waveOut.Init(_mixer);
             waveOut.Play();
@@ -71,7 +73,7 @@ namespace rpvoicechat
         // Updated every 20 milliseconds per player
         public async Task UpdatePlayerSource(IPlayer player)
         {
-            if (player.Entity.Pos.DistanceTo(_listenerPos) > ((float)VoiceLevel.Shouting + 10))
+            if (player.Entity.Pos.DistanceTo(_listenerPos) > GetVoiceDistance(VoiceLevel.Shouting) + 10)
             {
                 RemovePlayer(player);
                 return;
@@ -130,7 +132,7 @@ namespace rpvoicechat
                     // Otherwise, we just need to make it stereo
                     if (source.IsLocational)
                     {
-                        audioData = AudioUtils.VolumeBasedOnDistance(audioData, _listenerPos.DistanceTo(source.Position), packet.voiceLevel);
+                        audioData = AudioUtils.VolumeBasedOnDistance(audioData, _listenerPos.DistanceTo(source.Position), GetVoiceDistance(packet.voiceLevel));
                         audioData = AudioUtils.MakeStereoFromMono(audioData, _listenerPos, source.Position);
                     }
                     else
@@ -175,6 +177,81 @@ namespace rpvoicechat
                 source.Buffer.ClearBuffer();
             }
         }
+
+        public WaveOutCapabilities CycleOutputDevice()
+        {
+            int deviceCount = WaveOut.DeviceCount;
+            int currentDevice = waveOut.DeviceNumber;
+            int nextDevice = currentDevice + 1;
+
+            if (nextDevice >= deviceCount)
+            {
+                nextDevice = 0;
+            }
+
+            waveOut = CreateNewWaveOut(nextDevice);
+
+            return WaveOut.GetCapabilities(nextDevice);
+        }
+
+        public string[] GetInputDeviceIds()
+        {
+            string[] deviceIds = new string[WaveOut.DeviceCount];
+            for (int i = 0; i < WaveOut.DeviceCount; i++)
+            {
+                deviceIds[i] = i.ToString();
+            }
+            return deviceIds;
+        }
+
+        public string[] GetInputDeviceNames()
+        {
+            List<string> deviceNames = new List<string>();
+            for (int i = 0; i < WaveOut.DeviceCount; i++)
+            {
+                deviceNames.Add(WaveOut.GetCapabilities(i).ProductName);
+            }
+            return deviceNames.ToArray();
+        }
+
+
+        public WaveOut CreateNewWaveOut(int deviceIndex)
+        {
+            if (waveOut?.PlaybackState == PlaybackState.Playing)
+            {
+                waveOut.Stop();
+            }
+            waveOut?.Dispose();
+
+            waveOut = new WaveOut();
+            waveOut.DeviceNumber = deviceIndex;
+            waveOut.Init(_mixer);
+            waveOut.Play();
+
+            return waveOut;
+        }
+
+        public void SetOutputDevice(string deviceId)
+        {
+            int device = deviceId.ToInt(0);
+            waveOut = CreateNewWaveOut(device);
+        }
+
+        private int GetVoiceDistance(VoiceLevel voiceLevel)
+        {
+            switch (voiceLevel)
+            {
+                case VoiceLevel.Whispering:
+                    return capi.World.Config.GetInt("rpvoicechat:distance-whisper", 5);
+                case VoiceLevel.Normal:
+                    return capi.World.Config.GetInt("rpvoicechat:distance-talk", 15);
+                case VoiceLevel.Shouting:
+                    return capi.World.Config.GetInt("rpvoicechat:distance-shout", 25);
+                default:
+                    return 15;
+            }
+        }
+
     }
 }
 

@@ -16,13 +16,17 @@ namespace rpvoicechat.src
             base.StartServerSide(sapi);
             sapi.Event.PlayerNowPlaying += OnPlayerPlaying;
 
-            server = new RPVoiceChatSocketServer(sapi);
-
+            sapi.World.Config.SetInt("rpvoicechat:distance-whisper", sapi.World.Config.GetInt("rpvoicechat:distance-whisper", 5));
+            sapi.World.Config.SetInt("rpvoicechat:distance-talk", sapi.World.Config.GetInt("rpvoicechat:distance-talk", 15));
+            sapi.World.Config.SetInt("rpvoicechat:distance-shout", sapi.World.Config.GetInt("rpvoicechat:distance-shout", 25));
         }
 
         private void OnPlayerPlaying(IServerPlayer byPlayer)
         {
-            while (server == null) { }
+            if (server == null)
+            {
+                server = new RPVoiceChatSocketServer(sapi);
+            }
 
             string address = server.GetPublicIPAddress();
             int port = server.GetPort();
