@@ -99,9 +99,10 @@
     <Compile Include="src\Utils\Enums\ActivationMode.cs" />
     <Compile Include="src\Utils\Enums\VoiceLevel.cs" />
     <Compile Include="src\Utils\LocationUtils.cs" />
-    <Compile Include="src\Utils\ModConfig.cs" />
+    <Compile Include="src\Config\ModConfig.cs" />
     <Compile Include="src\Utils\PlayerAudioSource.cs" />
     <Compile Include="src\Utils\PlayerListener.cs" />
+    <Compile Include="src\Config\RPVoiceChatConfig.cs" />
     <Compile Include="src\Utils\WaveFormatMono.cs" />
     <Compile Include="src\Utils\AudioUtils.cs" />
     <Compile Include="src\Audio\MicrophoneManager.cs" />

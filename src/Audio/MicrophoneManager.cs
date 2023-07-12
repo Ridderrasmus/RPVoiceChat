@@ -22,14 +22,13 @@ namespace rpvoicechat
 
         WaveInEvent capture;
 
+        RPVoiceChatConfig _config;
+
         private VoiceLevel voiceLevel = VoiceLevel.Normal;
         public bool isTalking = false;
         public bool isGamePaused = false;
         public bool canSwitchDevice = true;
-        public bool isMuted = false;
         public bool keyDownPTT = false;
-        public bool pushToTalkEnabled = false;
-        public int inputThreshold = 40;
         public bool playersNearby = false;
 
         private bool isRecording = false;
@@ -44,7 +43,8 @@ namespace rpvoicechat
         public MicrophoneManager(ICoreClientAPI capi)
         {
             this.capi = capi;
-            capture = CreateNewCapture(0);
+            _config = ModConfig.config;
+            capture = CreateNewCapture(_config.CurrentInputDevice);
         }
 
         private void OnAudioRecorded(object sender, WaveInEventArgs e)
@@ -52,6 +52,10 @@ namespace rpvoicechat
             int validBytes = e.BytesRecorded;
             byte[] buffer = new byte[validBytes];
             Array.Copy(e.Buffer, buffer, validBytes);
+
+            bool pushToTalkEnabled = _config.PushToTalkEnabled;
+            bool isMuted = _config.IsMuted;
+            int inputThreshold = _config.InputThreshold;
 
 
             // If player is in the pause menu, return
@@ -188,6 +192,8 @@ namespace rpvoicechat
             WaveFormat customWaveFormat = new WaveFormatMono();
 
             WaveInEvent newCapture = new WaveInEvent();
+            _config.CurrentInputDevice = deviceIndex;
+            ModConfig.Save(capi);
             newCapture.DeviceNumber = deviceIndex;
             newCapture.WaveFormat = customWaveFormat;
             newCapture.BufferMilliseconds = 20;

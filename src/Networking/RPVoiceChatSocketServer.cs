@@ -20,6 +20,19 @@ namespace rpvoicechat
         public RPVoiceChatSocketServer(ICoreServerAPI sapi)
         {
             this.sapi = sapi;
+            BootVoiceServer();
+        }
+
+
+        public RPVoiceChatSocketServer(ICoreServerAPI sapi, int serverPort)
+        {
+            this.sapi = sapi;
+            this.port = serverPort;
+            BootVoiceServer();
+        }
+
+        private void BootVoiceServer()
+        {
             config.EnableMessageType(NetIncomingMessageType.NatIntroductionSuccess);
             config.EnableMessageType(NetIncomingMessageType.DiscoveryRequest);
             config.EnableMessageType(NetIncomingMessageType.DiscoveryResponse);
@@ -84,6 +97,25 @@ namespace rpvoicechat
 
         public void SendAudioToAllClientsInRange(AudioPacket packet)
         {
+            string key;
+            switch(packet.voiceLevel)
+            {
+                case VoiceLevel.Whispering:
+                    key = "rpvoicechat:distance-whisper";
+                    break;
+                case VoiceLevel.Normal:
+                    key = "rpvoicechat:distance-talk";
+                    break;
+                case VoiceLevel.Shouting:
+                    key = "rpvoicechat:distance-shout";
+                    break;
+                default:
+                    key = "rpvoicechat:distance-talk";
+                    break;
+            }
+
+            int distance = sapi.World.Config.GetInt(key);
+
             foreach (var connection in connections)
             {
 
@@ -91,8 +123,9 @@ namespace rpvoicechat
                     continue;
 
                 // If the player is too far away, don't send the packet
-                if (sapi.World.PlayerByUid(connection.Key).Entity.Pos.DistanceTo(sapi.World.PlayerByUid(packet.PlayerId).Entity.Pos.XYZ) > (int)packet.voiceLevel)
+                if (sapi.World.PlayerByUid(connection.Key).Entity.Pos.DistanceTo(sapi.World.PlayerByUid(packet.PlayerId).Entity.Pos.XYZ) > distance)
                     continue;
+
                 SendAudioToClient(packet, connection.Value);
             }
         }

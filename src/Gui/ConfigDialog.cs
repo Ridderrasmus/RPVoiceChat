@@ -15,6 +15,8 @@ namespace rpvoicechat
 
         protected List<ConfigOption> ConfigOptions = new List<ConfigOption>();
 
+        
+
         public MicrophoneManager _audioInputManager;
         public AudioOutputManager _audioOutputManager;
 
@@ -91,7 +93,7 @@ namespace rpvoicechat
                 else if (option.DropdownKey != null)
                 {
                     switchBounds.fixedWidth = 200;
-                    composer.AddDropDown(option.DropdownValues, option.DropdownNames, 0, option.DropdownSelect, switchBounds);
+                    composer.AddDropDown(option.DropdownValues, option.DropdownNames, 0, option.DropdownSelect, switchBounds, option.DropdownKey);
                 }
 
                 textBounds = textBounds.BelowCopy(fixedDeltaY: switchPadding);
@@ -131,9 +133,11 @@ namespace rpvoicechat
 
     public class MainConfig : ConfigDialog
     {
+        RPVoiceChatConfig _config;
+
         public MainConfig(ICoreClientAPI capi, MicrophoneManager audioInputManager, AudioOutputManager audioOutputManager) : base(capi)
         {
-
+            _config = ModConfig.config;
             _audioInputManager = audioInputManager;
             _audioOutputManager = audioOutputManager;
 
@@ -188,10 +192,11 @@ namespace rpvoicechat
             if (!IsOpened())
                 return;
 
-            SingleComposer.GetSwitch("togglePushToTalk").On = _audioInputManager.pushToTalkEnabled;
-            SingleComposer.GetSwitch("muteMicrophone").On = _audioInputManager.isMuted;
-            SingleComposer.GetSlider("inputThreshold").SetValues(_audioInputManager.inputThreshold, 0, 100, 1);
-            //SingleComposer.GetDropDown("inputDevice").SetSelectedIndex((RPModSettings.CurrentInputDevice).ToInt(0));
+            SingleComposer.GetSwitch("togglePushToTalk").On = _config.PushToTalkEnabled;
+            SingleComposer.GetSwitch("muteMicrophone").On = _config.IsMuted;
+            SingleComposer.GetSlider("inputThreshold").SetValues(_config.InputThreshold, 0, 100, 1);
+            SingleComposer.GetDropDown("inputDevice").SetSelectedIndex(_config.CurrentInputDevice);
+            SingleComposer.GetDropDown("outputDevice").SetSelectedIndex(_config.CurrentOutputDevice);
         }
 
         private void changeOutputDevice(string index, bool selected)
@@ -201,26 +206,27 @@ namespace rpvoicechat
 
         private void changeInputDevice(string deviceId, bool selected)
         {
-            _audioInputManager.CurrentInputDevice = deviceId;
             _audioInputManager.SetInputDevice(deviceId);
         }
 
         private bool slideInputThreshold(int threshold)
         {
-            _audioInputManager.inputThreshold = threshold;
-
+            _config.InputThreshold = threshold;
+            ModConfig.Save(capi);
 
             return true;
         }
 
         private void toggleMuted(bool enabled)
         {
-            _audioInputManager.isMuted = enabled;
+            _config.IsMuted = enabled;
+            ModConfig.Save(capi);
         }
 
         private void togglePushToTalk(bool enabled)
         {
-            _audioInputManager.pushToTalkEnabled = enabled;
+            _config.PushToTalkEnabled = enabled;
+            ModConfig.Save(capi);
         }
     }
 }

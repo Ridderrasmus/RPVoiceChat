@@ -19,6 +19,7 @@ namespace rpvoicechat
         EntityPos _listenerPos;
         MixingSampleProvider _mixer;
         WaveOut waveOut;
+        RPVoiceChatConfig _config;
 
 
 
@@ -27,10 +28,12 @@ namespace rpvoicechat
         public AudioOutputManager(ICoreClientAPI api)
         {
             capi = api;
+            _config = ModConfig.config;
+
             _mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(AudioUtils.sampleRate, 2));
             _mixer.ReadFully = true;
 
-            waveOut = CreateNewWaveOut(0);
+            waveOut = CreateNewWaveOut(_config.CurrentOutputDevice);
             
             waveOut = new WaveOut();
             waveOut.Init(_mixer);
@@ -224,6 +227,8 @@ namespace rpvoicechat
             waveOut?.Dispose();
 
             waveOut = new WaveOut();
+            _config.CurrentOutputDevice = deviceIndex;
+            ModConfig.Save(capi);
             waveOut.DeviceNumber = deviceIndex;
             waveOut.Init(_mixer);
             waveOut.Play();
