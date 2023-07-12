@@ -18,7 +18,7 @@ namespace rpvoicechat
 
         public override void StartClientSide(ICoreClientAPI api)
         {
-            this.capi = api;
+            capi = api;
             base.StartClientSide(capi);
 
             // Init microphone and audio output manager
@@ -44,11 +44,11 @@ namespace rpvoicechat
             capi.Event.PauseResume += OnPauseResume;
 
             // Initialize gui
-            MainConfig configGui = new MainConfig(capi, micManager);
+            MainConfig configGui = new MainConfig(capi, micManager, audioOutputManager);
+            api.Gui.RegisterDialog(new HudIcon(capi, micManager));
 
             // Set up keybinds
             capi.Input.RegisterHotKey("voicechatMenu", "RPVoice: Config menu", GlKeys.P, HotkeyType.GUIOrOtherControls);
-            capi.Input.RegisterHotKey("voicechatCycleDevice", "RPVoice: Switch input device", GlKeys.N, HotkeyType.GUIOrOtherControls, true);
             capi.Input.RegisterHotKey("voicechatVoiceLevel", "RPVoice: Change voice volume", GlKeys.Tab, HotkeyType.GUIOrOtherControls, false, false, true);
             capi.Input.RegisterHotKey("voicechatPTT", "RPVoice: Push to talk", GlKeys.CapsLock, HotkeyType.GUIOrOtherControls);
 
@@ -59,13 +59,6 @@ namespace rpvoicechat
                 return true;
             });
             
-            capi.Input.SetHotKeyHandler("voicechatCycleDevice", (t1) =>
-            {
-                var mic = micManager.CycleInputDevice();
-                capi.ShowChatMessage("RPVoice: Input device set to " + mic.ProductName);
-                return true;
-            });
-
             capi.Input.SetHotKeyHandler("voicechatVoiceLevel", (t1) =>
             {
                 var level = micManager.CycleVoiceLevel();

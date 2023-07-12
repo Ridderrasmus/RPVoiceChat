@@ -23,6 +23,7 @@ namespace rpvoicechat
         WaveInEvent capture;
 
         private VoiceLevel voiceLevel = VoiceLevel.Normal;
+        public bool isTalking = false;
         public bool isGamePaused = false;
         public bool canSwitchDevice = true;
         public bool isMuted = false;
@@ -55,25 +56,47 @@ namespace rpvoicechat
 
             // If player is in the pause menu, return
             if (capi.IsGamePaused)
+            {
+                isTalking = false;
                 return;
+            }
             
             if (capi.World == null)
+            {
+                isTalking = false;
                 return;
+            }
 
             if (capi.World.Player == null)
+            {
+                isTalking = false;
                 return;
+            }
 
             if (capi.World.Player.Entity == null)
+            {
+                isTalking = false;
                 return;
+            }
 
             if (!capi.World.Player.Entity.Alive || capi.World.Player.Entity.AnimManager.IsAnimationActive("sleep"))
+            {
+                isTalking = false;
                 return;
+            }
 
             if (isMuted)
+            {
+                isTalking = false;
                 return;
+            }
+
             keyDownPTT = capi.Input.KeyboardKeyState[capi.Input.GetHotKeyByCode("voicechatPTT").CurrentMapping.KeyCode];
             if (pushToTalkEnabled && !keyDownPTT)
+            {
+                isTalking = false;
                 return;
+            }
 
             // Get the amplitude of the audio
             int amplitude = AudioUtils.CalculateAmplitude(buffer, validBytes);
@@ -87,6 +110,7 @@ namespace rpvoicechat
                 }
                 else
                 {
+                    isTalking = false;
                     return;
                 }
             }
@@ -95,8 +119,12 @@ namespace rpvoicechat
                 ignoreThresholdCounter = ignoreThresholdLimit; // Reset the counter when amplitude is above the threshold
             }
 
+            isTalking = true;
+            
             if (!playersNearby)
+            {
                 return;
+            }
 
             buffer = AudioUtils.HandleAudioPeaking(buffer);
             OnBufferRecorded?.Invoke(buffer, voiceLevel);
@@ -225,7 +253,7 @@ namespace rpvoicechat
             return deviceIds;
         }
 
-        internal void SetInputDevice(string deviceId)
+        public void SetInputDevice(string deviceId)
         {
             int device = deviceId.ToInt(0);
             capture = CreateNewCapture(device);

@@ -21,8 +21,14 @@ namespace rpvoicechat
         public override void Start(ICoreAPI api)
         {
             base.Start(api);
+            
+            // Register network channel
             networkChannel = api.Network.RegisterChannel("rpvoicechat")
                 .RegisterMessageType(typeof(ConnectionInfo));
+
+            // Register hud assets
+            
+
         }
     }
 }

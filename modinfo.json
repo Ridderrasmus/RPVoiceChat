@@ -2,7 +2,7 @@
   "type": "code",
   "modid": "rpvoicechat",
   "name": "RP Voice Chat",
-  "authors": ["Ridderrasmus"],
+  "authors": ["Ridderrasmus", "Purplep_"],
   "description": "A mod that adds in game voice proximity chat!",
-  "version": "1.0.0"
+  "version": "1.0.2"
 }

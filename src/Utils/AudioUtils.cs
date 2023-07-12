@@ -160,7 +160,7 @@ namespace rpvoicechat
         }
 
             // Change the volume of the audio data based on the distance
-            public static byte[] VolumeBasedOnDistance(byte[] audioData, double distance, VoiceLevel voiceLevel)
+            public static byte[] VolumeBasedOnDistance(byte[] audioData, double distance, int voiceLevel)
         {
             short[] audioSamples = new short[audioData.Length / 2];
             Buffer.BlockCopy(audioData, 0, audioSamples, 0, audioData.Length);

@@ -16,6 +16,7 @@ namespace rpvoicechat
         protected List<ConfigOption> ConfigOptions = new List<ConfigOption>();
 
         public MicrophoneManager _audioInputManager;
+        public AudioOutputManager _audioOutputManager;
 
         public class ConfigOption
         {
@@ -59,13 +60,13 @@ namespace rpvoicechat
             const double sliderWidth = 200.0;
             var font = CairoFont.WhiteSmallText();
 
-            var switchBounds = ElementBounds.Fixed(250, GuiStyle.TitleBarHeight, switchSize, switchSize);
-            var textBounds = ElementBounds.Fixed(0, GuiStyle.TitleBarHeight, 110, switchSize);
+            var switchBounds = ElementBounds.Fixed(250, GuiStyle.TitleBarHeight, 300, switchSize);
+            var textBounds = ElementBounds.Fixed(0, GuiStyle.TitleBarHeight, 210, switchSize);
 
             var bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
             bgBounds.BothSizing = ElementSizing.FitToChildren;
 
-            var composer = capi.Gui.CreateCompo("rphudmenu", dialogBounds)
+            var composer = capi.Gui.CreateCompo("rpvcconfigmenu", dialogBounds)
                 .AddShadedDialogBG(bgBounds)
                 .AddDialogTitleBar("RP VC Config Menu", OnTitleBarCloseClicked)
                 .BeginChildElements(bgBounds);
@@ -89,7 +90,8 @@ namespace rpvoicechat
                 }
                 else if (option.DropdownKey != null)
                 {
-                    composer.AddDropDown(option.DropdownValues, option.DropdownNames, 0, option.DropdownSelect, textBounds);
+                    switchBounds.fixedWidth = 200;
+                    composer.AddDropDown(option.DropdownValues, option.DropdownNames, 0, option.DropdownSelect, switchBounds);
                 }
 
                 textBounds = textBounds.BelowCopy(fixedDeltaY: switchPadding);
@@ -129,10 +131,33 @@ namespace rpvoicechat
 
     public class MainConfig : ConfigDialog
     {
-        public MainConfig(ICoreClientAPI capi, MicrophoneManager audioInputManager) : base(capi)
+        public MainConfig(ICoreClientAPI capi, MicrophoneManager audioInputManager, AudioOutputManager audioOutputManager) : base(capi)
         {
 
             _audioInputManager = audioInputManager;
+            _audioOutputManager = audioOutputManager;
+
+
+            RegisterOption(new ConfigOption
+            {
+                Text = "Input Device",
+                DropdownKey = "inputDevice",
+                Tooltip = "Input device",
+                DropdownNames = _audioInputManager.GetInputDeviceNames(),
+                DropdownValues = _audioInputManager.GetInputDeviceIds(),
+                DropdownSelect = changeInputDevice
+            });
+
+            RegisterOption(new ConfigOption
+            {
+                Text = "Output Device",
+                DropdownKey = "outputDevice",
+                Tooltip = "Output device",
+                DropdownNames = _audioOutputManager.GetInputDeviceNames(),
+                DropdownValues = _audioOutputManager.GetInputDeviceIds(),
+                DropdownSelect = changeOutputDevice
+            });
+
             RegisterOption(new ConfigOption
             {
                 Text = "Push To Talk",
@@ -156,16 +181,6 @@ namespace rpvoicechat
                 Tooltip = "At which threshold your audio starts transmitting",
                 SlideAction = slideInputThreshold
             });
-
-            /*RegisterOption(new ConfigOption
-            {
-                Text = "Input Device",
-                DropdownKey = "inputDevice",
-                Tooltip = "Input device",
-                DropdownNames = _audioInputManager.GetInputDeviceNames(),
-                DropdownValues = _audioInputManager.GetInputDeviceIds(),
-                DropdownSelect = changeInputDevice
-            });*/
         }
 
         protected override void RefreshValues()
@@ -177,6 +192,11 @@ namespace rpvoicechat
             SingleComposer.GetSwitch("muteMicrophone").On = _audioInputManager.isMuted;
             SingleComposer.GetSlider("inputThreshold").SetValues(_audioInputManager.inputThreshold, 0, 100, 1);
             //SingleComposer.GetDropDown("inputDevice").SetSelectedIndex((RPModSettings.CurrentInputDevice).ToInt(0));
+        }
+
+        private void changeOutputDevice(string index, bool selected)
+        {
+            _audioOutputManager.SetOutputDevice(index);
         }
 
         private void changeInputDevice(string deviceId, bool selected)
