@@ -77,8 +77,15 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="assets\rpvoicechat\textures\gui\accordion.png" />
+    <Content Include="assets\rpvoicechat\textures\gui\altoflute.png" />
+    <Content Include="assets\rpvoicechat\textures\gui\clarinet.png" />
     <Content Include="assets\rpvoicechat\textures\gui\harmonica.png" />
+    <Content Include="assets\rpvoicechat\textures\gui\muted.png" />
+    <Content Include="assets\rpvoicechat\textures\gui\oboe.png" />
+    <Content Include="assets\rpvoicechat\textures\gui\sax.png" />
     <Content Include="assets\rpvoicechat\textures\gui\trumpet.png" />
+    <Content Include="assets\rpvoicechat\textures\gui\tuba.png" />
     <Content Include="modinfo.json" />
   </ItemGroup>
   <ItemGroup>
