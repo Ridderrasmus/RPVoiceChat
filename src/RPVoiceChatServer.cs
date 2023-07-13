@@ -1,12 +1,11 @@
-﻿using ProperVersion;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Vintagestory.API.Common;
+﻿using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;
 using Vintagestory.API.Server;
+
+[assembly: ModInfo( "rpvoicechat",
+Description = "",
+Website     = "",
+Authors     = new []{ "Ridderrasmus", "Purplep_" } )]
 
 namespace rpvoicechat.src
 {

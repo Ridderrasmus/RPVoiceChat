@@ -1,5 +1,4 @@
 ﻿using NAudio.Wave;
-using System.ComponentModel;
 
 namespace rpvoicechat
 {

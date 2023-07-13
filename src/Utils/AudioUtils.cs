@@ -1,11 +1,6 @@
 ﻿using NAudio.Dsp;
-using NAudio.Wave;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Windows.Forms;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
 

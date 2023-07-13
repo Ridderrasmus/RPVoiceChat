@@ -1,6 +1,4 @@
-﻿using System;
-using System.Net;
-using Vintagestory.API.Client;
+﻿using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
 namespace rpvoicechat

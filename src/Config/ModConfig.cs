@@ -1,5 +1,4 @@
 ﻿using Vintagestory.API.Common;
-using Vintagestory.ServerMods;
 
 namespace rpvoicechat
 {

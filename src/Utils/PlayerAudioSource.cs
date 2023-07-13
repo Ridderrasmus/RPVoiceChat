@@ -1,8 +1,6 @@
 ﻿using NAudio.Wave;
-using OpenTK.Graphics.OpenGL;
 using rpvoicechat;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using Vintagestory.API.MathTools;
 
 public class PlayerAudioSource

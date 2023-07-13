@@ -1,19 +1,12 @@
-﻿using NAudio.CoreAudioApi;
-using NAudio.Wave;
+﻿using NAudio.Wave;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using Vintagestory.API.Client;
-using Vintagestory.API.Common;
-using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 
 namespace rpvoicechat
 {
-    
+
 
 
     public class MicrophoneManager
