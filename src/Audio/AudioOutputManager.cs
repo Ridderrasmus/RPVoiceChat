@@ -76,9 +76,10 @@ namespace rpvoicechat
         // Updated every 20 milliseconds per player
         public async Task UpdatePlayerSource(IPlayer player)
         {
-            if (player.Entity.Pos.DistanceTo(_listenerPos) > GetVoiceDistance(VoiceLevel.Shouting) + 10)
+            if (player.Entity == null || player.Entity.Pos.DistanceTo(_listenerPos) > GetVoiceDistance(VoiceLevel.Shouting) + 10)
             {
-                RemovePlayer(player);
+                if (_playerSources.ContainsKey(player.PlayerUID))
+                    RemovePlayer(player);
                 return;
             }
             else if (!_playerSources.ContainsKey(player.PlayerUID))

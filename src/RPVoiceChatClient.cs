@@ -33,10 +33,7 @@ namespace rpvoicechat
             // Set up clientside handling of game network
             capi.Network.GetChannel("rpvoicechat").SetMessageHandler<ConnectionInfo>(OnConnectionInfo);
 
-            // Set up game events
-            capi.Event.RegisterGameTickListener(OnGameTick, 20);
-            capi.Event.LeftWorld += OnPlayerLeaving;
-            capi.Event.PauseResume += OnPauseResume;
+            
 
             // Initialize gui
             MainConfig configGui = new MainConfig(capi, micManager, audioOutputManager);
@@ -72,7 +69,11 @@ namespace rpvoicechat
         private void VoiceClientConnected(object sender, EventArgs e)
         {
             capi.Logger.Debug("[RPVoiceChat - Client] Voice client connected");
-            
+
+            // Set up game events
+            capi.Event.RegisterGameTickListener(OnGameTick, 20);
+            capi.Event.LeftWorld += OnPlayerLeaving;
+            capi.Event.PauseResume += OnPauseResume;
 
             micManager.OnBufferRecorded += (buffer, voiceLevel) =>
             {
@@ -109,12 +110,15 @@ namespace rpvoicechat
                 // Update player audio source
                 Task.Run(() => audioOutputManager.UpdatePlayerSource(player));
                 
-                // Ignore players too far away
-                if (player.Entity.Pos.DistanceTo(capi.World.Player.Entity.Pos) > ((int)VoiceLevel.Shouting + 10))
+                // Player is not loaded in clientside
+                if (player.Entity == null)
                     continue;
 
-                // Add player to list of players nearby
-                nearPlayers.Add(player);
+                // If player is nearby then add to list of players nearby
+                if (player.Entity.Pos.DistanceTo(capi.World.Player.Entity.Pos) < ((int)VoiceLevel.Shouting + 10))
+                    nearPlayers.Add(player);
+                
+
             }
 
             // Determine if players are nearby which determines if we should be transmitting audio
