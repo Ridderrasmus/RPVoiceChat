@@ -96,8 +96,7 @@ namespace rpvoicechat
 
             audioOutputManager.SetListenerPosition(capi.World.Player.Entity.Pos);
 
-            List<IPlayer> nearPlayers = new List<IPlayer>();
-
+            bool playerNearby = false;
 
             foreach (var player in capi.World.AllOnlinePlayers)
             {
@@ -108,21 +107,16 @@ namespace rpvoicechat
 
                 // Update player audio source
                 Task.Run(() => audioOutputManager.UpdatePlayerSource(player));
-                
+
                 // Ignore players too far away
-                if (player.Entity.Pos.DistanceTo(capi.World.Player.Entity.Pos) > ((int)VoiceLevel.Shouting + 10))
+                if (player.Entity.Pos.SquareDistanceTo(capi.World.Player.Entity.Pos) > ((int)VoiceLevel.SqrShouting + 100/*because 10^2=100*/))
                     continue;
 
-                // Add player to list of players nearby
-                nearPlayers.Add(player);
+                playerNearby = true;
             }
 
             // Determine if players are nearby which determines if we should be transmitting audio
-            if (nearPlayers.Count > 0)
-                micManager.playersNearby = true;
-            else
-                micManager.playersNearby = false;
-
+            micManager.playersNearby = playerNearby;
 
             audioOutputManager.PlayAudio();
         }

@@ -6,9 +6,6 @@ using Vintagestory.API.Util;
 
 namespace rpvoicechat
 {
-
-
-
     public class MicrophoneManager
     {
         ICoreClientAPI capi;
