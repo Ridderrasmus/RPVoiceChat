@@ -2,7 +2,6 @@ bin
 obj
 releases
 .vs
-Properties
 LICENSE
 modtools.command
 modtools.temp
