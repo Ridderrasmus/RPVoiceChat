@@ -1,8 +1,10 @@
-﻿using System;
+﻿using NAudio.MediaFoundation;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 
 namespace rpvoicechat
 {
@@ -15,6 +17,10 @@ namespace rpvoicechat
         {
             capi = api;
             base.StartClientSide(capi);
+
+            // For now we say screw Mac and Linux users because I'm a rude and mean guy
+            if (RuntimeEnv.OS != OS.Windows)
+                return;
 
             // Init microphone and audio output manager
             micManager = new MicrophoneManager(capi);
