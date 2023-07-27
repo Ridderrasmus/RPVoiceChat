@@ -43,6 +43,7 @@ namespace rpvoicechat
             capi.Input.RegisterHotKey("voicechatMenu", "RPVoice: Config menu", GlKeys.P, HotkeyType.GUIOrOtherControls);
             capi.Input.RegisterHotKey("voicechatVoiceLevel", "RPVoice: Change voice volume", GlKeys.Tab, HotkeyType.GUIOrOtherControls, false, false, true);
             capi.Input.RegisterHotKey("voicechatPTT", "RPVoice: Push to talk", GlKeys.CapsLock, HotkeyType.GUIOrOtherControls);
+            capi.Input.RegisterHotKey("voicechatMute", "RPVoice: Toggle mute", GlKeys.N, HotkeyType.GUIOrOtherControls);
 
             // Set up keybind event handlers
             capi.Input.SetHotKeyHandler("voicechatMenu", (t1) => 
@@ -55,6 +56,13 @@ namespace rpvoicechat
             {
                 var level = micManager.CycleVoiceLevel();
                 capi.ShowChatMessage("RPVoice: Voice level set to " + level.ToString());
+                return true;
+            });
+
+            capi.Input.SetHotKeyHandler("voicechatMute", (t1) =>
+            {
+                config.IsMuted = !config.IsMuted;
+                ModConfig.Save(capi);
                 return true;
             });
 
