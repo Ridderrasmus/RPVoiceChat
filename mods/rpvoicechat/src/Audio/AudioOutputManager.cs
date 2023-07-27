@@ -116,11 +116,8 @@ namespace rpvoicechat
             foreach (var source in _playerSources.Values)
             {
 
-                while (source.AudioQueue.Count > 0)
+                while (source.AudioQueue.TryDequeue(out AudioPacket packet))
                 {
-                    if (!source.AudioQueue.TryDequeue(out AudioPacket packet))
-                        continue;
-
                     var audioData = packet.AudioData;
 
                     // If the audio is muffled, we need to apply the muffling effect
