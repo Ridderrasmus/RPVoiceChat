@@ -2,9 +2,9 @@
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <StartAction>Program</StartAction>
-    <StartProgram>D:\Games\Vintagestory\Vintagestory.exe</StartProgram>
+    <StartProgram>C:\Users\jcope\AppData\Roaming\Vintagestory\Vintagestory.exe</StartProgram>
     <StartArguments>--openWorld="modsamplestest" -pcreativebuilding --addModPath="$(SolutionDir)mods" --tracelog</StartArguments>
-    <StartWorkingDirectory>D:\Games\Vintagestory\</StartWorkingDirectory>
+    <StartWorkingDirectory>C:\Users\jcope\AppData\Roaming\Vintagestory</StartWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <StartAction>Program</StartAction>

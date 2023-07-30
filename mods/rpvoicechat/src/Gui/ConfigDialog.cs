@@ -138,14 +138,13 @@ namespace rpvoicechat
             _audioInputManager = audioInputManager;
             _audioOutputManager = audioOutputManager;
 
-
             RegisterOption(new ConfigOption
             {
                 Text = "Input Device",
                 DropdownKey = "inputDevice",
                 Tooltip = "Input device",
                 DropdownNames = _audioInputManager.GetInputDeviceNames(),
-                DropdownValues = _audioInputManager.GetInputDeviceIds(),
+                DropdownValues = _audioInputManager.GetInputDeviceNames(),
                 DropdownSelect = changeInputDevice
             });
 
@@ -155,7 +154,7 @@ namespace rpvoicechat
                 DropdownKey = "outputDevice",
                 Tooltip = "Output device",
                 DropdownNames = _audioOutputManager.GetInputDeviceNames(),
-                DropdownValues = _audioOutputManager.GetInputDeviceIds(),
+                DropdownValues = _audioOutputManager.GetInputDeviceNames(),
                 DropdownSelect = changeOutputDevice
             });
 
@@ -192,8 +191,8 @@ namespace rpvoicechat
             SingleComposer.GetSwitch("togglePushToTalk").On = _config.PushToTalkEnabled;
             SingleComposer.GetSwitch("muteMicrophone").On = _config.IsMuted;
             SingleComposer.GetSlider("inputThreshold").SetValues(_config.InputThreshold, 0, 100, 1);
-            SingleComposer.GetDropDown("inputDevice").SetSelectedIndex(_config.CurrentInputDevice);
-            SingleComposer.GetDropDown("outputDevice").SetSelectedIndex(_config.CurrentOutputDevice);
+            SingleComposer.GetDropDown("inputDevice").SetSelectedIndex(_config.CurrentInputDeviceIndex);
+            SingleComposer.GetDropDown("outputDevice").SetSelectedIndex(_config.CurrentOutputDeviceIndex);
         }
 
         private void changeOutputDevice(string index, bool selected)

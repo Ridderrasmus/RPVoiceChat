@@ -1,21 +1,24 @@
 ﻿using NAudio.Wave;
 using System;
-using System.Collections.Generic;
+using System.Linq;
+using OpenTK;
 using Vintagestory.API.Client;
-using Vintagestory.API.Util;
+using OpenTK.Audio;
+using OpenTK.Audio.OpenAL;
 
 namespace rpvoicechat
 {
-
-
-
     public class MicrophoneManager
     {
+        private static int FREQUENCY = 44100;
+        private static int BUFFER_SIZE = (int)(20 * FREQUENCY * .001);
+        const byte SampleToByte = 4;
+        private byte[] sampleBuffer;
+
         ICoreClientAPI capi;
 
-        WaveInEvent capture;
-
-        RPVoiceChatConfig _config;
+        private AudioCapture capture;
+        private RPVoiceChatConfig config;
 
         private VoiceLevel voiceLevel = VoiceLevel.Normal;
         public bool isTalking = false;
@@ -31,24 +34,21 @@ namespace rpvoicechat
         public ActivationMode CurrentActivationMode { get; private set; } = ActivationMode.VoiceActivation;
         public string CurrentInputDevice { get; internal set; }
 
-        public event Action<byte[], VoiceLevel> OnBufferRecorded;
+        public event Action<byte[], int, VoiceLevel> OnBufferRecorded;
 
         public MicrophoneManager(ICoreClientAPI capi)
         {
             this.capi = capi;
-            _config = ModConfig.config;
-            capture = CreateNewCapture(_config.CurrentInputDevice);
+            config = ModConfig.config;
+            sampleBuffer = new byte[BUFFER_SIZE];
+            capture = new AudioCapture(config.CurrentInputDevice, FREQUENCY, ALFormat.Mono16, BUFFER_SIZE);
         }
 
-        private void OnAudioRecorded(object sender, WaveInEventArgs e)
+        public void UpdateCaptureAudioSamples()
         {
-            int validBytes = e.BytesRecorded;
-            byte[] buffer = new byte[validBytes];
-            Array.Copy(e.Buffer, buffer, validBytes);
-
-            bool pushToTalkEnabled = _config.PushToTalkEnabled;
-            bool isMuted = _config.IsMuted;
-            int inputThreshold = _config.InputThreshold;
+            bool pushToTalkEnabled = config.PushToTalkEnabled;
+            bool isMuted = config.IsMuted;
+            int inputThreshold = config.InputThreshold;
 
 
             // If player is in the pause menu, return
@@ -95,36 +95,50 @@ namespace rpvoicechat
                 return;
             }
 
-            // Get the amplitude of the audio
-            int amplitude = AudioUtils.CalculateAmplitude(buffer, validBytes);
+            //if (!playersNearby)
+            //{
+            //    return;
+            //}
 
-            // If the amplitude is below the threshold, return
-            if (!pushToTalkEnabled && amplitude < inputThreshold)
-            {
-                if (ignoreThresholdCounter > 0)
-                {
-                    ignoreThresholdCounter--;
-                }
-                else
-                {
-                    isTalking = false;
-                    return;
-                }
-            }
-            else
-            {
-                ignoreThresholdCounter = ignoreThresholdLimit; // Reset the counter when amplitude is above the threshold
-            }
-
-            isTalking = true;
-            
-            if (!playersNearby)
+            int samplesAvailable = capture.AvailableSamples;
+            int bufferLength = samplesAvailable * SampleToByte;
+            if (samplesAvailable <= 0)
             {
                 return;
             }
 
-            buffer = AudioUtils.HandleAudioPeaking(buffer);
-            OnBufferRecorded?.Invoke(buffer, voiceLevel);
+            if (sampleBuffer.Length < bufferLength)
+            {
+                sampleBuffer = new byte[bufferLength];
+            }
+            
+            capture.ReadSamples(sampleBuffer, samplesAvailable);
+
+            //// Get the amplitude of the audio
+            //int amplitude = AudioUtils.CalculateAmplitude(buffer, validBytes);
+
+            //// If the amplitude is below the threshold, return
+            //if (!pushToTalkEnabled && amplitude < inputThreshold)
+            //{
+            //    if (ignoreThresholdCounter > 0)
+            //    {
+            //        ignoreThresholdCounter--;
+            //    }
+            //    else
+            //    {
+            //        isTalking = false;
+            //        return;
+            //    }
+            //}
+            //else
+            //{
+            //    ignoreThresholdCounter = ignoreThresholdLimit; // Reset the counter when amplitude is above the threshold
+            //}
+
+            isTalking = true;
+
+            //buffer = AudioUtils.HandleAudioPeaking(buffer);
+            OnBufferRecorded?.Invoke(sampleBuffer, bufferLength, voiceLevel);
         }
 
 
@@ -143,11 +157,11 @@ namespace rpvoicechat
 
             if (mode)
             {
-                capture.StopRecording();
+                capture.Start();
             }
             else
             {
-                capture.StartRecording();
+                capture.Stop();
             }
 
             isRecording = mode;
@@ -156,73 +170,31 @@ namespace rpvoicechat
             return isRecording;
         }
 
-
-        public WaveInCapabilities CycleInputDevice()
+        private AudioCapture CreateNewCapture(string deviceName)
         {
-
-            int deviceCount = WaveIn.DeviceCount;
-            int currentDevice = capture.DeviceNumber;
-            int nextDevice = currentDevice + 1;
-
-            if (nextDevice >= deviceCount)
+            if (capture.CurrentDevice == deviceName)
             {
-                nextDevice = 0;
+                return capture;
             }
 
-            capture = CreateNewCapture(nextDevice);
-
-            return WaveIn.GetCapabilities(nextDevice);
-        }
-
-        private WaveInEvent CreateNewCapture(int deviceIndex)
-        {
-            if (isRecording)
+            if (capture.IsRunning)
             {
-                capture?.StopRecording();
+                capture.Stop();
             }
-            capture?.Dispose();
+            capture.Dispose();
 
-            WaveFormat customWaveFormat = new WaveFormatMono();
+            var newCapture = new AudioCapture(deviceName, FREQUENCY, ALFormat.Mono16, BUFFER_SIZE);
+            config.CurrentInputDevice = deviceName;
 
-            WaveInEvent newCapture = new WaveInEvent();
-            _config.CurrentInputDevice = deviceIndex;
-            ModConfig.Save(capi);
-            newCapture.DeviceNumber = deviceIndex;
-            newCapture.WaveFormat = customWaveFormat;
-            newCapture.BufferMilliseconds = 20;
-            newCapture.DataAvailable += OnAudioRecorded;
-
-            newCapture.StartRecording();
+            newCapture.Start();
 
             return newCapture;
         }
 
-        public WaveInEvent CreateNewCapture()
-        {
-            return CreateNewCapture(0);
-        }
-
-        public int GetInputDeviceCount()
-        {
-            return WaveIn.DeviceCount;
-        }
-
-        public string GetInputDeviceName()
-        {
-            return WaveIn.GetCapabilities(capture.DeviceNumber).ProductName;
-        }
-
         public string[] GetInputDeviceNames()
         {
-            List<string> deviceNames = new List<string>();
-            for (int i = 0; i < WaveIn.DeviceCount; i++)
-            {
-                deviceNames.Add(WaveIn.GetCapabilities(i).ProductName);
-            }
-            return deviceNames.ToArray();
+            return AudioCapture.AvailableDevices.ToArray();
         }
-
-
 
         public VoiceLevel CycleVoiceLevel()
         {
@@ -242,20 +214,9 @@ namespace rpvoicechat
             return voiceLevel;
         }
 
-        public string[] GetInputDeviceIds()
-        {
-            string[] deviceIds = new string[WaveIn.DeviceCount];
-            for (int i = 0; i < WaveIn.DeviceCount; i++)
-            {
-                deviceIds[i] = i.ToString();
-            }
-            return deviceIds;
-        }
-
         public void SetInputDevice(string deviceId)
         {
-            int device = deviceId.ToInt(0);
-            capture = CreateNewCapture(device);
+            capture = CreateNewCapture(deviceId);
         }
     }
 }

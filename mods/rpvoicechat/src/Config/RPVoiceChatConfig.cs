@@ -8,8 +8,10 @@
         public bool PushToTalkEnabled = false;
         public bool IsMuted = false;
         public int InputThreshold = 40;
-        public int CurrentInputDevice = 0;
-        public int CurrentOutputDevice = 0;
+        public string CurrentInputDevice;
+        public int CurrentInputDeviceIndex = 0;
+        public string CurrentOutputDevice;
+        public int CurrentOutputDeviceIndex = 0;
 
         public RPVoiceChatConfig() 
         { 

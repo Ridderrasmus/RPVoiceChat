@@ -57,19 +57,18 @@ namespace rpvoicechat
             return clampedData;
         }
 
-        public static int CalculateAmplitude(byte[] buffer, int validBytes)
+        public static int CalculateAmplitude(short[] buffer, int validBytes)
         {
             // Convert to 16-bit samples.
-            short[] samples = new short[buffer.Length / 2];
-            Buffer.BlockCopy(buffer, 0, samples, 0, buffer.Length);
+            Buffer.BlockCopy(buffer, 0, buffer, 0, buffer.Length);
 
             // Calculate RMS amplitude.
             int sum = 0;
-            foreach (var sample in samples)
+            foreach (var sample in buffer)
             {
                 sum += sample * sample;
             }
-            int rms = (int)Math.Sqrt(sum / samples.Length);
+            int rms = (int)Math.Sqrt(sum / validBytes);
 
             return Math.Max(Math.Min(rms / 10, 100), 0);
         }
@@ -149,13 +148,8 @@ namespace rpvoicechat
             return output;
         }
 
-        public static byte[] ApplyReverb(byte[] input)
-        {
-            return ApplyReverb(input, 100, 0.6f);
-        }
-
-            // Change the volume of the audio data based on the distance
-            public static byte[] VolumeBasedOnDistance(byte[] audioData, double distance, int voiceLevel)
+        // Change the volume of the audio data based on the distance
+        public static byte[] VolumeBasedOnDistance(byte[] audioData, double distance, int voiceLevel)
         {
             short[] audioSamples = new short[audioData.Length / 2];
             Buffer.BlockCopy(audioData, 0, audioSamples, 0, audioData.Length);

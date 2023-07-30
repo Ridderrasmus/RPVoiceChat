@@ -1,9 +1,6 @@
-﻿using NAudio.MediaFoundation;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
-using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 
 namespace rpvoicechat
@@ -17,10 +14,6 @@ namespace rpvoicechat
         {
             capi = api;
             base.StartClientSide(capi);
-
-            // For now we say screw Mac and Linux users because I'm a rude and mean guy
-            if (RuntimeEnv.OS != OS.Windows)
-                return;
 
             // Init microphone and audio output manager
             micManager = new MicrophoneManager(capi);
@@ -39,7 +32,6 @@ namespace rpvoicechat
             // Set up clientside handling of game network
             capi.Network.GetChannel("rpvoicechat").SetMessageHandler<ConnectionInfo>(OnConnectionInfo);
 
-            
 
             // Initialize gui
             MainConfig configGui = new MainConfig(capi, micManager, audioOutputManager);
@@ -89,12 +81,13 @@ namespace rpvoicechat
             capi.Event.LeftWorld += OnPlayerLeaving;
             capi.Event.PauseResume += OnPauseResume;
 
-            micManager.OnBufferRecorded += (buffer, voiceLevel) =>
+            micManager.OnBufferRecorded += (buffer, length, voiceLevel) =>
             {
                 AudioPacket packet = new AudioPacket()
                 {
                     PlayerId = capi.World.Player.PlayerUID,
                     AudioData = buffer,
+                    Length = length,
                     voiceLevel = voiceLevel
                 };
                 client.SendAudioToServer(packet);
@@ -108,6 +101,7 @@ namespace rpvoicechat
                 return;
 
             micManager.isGamePaused = capi.IsGamePaused;
+            micManager.UpdateCaptureAudioSamples();
 
             audioOutputManager.SetListenerPosition(capi.World.Player.Entity.Pos);
 
@@ -120,7 +114,7 @@ namespace rpvoicechat
                     continue;
 
                 // Update player audio source
-                Task.Run(() => audioOutputManager.UpdatePlayerSource(player));
+                
                 
                 // Player is not loaded in clientside
                 if (player.Entity == null)
