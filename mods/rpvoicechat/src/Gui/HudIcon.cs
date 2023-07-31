@@ -16,7 +16,7 @@ namespace rpvoicechat
         public HudIcon(ICoreClientAPI capi, MicrophoneManager microphoneManager) : base(capi)
         {
             _microphoneManager = microphoneManager;
-            _config = ModConfig.config;
+            _config = ModConfig.Config;
         }
 
         public override void OnOwnPlayerDataReceived()

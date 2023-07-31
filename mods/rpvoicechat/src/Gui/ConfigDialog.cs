@@ -134,7 +134,7 @@ namespace rpvoicechat
 
         public MainConfig(ICoreClientAPI capi, MicrophoneManager audioInputManager, AudioOutputManager audioOutputManager) : base(capi)
         {
-            _config = ModConfig.config;
+            _config = ModConfig.Config;
             _audioInputManager = audioInputManager;
             _audioOutputManager = audioOutputManager;
 
@@ -146,16 +146,6 @@ namespace rpvoicechat
                 DropdownNames = _audioInputManager.GetInputDeviceNames(),
                 DropdownValues = _audioInputManager.GetInputDeviceNames(),
                 DropdownSelect = changeInputDevice
-            });
-
-            RegisterOption(new ConfigOption
-            {
-                Text = "Output Device",
-                DropdownKey = "outputDevice",
-                Tooltip = "Output device",
-                DropdownNames = _audioOutputManager.GetInputDeviceNames(),
-                DropdownValues = _audioOutputManager.GetInputDeviceNames(),
-                DropdownSelect = changeOutputDevice
             });
 
             RegisterOption(new ConfigOption
@@ -181,6 +171,14 @@ namespace rpvoicechat
                 Tooltip = "At which threshold your audio starts transmitting",
                 SlideAction = slideInputThreshold
             });
+
+            RegisterOption(new ConfigOption
+            {
+                Text = "Loopback",
+                SwitchKey = "loopback",
+                Tooltip = "Play recorded audio through output audio",
+                ToggleAction = OnToggleLoopback
+            });
         }
 
         protected override void RefreshValues()
@@ -191,18 +189,20 @@ namespace rpvoicechat
             SingleComposer.GetSwitch("togglePushToTalk").On = _config.PushToTalkEnabled;
             SingleComposer.GetSwitch("muteMicrophone").On = _config.IsMuted;
             SingleComposer.GetSlider("inputThreshold").SetValues(_config.InputThreshold, 0, 100, 1);
-            SingleComposer.GetDropDown("inputDevice").SetSelectedIndex(_config.CurrentInputDeviceIndex);
-            SingleComposer.GetDropDown("outputDevice").SetSelectedIndex(_config.CurrentOutputDeviceIndex);
+            SingleComposer.GetDropDown("inputDevice").SetSelectedValue(_config.CurrentInputDevice);
+            SingleComposer.GetSwitch("loopback").On = _config.IsLoopbackEnabled;
         }
 
-        private void changeOutputDevice(string index, bool selected)
+        protected void OnToggleLoopback(bool enabled)
         {
-            _audioOutputManager.SetOutputDevice(index);
+            _config.IsLoopbackEnabled = enabled;
+            ModConfig.Save(capi);
+            _audioOutputManager.IsLoopbackEnabled = enabled;
         }
 
-        private void changeInputDevice(string deviceId, bool selected)
+        private void changeInputDevice(string value, bool selected)
         {
-            _audioInputManager.SetInputDevice(deviceId);
+            _audioInputManager.SetInputDevice(value);
         }
 
         private bool slideInputThreshold(int threshold)

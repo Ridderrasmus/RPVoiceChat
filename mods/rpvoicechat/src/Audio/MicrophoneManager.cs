@@ -1,7 +1,5 @@
-﻿using NAudio.Wave;
-using System;
+﻿using System;
 using System.Linq;
-using OpenTK;
 using Vintagestory.API.Client;
 using OpenTK.Audio;
 using OpenTK.Audio.OpenAL;
@@ -10,9 +8,9 @@ namespace rpvoicechat
 {
     public class MicrophoneManager
     {
-        private static int FREQUENCY = 44100;
-        private static int BUFFER_SIZE = (int)(20 * FREQUENCY * .001);
-        const byte SampleToByte = 4;
+        public static int Frequency = 44100;
+        public static int BufferSize = (int)(Frequency * 0.5);
+        const byte SampleToByte = 2;
         private byte[] sampleBuffer;
 
         ICoreClientAPI capi;
@@ -39,9 +37,10 @@ namespace rpvoicechat
         public MicrophoneManager(ICoreClientAPI capi)
         {
             this.capi = capi;
-            config = ModConfig.config;
-            sampleBuffer = new byte[BUFFER_SIZE];
-            capture = new AudioCapture(config.CurrentInputDevice, FREQUENCY, ALFormat.Mono16, BUFFER_SIZE);
+            config = ModConfig.Config;
+            sampleBuffer = new byte[BufferSize];
+            capture = new AudioCapture(config.CurrentInputDevice, Frequency, ALFormat.Mono16, BufferSize);
+            capture.Start();
         }
 
         public void UpdateCaptureAudioSamples()
@@ -95,11 +94,6 @@ namespace rpvoicechat
                 return;
             }
 
-            //if (!playersNearby)
-            //{
-            //    return;
-            //}
-
             int samplesAvailable = capture.AvailableSamples;
             int bufferLength = samplesAvailable * SampleToByte;
             if (samplesAvailable <= 0)
@@ -114,33 +108,11 @@ namespace rpvoicechat
             
             capture.ReadSamples(sampleBuffer, samplesAvailable);
 
-            //// Get the amplitude of the audio
-            //int amplitude = AudioUtils.CalculateAmplitude(buffer, validBytes);
-
-            //// If the amplitude is below the threshold, return
-            //if (!pushToTalkEnabled && amplitude < inputThreshold)
-            //{
-            //    if (ignoreThresholdCounter > 0)
-            //    {
-            //        ignoreThresholdCounter--;
-            //    }
-            //    else
-            //    {
-            //        isTalking = false;
-            //        return;
-            //    }
-            //}
-            //else
-            //{
-            //    ignoreThresholdCounter = ignoreThresholdLimit; // Reset the counter when amplitude is above the threshold
-            //}
-
             isTalking = true;
 
             //buffer = AudioUtils.HandleAudioPeaking(buffer);
             OnBufferRecorded?.Invoke(sampleBuffer, bufferLength, voiceLevel);
         }
-
 
         // Returns the success of the method
         public bool ToggleRecording()
@@ -183,8 +155,9 @@ namespace rpvoicechat
             }
             capture.Dispose();
 
-            var newCapture = new AudioCapture(deviceName, FREQUENCY, ALFormat.Mono16, BUFFER_SIZE);
+            var newCapture = new AudioCapture(deviceName, Frequency, ALFormat.Mono16, BufferSize);
             config.CurrentInputDevice = deviceName;
+            ModConfig.Save(capi);
 
             newCapture.Start();
 

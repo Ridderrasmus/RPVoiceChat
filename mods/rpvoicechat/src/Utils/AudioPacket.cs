@@ -15,6 +15,7 @@ namespace rpvoicechat
             message.Write(PlayerId);
             message.Write((byte)voiceLevel);
             message.Write(Length);
+            message.Write(AudioData.Length);
             message.Write(AudioData);
         }
 
@@ -24,7 +25,10 @@ namespace rpvoicechat
             packet.PlayerId = message.ReadString();
             packet.voiceLevel = (VoiceLevel)message.ReadByte();
             packet.Length = message.ReadInt32();
-            packet.AudioData = message.ReadBytes(packet.Length);
+
+            // this is so we read the entire buffer optimizations can be made if needed
+            var bufferLength = message.ReadInt32();
+            packet.AudioData = message.ReadBytes(bufferLength);
             return packet;
         }
     }

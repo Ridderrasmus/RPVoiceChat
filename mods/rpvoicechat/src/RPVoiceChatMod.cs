@@ -18,7 +18,7 @@ namespace rpvoicechat
         {
             base.StartPre(api);
             ModConfig.ReadConfig(api);
-            config = ModConfig.config;
+            config = ModConfig.Config;
         }
 
         public override void Start(ICoreAPI api)

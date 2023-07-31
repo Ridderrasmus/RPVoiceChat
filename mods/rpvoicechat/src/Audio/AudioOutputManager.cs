@@ -1,17 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using Vintagestory.API.Client;
-using Vintagestory.API.MathTools;
+﻿using Vintagestory.API.Client;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
-using Vintagestory.API.Common;
-using Vintagestory.GameContent;
-using System.Threading.Tasks;
 using Vintagestory.API.Common.Entities;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Threading.Tasks;
+using OpenTK.Audio;
 using OpenTK.Audio.OpenAL;
-using rpvoicechat.src.Utils;
+using Vintagestory.API.Common;
 using Vintagestory.API.Util;
 
 namespace rpvoicechat
@@ -19,110 +15,116 @@ namespace rpvoicechat
     public class AudioOutputManager
     {
         ICoreClientAPI capi;
-        EntityPos _listenerPos;
-        MixingSampleProvider _mixer;
-        WaveOut waveOut;
         RPVoiceChatConfig _config;
+        private bool isLoopbackEnabled;
+        public bool IsLoopbackEnabled { 
+            get => isLoopbackEnabled;
 
+            set
+            {
+                isLoopbackEnabled = value;
+                if (localPlayerAudioSource == null)
+                    return;
 
+                if (isLoopbackEnabled)
+                {
+                    localPlayerAudioSource.StartPlaying();
+                }
+                else
+                {
+                    localPlayerAudioSource.StopPlaying();
+                }
+            }
+        }
 
-        private ConcurrentDictionary<string, PlayerAudioSource> _playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
+        public EffectsExtension EffectsExtension;
+        private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
+        private PlayerAudioSource localPlayerAudioSource;
 
         public AudioOutputManager(ICoreClientAPI api)
         {
+            _config = ModConfig.Config;
+            IsLoopbackEnabled = _config.IsLoopbackEnabled;
             capi = api;
-            _config = ModConfig.config;
+            capi.Event.PlayerEntitySpawn += PlayerSpawned;
+            capi.Event.PlayerEntityDespawn += PlayerDespawned;
 
-            _mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(AudioUtils.sampleRate, 2));
-            _mixer.ReadFully = true;
-
-            waveOut = CreateNewWaveOut(_config.CurrentOutputDeviceIndex);
+            EffectsExtension = new EffectsExtension();
             
-            waveOut = new WaveOut();
-            waveOut.Init(_mixer);
-            waveOut.Play();
-        }
-
-        public void SetListenerPosition(EntityPos pos)
-        {
-            _listenerPos = pos;
         }
 
         // Called when the client receives an audio packet supplying the audio packet
         public void HandleAudioPacket(AudioPacket packet)
         {
-            if (_playerSources.TryGetValue(packet.PlayerId, out PlayerAudioSource source))
+            if (playerSources.TryGetValue(packet.PlayerId, out var source))
             {
-                source.AudioQueue.Enqueue(packet);
+                //packet.AudioData as short[]
+                //source.QueueAudio(packet.AudioData, packet.Length);
             }
         }
 
-        // Ran every 20 milliseconds
-        public void PlayAudio()
+        public void HandleLoopback(byte[] audioData, int length, VoiceLevel voiceLevel)
         {
-            
+            if (!IsLoopbackEnabled)
+                return;
+
+            localPlayerAudioSource.QueueAudio(audioData, length);
         }
 
         public void ClearAudio()
         {
-            
+            localPlayerAudioSource.StopPlaying();
+
+            foreach (var pair in playerSources)
+            {
+                pair.Value.StopPlaying();
+            }
         }
 
-        public WaveOutCapabilities CycleOutputDevice()
+        public void PlayerSpawned(IPlayer player)
         {
-            int deviceCount = WaveOut.DeviceCount;
-            int currentDevice = waveOut.DeviceNumber;
-            int nextDevice = currentDevice + 1;
-
-            if (nextDevice >= deviceCount)
+            if (player.ClientId == capi.World.Player.ClientId)
             {
-                nextDevice = 0;
+                localPlayerAudioSource = new PlayerAudioSource(player, this, capi)
+                {
+                    IsMuffled = false,
+                    IsReverberated = false,
+                    IsLocational = false
+                };
+
+                if (isLoopbackEnabled)
+                {
+                    localPlayerAudioSource.StartPlaying();
+                }
             }
-
-            waveOut = CreateNewWaveOut(nextDevice);
-
-            return WaveOut.GetCapabilities(nextDevice);
+            else
+            {
+                if (playerSources.TryAdd(player.PlayerUID, new PlayerAudioSource(player, this, capi)) == false)
+                {
+                    capi.ShowChatMessage("Failed to add new player to source !");
+                }
+            }
         }
-
-        public string[] GetInputDeviceIds()
+        public void PlayerDespawned(IPlayer player)
         {
-            string[] deviceIds = new string[WaveOut.DeviceCount];
-            for (int i = 0; i < WaveOut.DeviceCount; i++)
+            if (player.ClientId == capi.World.Player.ClientId)
             {
-                deviceIds[i] = i.ToString();
+                localPlayerAudioSource = null;
             }
-            return deviceIds;
+            else
+            {
+                if (playerSources.TryRemove(player.PlayerUID, out var playerAudioSource) == false)
+                {
+                    capi.ShowChatMessage("Failed to add new player to source !");
+                }
+
+                playerAudioSource.Dispose();
+            }
         }
 
         public string[] GetInputDeviceNames()
         {
-            IList<string> deviceNames = Alc.GetString(IntPtr.Zero, AlcGetStringList.AllDevicesSpecifier);
-            return deviceNames.Distinct().ToArray();
-        }
-
-
-        public WaveOut CreateNewWaveOut(int deviceIndex)
-        {
-            if (waveOut?.PlaybackState == PlaybackState.Playing)
-            {
-                waveOut.Stop();
-            }
-            waveOut?.Dispose();
-
-            waveOut = new WaveOut();
-            _config.CurrentOutputDeviceIndex = deviceIndex;
-            ModConfig.Save(capi);
-            waveOut.DeviceNumber = deviceIndex;
-            waveOut.Init(_mixer);
-            waveOut.Play();
-
-            return waveOut;
-        }
-
-        public void SetOutputDevice(string deviceId)
-        {
-            int device = deviceId.ToInt(0);
-            waveOut = CreateNewWaveOut(device);
+            return AudioContext.AvailableDevices.Distinct().ToArray();
         }
 
         private int GetVoiceDistance(VoiceLevel voiceLevel)

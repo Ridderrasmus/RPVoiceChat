@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Specialized;
+using System.Reflection;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Config;
@@ -10,11 +12,16 @@ namespace rpvoicechat
         MicrophoneManager micManager;
         AudioOutputManager audioOutputManager;
 
+        private bool audioClientConnected = false;
+
         public override void StartClientSide(ICoreClientAPI api)
         {
             capi = api;
             base.StartClientSide(capi);
 
+            var world = capi.World;
+            Type t = world.GetType();
+            var s = t.AssemblyQualifiedName;
             // Init microphone and audio output manager
             micManager = new MicrophoneManager(capi);
             audioOutputManager = new AudioOutputManager(capi);
@@ -32,6 +39,8 @@ namespace rpvoicechat
             // Set up clientside handling of game network
             capi.Network.GetChannel("rpvoicechat").SetMessageHandler<ConnectionInfo>(OnConnectionInfo);
 
+            capi.Event.LeftWorld += OnPlayerLeaving;
+            capi.Event.PauseResume += OnPauseResume;
 
             // Initialize gui
             MainConfig configGui = new MainConfig(capi, micManager, audioOutputManager);
@@ -64,72 +73,49 @@ namespace rpvoicechat
                 return true;
             });
 
+
+            micManager.OnBufferRecorded += (buffer, length, voiceLevel) =>
+            {
+                audioOutputManager.HandleLoopback(buffer, length, voiceLevel);
+
+                if (audioClientConnected)
+                {
+                    AudioPacket packet = new AudioPacket()
+                    {
+                        PlayerId = capi.World.Player.PlayerUID,
+                        AudioData = buffer,
+                        Length = length,
+                        voiceLevel = voiceLevel
+                    };
+                    client.SendAudioToServer(packet);
+                }
+            };
         }
 
         private void OnPauseResume(bool isPaused)
         {
-            if (isPaused)
-                audioOutputManager.ClearAudio();
+            //if (isPaused)
+            //    audioOutputManager.ClearAudio();
         }
 
         private void VoiceClientConnected(object sender, EventArgs e)
         {
+            audioClientConnected = true;
             capi.Logger.Debug("[RPVoiceChat - Client] Voice client connected");
 
             // Set up game events
-            capi.Event.RegisterGameTickListener(OnGameTick, 20);
-            capi.Event.LeftWorld += OnPlayerLeaving;
-            capi.Event.PauseResume += OnPauseResume;
-
-            micManager.OnBufferRecorded += (buffer, length, voiceLevel) =>
-            {
-                AudioPacket packet = new AudioPacket()
-                {
-                    PlayerId = capi.World.Player.PlayerUID,
-                    AudioData = buffer,
-                    Length = length,
-                    voiceLevel = voiceLevel
-                };
-                client.SendAudioToServer(packet);
-            };
+            capi.Event.RegisterGameTickListener(OnGameTick, 1);
         }
 
         private void OnGameTick(float dt)
         {
-
             if(micManager == null || audioOutputManager == null)
                 return;
 
             micManager.isGamePaused = capi.IsGamePaused;
             micManager.UpdateCaptureAudioSamples();
 
-            audioOutputManager.SetListenerPosition(capi.World.Player.Entity.Pos);
-
-            bool playersNearby = false;
-            foreach (var player in capi.World.AllOnlinePlayers)
-            {
-
-                // Ignore self
-                if (player.PlayerUID == capi.World.Player.PlayerUID)
-                    continue;
-
-                // Update player audio source
-                
-                
-                // Player is not loaded in clientside
-                if (player.Entity == null)
-                    continue;
-
-                // If player is nearby then add to list of players nearby
-                if (player.Entity.Pos.SquareDistanceTo(capi.World.Player.Entity.Pos) < ((int)VoiceLevel.SquareShouting + 100))
-                    playersNearby = true;
-            }
-
-            // Determine if players are nearby which determines if we should be transmitting audio
-
-            micManager.playersNearby = playersNearby;
-
-            audioOutputManager.PlayAudio();
+            
         }
 
         private void OnPlayerLeaving()
