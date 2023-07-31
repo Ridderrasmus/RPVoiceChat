@@ -1,6 +1,4 @@
 ﻿using Vintagestory.API.Client;
-using NAudio.Wave;
-using NAudio.Wave.SampleProviders;
 using Vintagestory.API.Common.Entities;
 using System.Collections.Concurrent;
 using System.Linq;
