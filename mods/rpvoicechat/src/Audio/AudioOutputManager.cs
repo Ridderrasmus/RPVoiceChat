@@ -50,7 +50,6 @@ namespace rpvoicechat
             capi.Event.PlayerEntityDespawn += PlayerDespawned;
 
             EffectsExtension = new EffectsExtension();
-            
         }
 
         // Called when the client receives an audio packet supplying the audio packet
@@ -58,8 +57,7 @@ namespace rpvoicechat
         {
             if (playerSources.TryGetValue(packet.PlayerId, out var source))
             {
-                //packet.AudioData as short[]
-                //source.QueueAudio(packet.AudioData, packet.Length);
+                source.QueueAudio(packet.AudioData, packet.Length);
             }
         }
 
