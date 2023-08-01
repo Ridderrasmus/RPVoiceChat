@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using OpenTK.Audio.OpenAL;
 using Vintagestory.API.Client;
+using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
@@ -61,6 +62,20 @@ namespace rpvoicechat
         //}
     }
 
+    public class Util
+    {
+        public static void CheckError(string Value, ICoreAPI capi, ALError ignoredErrors = ALError.NoError)
+        {
+            var error = AL.GetError();
+            if (error == ALError.NoError) return;
+
+            if (ignoredErrors == error)
+                return;
+
+            capi.Logger.Error("{0} {1}", Value, AL.GetErrorString(error));
+        }
+    }
+
     public class CircularAudioBuffer : IDisposable
     {
         private List<int> availableBuffers = new List<int>();
@@ -72,6 +87,7 @@ namespace rpvoicechat
         {
             this.source = source;
             buffers = AL.GenBuffers(bufferCount);
+            Util.CheckError("Error gen buffers", capi);
             availableBuffers.AddRange(buffers);
             this.capi = capi;
 
@@ -89,7 +105,9 @@ namespace rpvoicechat
             var currentBuffer = availableBuffers.PopOne();
 
             AL.BufferData(currentBuffer, format, audio, length, frequency);
+            Util.CheckError("Error buffer data", capi);
             AL.SourceQueueBuffer(source, currentBuffer);
+            Util.CheckError("Error SourceQueueBuffer", capi);
             queuedBuffers.Add(currentBuffer);
         }
 
@@ -100,11 +118,13 @@ namespace rpvoicechat
                 return;
 
             var buffer = AL.SourceUnqueueBuffer(source);
+            Util.CheckError("Error SourceUnqueueBuffer", capi);
             while (buffer != 0)
             {
                 queuedBuffers.Remove(buffer);
                 availableBuffers.Add(buffer);
                 buffer = AL.SourceUnqueueBuffer(source);
+                Util.CheckError("Error SourceUnqueueBuffer", capi, ALError.InvalidValue);
             }
         }
 

@@ -85,7 +85,7 @@ namespace rpvoicechat
                         PlayerId = capi.World.Player.PlayerUID,
                         AudioData = buffer,
                         Length = length,
-                        voiceLevel = voiceLevel
+                        VoiceLevel = voiceLevel
                     };
                     client.SendAudioToServer(packet);
                 }

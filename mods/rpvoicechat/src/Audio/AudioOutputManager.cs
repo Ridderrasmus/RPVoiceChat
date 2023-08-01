@@ -95,9 +95,20 @@ namespace rpvoicechat
             }
             else
             {
-                if (playerSources.TryAdd(player.PlayerUID, new PlayerAudioSource(player, this, capi)) == false)
+                var playerSource = new PlayerAudioSource(player, this, capi)
+                {
+                    IsMuffled = false,
+                    IsReverberated = false,
+                    IsLocational = false
+                };
+
+                if (playerSources.TryAdd(player.PlayerUID, playerSource) == false)
                 {
                     capi.ShowChatMessage("Failed to add new player to source !");
+                }
+                else
+                {
+                    playerSource.StartPlaying();
                 }
             }
         }
@@ -109,12 +120,14 @@ namespace rpvoicechat
             }
             else
             {
-                if (playerSources.TryRemove(player.PlayerUID, out var playerAudioSource) == false)
+                if (playerSources.TryRemove(player.PlayerUID, out var playerAudioSource))
+                {
+                    playerAudioSource.Dispose();
+                }
+                else
                 {
                     capi.ShowChatMessage("Failed to add new player to source !");
                 }
-
-                playerAudioSource.Dispose();
             }
         }
 

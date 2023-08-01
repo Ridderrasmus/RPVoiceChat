@@ -42,8 +42,7 @@ namespace rpvoicechat
             serverAddress = address;
             serverPort = port;
             NetOutgoingMessage hail = client.CreateMessage("RPVoiceChat " + clientUID);
-            client.Connect(serverAddress, serverPort, hail);
-            
+            client.Connect("192.168.1.238", serverPort, hail);
             OnClientConnected.Invoke(this, null);
         }
 
