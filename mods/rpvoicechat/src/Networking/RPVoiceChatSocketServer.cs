@@ -1,6 +1,7 @@
 ﻿using Lidgren.Network;
 using System.Collections.Generic;
 using System.Net;
+using Vintagestory.API.Common;
 using Vintagestory.API.Server;
 
 namespace rpvoicechat
@@ -12,13 +13,6 @@ namespace rpvoicechat
         private long totalPacketCount = 0;
 
         private Dictionary<string, NetConnection> connections = new Dictionary<string, NetConnection>();
-
-        public RPVoiceChatSocketServer(ICoreServerAPI sapi)
-        {
-            this.sapi = sapi;
-            BootVoiceServer();
-        }
-
 
         public RPVoiceChatSocketServer(ICoreServerAPI sapi, int serverPort)
         {
@@ -35,12 +29,14 @@ namespace rpvoicechat
             config.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
             config.EnableMessageType(NetIncomingMessageType.ConnectionLatencyUpdated);
             config.EnableMessageType(NetIncomingMessageType.StatusChanged);
+            config.EnableMessageType(NetIncomingMessageType.ErrorMessage);
+            // this should probably be a config or something similar. 
             config.MaximumConnections = 100;
             config.UseMessageRecycling = true;
             config.AcceptIncomingConnections = true;
+            // this should probably also be a config
             config.Port = port;
             config.EnableUPnP = true;
-
 
             server = new NetServer(config);
 
@@ -52,10 +48,10 @@ namespace rpvoicechat
             else
                 sapi.Logger.Warning("[RPVoiceChat - Server] UPnP failed.");
 
-
             OnMessageReceived += RPVoiceChatSocketServer_OnMessageReceived;
             OnConnectionApprovalMessage += RPVoiceChatSocketServer_OnConnectionApprovalMessage;
             OnDiscoveryRequestReceived += RPVoiceChatSocketServer_OnDiscoveryRequestReceived;
+            OnErrorMessageReceived += RPVoiceChatSocketServer_OnErrorReceived;
 
             StartListening(server);
 
@@ -91,6 +87,12 @@ namespace rpvoicechat
             SendAudioToAllClientsInRange(AudioPacket.ReadFromMessage(e));
         }
 
+        private void RPVoiceChatSocketServer_OnErrorReceived(object sender, NetIncomingMessage e)
+        {
+            // this is needed to help debug possible errors that happen, always find ways to get as much information as possible
+            sapi.Logger.Error("[RPVoiceChat:SocketServer] Error received {0}", e.ReadString());
+        }
+
         public void SendAudioToAllClientsInRange(AudioPacket packet)
         {
             string key;
@@ -112,13 +114,17 @@ namespace rpvoicechat
 
             int distance = sapi.World.Config.GetInt(key);
 
-            foreach (var connection in connections)
+            IPlayer player = sapi.World.PlayerByUid(packet.PlayerId);
+            // this might look slower but it should result in being faster, this (hopefully) uses collision partitioning,
+            // if so instead of looping through literally all players it only loops through the ones within a partition.
+            var players = sapi.World.GetPlayersAround(player.Entity.Pos.XYZ, distance, distance);
+
+            foreach(var closePlayer in players)
             {
-
-                if (connection.Key == packet.PlayerId)
-                    continue;
-
-                SendAudioToClient(packet, connection.Value);
+                if (connections.TryGetValue(closePlayer.PlayerUID, out var connection))
+                {
+                    SendAudioToClient(packet, connection);
+                }
             }
         }
 
@@ -128,14 +134,16 @@ namespace rpvoicechat
             packet.WriteToMessage(message);
             server.SendMessage(message, client, deliveryMethod);
 
+            // why do this ? Is there a reason ?
             totalPacketSize += message.LengthBytes;
             totalPacketCount++;
         }
         public void SendAudioToClient(AudioPacket packet, string uid)
         {
-            NetConnection connection;
-            if(connections.TryGetValue(uid, out connection))
+            if (connections.TryGetValue(uid, out var connection))
+            {
                 SendAudioToClient(packet, connection);
+            }
         }
 
         public void AddClientToDictionary(string uid, NetConnection connection)
@@ -148,7 +156,6 @@ namespace rpvoicechat
             connections.Remove(uid);
         }
 
-
         public void Close()
         {
             server.Shutdown("[RPVoiceChat - Server] Shutting down");
@@ -156,7 +163,8 @@ namespace rpvoicechat
 
         public string GetPublicIPAddress()
         {
-            return new WebClient().DownloadString("https://ipv4.icanhazip.com/").Replace("\n", "");
+            // we can just use the hosts IP here because we are definitely running on the same machine
+            return sapi.Server.ServerIp;
         }
 
         public int GetPort()
@@ -174,6 +182,14 @@ namespace rpvoicechat
             {
                 return (double)totalPacketSize / totalPacketCount;
             }
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            Close();
+            server = null;
         }
     }
 }

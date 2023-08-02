@@ -2,6 +2,7 @@
 using System.Collections.Specialized;
 using System.Reflection;
 using System.Threading.Tasks;
+using Lidgren.Network;
 using Vintagestory.API.Client;
 using Vintagestory.API.Config;
 
@@ -13,15 +14,13 @@ namespace rpvoicechat
         AudioOutputManager audioOutputManager;
 
         private bool audioClientConnected = false;
+        private long gameTickId = 0;
 
         public override void StartClientSide(ICoreClientAPI api)
         {
             capi = api;
             base.StartClientSide(capi);
 
-            var world = capi.World;
-            Type t = world.GetType();
-            var s = t.AssemblyQualifiedName;
             // Init microphone and audio output manager
             micManager = new MicrophoneManager(capi);
             audioOutputManager = new AudioOutputManager(capi);
@@ -30,11 +29,9 @@ namespace rpvoicechat
             client = new RPVoiceChatSocketClient(api);
 
             // Add voice chat client event handlers
-            client.OnMessageReceived += (sender, msg) =>
-            { 
-                audioOutputManager.HandleAudioPacket(AudioPacket.ReadFromMessage(msg));
-            };
+            client.OnMessageReceived += OnMessageReceived;
             client.OnClientConnected += VoiceClientConnected;
+            client.OnClientDisconnected += VoiceClientDisconnected;
 
             // Set up clientside handling of game network
             capi.Network.GetChannel("rpvoicechat").SetMessageHandler<ConnectionInfo>(OnConnectionInfo);
@@ -94,17 +91,34 @@ namespace rpvoicechat
 
         private void OnPauseResume(bool isPaused)
         {
-            //if (isPaused)
-            //    audioOutputManager.ClearAudio();
+            // should we stop audio for some reason ?
+            // I think even if the game is paused (which should be impossible on a server) we should still play audio
+        }
+
+        private void OnMessageReceived(object sender, NetIncomingMessage msg)
+        {
+            audioOutputManager.HandleAudioPacket(AudioPacket.ReadFromMessage(msg));
         }
 
         private void VoiceClientConnected(object sender, EventArgs e)
         {
             audioClientConnected = true;
-            capi.Logger.Debug("[RPVoiceChat - Client] Voice client connected");
+            var status = e as ConnectionStatusUpdate;
+            capi.Logger.Debug("[RPVoiceChat - Client] Voice client connected{0}", status?.Reason);
 
             // Set up game events
-            capi.Event.RegisterGameTickListener(OnGameTick, 1);
+            gameTickId = capi.Event.RegisterGameTickListener(OnGameTick, 1);
+        }
+
+        private void VoiceClientDisconnected(object sender, EventArgs e)
+        {
+            audioClientConnected = false;
+            var status = e as ConnectionStatusUpdate;
+            capi.Logger.Debug("[RPVoiceChat - Client] Voice client disconnected {0}", status?.Reason);
+
+            // Stop game events
+            if(gameTickId != 0) 
+                capi.Event.UnregisterGameTickListener(gameTickId);
         }
 
         private void OnGameTick(float dt)
@@ -114,8 +128,6 @@ namespace rpvoicechat
 
             micManager.isGamePaused = capi.IsGamePaused;
             micManager.UpdateCaptureAudioSamples();
-
-            
         }
 
         private void OnPlayerLeaving()
@@ -128,6 +140,12 @@ namespace rpvoicechat
             if (packet == null) return;
             client.ConnectToServer(packet.Address, packet.Port);
             capi.Logger.Debug($"[RPVoiceChat - Client] Connected to server {packet.Address}:{packet.Port}");
+        }
+
+        public override void Dispose()
+        {
+            client.Dispose();
+            client = null;
         }
     }
 }

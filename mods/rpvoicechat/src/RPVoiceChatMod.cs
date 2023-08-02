@@ -30,7 +30,5 @@ namespace rpvoicechat
                 .RegisterMessageType(typeof(ConnectionInfo));
 
         }
-
-
     }
 }

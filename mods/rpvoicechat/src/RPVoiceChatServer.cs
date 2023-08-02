@@ -5,7 +5,7 @@ using Vintagestory.API.Server;
 [assembly: ModInfo( "rpvoicechat",
 Description = "",
 Website     = "",
-Authors     = new []{ "Ridderrasmus", "Purplep_" } )]
+Authors     = new []{ "Ridderrasmus", "Purplep_", "blakdragan7" } )]
 
 namespace rpvoicechat.src
 {
@@ -15,6 +15,8 @@ namespace rpvoicechat.src
         {
             sapi = api;
             base.StartServerSide(sapi);
+
+            server = new RPVoiceChatSocketServer(sapi, config.ServerPort);
 
             // Register/load world config
             sapi.World.Config.SetInt("rpvoicechat:distance-whisper", sapi.World.Config.GetInt("rpvoicechat:distance-whisper", 5));
@@ -26,9 +28,7 @@ namespace rpvoicechat.src
 
             // Register events
             sapi.Event.PlayerNowPlaying += OnPlayerPlaying;
-
-
-
+            sapi.Event.
         }
 
         private void registerCommands()
@@ -117,11 +117,6 @@ namespace rpvoicechat.src
 
         private void OnPlayerPlaying(IServerPlayer byPlayer)
         {
-            if (server == null)
-            {
-                server = new RPVoiceChatSocketServer(sapi, config.ServerPort);
-            }
-
             string address = server.GetPublicIPAddress();
             int port = server.GetPort();
             sapi.Network.GetChannel("rpvoicechat").SendPacket(new ConnectionInfo()
@@ -129,6 +124,14 @@ namespace rpvoicechat.src
                 Address = address,
                 Port = port
             }, byPlayer);
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            server.Dispose();
+            server = null;
         }
     }
 }
