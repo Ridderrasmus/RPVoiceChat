@@ -98,7 +98,7 @@ namespace rpvoicechat
             // we arent playing back audio fast enough, better to skip the audio
             if (availableBuffers.Count == 0)
             {
-                capi.ShowChatMessage("Had to skip buffer");
+                capi.Logger.Debug("CircularAudioBuffer had to skip queuing audio");
                 return;
             }
 
