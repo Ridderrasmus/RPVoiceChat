@@ -2,9 +2,9 @@
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <StartAction>Program</StartAction>
-    <StartProgram>C:\Users\jcope\AppData\Roaming\Vintagestory\Vintagestory.exe</StartProgram>
-    <StartArguments>--openWorld="modsamplestest" -pcreativebuilding --addModPath="$(SolutionDir)mods" --tracelog</StartArguments>
-    <StartWorkingDirectory>C:\Users\jcope\AppData\Roaming\Vintagestory</StartWorkingDirectory>
+    <StartProgram>D:\Games\VintageStory\Vintagestory.exe</StartProgram>
+    <StartArguments>--openWorld="modsamplestest" -pcreativebuilding --addModPath="D:\git\RPVoiceChat\mods" --tracelog --dataPath="D:\Games\Test\Debug"</StartArguments>
+    <StartWorkingDirectory>D:\Games\VintageStory</StartWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <StartAction>Program</StartAction>
@@ -16,4 +16,16 @@
     <ReferencePath>D:\Games\Vintagestory\;D:\Games\Vintagestory\Lib\</ReferencePath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'Default' " />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DebugServer|AnyCPU'">
+    <StartProgram>D:\Games\VintageStory\VintagestoryServer.exe</StartProgram>
+    <StartWorkingDirectory>D:\Games\VintageStory</StartWorkingDirectory>
+    <StartArguments>--openWorld="modsamplestest" -pcreativebuilding --addModPath="D:\git\RPVoiceChat\mods" --tracelog --dataPath="D:\Games\Test\Server"</StartArguments>
+    <StartAction>Program</StartAction>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DebugB|AnyCPU'">
+    <StartProgram>D:\Games\VintageStory\Vintagestory.exe</StartProgram>
+    <StartWorkingDirectory>D:\Games\VintageStory</StartWorkingDirectory>
+    <StartArguments>--openWorld="modsamplestest" -pcreativebuilding --addModPath="D:\git\RPVoiceChat\mods" --tracelog --dataPath="D:\Games\Test\DebugB"</StartArguments>
+    <StartAction>Program</StartAction>
+  </PropertyGroup>
 </Project>
