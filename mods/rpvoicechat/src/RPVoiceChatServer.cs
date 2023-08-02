@@ -28,7 +28,6 @@ namespace rpvoicechat.src
 
             // Register events
             sapi.Event.PlayerNowPlaying += OnPlayerPlaying;
-            sapi.Event.
         }
 
         private void registerCommands()
