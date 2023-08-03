@@ -67,16 +67,6 @@ namespace rpvoicechat
             localPlayerAudioSource.QueueAudio(audioData, length);
         }
 
-        public void ClearAudio()
-        {
-            localPlayerAudioSource.StopPlaying();
-
-            foreach (var pair in playerSources)
-            {
-                pair.Value.StopPlaying();
-            }
-        }
-
         public void PlayerSpawned(IPlayer player)
         {
             if (player.ClientId == capi.World.Player.ClientId)
@@ -99,12 +89,12 @@ namespace rpvoicechat
                 {
                     IsMuffled = false,
                     IsReverberated = false,
-                    IsLocational = false
+                    IsLocational = true
                 };
 
                 if (playerSources.TryAdd(player.PlayerUID, playerSource) == false)
                 {
-                    capi.ShowChatMessage("Failed to add new player to source !");
+                    capi.Logger.Warning($"Failed to add player {player.PlayerName} as source !");
                 }
                 else
                 {
@@ -126,7 +116,7 @@ namespace rpvoicechat
                 }
                 else
                 {
-                    capi.ShowChatMessage("Failed to add new player to source !");
+                    capi.Logger.Warning($"Failed to remove player {player.PlayerName}");
                 }
             }
         }

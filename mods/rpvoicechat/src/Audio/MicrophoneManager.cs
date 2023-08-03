@@ -21,8 +21,11 @@ namespace rpvoicechat
         public static int Frequency = 44100;
         public static int BufferSize = (int)(Frequency * 0.5);
         const byte SampleToByte = 2;
-
-        ICoreClientAPI capi;
+        // this is used because max input is SUPER loud, the average person will not need a slider to that, so
+        // to make the threshold slider more user friendly, we scale it down. Change this number to something higher
+        // if it feels like it is not filtering enough out at max
+        private const double MaxInputThreshold = 0.4;
+        readonly ICoreClientAPI capi;
 
         private AudioCapture capture;
         private RPVoiceChatConfig config;
@@ -64,7 +67,7 @@ namespace rpvoicechat
 
         public void SetThreshold(int threshold)
         {
-            inputThreshold = (threshold / 100.0) * 0.04;
+            inputThreshold = (threshold / 100.0) * MaxInputThreshold;
         }
 
         public void UpdateCaptureAudioSamples()

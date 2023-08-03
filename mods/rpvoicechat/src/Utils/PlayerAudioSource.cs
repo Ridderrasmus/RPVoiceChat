@@ -38,8 +38,6 @@ public class PlayerAudioSource : IDisposable
         Util.CheckError("Error gen source", capi);
         buffer = new CircularAudioBuffer(source, BufferCount, capi);
 
-        capi.ShowChatMessage(AudioContext.CurrentContext.CurrentDevice);
-        
         AL.Source(source, ALSourceb.Looping, false);
         Util.CheckError("Error setting source looping", capi);
         AL.Source(source, ALSourceb.SourceRelative, false);

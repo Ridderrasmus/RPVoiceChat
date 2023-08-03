@@ -82,12 +82,15 @@ namespace rpvoicechat
             if (msgKey == "RPVoiceChat")
             {
                 e.SenderConnection.Approve();
-                connections.Add(msgUID, e.SenderConnection);
+                // we want to add or update always
+                connections[msgUID] = e.SenderConnection;
             }
             else
             {
                 // Otherwise, reject it
                 e.SenderConnection.Deny();
+                sapi.Logger.Debug($"Denying connection from {e.SenderConnection}");
+
             }
         }
 
@@ -143,6 +146,10 @@ namespace rpvoicechat
                 {
                     SendAudioToClient(packet, connection);
                 }
+                else
+                {
+                    sapi.Logger.Error($"Failed to get connection for player {closePlayer.PlayerName} when sending audio packet");
+                }
             }
         }
 
@@ -155,13 +162,6 @@ namespace rpvoicechat
             // why do this ? Is there a reason ?
             totalPacketSize += message.LengthBytes;
             totalPacketCount++;
-        }
-        public void SendAudioToClient(AudioPacket packet, string uid)
-        {
-            if (connections.TryGetValue(uid, out var connection))
-            {
-                SendAudioToClient(packet, connection);
-            }
         }
 
         public void Close()
