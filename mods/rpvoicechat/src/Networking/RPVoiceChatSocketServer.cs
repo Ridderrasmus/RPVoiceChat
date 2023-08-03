@@ -18,7 +18,21 @@ namespace rpvoicechat
         {
             this.sapi = sapi;
             this.port = serverPort;
+            sapi.Event.PlayerLeave += Event_PlayerLeave;
             BootVoiceServer();
+        }
+
+        private void Event_PlayerLeave(IServerPlayer player)
+        {
+            if (connections.TryGetValue(player.PlayerUID, out var connection))
+            {
+                if (connection.Status != NetConnectionStatus.Disconnected)
+                {
+                    connection.Disconnect("Player left");
+                }
+
+                connections.Remove(player.PlayerUID);
+            }
         }
 
         private void BootVoiceServer()
@@ -101,7 +115,7 @@ namespace rpvoicechat
                 case VoiceLevel.Whispering:
                     key = "rpvoicechat:distance-whisper";
                     break;
-                case VoiceLevel.Normal:
+                case VoiceLevel.Talking:
                     key = "rpvoicechat:distance-talk";
                     break;
                 case VoiceLevel.Shouting:
@@ -114,6 +128,7 @@ namespace rpvoicechat
 
             int distance = sapi.World.Config.GetInt(key);
 
+
             IPlayer player = sapi.World.PlayerByUid(packet.PlayerId);
             // this might look slower but it should result in being faster, this (hopefully) uses collision partitioning,
             // if so instead of looping through literally all players it only loops through the ones within a partition.
@@ -121,6 +136,9 @@ namespace rpvoicechat
 
             foreach(var closePlayer in players)
             {
+                if (closePlayer == player)
+                    continue;
+
                 if (connections.TryGetValue(closePlayer.PlayerUID, out var connection))
                 {
                     SendAudioToClient(packet, connection);
@@ -146,25 +164,15 @@ namespace rpvoicechat
             }
         }
 
-        public void AddClientToDictionary(string uid, NetConnection connection)
-        {
-            connections.Add(uid, connection);
-        }
-
-        public void RemoveClientFromDictionary(string uid)
-        {
-            connections.Remove(uid);
-        }
-
         public void Close()
         {
             server.Shutdown("[RPVoiceChat - Server] Shutting down");
+            connections.Clear();
         }
 
         public string GetPublicIPAddress()
         {
-            // we can just use the hosts IP here because we are definitely running on the same machine
-            return sapi.Server.ServerIp;
+            return new WebClient().DownloadString("https://ipv4.icanhazip.com/").Replace("\n", "");
         }
 
         public int GetPort()

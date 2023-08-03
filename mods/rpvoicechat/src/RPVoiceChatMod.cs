@@ -10,8 +10,6 @@ namespace rpvoicechat
         protected RPVoiceChatSocketServer server;
         protected RPVoiceChatConfig config;
 
-        protected ICoreClientAPI capi;
-        protected ICoreServerAPI sapi;
         protected INetworkChannel networkChannel;
 
         public override void StartPre(ICoreAPI api)

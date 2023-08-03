@@ -142,7 +142,7 @@ namespace rpvoicechat
             {
                 case VoiceLevel.Whispering:
                     return capi.World.Config.GetInt("rpvoicechat:distance-whisper", 5);
-                case VoiceLevel.Normal:
+                case VoiceLevel.Talking:
                     return capi.World.Config.GetInt("rpvoicechat:distance-talk", 15);
                 case VoiceLevel.Shouting:
                     return capi.World.Config.GetInt("rpvoicechat:distance-shout", 25);

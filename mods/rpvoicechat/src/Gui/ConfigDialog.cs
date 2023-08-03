@@ -208,6 +208,7 @@ namespace rpvoicechat
         private bool slideInputThreshold(int threshold)
         {
             _config.InputThreshold = threshold;
+            _audioInputManager.SetThreshold(threshold);
             ModConfig.Save(capi);
 
             return true;

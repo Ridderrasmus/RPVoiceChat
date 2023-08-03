@@ -1,4 +1,5 @@
-﻿using Vintagestory.API.Common;
+﻿using System.Net.Sockets;
+using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;
 using Vintagestory.API.Server;
 
@@ -11,13 +12,16 @@ namespace rpvoicechat.src
 {
     public class RPVoiceChatServer : RPVoiceChatMod
     {
+        protected ICoreServerAPI sapi;
+
         public override void StartServerSide(ICoreServerAPI api)
         {
             sapi = api;
             base.StartServerSide(sapi);
 
             server = new RPVoiceChatSocketServer(sapi, config.ServerPort);
-
+            var ip = server.GetPublicIPAddress();
+            
             // Register/load world config
             sapi.World.Config.SetInt("rpvoicechat:distance-whisper", sapi.World.Config.GetInt("rpvoicechat:distance-whisper", 5));
             sapi.World.Config.SetInt("rpvoicechat:distance-talk", sapi.World.Config.GetInt("rpvoicechat:distance-talk", 15));
@@ -116,6 +120,7 @@ namespace rpvoicechat.src
 
         private void OnPlayerPlaying(IServerPlayer byPlayer)
         {
+            sapi.Logger.Debug($"[RPVoiceChat - Server] Player start {byPlayer.PlayerName}");
             string address = server.GetPublicIPAddress();
             int port = server.GetPort();
             sapi.Network.GetChannel("rpvoicechat").SendPacket(new ConnectionInfo()
@@ -129,7 +134,7 @@ namespace rpvoicechat.src
         {
             base.Dispose();
 
-            server.Dispose();
+            server?.Dispose();
             server = null;
         }
     }

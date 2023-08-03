@@ -113,16 +113,19 @@ public class PlayerAudioSource : IDisposable
         if(!isPlaying)
             return;
 
-        buffer.TryDequeBuffers();
-        buffer.QueueAudio(audioBytes, bufferLength, ALFormat.Mono16, MicrophoneManager.Frequency);
-
-        var state = AL.GetSourceState(source);
-        Util.CheckError("Error getting source state", capi);
-        // the source can stop playing if it finishes everything in queue
-        if (state != ALSourceState.Playing && isPlaying)
+        capi.Event.EnqueueMainThreadTask(() =>
         {
-            StartPlaying();
-        }
+            buffer.TryDequeBuffers();
+            buffer.QueueAudio(audioBytes, bufferLength, ALFormat.Mono16, MicrophoneManager.Frequency);
+
+            var state = AL.GetSourceState(source);
+            Util.CheckError("Error getting source state", capi);
+            // the source can stop playing if it finishes everything in queue
+            if (state != ALSourceState.Playing && isPlaying)
+            {
+                StartPlaying();
+            }
+        }, "QueueAudio");
     }
 
     public void StartPlaying()

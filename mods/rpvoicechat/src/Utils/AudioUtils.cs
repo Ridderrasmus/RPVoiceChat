@@ -118,7 +118,7 @@ namespace rpvoicechat
                 return;
 
             var buffer = AL.SourceUnqueueBuffer(source);
-            Util.CheckError("Error SourceUnqueueBuffer", capi);
+            Util.CheckError("Error SourceUnqueueBuffer", capi, ALError.InvalidValue);
             while (buffer != 0)
             {
                 queuedBuffers.Remove(buffer);
@@ -142,6 +142,7 @@ namespace rpvoicechat
         private EffectsExtension efx;
         public ReverbEffect(EffectsExtension efx, int source)
         {
+            
             this.efx = efx;
             effect = efx.GenEffect();
             slot = efx.GenAuxiliaryEffectSlot();

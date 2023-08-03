@@ -1,33 +1,43 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using OpenTK.Audio;
 using OpenTK.Audio.OpenAL;
 
 namespace rpvoicechat
 {
-    public class MicrophoneManager
+    struct AudioData
+    {
+        public byte[] Data;
+        public int Length;
+        public VoiceLevel VoiceLevel;
+    }
+
+    public class MicrophoneManager : IDisposable
     {
         public static int Frequency = 44100;
         public static int BufferSize = (int)(Frequency * 0.5);
         const byte SampleToByte = 2;
-        private byte[] sampleBuffer;
 
         ICoreClientAPI capi;
 
         private AudioCapture capture;
         private RPVoiceChatConfig config;
+        private ConcurrentQueue<AudioData> audioDataQueue = new ConcurrentQueue<AudioData>();
+        private Thread audioProcessingThread;
 
-        private VoiceLevel voiceLevel = VoiceLevel.Normal;
-        public bool isTalking = false;
-        public bool isGamePaused = false;
+        private VoiceLevel voiceLevel = VoiceLevel.Talking;
         public bool canSwitchDevice = true;
         public bool keyDownPTT = false;
-        public bool playersNearby = false;
+        public bool IsTalking = false;
 
         private bool isRecording = false;
-        private int ignoreThresholdCounter = 0;
-        private const int ignoreThresholdLimit = 13;
+        private double inputThreshold;
+
+        public double Amplitude { get; set; }
 
         public ActivationMode CurrentActivationMode { get; private set; } = ActivationMode.VoiceActivation;
         public string CurrentInputDevice { get; internal set; }
@@ -36,61 +46,45 @@ namespace rpvoicechat
 
         public MicrophoneManager(ICoreClientAPI capi)
         {
+            audioProcessingThread = new Thread(ProcessAudio);
+            audioProcessingThread.Start();
             this.capi = capi;
             config = ModConfig.Config;
-            sampleBuffer = new byte[BufferSize];
+            SetThreshold(config.InputThreshold);
             capture = new AudioCapture(config.CurrentInputDevice, Frequency, ALFormat.Mono16, BufferSize);
             capture.Start();
+        }
+
+        public void Dispose()
+        {
+            audioProcessingThread.Abort();
+            capture.Stop();
+            capture.Dispose();
+        }
+
+        public void SetThreshold(int threshold)
+        {
+            inputThreshold = (threshold / 100.0) * 0.04;
         }
 
         public void UpdateCaptureAudioSamples()
         {
             bool pushToTalkEnabled = config.PushToTalkEnabled;
             bool isMuted = config.IsMuted;
-            int inputThreshold = config.InputThreshold;
-
-
-            // If player is in the pause menu, return
-            if (capi.IsGamePaused)
-            {
-                isTalking = false;
-                return;
-            }
-            
-            if (capi.World == null)
-            {
-                isTalking = false;
-                return;
-            }
-
-            if (capi.World.Player == null)
-            {
-                isTalking = false;
-                return;
-            }
-
-            if (capi.World.Player.Entity == null)
-            {
-                isTalking = false;
-                return;
-            }
 
             if (!capi.World.Player.Entity.Alive || capi.World.Player.Entity.AnimManager.IsAnimationActive("sleep"))
             {
-                isTalking = false;
                 return;
             }
 
             if (isMuted)
             {
-                isTalking = false;
                 return;
             }
 
             keyDownPTT = capi.Input.KeyboardKeyState[capi.Input.GetHotKeyByCode("voicechatPTT").CurrentMapping.KeyCode];
             if (pushToTalkEnabled && !keyDownPTT)
             {
-                isTalking = false;
                 return;
             }
 
@@ -101,17 +95,48 @@ namespace rpvoicechat
                 return;
             }
 
-            if (sampleBuffer.Length < bufferLength)
-            {
-                sampleBuffer = new byte[bufferLength];
-            }
-            
+            // because we would have to copy, its actually faster to just allocate each time here. 
+            var sampleBuffer = new byte[bufferLength];
             capture.ReadSamples(sampleBuffer, samplesAvailable);
 
-            isTalking = true;
+            // this adds some latency and cpu time to our clients, however, it allows for processing to be done before 
+            // we send off the data. It also ensure that the packets arrive in order, if we just used Task.Run()
+            // we are not guaranteed an order of the packets finishing
+            audioDataQueue.Enqueue(new AudioData()
+            {
+                Data = sampleBuffer,
+                Length = bufferLength,
+                VoiceLevel = voiceLevel
+            });
+        }
 
-            //buffer = AudioUtils.HandleAudioPeaking(buffer);
-            OnBufferRecorded?.Invoke(sampleBuffer, bufferLength, voiceLevel);
+        private void ProcessAudio()
+        {
+            while (audioProcessingThread.IsAlive)
+            {
+                if (audioDataQueue.TryDequeue(out var data))
+                {
+                    double rms = 0;
+                    var numSamples = data.Length / SampleToByte;
+                    for (var i = 0; i < data.Length; i += SampleToByte)
+                    {
+                        var sample = ((BitConverter.ToInt16(data.Data, i) / (double)short.MaxValue));
+                        rms += sample*sample;
+                    }
+
+                    Amplitude = Math.Abs(Math.Sqrt(rms / numSamples));
+
+                    if (Amplitude >= inputThreshold)
+                    {
+                        IsTalking = true;
+                        OnBufferRecorded?.Invoke(data.Data, data.Length, data.VoiceLevel);
+                    }
+                    else
+                    {
+                        IsTalking = false;
+                    }
+                }
+            }
         }
 
         // Returns the success of the method
@@ -171,7 +196,7 @@ namespace rpvoicechat
 
         public VoiceLevel CycleVoiceLevel()
         {
-            if (voiceLevel == VoiceLevel.Normal)
+            if (voiceLevel == VoiceLevel.Talking)
             {
                 voiceLevel = VoiceLevel.Shouting;
             }
@@ -181,7 +206,7 @@ namespace rpvoicechat
             }
             else if (voiceLevel == VoiceLevel.Whispering)
             {
-                voiceLevel = VoiceLevel.Normal;
+                voiceLevel = VoiceLevel.Talking;
             }
 
             return voiceLevel;

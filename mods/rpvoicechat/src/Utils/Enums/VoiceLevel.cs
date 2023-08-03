@@ -3,11 +3,11 @@
     public enum VoiceLevel
     {
         Whispering = 5,
-        Normal = 15,
+        Talking = 15,
         Shouting = 25,
 
         SquareWhispering = Whispering* Whispering,
-        SquareNormal = Normal* Normal,
+        SquareTalking = Talking* Talking,
         SquareShouting = Shouting* Shouting
     }
 }

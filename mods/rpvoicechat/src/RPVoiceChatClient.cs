@@ -13,6 +13,8 @@ namespace rpvoicechat
         MicrophoneManager micManager;
         AudioOutputManager audioOutputManager;
 
+        protected ICoreClientAPI capi;
+
         private bool audioClientConnected = false;
         private long gameTickId = 0;
 
@@ -106,8 +108,11 @@ namespace rpvoicechat
             var status = e as ConnectionStatusUpdate;
             capi.Logger.Debug("[RPVoiceChat - Client] Voice client connected{0}", status?.Reason);
 
-            // Set up game events
-            gameTickId = capi.Event.RegisterGameTickListener(OnGameTick, 1);
+            capi.Event.EnqueueMainThreadTask(() =>
+            {
+                // Set up game events
+                gameTickId = capi.Event.RegisterGameTickListener(OnGameTick, 1);
+            }, "register mic update");
         }
 
         private void VoiceClientDisconnected(object sender, EventArgs e)
@@ -117,8 +122,8 @@ namespace rpvoicechat
             capi.Logger.Debug("[RPVoiceChat - Client] Voice client disconnected {0}", status?.Reason);
 
             // Stop game events
-            if(gameTickId != 0) 
-                capi.Event.UnregisterGameTickListener(gameTickId);
+            if (gameTickId != 0)
+                capi.Event.EnqueueMainThreadTask(() => { capi.Event.UnregisterGameTickListener(gameTickId); }, "Unregister mic tick");
         }
 
         private void OnGameTick(float dt)
@@ -126,7 +131,6 @@ namespace rpvoicechat
             if(micManager == null || audioOutputManager == null)
                 return;
 
-            micManager.isGamePaused = capi.IsGamePaused;
             micManager.UpdateCaptureAudioSamples();
         }
 
@@ -144,7 +148,8 @@ namespace rpvoicechat
 
         public override void Dispose()
         {
-            client.Dispose();
+            micManager?.Dispose();
+            client?.Dispose();
             client = null;
         }
     }
