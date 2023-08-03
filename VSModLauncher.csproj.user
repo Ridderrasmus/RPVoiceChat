@@ -3,7 +3,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <StartAction>Program</StartAction>
     <StartProgram>D:\Games\VintageStory\Vintagestory.exe</StartProgram>
-    <StartArguments>--openWorld="modsamplestest" -pcreativebuilding --addModPath="D:\git\RPVoiceChat\mods" --tracelog --dataPath="D:\Games\Test\Debug"</StartArguments>
+    <StartArguments>--addModPath="D:\git\RPVoiceChat\mods" --tracelog --dataPath="D:\Games\Test\Debug"</StartArguments>
     <StartWorkingDirectory>D:\Games\VintageStory</StartWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
@@ -18,14 +18,14 @@
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'Default' " />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DebugServer|AnyCPU'">
     <StartProgram>D:\Games\VintageStory\VintagestoryServer.exe</StartProgram>
-    <StartWorkingDirectory>D:\Games\VintageStory</StartWorkingDirectory>
-    <StartArguments>--openWorld="modsamplestest" -pcreativebuilding --addModPath="D:\git\RPVoiceChat\mods" --tracelog --dataPath="D:\Games\Test\Server"</StartArguments>
+    <StartWorkingDirectory>D:\Games\VintageStory\</StartWorkingDirectory>
+    <StartArguments>--addModPath="D:\git\RPVoiceChat\mods" --tracelog --dataPath="D:\Games\Test\Server"</StartArguments>
     <StartAction>Program</StartAction>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DebugB|AnyCPU'">
     <StartProgram>D:\Games\VintageStory\Vintagestory.exe</StartProgram>
     <StartWorkingDirectory>D:\Games\VintageStory</StartWorkingDirectory>
-    <StartArguments>--openWorld="modsamplestest" -pcreativebuilding --addModPath="D:\git\RPVoiceChat\mods" --tracelog --dataPath="D:\Games\Test\DebugB"</StartArguments>
+    <StartArguments>--addModPath="D:\git\RPVoiceChat\mods" --tracelog --dataPath="D:\Games\Test\DebugB"</StartArguments>
     <StartAction>Program</StartAction>
   </PropertyGroup>
 </Project>
