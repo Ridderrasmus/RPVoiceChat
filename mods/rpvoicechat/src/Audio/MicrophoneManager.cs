@@ -114,27 +114,26 @@ namespace rpvoicechat
         {
             while (audioProcessingThread.IsAlive)
             {
-                if (audioDataQueue.TryDequeue(out var data))
+                if (!audioDataQueue.TryDequeue(out var data)) Thread.Sleep(30);
+
+                double rms = 0;
+                var numSamples = data.Length / SampleToByte;
+                for (var i = 0; i < data.Length; i += SampleToByte)
                 {
-                    double rms = 0;
-                    var numSamples = data.Length / SampleToByte;
-                    for (var i = 0; i < data.Length; i += SampleToByte)
-                    {
-                        var sample = ((BitConverter.ToInt16(data.Data, i) / (double)short.MaxValue));
-                        rms += sample*sample;
-                    }
+                    var sample = ((BitConverter.ToInt16(data.Data, i) / (double)short.MaxValue));
+                    rms += sample*sample;
+                }
 
-                    Amplitude = Math.Abs(Math.Sqrt(rms / numSamples));
+                Amplitude = Math.Abs(Math.Sqrt(rms / numSamples));
 
-                    if (Amplitude >= inputThreshold)
-                    {
-                        IsTalking = true;
-                        OnBufferRecorded?.Invoke(data.Data, data.Length, data.VoiceLevel);
-                    }
-                    else
-                    {
-                        IsTalking = false;
-                    }
+                if (Amplitude >= inputThreshold)
+                {
+                    IsTalking = true;
+                    OnBufferRecorded?.Invoke(data.Data, data.Length, data.VoiceLevel);
+                }
+                else
+                {
+                    IsTalking = false;
                 }
             }
         }
