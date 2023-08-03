@@ -83,6 +83,8 @@ namespace rpvoicechat
             {
                 e.SenderConnection.Approve();
                 // we want to add or update always
+                // the .Add before would just throw an exception if the key already existed,
+                // but we don't care if it does, we just care that the connection is correctly set
                 connections[msgUID] = e.SenderConnection;
             }
             else
