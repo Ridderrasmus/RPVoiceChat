@@ -57,7 +57,9 @@ namespace rpvoicechat
             serverAddress = address;
             serverPort = port;
             NetOutgoingMessage hail = client.CreateMessage("RPVoiceChat " + clientUID);
-            client.Connect("192.168.1.238", serverPort, hail);
+            // my hard coded local ip for testing
+            //client.Connect("192.168.1.238", serverPort, hail);
+            client.Connect(serverAddress, serverPort, hail);
         }
         private void RPVoiceChatSocketServer_OnStatusChanged(object sender, NetIncomingMessage e)
         {
