@@ -2,9 +2,9 @@
 {
     public enum VoiceLevel
     {
-        Whispering = 5,
-        Talking = 15,
-        Shouting = 25,
+        Whispering = 50,
+        Talking = 150,
+        Shouting = 250,
 
         SquareWhispering = Whispering* Whispering,
         SquareTalking = Talking* Talking,

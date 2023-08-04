@@ -34,6 +34,11 @@ namespace rpvoicechat.src
             sapi.Event.PlayerNowPlaying += OnPlayerPlaying;
         }
 
+        public override bool ShouldLoad(EnumAppSide forSide)
+        {
+            return forSide == EnumAppSide.Server;
+        }
+
         private void registerCommands()
         {
             var parsers = sapi.ChatCommands.Parsers;

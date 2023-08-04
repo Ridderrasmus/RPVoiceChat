@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Lidgren.Network;
 using Vintagestory.API.Client;
+using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 
 namespace rpvoicechat
@@ -18,6 +19,10 @@ namespace rpvoicechat
         private bool audioClientConnected = false;
         private long gameTickId = 0;
 
+        public override bool ShouldLoad(EnumAppSide forSide)
+        {
+            return forSide == EnumAppSide.Client;
+        }
         public override void StartClientSide(ICoreClientAPI api)
         {
             capi = api;
