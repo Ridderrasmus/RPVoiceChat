@@ -44,7 +44,6 @@ namespace rpvoicechat
             capi.Network.GetChannel("rpvoicechat").SetMessageHandler<ConnectionInfo>(OnConnectionInfo);
 
             capi.Event.LeftWorld += OnPlayerLeaving;
-            capi.Event.PauseResume += OnPauseResume;
 
             // Initialize gui
             MainConfig configGui = new MainConfig(capi, micManager, audioOutputManager);
@@ -52,7 +51,7 @@ namespace rpvoicechat
 
             // Set up keybinds
             capi.Input.RegisterHotKey("voicechatMenu", "RPVoice: Config menu", GlKeys.P, HotkeyType.GUIOrOtherControls);
-            capi.Input.RegisterHotKey("voicechatVoiceLevel", "RPVoice: Change voice volume", GlKeys.Tab, HotkeyType.GUIOrOtherControls, false, false, true);
+            capi.Input.RegisterHotKey("voicechatVoiceLevel", "RPVoice: Change speech volume", GlKeys.Tab, HotkeyType.GUIOrOtherControls, false, false, true);
             capi.Input.RegisterHotKey("voicechatPTT", "RPVoice: Push to talk", GlKeys.CapsLock, HotkeyType.GUIOrOtherControls);
             capi.Input.RegisterHotKey("voicechatMute", "RPVoice: Toggle mute", GlKeys.N, HotkeyType.GUIOrOtherControls);
 
@@ -66,7 +65,7 @@ namespace rpvoicechat
             capi.Input.SetHotKeyHandler("voicechatVoiceLevel", (t1) =>
             {
                 var level = micManager.CycleVoiceLevel();
-                capi.ShowChatMessage("RPVoice: Voice level set to " + level.ToString());
+                capi.ShowChatMessage("RPVoice: Speech volume set to " + level.ToString());
                 return true;
             });
 
@@ -94,12 +93,6 @@ namespace rpvoicechat
                     client.SendAudioToServer(packet);
                 }
             };
-        }
-
-        private void OnPauseResume(bool isPaused)
-        {
-            // should we stop audio for some reason ?
-            // I think even if the game is paused (which should be impossible on a server) we should still play audio
         }
 
         private void OnMessageReceived(object sender, NetIncomingMessage msg)

@@ -9,8 +9,6 @@ namespace rpvoicechat
     public class RPVoiceChatSocketServer : RPVoiceChatSocketCommon
     {
         public NetServer server;
-        private long totalPacketSize = 0;
-        private long totalPacketCount = 0;
 
         private Dictionary<string, NetConnection> connections = new Dictionary<string, NetConnection>();
 
@@ -44,13 +42,13 @@ namespace rpvoicechat
             config.EnableMessageType(NetIncomingMessageType.ConnectionLatencyUpdated);
             config.EnableMessageType(NetIncomingMessageType.StatusChanged);
             config.EnableMessageType(NetIncomingMessageType.ErrorMessage);
-            // this should probably be a config or something similar. 
-            config.MaximumConnections = 100;
             config.UseMessageRecycling = true;
             config.AcceptIncomingConnections = true;
-            // this should probably also be a config
-            config.Port = port;
             config.EnableUPnP = true;
+            
+            // Config options
+            config.MaximumConnections = ModConfig.Config.MaximumConnections;
+            config.Port = ModConfig.Config.ServerPort;
 
             server = new NetServer(config);
 
@@ -60,7 +58,7 @@ namespace rpvoicechat
             if (server.UPnP.ForwardPort(port, "Vintage Story Voice Chat"))
                 sapi.Logger.Notification("[RPVoiceChat - Server] UPnP successful.");
             else
-                sapi.Logger.Warning("[RPVoiceChat - Server] UPnP failed.");
+                sapi.Logger.Warning("[RPVoiceChat - Server] UPnP failed. Port forwarding needed for voice chat to function normally.");
 
             OnMessageReceived += RPVoiceChatSocketServer_OnMessageReceived;
             OnConnectionApprovalMessage += RPVoiceChatSocketServer_OnConnectionApprovalMessage;
@@ -137,11 +135,20 @@ namespace rpvoicechat
             IPlayer player = sapi.World.PlayerByUid(packet.PlayerId);
             // this might look slower but it should result in being faster, this (hopefully) uses collision partitioning,
             // if so instead of looping through literally all players it only loops through the ones within a partition.
-            var players = sapi.World.GetPlayersAround(player.Entity.Pos.XYZ, distance, distance);
+            //var players = sapi.World.GetPlayersAround(player.Entity.Pos.XYZ, distance, distance);
+
+            // The reason we use this instead of the above is because the above doesn't work in blocks.
+            var players = sapi.World.AllOnlinePlayers;
 
             foreach(var closePlayer in players)
             {
                 if (closePlayer == player)
+                    continue;
+
+                if (closePlayer.Entity == null)
+                    continue;
+
+                if (player.Entity.Pos.DistanceTo(closePlayer.Entity.Pos.XYZ) > distance)
                     continue;
 
                 if (connections.TryGetValue(closePlayer.PlayerUID, out var connection))
@@ -160,10 +167,6 @@ namespace rpvoicechat
             NetOutgoingMessage message = server.CreateMessage();
             packet.WriteToMessage(message);
             server.SendMessage(message, client, deliveryMethod);
-
-            // why do this ? Is there a reason ?
-            totalPacketSize += message.LengthBytes;
-            totalPacketCount++;
         }
 
         public void Close()
@@ -180,18 +183,6 @@ namespace rpvoicechat
         public int GetPort()
         {
             return server.Port;
-        }
-
-        public double GetAveragePacketSize()
-        {
-            if (totalPacketCount == 0)
-            {
-                return 0;
-            }
-            else
-            {
-                return (double)totalPacketSize / totalPacketCount;
-            }
         }
 
         public override void Dispose()

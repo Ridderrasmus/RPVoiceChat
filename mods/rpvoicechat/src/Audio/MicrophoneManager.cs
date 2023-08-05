@@ -24,7 +24,7 @@ namespace rpvoicechat
         // this is used because max input is SUPER loud, the average person will not need a slider to that, so
         // to make the threshold slider more user friendly, we scale it down. Change this number to something higher
         // if it feels like it is not filtering enough out at max
-        private const double MaxInputThreshold = 0.4;
+        private const double MaxInputThreshold = 0.17;
         readonly ICoreClientAPI capi;
 
         private AudioCapture capture;
@@ -127,7 +127,11 @@ namespace rpvoicechat
                     rms += sample*sample;
                 }
 
-                Amplitude = Math.Abs(Math.Sqrt(rms / numSamples));
+                Amplitude = (Math.Abs(Math.Sqrt(rms / numSamples))) + 0.05;
+
+                // Gotta add some sort of threshold ignoring feature so that we can keep transmitting if someone is taking
+                // a breath or something while talking. This also would eliminate choppy audio if someones threshold is
+                // right on the edge
 
                 if (Amplitude >= inputThreshold)
                 {

@@ -13,8 +13,7 @@ namespace rpvoicechat
 
         protected NetDeliveryMethod deliveryMethod = NetDeliveryMethod.ReliableSequenced;
         public NetPeerConfiguration config = new NetPeerConfiguration("RPVoiceChat");
-        public int port = 52525;
-
+        public int port;
 
         public event EventHandler<NetIncomingMessage> OnErrorMessageReceived;
         public event EventHandler<NetIncomingMessage> OnStatucChangedReceived;

@@ -23,9 +23,9 @@ namespace rpvoicechat.src
             var ip = server.GetPublicIPAddress();
             
             // Register/load world config
-            sapi.World.Config.SetInt("rpvoicechat:distance-whisper", sapi.World.Config.GetInt("rpvoicechat:distance-whisper", 5));
-            sapi.World.Config.SetInt("rpvoicechat:distance-talk", sapi.World.Config.GetInt("rpvoicechat:distance-talk", 15));
-            sapi.World.Config.SetInt("rpvoicechat:distance-shout", sapi.World.Config.GetInt("rpvoicechat:distance-shout", 25));
+            sapi.World.Config.SetInt("rpvoicechat:distance-whisper", sapi.World.Config.GetInt("rpvoicechat:distance-whisper", (int)VoiceLevel.Whispering));
+            sapi.World.Config.SetInt("rpvoicechat:distance-talk", sapi.World.Config.GetInt("rpvoicechat:distance-talk", (int)VoiceLevel.Talking));
+            sapi.World.Config.SetInt("rpvoicechat:distance-shout", sapi.World.Config.GetInt("rpvoicechat:distance-shout", (int)VoiceLevel.Shouting));
 
             // Register commands
             registerCommands();
@@ -75,24 +75,24 @@ namespace rpvoicechat.src
 
         private TextCommandResult ResetDistanceHandler(TextCommandCallingArgs args)
         {
-            sapi.World.Config.SetInt("rpvoicechat:distance-whisper", 5);
-            sapi.World.Config.SetInt("rpvoicechat:distance-talk", 15);
-            sapi.World.Config.SetInt("rpvoicechat:distance-shout", 25);
+            sapi.World.Config.SetInt("rpvoicechat:distance-whisper", (int)VoiceLevel.Whispering);
+            sapi.World.Config.SetInt("rpvoicechat:distance-talk", (int)VoiceLevel.Talking);
+            sapi.World.Config.SetInt("rpvoicechat:distance-shout", (int)VoiceLevel.Shouting);
 
             return TextCommandResult.Success("Audio distances reset to default");
         }
         
         private TextCommandResult DisplayInfoHandler(TextCommandCallingArgs args)
         {
-            int whisper = sapi.World.Config.GetInt("rpvoicechat:distance-whisper", 5);
-            int talk = sapi.World.Config.GetInt("rpvoicechat:distance-talk", 15);
-            int shout = sapi.World.Config.GetInt("rpvoicechat:distance-shout", 25);
+            int whisper = sapi.World.Config.GetInt("rpvoicechat:distance-whisper", (int)VoiceLevel.Whispering);
+            int talk = sapi.World.Config.GetInt("rpvoicechat:distance-talk", (int)VoiceLevel.Talking);
+            int shout = sapi.World.Config.GetInt("rpvoicechat:distance-shout", (int)VoiceLevel.Shouting);
 
             return TextCommandResult.Success
                 (
-                    "Whisper distance: " + whisper + "\n" +
-                    "Talk distance: " + talk + "\n" +
-                    "Shout distance: " + shout
+                    "Whisper distance: " + whisper + " blocks\n" +
+                    "Talk distance: " + talk + " blocks\n" +
+                    "Shout distance: " + shout + " blocks"
                 );
         }
 

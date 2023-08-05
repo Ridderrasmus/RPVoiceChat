@@ -131,13 +131,13 @@ namespace rpvoicechat
             switch (voiceLevel)
             {
                 case VoiceLevel.Whispering:
-                    return capi.World.Config.GetInt("rpvoicechat:distance-whisper", 5);
+                    return capi.World.Config.GetInt("rpvoicechat:distance-whisper", (int)VoiceLevel.Whispering);
                 case VoiceLevel.Talking:
-                    return capi.World.Config.GetInt("rpvoicechat:distance-talk", 15);
+                    return capi.World.Config.GetInt("rpvoicechat:distance-talk", (int)VoiceLevel.Talking);
                 case VoiceLevel.Shouting:
-                    return capi.World.Config.GetInt("rpvoicechat:distance-shout", 25);
+                    return capi.World.Config.GetInt("rpvoicechat:distance-shout", (int)VoiceLevel.Shouting);
                 default:
-                    return 15;
+                    return (int)VoiceLevel.Talking;
             }
         }
 

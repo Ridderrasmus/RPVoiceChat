@@ -5,6 +5,7 @@ using OpenTK.Audio;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
+using OpenTK;
 
 public class PlayerAudioSource : IDisposable
 {
@@ -23,6 +24,7 @@ public class PlayerAudioSource : IDisposable
     public bool IsReverberated { get; set; } = false;
 
     public bool IsLocational { get; set; } = true;
+    public VoiceLevel VoiceLevel { get; private set; } = VoiceLevel.Talking;
 
     private IPlayer player;
 
@@ -48,6 +50,32 @@ public class PlayerAudioSource : IDisposable
         Util.CheckError("Error setting source Pitch", capi);
 
         //reverbEffect = new ReverbEffect(manager.EffectsExtension, source);
+    }
+
+    public void UpdateVoiceLevel(VoiceLevel voiceLevel)
+    {
+        VoiceLevel = voiceLevel;
+        
+        string key = "rpvoicechat:distance-";
+
+        switch (voiceLevel)
+        {
+            case VoiceLevel.Whispering:
+                key = key + "whisper";
+                break;
+            case VoiceLevel.Talking:
+                key = key + "talk";
+                break;
+            case VoiceLevel.Shouting:
+                key = key + "shout";
+                break;
+            default:
+                key = key + "talk";
+                break;
+        }
+
+        AL.Source(source, ALSourcef.MaxDistance, (float)capi.World.Config.GetInt(key));
+        Util.CheckError("Error setting max audible distance", capi);
     }
 
     public void UpdatePlayer(float dt)
