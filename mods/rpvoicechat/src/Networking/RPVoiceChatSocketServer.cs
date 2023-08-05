@@ -148,7 +148,7 @@ namespace rpvoicechat
                 if (closePlayer.Entity == null)
                     continue;
 
-                if (player.Entity.Pos.DistanceTo(closePlayer.Entity.Pos.XYZ) > distance)
+                if (player.Entity.Pos.SquareDistanceTo(closePlayer.Entity.Pos.XYZ) > distance*distance)
                     continue;
 
                 if (connections.TryGetValue(closePlayer.PlayerUID, out var connection))

@@ -21,10 +21,8 @@ namespace rpvoicechat
         public static int Frequency = 44100;
         public static int BufferSize = (int)(Frequency * 0.5);
         const byte SampleToByte = 2;
-        // this is used because max input is SUPER loud, the average person will not need a slider to that, so
-        // to make the threshold slider more user friendly, we scale it down. Change this number to something higher
-        // if it feels like it is not filtering enough out at max
-        private const double MaxInputThreshold = 0.17;
+        // This might need to be changed to become a config option.
+        private const double MaxInputThreshold = 0.25;
         readonly ICoreClientAPI capi;
 
         private AudioCapture capture;
@@ -127,7 +125,7 @@ namespace rpvoicechat
                     rms += sample*sample;
                 }
 
-                Amplitude = (Math.Abs(Math.Sqrt(rms / numSamples))) + 0.05;
+                Amplitude = Math.Abs(Math.Sqrt(rms / numSamples));
 
                 // Gotta add some sort of threshold ignoring feature so that we can keep transmitting if someone is taking
                 // a breath or something while talking. This also would eliminate choppy audio if someones threshold is
