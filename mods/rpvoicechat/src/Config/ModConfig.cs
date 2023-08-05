@@ -6,35 +6,35 @@ namespace rpvoicechat
     {
         
         private const string ConfigFileName = "rpvoicechat.json";
-        public static RPVoiceChatConfig config { get; private set; }
+        public static RPVoiceChatConfig Config { get; private set; }
 
         public static void ReadConfig(ICoreAPI api)
         {
             
             try
             {
-                config = LoadConfig(api);
+                Config = LoadConfig(api);
 
-                if (config == null)
+                if (Config == null)
                 {
                     GenerateConfig(api);
-                    config = LoadConfig(api);
+                    Config = LoadConfig(api);
                 }
                 else
                 {
-                    GenerateConfig(api, config);
+                    GenerateConfig(api, Config);
                 }
             }
             catch
             {
                 GenerateConfig(api);
-                config = LoadConfig(api);
+                Config = LoadConfig(api);
             }
         }
 
         public static void Save(ICoreAPI api)
         {
-            GenerateConfig(api, config);
+            GenerateConfig(api, Config);
         }
 
         private static RPVoiceChatConfig LoadConfig(ICoreAPI api) => api.LoadModConfig<RPVoiceChatConfig>(ConfigFileName);

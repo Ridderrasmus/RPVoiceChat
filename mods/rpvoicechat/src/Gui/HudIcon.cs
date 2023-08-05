@@ -16,7 +16,7 @@ namespace rpvoicechat
         public HudIcon(ICoreClientAPI capi, MicrophoneManager microphoneManager) : base(capi)
         {
             _microphoneManager = microphoneManager;
-            _config = ModConfig.config;
+            _config = ModConfig.Config;
         }
 
         public override void OnOwnPlayerDataReceived()
@@ -50,7 +50,7 @@ namespace rpvoicechat
 
             var composer = this.capi.Gui.CreateCompo("rpvcicon", dialogBounds);
 
-            if (_microphoneManager.isTalking || _config.IsMuted)
+            if (_microphoneManager.IsTalking || _config.IsMuted)
             {
                 composer.AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation("rpvoicechat", "textures/gui/" + voice + ".png"));
             }

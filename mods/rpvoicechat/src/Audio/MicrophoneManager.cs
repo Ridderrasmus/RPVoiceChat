@@ -1,132 +1,145 @@
-﻿using NAudio.Wave;
-using System;
-using System.Collections.Generic;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Vintagestory.API.Client;
-using Vintagestory.API.Util;
+using OpenTK.Audio;
+using OpenTK.Audio.OpenAL;
 
 namespace rpvoicechat
 {
-
-
-
-    public class MicrophoneManager
+    struct AudioData
     {
-        ICoreClientAPI capi;
+        public byte[] Data;
+        public int Length;
+        public VoiceLevel VoiceLevel;
+    }
 
-        WaveInEvent capture;
+    public class MicrophoneManager : IDisposable
+    {
+        public static int Frequency = 44100;
+        public static int BufferSize = (int)(Frequency * 0.5);
+        const byte SampleToByte = 2;
+        // this is used because max input is SUPER loud, the average person will not need a slider to that, so
+        // to make the threshold slider more user friendly, we scale it down. Change this number to something higher
+        // if it feels like it is not filtering enough out at max
+        private const double MaxInputThreshold = 0.4;
+        readonly ICoreClientAPI capi;
 
-        RPVoiceChatConfig _config;
+        private AudioCapture capture;
+        private RPVoiceChatConfig config;
+        private ConcurrentQueue<AudioData> audioDataQueue = new ConcurrentQueue<AudioData>();
+        private Thread audioProcessingThread;
 
-        private VoiceLevel voiceLevel = VoiceLevel.Normal;
-        public bool isTalking = false;
-        public bool isGamePaused = false;
+        private VoiceLevel voiceLevel = VoiceLevel.Talking;
         public bool canSwitchDevice = true;
         public bool keyDownPTT = false;
-        public bool playersNearby = false;
+        public bool IsTalking = false;
 
         private bool isRecording = false;
-        private int ignoreThresholdCounter = 0;
-        private const int ignoreThresholdLimit = 13;
+        private double inputThreshold;
+
+        public double Amplitude { get; set; }
 
         public ActivationMode CurrentActivationMode { get; private set; } = ActivationMode.VoiceActivation;
         public string CurrentInputDevice { get; internal set; }
 
-        public event Action<byte[], VoiceLevel> OnBufferRecorded;
+        public event Action<byte[], int, VoiceLevel> OnBufferRecorded;
 
         public MicrophoneManager(ICoreClientAPI capi)
         {
+            audioProcessingThread = new Thread(ProcessAudio);
+            audioProcessingThread.Start();
             this.capi = capi;
-            _config = ModConfig.config;
-            capture = CreateNewCapture(_config.CurrentInputDevice);
+            config = ModConfig.Config;
+            SetThreshold(config.InputThreshold);
+            capture = new AudioCapture(config.CurrentInputDevice, Frequency, ALFormat.Mono16, BufferSize);
+            capture.Start();
         }
 
-        private void OnAudioRecorded(object sender, WaveInEventArgs e)
+        public void Dispose()
         {
-            int validBytes = e.BytesRecorded;
-            byte[] buffer = new byte[validBytes];
-            Array.Copy(e.Buffer, buffer, validBytes);
+            audioProcessingThread.Abort();
+            capture.Stop();
+            capture.Dispose();
+        }
 
-            bool pushToTalkEnabled = _config.PushToTalkEnabled;
-            bool isMuted = _config.IsMuted;
-            int inputThreshold = _config.InputThreshold;
+        public void SetThreshold(int threshold)
+        {
+            inputThreshold = (threshold / 100.0) * MaxInputThreshold;
+        }
 
-
-            // If player is in the pause menu, return
-            if (capi.IsGamePaused)
-            {
-                isTalking = false;
-                return;
-            }
-            
-            if (capi.World == null)
-            {
-                isTalking = false;
-                return;
-            }
-
-            if (capi.World.Player == null)
-            {
-                isTalking = false;
-                return;
-            }
-
-            if (capi.World.Player.Entity == null)
-            {
-                isTalking = false;
-                return;
-            }
+        public void UpdateCaptureAudioSamples()
+        {
+            bool pushToTalkEnabled = config.PushToTalkEnabled;
+            bool isMuted = config.IsMuted;
 
             if (!capi.World.Player.Entity.Alive || capi.World.Player.Entity.AnimManager.IsAnimationActive("sleep"))
             {
-                isTalking = false;
                 return;
             }
 
             if (isMuted)
             {
-                isTalking = false;
                 return;
             }
 
             keyDownPTT = capi.Input.KeyboardKeyState[capi.Input.GetHotKeyByCode("voicechatPTT").CurrentMapping.KeyCode];
             if (pushToTalkEnabled && !keyDownPTT)
             {
-                isTalking = false;
                 return;
             }
 
-            // Get the amplitude of the audio
-            int amplitude = AudioUtils.CalculateAmplitude(buffer, validBytes);
-
-            // If the amplitude is below the threshold, return
-            if (!pushToTalkEnabled && amplitude < inputThreshold)
+            int samplesAvailable = capture.AvailableSamples;
+            int bufferLength = samplesAvailable * SampleToByte;
+            if (samplesAvailable <= 0)
             {
-                if (ignoreThresholdCounter > 0)
+                return;
+            }
+
+            // because we would have to copy, its actually faster to just allocate each time here. 
+            var sampleBuffer = new byte[bufferLength];
+            capture.ReadSamples(sampleBuffer, samplesAvailable);
+
+            // this adds some latency and cpu time to our clients, however, it allows for processing to be done before 
+            // we send off the data. It also ensure that the packets arrive in order, if we just used Task.Run()
+            // we are not guaranteed an order of the packets finishing
+            audioDataQueue.Enqueue(new AudioData()
+            {
+                Data = sampleBuffer,
+                Length = bufferLength,
+                VoiceLevel = voiceLevel
+            });
+        }
+
+        private void ProcessAudio()
+        {
+            while (audioProcessingThread.IsAlive)
+            {
+                if (!audioDataQueue.TryDequeue(out var data)) Thread.Sleep(30);
+
+                double rms = 0;
+                var numSamples = data.Length / SampleToByte;
+                for (var i = 0; i < data.Length; i += SampleToByte)
                 {
-                    ignoreThresholdCounter--;
+                    var sample = ((BitConverter.ToInt16(data.Data, i) / (double)short.MaxValue));
+                    rms += sample*sample;
+                }
+
+                Amplitude = Math.Abs(Math.Sqrt(rms / numSamples));
+
+                if (Amplitude >= inputThreshold)
+                {
+                    IsTalking = true;
+                    OnBufferRecorded?.Invoke(data.Data, data.Length, data.VoiceLevel);
                 }
                 else
                 {
-                    isTalking = false;
-                    return;
+                    IsTalking = false;
                 }
             }
-            else
-            {
-                ignoreThresholdCounter = ignoreThresholdLimit; // Reset the counter when amplitude is above the threshold
-            }
-
-            isTalking = true;
-            
-            if (!playersNearby)
-            {
-                return;
-            }
-
-            buffer = AudioUtils.HandleAudioPeaking(buffer);
-            OnBufferRecorded?.Invoke(buffer, voiceLevel);
         }
-
 
         // Returns the success of the method
         public bool ToggleRecording()
@@ -143,11 +156,11 @@ namespace rpvoicechat
 
             if (mode)
             {
-                capture.StopRecording();
+                capture.Start();
             }
             else
             {
-                capture.StartRecording();
+                capture.Stop();
             }
 
             isRecording = mode;
@@ -156,77 +169,36 @@ namespace rpvoicechat
             return isRecording;
         }
 
-
-        public WaveInCapabilities CycleInputDevice()
+        private AudioCapture CreateNewCapture(string deviceName)
         {
-
-            int deviceCount = WaveIn.DeviceCount;
-            int currentDevice = capture.DeviceNumber;
-            int nextDevice = currentDevice + 1;
-
-            if (nextDevice >= deviceCount)
+            if (capture.CurrentDevice == deviceName)
             {
-                nextDevice = 0;
+                return capture;
             }
 
-            capture = CreateNewCapture(nextDevice);
-
-            return WaveIn.GetCapabilities(nextDevice);
-        }
-
-        private WaveInEvent CreateNewCapture(int deviceIndex)
-        {
-            if (isRecording)
+            if (capture.IsRunning)
             {
-                capture?.StopRecording();
+                capture.Stop();
             }
-            capture?.Dispose();
+            capture.Dispose();
 
-            WaveFormat customWaveFormat = new WaveFormatMono();
-
-            WaveInEvent newCapture = new WaveInEvent();
-            _config.CurrentInputDevice = deviceIndex;
+            var newCapture = new AudioCapture(deviceName, Frequency, ALFormat.Mono16, BufferSize);
+            config.CurrentInputDevice = deviceName;
             ModConfig.Save(capi);
-            newCapture.DeviceNumber = deviceIndex;
-            newCapture.WaveFormat = customWaveFormat;
-            newCapture.BufferMilliseconds = 20;
-            newCapture.DataAvailable += OnAudioRecorded;
 
-            newCapture.StartRecording();
+            newCapture.Start();
 
             return newCapture;
         }
 
-        public WaveInEvent CreateNewCapture()
-        {
-            return CreateNewCapture(0);
-        }
-
-        public int GetInputDeviceCount()
-        {
-            return WaveIn.DeviceCount;
-        }
-
-        public string GetInputDeviceName()
-        {
-            return WaveIn.GetCapabilities(capture.DeviceNumber).ProductName;
-        }
-
         public string[] GetInputDeviceNames()
         {
-            List<string> deviceNames = new List<string>();
-            for (int i = 0; i < WaveIn.DeviceCount; i++)
-            {
-                deviceNames.Add(WaveIn.GetCapabilities(i).ProductName);
-            }
-            return deviceNames.ToArray();
+            return AudioCapture.AvailableDevices.ToArray();
         }
-
-
 
         public VoiceLevel CycleVoiceLevel()
         {
-            if (voiceLevel == VoiceLevel.Normal)
+            if (voiceLevel == VoiceLevel.Talking)
             {
                 voiceLevel = VoiceLevel.Shouting;
             }
@@ -236,26 +208,15 @@ namespace rpvoicechat
             }
             else if (voiceLevel == VoiceLevel.Whispering)
             {
-                voiceLevel = VoiceLevel.Normal;
+                voiceLevel = VoiceLevel.Talking;
             }
 
             return voiceLevel;
         }
 
-        public string[] GetInputDeviceIds()
-        {
-            string[] deviceIds = new string[WaveIn.DeviceCount];
-            for (int i = 0; i < WaveIn.DeviceCount; i++)
-            {
-                deviceIds[i] = i.ToString();
-            }
-            return deviceIds;
-        }
-
         public void SetInputDevice(string deviceId)
         {
-            int device = deviceId.ToInt(0);
-            capture = CreateNewCapture(device);
+            capture = CreateNewCapture(deviceId);
         }
     }
 }

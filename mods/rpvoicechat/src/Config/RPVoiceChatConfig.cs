@@ -6,10 +6,10 @@
         public int ServerPort = 52525;
 
         public bool PushToTalkEnabled = false;
+        public bool IsLoopbackEnabled = false;
         public bool IsMuted = false;
         public int InputThreshold = 40;
-        public int CurrentInputDevice = 0;
-        public int CurrentOutputDevice = 0;
+        public string CurrentInputDevice;
 
         public RPVoiceChatConfig() 
         { 
@@ -24,7 +24,7 @@
             IsMuted = previousConfig.IsMuted;
             InputThreshold = previousConfig.InputThreshold;
             CurrentInputDevice = previousConfig.CurrentInputDevice;
-            CurrentOutputDevice = previousConfig.CurrentOutputDevice;
+            IsLoopbackEnabled = previousConfig.IsLoopbackEnabled;
         }
 
     }

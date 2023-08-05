@@ -10,15 +10,13 @@ namespace rpvoicechat
         protected RPVoiceChatSocketServer server;
         protected RPVoiceChatConfig config;
 
-        protected ICoreClientAPI capi;
-        protected ICoreServerAPI sapi;
         protected INetworkChannel networkChannel;
 
         public override void StartPre(ICoreAPI api)
         {
             base.StartPre(api);
             ModConfig.ReadConfig(api);
-            config = ModConfig.config;
+            config = ModConfig.Config;
         }
 
         public override void Start(ICoreAPI api)
@@ -30,7 +28,5 @@ namespace rpvoicechat
                 .RegisterMessageType(typeof(ConnectionInfo));
 
         }
-
-
     }
 }
