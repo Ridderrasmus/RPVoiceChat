@@ -80,12 +80,28 @@ public class PlayerAudioSource : IDisposable
 
     public void UpdatePlayer(float dt)
     {
+        // If the player is on the other side of a wall, then the player's voice should be muffled
         if (IsMuffled)
         {
         }
 
+        // If the player is in a reverberated area, then the player's voice should be reverberated
         if (IsReverberated)
         {
+        }
+
+        // If the player has a temporal stability of less than 0.7, then the player's voice should be distorted
+        // Values are temporary currently
+        if (player.Entity.WatchedAttributes.GetDouble("temporalStability") < 0.7)
+        {
+
+        }
+
+        // If the player is drunk, then the player's voice should be affected
+        // Values are temporary currently
+        if (player.Entity.WatchedAttributes.GetFloat("intoxication") > 1.1)
+        {
+
         }
 
         if (IsLocational)
@@ -109,6 +125,8 @@ public class PlayerAudioSource : IDisposable
         }
         else
         {
+            AL.Source(source, ALSourceb.SourceRelative, true);
+            Util.CheckError("Error making source relative to client", capi);
             AL.GetListener(ALListener3f.Position, out var Pos);
             Util.CheckError("Error getting listener pos", capi);
             AL.Source(source, ALSource3f.Position, ref Pos);
@@ -147,7 +165,7 @@ public class PlayerAudioSource : IDisposable
             var state = AL.GetSourceState(source);
             Util.CheckError("Error getting source state", capi);
             // the source can stop playing if it finishes everything in queue
-            if (state != ALSourceState.Playing && isPlaying)
+            if (state != ALSourceState.Playing)
             {
                 StartPlaying();
             }
