@@ -12,7 +12,6 @@ public class PlayerAudioSource : IDisposable
     public const int BufferCount = 4;
 
     private readonly int source;
-    private bool isPlaying = false;
 
     private CircularAudioBuffer buffer;
     //private ReverbEffect reverbEffect;
@@ -136,9 +135,6 @@ public class PlayerAudioSource : IDisposable
 
     public void QueueAudio(byte[] audioBytes, int bufferLength)
     {
-        if(!isPlaying)
-            return;
-
         capi.Event.EnqueueMainThreadTask(() =>
         {
             buffer.TryDequeBuffers();
@@ -147,7 +143,7 @@ public class PlayerAudioSource : IDisposable
             var state = AL.GetSourceState(source);
             Util.CheckError("Error getting source state", capi);
             // the source can stop playing if it finishes everything in queue
-            if (state != ALSourceState.Playing && isPlaying)
+            if (state != ALSourceState.Playing)
             {
                 StartPlaying();
             }
@@ -157,7 +153,6 @@ public class PlayerAudioSource : IDisposable
     public void StartPlaying()
     {
         StartTick();
-        isPlaying = true;
         AL.SourcePlay(source);
         Util.CheckError("Error playing source", capi);
     }
@@ -165,7 +160,6 @@ public class PlayerAudioSource : IDisposable
     public void StopPlaying()
     {
         StopTick();
-        isPlaying = false;
         AL.SourceStop(source);
         Util.CheckError("Error stop playing source", capi);
     }
