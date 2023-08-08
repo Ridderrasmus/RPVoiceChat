@@ -110,6 +110,9 @@
     <Compile Include="src\Audio\AudioOutputManager.cs" />
     <Compile Include="src\Gui\ConfigDialog.cs" />
     <Compile Include="src\Gui\HudIcon.cs" />
+    <Compile Include="src\Networking\RPVoiceChatNativeNetworkClient.cs" />
+    <Compile Include="src\Networking\RPVoiceChatNativeNetwork.cs" />
+    <Compile Include="src\Networking\RPVoiceChatNativeNetworkServer.cs" />
     <Compile Include="src\RPVoiceChatServer.cs" />
     <Compile Include="src\RPVoiceChatClient.cs" />
     <Compile Include="src\Utils\AudioPacket.cs" />

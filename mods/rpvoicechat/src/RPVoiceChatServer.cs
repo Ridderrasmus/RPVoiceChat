@@ -1,4 +1,5 @@
 ﻿using System.Net.Sockets;
+using rpvoicechat.src.Networking;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;
 using Vintagestory.API.Server;
@@ -13,14 +14,14 @@ namespace rpvoicechat.src
     public class RPVoiceChatServer : RPVoiceChatMod
     {
         protected ICoreServerAPI sapi;
-
+        //private RPVoiceChatSocketServer server;
+        private RPVoiceChatNativeNetworkServer server;
         public override void StartServerSide(ICoreServerAPI api)
         {
             sapi = api;
             base.StartServerSide(sapi);
 
-            server = new RPVoiceChatSocketServer(sapi, config.ServerPort);
-            var ip = server.GetPublicIPAddress();
+            server = new RPVoiceChatNativeNetworkServer(sapi);
             
             // Register/load world config
             sapi.World.Config.SetInt("rpvoicechat:distance-whisper", sapi.World.Config.GetInt("rpvoicechat:distance-whisper", (int)VoiceLevel.Whispering));
@@ -29,9 +30,6 @@ namespace rpvoicechat.src
 
             // Register commands
             registerCommands();
-
-            // Register events
-            sapi.Event.PlayerNowPlaying += OnPlayerPlaying;
         }
 
         public override bool ShouldLoad(EnumAppSide forSide)
@@ -121,26 +119,6 @@ namespace rpvoicechat.src
             sapi.World.Config.SetInt("rpvoicechat:distance-shout", distance);
 
             return TextCommandResult.Success("Shout distance set to " + distance);
-        }
-
-        private void OnPlayerPlaying(IServerPlayer byPlayer)
-        {
-            sapi.Logger.Debug($"[RPVoiceChat - Server] Player start {byPlayer.PlayerName}");
-            string address = server.GetPublicIPAddress();
-            int port = server.GetPort();
-            sapi.Network.GetChannel("rpvoicechat").SendPacket(new ConnectionInfo()
-            {
-                Address = address,
-                Port = port
-            }, byPlayer);
-        }
-
-        public override void Dispose()
-        {
-            base.Dispose();
-
-            server?.Dispose();
-            server = null;
         }
     }
 }

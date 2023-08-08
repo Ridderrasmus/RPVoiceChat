@@ -35,6 +35,8 @@ namespace rpvoicechat
         public bool keyDownPTT = false;
         public bool IsTalking = false;
 
+        private long gameTickId = 0;
+
         private bool isRecording = false;
         private double inputThreshold;
 
@@ -49,6 +51,7 @@ namespace rpvoicechat
         {
             audioProcessingThread = new Thread(ProcessAudio);
             audioProcessingThread.Start();
+            gameTickId = capi.Event.RegisterGameTickListener(UpdateCaptureAudioSamples, 100);
             this.capi = capi;
             config = ModConfig.Config;
             SetThreshold(config.InputThreshold);
@@ -58,6 +61,8 @@ namespace rpvoicechat
 
         public void Dispose()
         {
+            capi.Event.UnregisterGameTickListener(gameTickId);
+            gameTickId = 0;
             audioProcessingThread.Abort();
             capture.Stop();
             capture.Dispose();
@@ -68,7 +73,7 @@ namespace rpvoicechat
             inputThreshold = (threshold / 100.0) * MaxInputThreshold;
         }
 
-        public void UpdateCaptureAudioSamples()
+        public void UpdateCaptureAudioSamples(float deltaTime)
         {
             bool pushToTalkEnabled = config.PushToTalkEnabled;
             bool isMuted = config.IsMuted;
