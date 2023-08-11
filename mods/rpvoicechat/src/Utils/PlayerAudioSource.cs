@@ -11,8 +11,7 @@ public class PlayerAudioSource : IDisposable
 {
     public const int BufferCount = 4;
 
-    private readonly int source;
-    private bool isPlaying = false;
+    private int source;
 
     private CircularAudioBuffer buffer;
     //private ReverbEffect reverbEffect;
@@ -32,24 +31,26 @@ public class PlayerAudioSource : IDisposable
     {
         this.player = player;
         this.capi = capi;
-        gameTickId = capi.Event.RegisterGameTickListener(UpdatePlayer, 20);
+        StartTick();
+        capi.Event.EnqueueMainThreadTask(() =>
+        {
+            lastPos = player.Entity?.SidedPos?.XYZFloat;
 
-        lastPos = player.Entity.SidedPos.XYZFloat;
+            source = AL.GenSource();
+            Util.CheckError("Error gen source", capi);
+            buffer = new CircularAudioBuffer(source, BufferCount, capi);
 
-        source = AL.GenSource();
-        Util.CheckError("Error gen source", capi);
-        buffer = new CircularAudioBuffer(source, BufferCount, capi);
+            AL.Source(source, ALSourceb.Looping, false);
+            Util.CheckError("Error setting source looping", capi);
+            AL.Source(source, ALSourceb.SourceRelative, false);
+            Util.CheckError("Error setting source SourceRelative", capi);
+            AL.Source(source, ALSourcef.Gain, 1.0f);
+            Util.CheckError("Error setting source Gain", capi);
+            AL.Source(source, ALSourcef.Pitch, 1.0f);
+            Util.CheckError("Error setting source Pitch", capi);
 
-        AL.Source(source, ALSourceb.Looping, false);
-        Util.CheckError("Error setting source looping", capi);
-        AL.Source(source, ALSourceb.SourceRelative, false);
-        Util.CheckError("Error setting source SourceRelative", capi);
-        AL.Source(source, ALSourcef.Gain, 1.0f);
-        Util.CheckError("Error setting source Gain", capi);
-        AL.Source(source, ALSourcef.Pitch, 1.0f);
-        Util.CheckError("Error setting source Pitch", capi);
-
-        //reverbEffect = new ReverbEffect(manager.EffectsExtension, source);
+            //reverbEffect = new ReverbEffect(manager.EffectsExtension, source);
+        }, "PlayerAudioSource Init");
     }
 
     public void UpdateVoiceLevel(VoiceLevel voiceLevel)
@@ -74,12 +75,18 @@ public class PlayerAudioSource : IDisposable
                 break;
         }
 
-        AL.Source(source, ALSourcef.MaxDistance, (float)capi.World.Config.GetInt(key));
-        Util.CheckError("Error setting max audible distance", capi);
+        capi.Event.EnqueueMainThreadTask(() =>
+        {
+            AL.Source(source, ALSourcef.MaxDistance, (float) capi.World.Config.GetInt(key));
+            Util.CheckError("Error setting max audible distance", capi);
+        }, "PlayerAudioSource update max distance");
     }
 
     public void UpdatePlayer(float dt)
     {
+        if (player.Entity == null || player.Entity.SidedPos == null)
+            return;
+
         if (IsMuffled)
         {
         }
@@ -90,6 +97,11 @@ public class PlayerAudioSource : IDisposable
 
         if (IsLocational)
         {
+            if (lastPos == null)
+            {
+                lastPos = player.Entity.SidedPos.XYZFloat;
+            }
+
             var entityPos = player.Entity.SidedPos.XYZFloat;
             var direction = (entityPos - capi.World.Player.Entity.SidedPos.XYZFloat);
             direction.Normalize();
@@ -122,8 +134,7 @@ public class PlayerAudioSource : IDisposable
     {
         if(gameTickId != 0)
             return;
-
-        gameTickId = capi.Event.RegisterGameTickListener(UpdatePlayer, 100);
+        capi.Event.EnqueueMainThreadTask(() => { gameTickId = capi.Event.RegisterGameTickListener(UpdatePlayer, 100); }, "PlayerAudioSource Start");
     }
 
     public void StopTick()
@@ -131,14 +142,14 @@ public class PlayerAudioSource : IDisposable
         if(gameTickId == 0)
             return;
 
-        capi.Event.UnregisterGameTickListener(gameTickId);
+        capi.Event.EnqueueMainThreadTask(() => { 
+            capi.Event.UnregisterGameTickListener(gameTickId);
+            gameTickId = 0;
+        }, "PlayerAudioSource Start");
     }
 
     public void QueueAudio(byte[] audioBytes, int bufferLength)
     {
-        if(!isPlaying)
-            return;
-
         capi.Event.EnqueueMainThreadTask(() =>
         {
             buffer.TryDequeBuffers();
@@ -147,27 +158,31 @@ public class PlayerAudioSource : IDisposable
             var state = AL.GetSourceState(source);
             Util.CheckError("Error getting source state", capi);
             // the source can stop playing if it finishes everything in queue
-            if (state != ALSourceState.Playing && isPlaying)
+            if (state != ALSourceState.Playing)
             {
                 StartPlaying();
             }
-        }, "QueueAudio");
+        }, "PlayerAudioSource QueueAudio");
     }
 
     public void StartPlaying()
     {
         StartTick();
-        isPlaying = true;
-        AL.SourcePlay(source);
-        Util.CheckError("Error playing source", capi);
+        capi.Event.EnqueueMainThreadTask(() =>
+        {
+            AL.SourcePlay(source);
+            Util.CheckError("Error playing source", capi);
+        }, "PlayerAudioSource StartPlaying");
     }
 
     public void StopPlaying()
     {
         StopTick();
-        isPlaying = false;
-        AL.SourceStop(source);
-        Util.CheckError("Error stop playing source", capi);
+        capi.Event.EnqueueMainThreadTask(() =>
+        {
+            AL.SourceStop(source);
+            Util.CheckError("Error stop playing source", capi);
+        }, "PlayerAudioSource StopPlaying");
     }
 
     public void Dispose()

@@ -1,13 +1,10 @@
 ﻿using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Server;
 
 namespace rpvoicechat
 {
     public abstract class RPVoiceChatMod : ModSystem
     {
-        protected RPVoiceChatSocketClient client;
-        protected RPVoiceChatSocketServer server;
         protected RPVoiceChatConfig config;
 
         protected INetworkChannel networkChannel;
