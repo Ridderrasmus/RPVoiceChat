@@ -51,7 +51,7 @@ public class PlayerAudioSource : IDisposable
             Util.CheckError("Error setting source Pitch", capi);
 
             //reverbEffect = new ReverbEffect(manager.EffectsExtension, source);
-        });
+        }, "PlayerAudioSource Init");
     }
 
     public void UpdateVoiceLevel(VoiceLevel voiceLevel)
