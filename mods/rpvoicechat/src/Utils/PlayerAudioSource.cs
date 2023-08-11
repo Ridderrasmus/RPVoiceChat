@@ -34,7 +34,7 @@ public class PlayerAudioSource : IDisposable
         StartTick();
         capi.Event.EnqueueMainThreadTask(() =>
         {
-            lastPos = player.Entity.SidedPos.XYZFloat;
+            lastPos = player.Entity?.SidedPos?.XYZFloat;
 
             source = AL.GenSource();
             Util.CheckError("Error gen source", capi);
@@ -84,6 +84,9 @@ public class PlayerAudioSource : IDisposable
 
     public void UpdatePlayer(float dt)
     {
+        if (player.Entity == null || player.Entity.SidedPos == null)
+            return;
+
         if (IsMuffled)
         {
         }
