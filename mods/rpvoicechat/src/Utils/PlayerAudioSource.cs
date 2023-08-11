@@ -31,10 +31,9 @@ public class PlayerAudioSource : IDisposable
     {
         this.player = player;
         this.capi = capi;
+        StartTick();
         capi.Event.EnqueueMainThreadTask(() =>
         {
-            gameTickId = capi.Event.RegisterGameTickListener(UpdatePlayer, 20);
-
             lastPos = player.Entity.SidedPos.XYZFloat;
 
             source = AL.GenSource();
@@ -76,8 +75,11 @@ public class PlayerAudioSource : IDisposable
                 break;
         }
 
-        AL.Source(source, ALSourcef.MaxDistance, (float)capi.World.Config.GetInt(key));
-        Util.CheckError("Error setting max audible distance", capi);
+        capi.Event.EnqueueMainThreadTask(() =>
+        {
+            AL.Source(source, ALSourcef.MaxDistance, (float) capi.World.Config.GetInt(key));
+            Util.CheckError("Error setting max audible distance", capi);
+        }, "PlayerAudioSource update max distance");
     }
 
     public void UpdatePlayer(float dt)
@@ -124,8 +126,7 @@ public class PlayerAudioSource : IDisposable
     {
         if(gameTickId != 0)
             return;
-
-        gameTickId = capi.Event.RegisterGameTickListener(UpdatePlayer, 100);
+        capi.Event.EnqueueMainThreadTask(() => { gameTickId = capi.Event.RegisterGameTickListener(UpdatePlayer, 100); }, "PlayerAudioSource Start");
     }
 
     public void StopTick()
@@ -133,7 +134,7 @@ public class PlayerAudioSource : IDisposable
         if(gameTickId == 0)
             return;
 
-        capi.Event.UnregisterGameTickListener(gameTickId);
+        capi.Event.EnqueueMainThreadTask(() => { capi.Event.UnregisterGameTickListener(gameTickId); }, "PlayerAudioSource Start");
     }
 
     public void QueueAudio(byte[] audioBytes, int bufferLength)
@@ -150,21 +151,27 @@ public class PlayerAudioSource : IDisposable
             {
                 StartPlaying();
             }
-        }, "QueueAudio");
+        }, "PlayerAudioSource QueueAudio");
     }
 
     public void StartPlaying()
     {
         StartTick();
-        AL.SourcePlay(source);
-        Util.CheckError("Error playing source", capi);
+        capi.Event.EnqueueMainThreadTask(() =>
+        {
+            AL.SourcePlay(source);
+            Util.CheckError("Error playing source", capi);
+        }, "PlayerAudioSource StartPlaying");
     }
 
     public void StopPlaying()
     {
         StopTick();
-        AL.SourceStop(source);
-        Util.CheckError("Error stop playing source", capi);
+        capi.Event.EnqueueMainThreadTask(() =>
+        {
+            AL.SourceStop(source);
+            Util.CheckError("Error stop playing source", capi);
+        }, "PlayerAudioSource StopPlaying");
     }
 
     public void Dispose()
