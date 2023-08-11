@@ -97,6 +97,11 @@ public class PlayerAudioSource : IDisposable
 
         if (IsLocational)
         {
+            if (lastPos == null)
+            {
+                lastPos = player.Entity.SidedPos.XYZFloat;
+            }
+
             var entityPos = player.Entity.SidedPos.XYZFloat;
             var direction = (entityPos - capi.World.Player.Entity.SidedPos.XYZFloat);
             direction.Normalize();
