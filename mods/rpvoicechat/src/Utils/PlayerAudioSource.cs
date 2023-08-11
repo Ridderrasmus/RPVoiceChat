@@ -134,7 +134,10 @@ public class PlayerAudioSource : IDisposable
         if(gameTickId == 0)
             return;
 
-        capi.Event.EnqueueMainThreadTask(() => { capi.Event.UnregisterGameTickListener(gameTickId); }, "PlayerAudioSource Start");
+        capi.Event.EnqueueMainThreadTask(() => { 
+            capi.Event.UnregisterGameTickListener(gameTickId);
+            gameTickId = 0;
+        }, "PlayerAudioSource Start");
     }
 
     public void QueueAudio(byte[] audioBytes, int bufferLength)
