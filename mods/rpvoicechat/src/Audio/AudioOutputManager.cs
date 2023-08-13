@@ -51,17 +51,36 @@ namespace rpvoicechat
         }
 
         // Called when the client receives an audio packet supplying the audio packet
-        public void HandleAudioPacket(AudioPacket packet)
+        public async void HandleAudioPacket(AudioPacket packet)
         {
-            if (playerSources.TryGetValue(packet.PlayerId, out var source))
+            await Task.Run(() =>
             {
-                // Update the voice level if it has changed
-                // Not sure about this one, might be better to just update the voice level every time we update the player
-                if(source.VoiceLevel != packet.VoiceLevel)
-                    source.UpdateVoiceLevel(packet.VoiceLevel);
-                
-                source.QueueAudio(packet.AudioData, packet.Length);
-            }
+                if (playerSources.TryGetValue(packet.PlayerId, out var source))
+                {
+                    // Update the voice level if it has changed
+                    // Not sure about this one, might be better to just update the voice level every time we update the player
+                    if (source.VoiceLevel != packet.VoiceLevel)
+                        source.UpdateVoiceLevel(packet.VoiceLevel);
+
+                    source.QueueAudio(packet.AudioData, packet.Length);
+                }
+                else
+                {
+                    var player = capi.World.PlayerByUid(packet.PlayerId);
+                    if (player == null)
+                    {
+                        capi.Logger.Error("Could not find player for playerId !");
+                        return;
+                    }
+
+                    var newSource = new PlayerAudioSource(player, this, capi);
+                    newSource.QueueAudio(packet.AudioData, packet.Length);
+                    if (!playerSources.TryAdd(packet.PlayerId, newSource))
+                    {
+                        capi.Logger.Error("Could not add new player to sources !");
+                    }
+                }
+            });
         }
 
         public void HandleLoopback(byte[] audioData, int length, VoiceLevel voiceLevel)
@@ -111,6 +130,7 @@ namespace rpvoicechat
         {
             if (player.ClientId == capi.World.Player.ClientId)
             {
+                localPlayerAudioSource.Dispose();
                 localPlayerAudioSource = null;
             }
             else
@@ -125,27 +145,6 @@ namespace rpvoicechat
                 }
             }
         }
-
-        public string[] GetInputDeviceNames()
-        {
-            return AudioContext.AvailableDevices.Distinct().ToArray();
-        }
-
-        private int GetVoiceDistance(VoiceLevel voiceLevel)
-        {
-            switch (voiceLevel)
-            {
-                case VoiceLevel.Whispering:
-                    return capi.World.Config.GetInt("rpvoicechat:distance-whisper", (int)VoiceLevel.Whispering);
-                case VoiceLevel.Talking:
-                    return capi.World.Config.GetInt("rpvoicechat:distance-talk", (int)VoiceLevel.Talking);
-                case VoiceLevel.Shouting:
-                    return capi.World.Config.GetInt("rpvoicechat:distance-shout", (int)VoiceLevel.Shouting);
-                default:
-                    return (int)VoiceLevel.Talking;
-            }
-        }
-
     }
 }
 

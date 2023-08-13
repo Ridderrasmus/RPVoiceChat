@@ -64,10 +64,16 @@ namespace rpvoicechat
             OnConnectionApprovalMessage += RPVoiceChatSocketServer_OnConnectionApprovalMessage;
             OnDiscoveryRequestReceived += RPVoiceChatSocketServer_OnDiscoveryRequestReceived;
             OnErrorMessageReceived += RPVoiceChatSocketServer_OnErrorReceived;
+            OnStatucChangedReceived += OnOnStatucChangedReceived;
 
             StartListening(server);
 
             sapi.Logger.Notification("[RPVoiceChat - Server] Started on port " + port);
+        }
+
+        private void OnOnStatucChangedReceived(object sender, NetIncomingMessage e)
+        {
+            
         }
 
         private void RPVoiceChatSocketServer_OnConnectionApprovalMessage(object sender, NetIncomingMessage e)

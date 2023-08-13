@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using System.Reflection;
 using System.Threading.Tasks;
 using Lidgren.Network;
+using rpvoicechat.src.Networking;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -11,13 +12,14 @@ namespace rpvoicechat
 {
     public class RPVoiceChatClient : RPVoiceChatMod
     {
-        MicrophoneManager micManager;
-        AudioOutputManager audioOutputManager;
+        private MicrophoneManager micManager;
+        private AudioOutputManager audioOutputManager;
+        //private RPVoiceChatSocketClient client;
+        private RPVoiceChatNativeNetworkClient client;
 
         protected ICoreClientAPI capi;
 
-        private bool audioClientConnected = false;
-        private long gameTickId = 0;
+        private MainConfig configGui;
 
         public override bool ShouldLoad(EnumAppSide forSide)
         {
@@ -33,20 +35,17 @@ namespace rpvoicechat
             audioOutputManager = new AudioOutputManager(capi);
             
             // Init voice chat client
-            client = new RPVoiceChatSocketClient(api);
+            client = new RPVoiceChatNativeNetworkClient(api);
 
             // Add voice chat client event handlers
-            client.OnMessageReceived += OnMessageReceived;
-            client.OnClientConnected += VoiceClientConnected;
-            client.OnClientDisconnected += VoiceClientDisconnected;
+            //client.OnMessageReceived += OnMessageReceived;
+            //client.OnClientConnected += VoiceClientConnected;
+            //client.OnClientDisconnected += VoiceClientDisconnected;
 
-            // Set up clientside handling of game network
-            capi.Network.GetChannel("rpvoicechat").SetMessageHandler<ConnectionInfo>(OnConnectionInfo);
-
-            capi.Event.LeftWorld += OnPlayerLeaving;
+            client.OnAudioReceived += OnAudioReceived;
 
             // Initialize gui
-            MainConfig configGui = new MainConfig(capi, micManager, audioOutputManager);
+            configGui = new MainConfig(capi, micManager, audioOutputManager);
             api.Gui.RegisterDialog(new HudIcon(capi, micManager));
 
             // Set up keybinds
@@ -81,74 +80,28 @@ namespace rpvoicechat
             {
                 audioOutputManager.HandleLoopback(buffer, length, voiceLevel);
 
-                if (audioClientConnected)
+                AudioPacket packet = new AudioPacket()
                 {
-                    AudioPacket packet = new AudioPacket()
-                    {
-                        PlayerId = capi.World.Player.PlayerUID,
-                        AudioData = buffer,
-                        Length = length,
-                        VoiceLevel = voiceLevel
-                    };
-                    client.SendAudioToServer(packet);
-                }
+                    PlayerId = capi.World.Player.PlayerUID,
+                    AudioData = buffer,
+                    Length = length,
+                    VoiceLevel = voiceLevel
+                };
+                client.SendAudioToServer(packet);
             };
         }
 
-        private void OnMessageReceived(object sender, NetIncomingMessage msg)
+        private void OnAudioReceived(AudioPacket obj)
         {
-            audioOutputManager.HandleAudioPacket(AudioPacket.ReadFromMessage(msg));
-        }
-
-        private void VoiceClientConnected(object sender, EventArgs e)
-        {
-            audioClientConnected = true;
-            var status = e as ConnectionStatusUpdate;
-            capi.Logger.Debug("[RPVoiceChat - Client] Voice client connected{0}", status?.Reason);
-
-            capi.Event.EnqueueMainThreadTask(() =>
-            {
-                // Set up game events
-                gameTickId = capi.Event.RegisterGameTickListener(OnGameTick, 1);
-            }, "register mic update");
-        }
-
-        private void VoiceClientDisconnected(object sender, EventArgs e)
-        {
-            audioClientConnected = false;
-            var status = e as ConnectionStatusUpdate;
-            capi.Logger.Debug("[RPVoiceChat - Client] Voice client disconnected {0}", status?.Reason);
-
-            // Stop game events
-            if (gameTickId != 0)
-                capi.Event.EnqueueMainThreadTask(() => { capi.Event.UnregisterGameTickListener(gameTickId); }, "Unregister mic tick");
-        }
-
-        private void OnGameTick(float dt)
-        {
-            if(micManager == null || audioOutputManager == null)
-                return;
-
-            micManager.UpdateCaptureAudioSamples();
-        }
-
-        private void OnPlayerLeaving()
-        {
-            client.Close();
-        }
-
-        private void OnConnectionInfo(ConnectionInfo packet)
-        {
-            if (packet == null) return;
-            client.ConnectToServer(packet.Address, packet.Port);
-            capi.Logger.Debug($"[RPVoiceChat - Client] Connected to server {packet.Address}:{packet.Port}");
+            audioOutputManager.HandleAudioPacket(obj);
         }
 
         public override void Dispose()
         {
             micManager?.Dispose();
-            client?.Dispose();
-            client = null;
+            //client?.Dispose();
+            configGui.Dispose();
+            //client = null;
         }
     }
 }

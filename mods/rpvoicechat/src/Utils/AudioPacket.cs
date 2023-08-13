@@ -1,8 +1,10 @@
 ﻿using System;
 using Lidgren.Network;
+using ProtoBuf;
 
 namespace rpvoicechat
 {
+    [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     public class AudioPacket
     {
         public string PlayerId { get; set; }

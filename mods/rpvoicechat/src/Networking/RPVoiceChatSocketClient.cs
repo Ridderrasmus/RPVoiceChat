@@ -59,7 +59,7 @@ namespace rpvoicechat
             NetOutgoingMessage hail = client.CreateMessage("RPVoiceChat " + clientUID);
             // my hard coded local ip for testing
             //client.Connect("192.168.1.238", serverPort, hail);
-            client.Connect(serverAddress, serverPort, hail);
+            client?.Connect(serverAddress, serverPort, hail);
         }
         private void RPVoiceChatSocketServer_OnStatusChanged(object sender, NetIncomingMessage e)
         {
@@ -88,19 +88,20 @@ namespace rpvoicechat
         {
             NetOutgoingMessage msg = client.CreateMessage();
             packet.WriteToMessage(msg);
-            client.SendMessage(msg, deliveryMethod);
+            client?.SendMessage(msg, deliveryMethod);
         }
 
         public void Close()
         {
-            client.Disconnect("Disconnecting");
-            client.Shutdown("Client shutting down");
+            client?.Disconnect("Disconnecting");
+            client?.Shutdown("Client shutting down");
         }
 
         public override void Dispose()
         {
             base.Dispose();
 
+            Close();
             client = null;
         }
     }
