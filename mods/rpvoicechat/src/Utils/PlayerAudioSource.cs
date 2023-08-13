@@ -125,14 +125,14 @@ public class PlayerAudioSource : IDisposable
         }
         else
         {
-            AL.Source(source, ALSourceb.SourceRelative, true);
-            Util.CheckError("Error making source relative to client", capi);
             AL.GetListener(ALListener3f.Position, out var Pos);
             Util.CheckError("Error getting listener pos", capi);
             AL.Source(source, ALSource3f.Position, ref Pos);
             Util.CheckError("Error setting source direction", capi);
             AL.Source(source, ALSource3f.Velocity, 0, 0, 0);
             Util.CheckError("Error setting source velocity", capi);
+            AL.Source(source, ALSourceb.SourceRelative, true);
+            Util.CheckError("Error making source relative to client", capi);
         }
     }
 

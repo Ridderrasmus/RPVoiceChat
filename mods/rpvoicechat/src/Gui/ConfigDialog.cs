@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OpenTK.Input;
+using System;
 using System.Collections.Generic;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -12,6 +13,7 @@ namespace rpvoicechat
 
         protected List<ConfigOption> ConfigOptions = new List<ConfigOption>();
 
+
         
 
         public MicrophoneManager _audioInputManager;
@@ -22,6 +24,7 @@ namespace rpvoicechat
             public ActionConsumable AdvancedAction;
             public string SwitchKey;
             public string SliderKey;
+            public string SpecialSliderKey;
             public string DropdownKey;
 
             public string Text;
@@ -92,6 +95,10 @@ namespace rpvoicechat
                     switchBounds.fixedWidth = 200;
                     composer.AddDropDown(option.DropdownValues, option.DropdownNames, 0, option.DropdownSelect, switchBounds, option.DropdownKey);
                 }
+                else if (option.SpecialSliderKey != null)
+                {
+                    composer.AddInteractiveElement(new GuiElementAudioMeter(capi, switchBounds.FlatCopy().WithFixedWidth(sliderWidth)), option.SpecialSliderKey);
+                }
 
                 textBounds = textBounds.BelowCopy(fixedDeltaY: switchPadding);
                 switchBounds = switchBounds.BelowCopy(fixedDeltaY: switchPadding);
@@ -130,6 +137,9 @@ namespace rpvoicechat
 
     public class MainConfig : ConfigDialog
     {
+        private long tickEvent;
+        private double inputAudioAmplitude;
+
         RPVoiceChatConfig _config;
 
         public MainConfig(ICoreClientAPI capi, MicrophoneManager audioInputManager, AudioOutputManager audioOutputManager) : base(capi)
@@ -179,6 +189,25 @@ namespace rpvoicechat
                 Tooltip = "Play recorded audio through output audio",
                 ToggleAction = OnToggleLoopback
             });
+        }
+
+        public override void OnGuiClosed()
+        {
+            base.OnGuiClosed();
+
+            tickEvent = capi.Event.RegisterGameTickListener(OnGameTick, 100);
+        }
+
+        public override void OnGuiOpened()
+        {
+            base.OnGuiOpened();
+
+            capi.Event.UnregisterGameTickListener(tickEvent);
+        }
+
+        private void OnGameTick(float obj)
+        {
+            inputAudioAmplitude = _audioInputManager.Amplitude;
         }
 
         protected override void RefreshValues()
