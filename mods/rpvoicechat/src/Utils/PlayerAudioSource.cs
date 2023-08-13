@@ -6,12 +6,15 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using OpenTK;
+using rpvoicechat.src.Utils.Filters;
 
 public class PlayerAudioSource : IDisposable
 {
     public const int BufferCount = 4;
 
     private int source;
+
+    public EffectsExtension EffectsExtension;
 
     private CircularAudioBuffer buffer;
     //private ReverbEffect reverbEffect;
@@ -27,8 +30,11 @@ public class PlayerAudioSource : IDisposable
 
     private IPlayer player;
 
+    private FilterLowpass lowpassFilter;
+
     public PlayerAudioSource(IPlayer player, AudioOutputManager manager, ICoreClientAPI capi)
     {
+        this.EffectsExtension = manager.EffectsExtension;
         this.player = player;
         this.capi = capi;
         StartTick();
@@ -87,8 +93,19 @@ public class PlayerAudioSource : IDisposable
         if (player.Entity == null || player.Entity.SidedPos == null)
             return;
 
-        if (IsMuffled)
+        // If the player is on the other side of something to the listener, then the player's voice should be muffled
+        BlockSelection blocks = new BlockSelection();
+        EntitySelection entities = new EntitySelection();
+        capi.World.RayTraceForSelection(player.Entity.Pos.XYZ, capi.World.Player.Entity.Pos.XYZ, ref blocks, ref entities);
+        if (blocks != null)
         {
+            if(lowpassFilter == null)
+                lowpassFilter = new FilterLowpass(EffectsExtension, source);
+
+            lowpassFilter.Start();
+        } else
+        {
+            lowpassFilter?.Stop();
         }
 
         // If the player is in a reverberated area, then the player's voice should be reverberated
@@ -98,7 +115,7 @@ public class PlayerAudioSource : IDisposable
 
         // If the player has a temporal stability of less than 0.7, then the player's voice should be distorted
         // Values are temporary currently
-        if (player.Entity.WatchedAttributes.GetDouble("temporalStability") < 0.7)
+        if (player.Entity.WatchedAttributes.GetDouble("temporalStability") < 0.5)
         {
 
         }
