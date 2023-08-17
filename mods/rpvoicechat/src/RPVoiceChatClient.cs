@@ -78,6 +78,9 @@ namespace rpvoicechat
 
             micManager.OnBufferRecorded += (buffer, length, voiceLevel) =>
             {
+                if (buffer == null)
+                    return;
+
                 audioOutputManager.HandleLoopback(buffer, length, voiceLevel);
 
                 AudioPacket packet = new AudioPacket()

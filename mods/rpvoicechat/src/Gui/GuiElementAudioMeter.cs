@@ -1,4 +1,5 @@
-﻿using Vintagestory.API.Client;
+﻿using System;
+using Vintagestory.API.Client;
 
 namespace rpvoicechat
 {
@@ -26,7 +27,6 @@ namespace rpvoicechat
 
         public void UpdateVisuals(double amplitude)
         {
-            capi.Logger.Debug("Amplitude: " + amplitude);
             if (amplitude <= 0) amplitude = 0;
 
 
@@ -38,8 +38,10 @@ namespace rpvoicechat
             {
                 this.ShouldFlash = false;
             }
-            
             amplitude = amplitude * coefficient;
+            amplitude = Math.Round(amplitude);
+
+            capi.Logger.Debug("Amplitude: " + amplitude);
 
             SetValue((float)amplitude);
         }

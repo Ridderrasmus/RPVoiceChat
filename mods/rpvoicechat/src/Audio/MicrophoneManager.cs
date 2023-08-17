@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using OpenTK.Audio;
 using OpenTK.Audio.OpenAL;
+using System.Collections.Generic;
+using Vintagestory.API.Util;
 
 namespace rpvoicechat
 {
@@ -33,6 +35,7 @@ namespace rpvoicechat
         public bool canSwitchDevice = true;
         public bool keyDownPTT = false;
         public bool IsTalking = false;
+        public bool transmitting = false;
 
         private long gameTickId = 0;
 
@@ -45,6 +48,8 @@ namespace rpvoicechat
         public string CurrentInputDevice { get; internal set; }
 
         public event Action<byte[], int, VoiceLevel> OnBufferRecorded;
+
+        private List<double> recentAmplitudes = new List<double>();
 
         public MicrophoneManager(ICoreClientAPI capi)
         {
@@ -85,7 +90,6 @@ namespace rpvoicechat
 
         public void UpdateCaptureAudioSamples(float deltaTime)
         {
-            bool pushToTalkEnabled = config.PushToTalkEnabled;
             bool isMuted = config.IsMuted;
 
 
@@ -95,12 +99,6 @@ namespace rpvoicechat
             }
 
             if (isMuted)
-            {
-                return;
-            }
-
-            keyDownPTT = capi.Input.KeyboardKeyState[capi.Input.GetHotKeyByCode("voicechatPTT").CurrentMapping.KeyCode];
-            if (pushToTalkEnabled && !keyDownPTT)
             {
                 return;
             }
@@ -134,6 +132,7 @@ namespace rpvoicechat
             {
                 if (!audioDataQueue.TryDequeue(out var data)) Thread.Sleep(30);
 
+                
                 double rms = 0;
                 var numSamples = data.Length / SampleToByte;
                 for (var i = 0; i < data.Length; i += SampleToByte)
@@ -143,14 +142,29 @@ namespace rpvoicechat
                 }
 
                 var calc = Math.Abs(Math.Sqrt(rms / numSamples));
-                if (double.IsNaN(calc)) calc = -1;
+                if (double.IsNaN(calc)) calc = 0.000001;
                 Amplitude = calc;
 
-                // Gotta add some sort of threshold ignoring feature so that we can keep transmitting if someone is taking
-                // a breath or something while talking. This also would eliminate choppy audio if someones threshold is
-                // right on the edge
+                recentAmplitudes.Add(Amplitude);
 
-                if (Amplitude >= inputThreshold)
+                if (recentAmplitudes.Count > 10)
+                {
+                    recentAmplitudes.RemoveAt(0);
+
+                    Amplitude = recentAmplitudes.Average();
+                }
+
+                // Handle Push to Talk
+                if (config.PushToTalkEnabled)
+                {
+                    transmitting = capi.Input.KeyboardKeyState[capi.Input.GetHotKeyByCode("voicechatPTT").CurrentMapping.KeyCode];
+                }
+                else
+                {
+                    transmitting = Amplitude >= inputThreshold;
+                }
+
+                if (transmitting)
                 {
                     IsTalking = true;
                     OnBufferRecorded?.Invoke(data.Data, data.Length, data.VoiceLevel);
