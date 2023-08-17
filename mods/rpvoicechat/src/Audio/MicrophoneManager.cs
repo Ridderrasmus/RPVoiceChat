@@ -81,10 +81,6 @@ namespace rpvoicechat
         public void SetThreshold(int threshold)
         {
             inputThreshold = (threshold / 100.0) * MaxInputThreshold;
-
-
-            // inputThreshold / MaxInputThreshold = threshold / 100
-            // 100 = threshold * MaxInputThreshold / inputThreshold
         }
 
         public void UpdateCaptureAudioSamples(float deltaTime)
