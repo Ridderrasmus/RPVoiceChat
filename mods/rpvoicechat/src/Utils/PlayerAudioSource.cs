@@ -99,10 +99,20 @@ public class PlayerAudioSource : IDisposable
         capi.World.RayTraceForSelection(player.Entity.Pos.XYZ, capi.World.Player.Entity.Pos.XYZ, ref blocks, ref entities);
         if (blocks != null)
         {
+            int blockHitboxSize = 0;
+            foreach (Cuboidf val in blocks.Block.CollisionBoxes)
+            {
+                blockHitboxSize += (int) (val.Length * val.Height * val.Width);
+            }
+
+            capi.Logger.Debug("Total hitbox size: " + blockHitboxSize);
+
             if(lowpassFilter == null)
                 lowpassFilter = new FilterLowpass(EffectsExtension, source);
 
             lowpassFilter.Start();
+            lowpassFilter.SetHFGain(Math.Max((float) 1 - (blockHitboxSize / 10),(float) 0));
+            
         } else
         {
             lowpassFilter?.Stop();
@@ -111,6 +121,7 @@ public class PlayerAudioSource : IDisposable
         // If the player is in a reverberated area, then the player's voice should be reverberated
         if (IsReverberated)
         {
+
         }
 
         // If the player has a temporal stability of less than 0.7, then the player's voice should be distorted
@@ -153,12 +164,12 @@ public class PlayerAudioSource : IDisposable
         }
         else
         {
-            AL.GetListener(ALListener3f.Position, out var Pos);
-            Util.CheckError("Error getting listener pos", capi);
-            AL.Source(source, ALSource3f.Position, ref Pos);
+            AL.Source(source, ALSource3f.Position, 0, 0, 0);
             Util.CheckError("Error setting source direction", capi);
+
             AL.Source(source, ALSource3f.Velocity, 0, 0, 0);
             Util.CheckError("Error setting source velocity", capi);
+
             AL.Source(source, ALSourceb.SourceRelative, true);
             Util.CheckError("Error making source relative to client", capi);
         }

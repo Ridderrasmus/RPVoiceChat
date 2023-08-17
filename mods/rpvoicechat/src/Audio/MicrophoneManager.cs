@@ -78,6 +78,7 @@ namespace rpvoicechat
             bool pushToTalkEnabled = config.PushToTalkEnabled;
             bool isMuted = config.IsMuted;
 
+
             if (!capi.World.Player.Entity.Alive || capi.World.Player.Entity.AnimManager.IsAnimationActive("sleep"))
             {
                 return;
@@ -104,6 +105,7 @@ namespace rpvoicechat
             // because we would have to copy, its actually faster to just allocate each time here. 
             var sampleBuffer = new byte[bufferLength];
             capture.ReadSamples(sampleBuffer, samplesAvailable);
+            
 
             // this adds some latency and cpu time to our clients, however, it allows for processing to be done before 
             // we send off the data. It also ensure that the packets arrive in order, if we just used Task.Run()
