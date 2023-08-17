@@ -17,6 +17,11 @@
         public bool IsMuted = false;
         public int InputThreshold = 20;
         public string CurrentInputDevice;
+        // These are client settings but they are not
+        // accessible from the in-game settings menu and
+        // are only meant to be modified by someone who
+        // knows what they are doing
+        public double MaxInputThreshold = 0.24;
 
         public RPVoiceChatConfig() 
         { 

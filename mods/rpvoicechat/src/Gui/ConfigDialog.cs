@@ -1,4 +1,5 @@
-﻿using OpenTK.Input;
+﻿using NAudio.Wave.SampleProviders;
+using OpenTK.Input;
 using System;
 using System.Collections.Generic;
 using Vintagestory.API.Client;
@@ -14,10 +15,11 @@ namespace rpvoicechat
         protected List<ConfigOption> ConfigOptions = new List<ConfigOption>();
 
 
-        
-
         public MicrophoneManager _audioInputManager;
         public AudioOutputManager _audioOutputManager;
+
+        private GuiElementAudioMeter AudioMeter;
+        private long audioMeterId;
 
         public class ConfigOption
         {
@@ -32,6 +34,7 @@ namespace rpvoicechat
             public Action<bool> ToggleAction;
             public ActionConsumable<int> SlideAction;
             public SelectionChangedDelegate DropdownSelect { get; internal set; }
+
 
             public string Tooltip;
             public bool InstantSlider;
@@ -97,7 +100,9 @@ namespace rpvoicechat
                 }
                 else if (option.SpecialSliderKey != null)
                 {
-                    composer.AddInteractiveElement(new GuiElementAudioMeter(capi, switchBounds.FlatCopy().WithFixedWidth(sliderWidth)), option.SpecialSliderKey);
+                    AudioMeter = new GuiElementAudioMeter(capi, switchBounds.FlatCopy().WithFixedWidth(sliderWidth));
+                    AudioMeter.SetCoefficient((100 * _audioInputManager.GetMaxInputThreshold() / _audioInputManager.GetInputThreshold()));
+                    composer.AddInteractiveElement(AudioMeter, option.SpecialSliderKey);
                 }
 
                 textBounds = textBounds.BelowCopy(fixedDeltaY: switchPadding);
@@ -128,6 +133,25 @@ namespace rpvoicechat
         private void OnTitleBarCloseClicked()
         {
             TryClose();
+        }
+
+        public override void OnGuiClosed()
+        {
+            base.OnGuiClosed();
+            capi.Event.UnregisterGameTickListener(audioMeterId);
+        }
+
+        public override void OnGuiOpened()
+        {
+            base.OnGuiOpened();
+            audioMeterId = capi.Event.RegisterGameTickListener(TickUpdate, 20);
+
+        }
+
+        private void TickUpdate(float obj)
+        {
+            AudioMeter?.SetThreshold(_audioInputManager.GetInputThreshold());
+            AudioMeter?.UpdateVisuals(_audioInputManager.Amplitude);
         }
 
         protected abstract void RefreshValues();
@@ -176,6 +200,14 @@ namespace rpvoicechat
 
             RegisterOption(new ConfigOption
             {
+                Text = "Loopback",
+                SwitchKey = "loopback",
+                Tooltip = "Play recorded audio through output audio",
+                ToggleAction = OnToggleLoopback
+            });
+
+            RegisterOption(new ConfigOption
+            {
                 Text = "Audio Input Threshold",
                 SliderKey = "inputThreshold",
                 Tooltip = "At which threshold your audio starts transmitting",
@@ -184,10 +216,9 @@ namespace rpvoicechat
 
             RegisterOption(new ConfigOption
             {
-                Text = "Loopback",
-                SwitchKey = "loopback",
-                Tooltip = "Play recorded audio through output audio",
-                ToggleAction = OnToggleLoopback
+                Text = "Audio Meter",
+                SpecialSliderKey = "audioMeter",
+                Tooltip = "Shows your audio amplitude"
             });
         }
 
@@ -207,7 +238,7 @@ namespace rpvoicechat
 
         private void OnGameTick(float obj)
         {
-            inputAudioAmplitude = _audioInputManager.Amplitude;
+            //
         }
 
         protected override void RefreshValues()

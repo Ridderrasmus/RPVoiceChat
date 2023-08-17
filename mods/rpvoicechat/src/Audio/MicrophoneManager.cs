@@ -21,8 +21,7 @@ namespace rpvoicechat
         public static int Frequency = 44100;
         public static int BufferSize = (int)(Frequency * 0.5);
         const byte SampleToByte = 2;
-        // This might need to be changed to become a config option.
-        private const double MaxInputThreshold = 0.25;
+        private double MaxInputThreshold;
         readonly ICoreClientAPI capi;
 
         private AudioCapture capture;
@@ -54,9 +53,20 @@ namespace rpvoicechat
             gameTickId = capi.Event.RegisterGameTickListener(UpdateCaptureAudioSamples, 100);
             this.capi = capi;
             config = ModConfig.Config;
+            MaxInputThreshold = config.MaxInputThreshold;
             SetThreshold(config.InputThreshold);
             capture = new AudioCapture(config.CurrentInputDevice, Frequency, ALFormat.Mono16, BufferSize);
             capture.Start();
+        }
+
+        public double GetMaxInputThreshold()
+        {
+            return MaxInputThreshold;
+        }
+
+        public double GetInputThreshold()
+        {
+            return inputThreshold;
         }
 
         public void Dispose()
@@ -71,6 +81,10 @@ namespace rpvoicechat
         public void SetThreshold(int threshold)
         {
             inputThreshold = (threshold / 100.0) * MaxInputThreshold;
+
+
+            // inputThreshold / MaxInputThreshold = threshold / 100
+            // 100 = threshold * MaxInputThreshold / inputThreshold
         }
 
         public void UpdateCaptureAudioSamples(float deltaTime)
@@ -132,7 +146,9 @@ namespace rpvoicechat
                     rms += sample*sample;
                 }
 
-                Amplitude = Math.Abs(Math.Sqrt(rms / numSamples));
+                var calc = Math.Abs(Math.Sqrt(rms / numSamples));
+                if (double.IsNaN(calc)) calc = -1;
+                Amplitude = calc;
 
                 // Gotta add some sort of threshold ignoring feature so that we can keep transmitting if someone is taking
                 // a breath or something while talking. This also would eliminate choppy audio if someones threshold is
