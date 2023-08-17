@@ -41,8 +41,6 @@ namespace rpvoicechat
             amplitude = amplitude * coefficient;
             amplitude = Math.Round(amplitude);
 
-            capi.Logger.Debug("Amplitude: " + amplitude);
-
             SetValue((float)amplitude);
         }
     }
