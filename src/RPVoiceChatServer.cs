@@ -9,7 +9,6 @@ namespace rpvoicechat
     public class RPVoiceChatServer : RPVoiceChatMod
     {
         protected ICoreServerAPI sapi;
-        //private RPVoiceChatSocketServer server;
         private RPVoiceChatNativeNetworkServer server;
         public override void StartServerSide(ICoreServerAPI api)
         {

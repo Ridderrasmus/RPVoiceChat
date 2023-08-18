@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Specialized;
-using System.Reflection;
-using System.Threading.Tasks;
-using Lidgren.Network;
-using rpvoicechat.Networking;
+﻿using rpvoicechat.Networking;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
 
 namespace rpvoicechat
 {
@@ -14,7 +8,6 @@ namespace rpvoicechat
     {
         private MicrophoneManager micManager;
         private AudioOutputManager audioOutputManager;
-        //private RPVoiceChatSocketClient client;
         private RPVoiceChatNativeNetworkClient client;
 
         protected ICoreClientAPI capi;
@@ -25,6 +18,7 @@ namespace rpvoicechat
         {
             return forSide == EnumAppSide.Client;
         }
+
         public override void StartClientSide(ICoreClientAPI api)
         {
             capi = api;
