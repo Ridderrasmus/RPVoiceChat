@@ -14,6 +14,10 @@ namespace rpvoicechat
 
         private MainConfig configGui;
 
+        private bool mutePressed = false;
+        private bool voiceMenuPressed = false;
+        private bool voiceLevelPressed = false;
+
         public override bool ShouldLoad(EnumAppSide forSide)
         {
             return forSide == EnumAppSide.Client;
@@ -46,16 +50,27 @@ namespace rpvoicechat
             capi.Input.RegisterHotKey("voicechatVoiceLevel", "RPVoice: Change speech volume", GlKeys.Tab, HotkeyType.GUIOrOtherControls, false, false, true);
             capi.Input.RegisterHotKey("voicechatPTT", "RPVoice: Push to talk", GlKeys.CapsLock, HotkeyType.GUIOrOtherControls);
             capi.Input.RegisterHotKey("voicechatMute", "RPVoice: Toggle mute", GlKeys.N, HotkeyType.GUIOrOtherControls);
+            capi.Event.KeyUp += Event_KeyUp;
 
             // Set up keybind event handlers
             capi.Input.SetHotKeyHandler("voicechatMenu", (t1) => 
             {
+                if (voiceMenuPressed)
+                    return true;
+
+                voiceMenuPressed = true;
+
                 configGui.Toggle();
                 return true;
             });
             
             capi.Input.SetHotKeyHandler("voicechatVoiceLevel", (t1) =>
             {
+                if (voiceLevelPressed)
+                    return true;
+
+                voiceLevelPressed = true;
+
                 var level = micManager.CycleVoiceLevel();
                 capi.ShowChatMessage("RPVoice: Speech volume set to " + level.ToString());
                 return true;
@@ -63,6 +78,11 @@ namespace rpvoicechat
 
             capi.Input.SetHotKeyHandler("voicechatMute", (t1) =>
             {
+                if (mutePressed)
+                    return true;
+
+                mutePressed = true;
+
                 config.IsMuted = !config.IsMuted;
                 ModConfig.Save(capi);
                 return true;
@@ -71,6 +91,9 @@ namespace rpvoicechat
 
             micManager.OnBufferRecorded += (buffer, length, voiceLevel) =>
             {
+                if (buffer == null)
+                    return;
+
                 audioOutputManager.HandleLoopback(buffer, length, voiceLevel);
 
                 AudioPacket packet = new AudioPacket()
@@ -82,6 +105,18 @@ namespace rpvoicechat
                 };
                 client.SendAudioToServer(packet);
             };
+        }
+
+        private void Event_KeyUp(KeyEvent e)
+        {
+            
+            if (e.KeyCode == capi.Input.HotKeys["voicechatMenu"].CurrentMapping.KeyCode)
+                voiceMenuPressed = false;
+            else if (e.KeyCode == capi.Input.HotKeys["voicechatVoiceLevel"].CurrentMapping.KeyCode)
+                voiceLevelPressed = false;
+            else if (e.KeyCode == capi.Input.HotKeys["voicechatMute"].CurrentMapping.KeyCode)
+                mutePressed = false;
+
         }
 
         private void OnAudioReceived(AudioPacket obj)

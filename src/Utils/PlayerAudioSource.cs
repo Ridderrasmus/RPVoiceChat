@@ -6,12 +6,15 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using OpenTK;
+using rpvoicechat.src.Utils.Filters;
 
 public class PlayerAudioSource : IDisposable
 {
     public const int BufferCount = 4;
 
     private int source;
+
+    public EffectsExtension EffectsExtension;
 
     private CircularAudioBuffer buffer;
     //private ReverbEffect reverbEffect;
@@ -27,8 +30,11 @@ public class PlayerAudioSource : IDisposable
 
     private IPlayer player;
 
+    private FilterLowpass lowpassFilter;
+
     public PlayerAudioSource(IPlayer player, AudioOutputManager manager, ICoreClientAPI capi)
     {
+        this.EffectsExtension = manager.EffectsExtension;
         this.player = player;
         this.capi = capi;
         StartTick();
@@ -87,12 +93,49 @@ public class PlayerAudioSource : IDisposable
         if (player.Entity == null || player.Entity.SidedPos == null)
             return;
 
-        if (IsMuffled)
+        // If the player is on the other side of something to the listener, then the player's voice should be muffled
+        BlockSelection blocks = new BlockSelection();
+        EntitySelection entities = new EntitySelection();
+        capi.World.RayTraceForSelection(player.Entity.Pos.XYZ, capi.World.Player.Entity.Pos.XYZ, ref blocks, ref entities);
+        if (blocks != null)
         {
+            int blockHitboxSize = 0;
+            foreach (Cuboidf val in blocks.Block.CollisionBoxes)
+            {
+                blockHitboxSize += (int) (val.Length * val.Height * val.Width);
+            }
+
+            capi.Logger.Debug("Total hitbox size: " + blockHitboxSize);
+
+            if(lowpassFilter == null)
+                lowpassFilter = new FilterLowpass(EffectsExtension, source);
+
+            lowpassFilter.Start();
+            //lowpassFilter.SetHFGain(Math.Max((float) 1 - (blockHitboxSize / 10),(float) 0));
+            
+        } else
+        {
+            lowpassFilter?.Stop();
         }
 
+        // If the player is in a reverberated area, then the player's voice should be reverberated
         if (IsReverberated)
         {
+
+        }
+
+        // If the player has a temporal stability of less than 0.7, then the player's voice should be distorted
+        // Values are temporary currently
+        if (player.Entity.WatchedAttributes.GetDouble("temporalStability") < 0.5)
+        {
+
+        }
+
+        // If the player is drunk, then the player's voice should be affected
+        // Values are temporary currently
+        if (player.Entity.WatchedAttributes.GetFloat("intoxication") > 1.1)
+        {
+
         }
 
         if (IsLocational)
@@ -121,12 +164,14 @@ public class PlayerAudioSource : IDisposable
         }
         else
         {
-            AL.GetListener(ALListener3f.Position, out var Pos);
-            Util.CheckError("Error getting listener pos", capi);
-            AL.Source(source, ALSource3f.Position, ref Pos);
+            AL.Source(source, ALSource3f.Position, 0, 0, 0);
             Util.CheckError("Error setting source direction", capi);
+
             AL.Source(source, ALSource3f.Velocity, 0, 0, 0);
             Util.CheckError("Error setting source velocity", capi);
+
+            AL.Source(source, ALSourceb.SourceRelative, true);
+            Util.CheckError("Error making source relative to client", capi);
         }
     }
 
