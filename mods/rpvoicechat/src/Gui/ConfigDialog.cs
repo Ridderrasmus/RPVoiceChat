@@ -151,7 +151,7 @@ namespace rpvoicechat
         private void TickUpdate(float obj)
         {
             AudioMeter?.SetThreshold(_audioInputManager.GetInputThreshold());
-            AudioMeter?.UpdateVisuals(_audioInputManager.Amplitude);
+            AudioMeter?.UpdateVisuals(_audioInputManager.AmplitudeAverage);
         }
 
         protected abstract void RefreshValues();

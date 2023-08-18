@@ -35,7 +35,7 @@ namespace rpvoicechat
         public bool canSwitchDevice = true;
         public bool keyDownPTT = false;
         public bool IsTalking = false;
-        public bool transmitting = false;
+        public bool Transmitting = false;
 
         private long gameTickId = 0;
 
@@ -43,6 +43,7 @@ namespace rpvoicechat
         private double inputThreshold;
 
         public double Amplitude { get; set; }
+        public double AmplitudeAverage { get; set; }
 
         public ActivationMode CurrentActivationMode { get; private set; } = ActivationMode.VoiceActivation;
         public string CurrentInputDevice { get; internal set; }
@@ -145,26 +146,27 @@ namespace rpvoicechat
                 if (double.IsNaN(calc)) calc = 0.000001;
                 Amplitude = calc;
 
+
                 recentAmplitudes.Add(Amplitude);
 
-                if (recentAmplitudes.Count > 10)
+                if (recentAmplitudes.Count > 20)
                 {
                     recentAmplitudes.RemoveAt(0);
 
-                    Amplitude = recentAmplitudes.Average();
+                    AmplitudeAverage = recentAmplitudes.Average();
                 }
 
                 // Handle Push to Talk
                 if (config.PushToTalkEnabled)
                 {
-                    transmitting = capi.Input.KeyboardKeyState[capi.Input.GetHotKeyByCode("voicechatPTT").CurrentMapping.KeyCode];
+                    Transmitting = capi.Input.KeyboardKeyState[capi.Input.GetHotKeyByCode("voicechatPTT").CurrentMapping.KeyCode];
                 }
                 else
                 {
-                    transmitting = Amplitude >= inputThreshold;
+                    Transmitting = Amplitude >= inputThreshold || AmplitudeAverage >= inputThreshold;
                 }
 
-                if (transmitting)
+                if (Transmitting)
                 {
                     IsTalking = true;
                     OnBufferRecorded?.Invoke(data.Data, data.Length, data.VoiceLevel);
