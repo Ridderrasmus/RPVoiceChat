@@ -1,4 +1,6 @@
-﻿using System;
+﻿using NAudio.Wave.SampleProviders;
+using OpenTK.Input;
+using System;
 using System.Collections.Generic;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -12,16 +14,19 @@ namespace rpvoicechat
 
         protected List<ConfigOption> ConfigOptions = new List<ConfigOption>();
 
-        
 
         public MicrophoneManager _audioInputManager;
         public AudioOutputManager _audioOutputManager;
+
+        private GuiElementAudioMeter AudioMeter;
+        private long audioMeterId;
 
         public class ConfigOption
         {
             public ActionConsumable AdvancedAction;
             public string SwitchKey;
             public string SliderKey;
+            public string SpecialSliderKey;
             public string DropdownKey;
 
             public string Text;
@@ -29,6 +34,7 @@ namespace rpvoicechat
             public Action<bool> ToggleAction;
             public ActionConsumable<int> SlideAction;
             public SelectionChangedDelegate DropdownSelect { get; internal set; }
+
 
             public string Tooltip;
             public bool InstantSlider;
@@ -92,6 +98,12 @@ namespace rpvoicechat
                     switchBounds.fixedWidth = 200;
                     composer.AddDropDown(option.DropdownValues, option.DropdownNames, 0, option.DropdownSelect, switchBounds, option.DropdownKey);
                 }
+                else if (option.SpecialSliderKey != null)
+                {
+                    AudioMeter = new GuiElementAudioMeter(capi, switchBounds.FlatCopy().WithFixedWidth(sliderWidth));
+                    AudioMeter.SetCoefficient((100 * _audioInputManager.GetMaxInputThreshold() / _audioInputManager.GetInputThreshold()));
+                    composer.AddInteractiveElement(AudioMeter, option.SpecialSliderKey);
+                }
 
                 textBounds = textBounds.BelowCopy(fixedDeltaY: switchPadding);
                 switchBounds = switchBounds.BelowCopy(fixedDeltaY: switchPadding);
@@ -123,6 +135,25 @@ namespace rpvoicechat
             TryClose();
         }
 
+        public override void OnGuiClosed()
+        {
+            base.OnGuiClosed();
+            capi.Event.UnregisterGameTickListener(audioMeterId);
+        }
+
+        public override void OnGuiOpened()
+        {
+            base.OnGuiOpened();
+            audioMeterId = capi.Event.RegisterGameTickListener(TickUpdate, 20);
+
+        }
+
+        private void TickUpdate(float obj)
+        {
+            AudioMeter?.SetThreshold(_audioInputManager.GetInputThreshold());
+            AudioMeter?.UpdateVisuals(_audioInputManager.AmplitudeAverage);
+        }
+
         protected abstract void RefreshValues();
 
         public override string ToggleKeyCombinationCode => null;
@@ -130,6 +161,9 @@ namespace rpvoicechat
 
     public class MainConfig : ConfigDialog
     {
+        private long tickEvent;
+        private double inputAudioAmplitude;
+
         RPVoiceChatConfig _config;
 
         public MainConfig(ICoreClientAPI capi, MicrophoneManager audioInputManager, AudioOutputManager audioOutputManager) : base(capi)
@@ -166,6 +200,14 @@ namespace rpvoicechat
 
             RegisterOption(new ConfigOption
             {
+                Text = "Loopback",
+                SwitchKey = "loopback",
+                Tooltip = "Play recorded audio through output audio",
+                ToggleAction = OnToggleLoopback
+            });
+
+            RegisterOption(new ConfigOption
+            {
                 Text = "Audio Input Threshold",
                 SliderKey = "inputThreshold",
                 Tooltip = "At which threshold your audio starts transmitting",
@@ -174,11 +216,29 @@ namespace rpvoicechat
 
             RegisterOption(new ConfigOption
             {
-                Text = "Loopback",
-                SwitchKey = "loopback",
-                Tooltip = "Play recorded audio through output audio",
-                ToggleAction = OnToggleLoopback
+                Text = "Audio Meter",
+                SpecialSliderKey = "audioMeter",
+                Tooltip = "Shows your audio amplitude"
             });
+        }
+
+        public override void OnGuiClosed()
+        {
+            base.OnGuiClosed();
+
+            tickEvent = capi.Event.RegisterGameTickListener(OnGameTick, 100);
+        }
+
+        public override void OnGuiOpened()
+        {
+            base.OnGuiOpened();
+
+            capi.Event.UnregisterGameTickListener(tickEvent);
+        }
+
+        private void OnGameTick(float obj)
+        {
+            //
         }
 
         protected override void RefreshValues()

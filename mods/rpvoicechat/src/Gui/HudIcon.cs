@@ -11,6 +11,9 @@ namespace rpvoicechat
         string voice;
         long listenerId;
 
+        private int IconCounter = 0;
+        private int IconCounterMax = 7;
+
         float size = 64;
 
         public HudIcon(ICoreClientAPI capi, MicrophoneManager microphoneManager) : base(capi)
@@ -50,10 +53,21 @@ namespace rpvoicechat
 
             var composer = this.capi.Gui.CreateCompo("rpvcicon", dialogBounds);
 
-            if (_microphoneManager.IsTalking || _config.IsMuted)
+            if (_microphoneManager.Transmitting || _config.IsMuted)
             {
                 composer.AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation("rpvoicechat", "textures/gui/" + voice + ".png"));
+                if (!_config.IsMuted)
+                    IconCounter = 0;
+                else
+                    IconCounter = IconCounterMax;
             }
+            else if (!_microphoneManager.Transmitting && IconCounter < IconCounterMax)
+            {
+                composer.AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation("rpvoicechat", "textures/gui/" + voice + ".png"));
+                IconCounter++;
+            }
+
+
             if (_config.IsMuted)
             {
                 composer.AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation("rpvoicechat", "textures/gui/muted.png"));

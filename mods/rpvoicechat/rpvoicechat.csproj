@@ -109,6 +109,7 @@
   <ItemGroup>
     <Compile Include="src\Audio\AudioOutputManager.cs" />
     <Compile Include="src\Gui\ConfigDialog.cs" />
+    <Compile Include="src\Gui\GuiElementAudioMeter.cs" />
     <Compile Include="src\Gui\HudIcon.cs" />
     <Compile Include="src\Networking\RPVoiceChatNativeNetworkClient.cs" />
     <Compile Include="src\Networking\RPVoiceChatNativeNetwork.cs" />
@@ -119,6 +120,7 @@
     <Compile Include="src\Utils\ConnectionInfo.cs" />
     <Compile Include="src\Utils\Enums\ActivationMode.cs" />
     <Compile Include="src\Utils\Enums\VoiceLevel.cs" />
+    <Compile Include="src\Utils\Filters\FilterLowpass.cs" />
     <Compile Include="src\Utils\LocationUtils.cs" />
     <Compile Include="src\Config\ModConfig.cs" />
     <Compile Include="src\Utils\PlayerAudioSource.cs" />
