@@ -4,11 +4,6 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;
 using Vintagestory.API.Server;
 
-[assembly: ModInfo( "rpvoicechat",
-Description = "",
-Website     = "",
-Authors     = new []{ "Ridderrasmus", "Purplep_", "blakdragan7" } )]
-
 namespace rpvoicechat
 {
     public class RPVoiceChatServer : RPVoiceChatMod
