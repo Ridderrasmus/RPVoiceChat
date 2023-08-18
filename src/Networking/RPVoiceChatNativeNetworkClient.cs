@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
 
@@ -7,14 +6,11 @@ namespace rpvoicechat.Networking
 {
     public class RPVoiceChatNativeNetworkClient : RPVoiceChatNativeNetwork
     {
-        private ICoreClientAPI api;
-
-        public Action<AudioPacket> OnAudioReceived;
+        public event Action<AudioPacket> OnAudioReceived;
         private IClientNetworkChannel channel;
 
         public RPVoiceChatNativeNetworkClient(ICoreClientAPI api) : base(api)
         {
-            this.api = api;
             channel = api.Network.GetChannel(ChannelName).SetMessageHandler<AudioPacket>(HandleAudioPacket);
         }
 
