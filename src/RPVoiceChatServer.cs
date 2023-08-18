@@ -1,5 +1,5 @@
 ﻿using System.Net.Sockets;
-using rpvoicechat.src.Networking;
+using rpvoicechat.Networking;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;
 using Vintagestory.API.Server;
@@ -9,7 +9,7 @@ Description = "",
 Website     = "",
 Authors     = new []{ "Ridderrasmus", "Purplep_", "blakdragan7" } )]
 
-namespace rpvoicechat.src
+namespace rpvoicechat
 {
     public class RPVoiceChatServer : RPVoiceChatMod
     {

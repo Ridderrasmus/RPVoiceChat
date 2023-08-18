@@ -3,7 +3,7 @@ using System.Collections.Specialized;
 using System.Reflection;
 using System.Threading.Tasks;
 using Lidgren.Network;
-using rpvoicechat.src.Networking;
+using rpvoicechat.Networking;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;

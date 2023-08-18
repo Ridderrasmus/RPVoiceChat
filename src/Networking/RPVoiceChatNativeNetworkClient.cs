@@ -3,7 +3,7 @@ using System;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
 
-namespace rpvoicechat.src.Networking
+namespace rpvoicechat.Networking
 {
     public class RPVoiceChatNativeNetworkClient : RPVoiceChatNativeNetwork
     {
