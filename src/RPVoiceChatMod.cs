@@ -11,15 +11,12 @@ namespace rpvoicechat
 
         public override void StartPre(ICoreAPI api)
         {
-            base.StartPre(api);
             ModConfig.ReadConfig(api);
             config = ModConfig.Config;
         }
 
         public override void Start(ICoreAPI api)
         {
-            base.Start(api);
-            
             // Register network channel
             networkChannel = api.Network.RegisterChannel("rpvoicechat")
                 .RegisterMessageType(typeof(ConnectionInfo));
