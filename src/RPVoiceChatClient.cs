@@ -28,7 +28,6 @@ namespace rpvoicechat
         public override void StartClientSide(ICoreClientAPI api)
         {
             capi = api;
-            base.StartClientSide(capi);
 
             // Init microphone and audio output manager
             micManager = new MicrophoneManager(capi);

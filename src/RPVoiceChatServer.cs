@@ -14,7 +14,6 @@ namespace rpvoicechat
         public override void StartServerSide(ICoreServerAPI api)
         {
             sapi = api;
-            base.StartServerSide(sapi);
 
             server = new RPVoiceChatNativeNetworkServer(sapi);
             
