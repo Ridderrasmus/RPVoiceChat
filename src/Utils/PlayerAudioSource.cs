@@ -111,7 +111,7 @@ public class PlayerAudioSource : IDisposable
                 lowpassFilter = new FilterLowpass(EffectsExtension, source);
 
             lowpassFilter.Start();
-            lowpassFilter.SetHFGain(Math.Max((float) 1 - (blockHitboxSize / 10),(float) 0));
+            //lowpassFilter.SetHFGain(Math.Max((float) 1 - (blockHitboxSize / 10),(float) 0));
             
         } else
         {
