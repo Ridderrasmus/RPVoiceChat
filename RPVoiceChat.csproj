@@ -6,6 +6,7 @@
 	<OutputType>Library</OutputType>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputPath>bin\$(Configuration)\Mods\RPVoiceChat</OutputPath>
+    <RootNamespace>rpvoicechat</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
