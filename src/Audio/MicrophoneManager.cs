@@ -49,6 +49,7 @@ namespace rpvoicechat
         public string CurrentInputDevice { get; internal set; }
 
         public event Action<byte[], int, VoiceLevel> OnBufferRecorded;
+        public event Action<VoiceLevel> VoiceLevelUpdated;
 
         private List<double> recentAmplitudes = new List<double>();
 
@@ -248,6 +249,12 @@ namespace rpvoicechat
                 voiceLevel = VoiceLevel.Talking;
             }
 
+            VoiceLevelUpdated?.Invoke(voiceLevel);
+            return voiceLevel;
+        }
+
+        public VoiceLevel GetVoiceLevel()
+        {
             return voiceLevel;
         }
 

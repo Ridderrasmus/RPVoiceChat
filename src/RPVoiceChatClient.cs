@@ -44,6 +44,7 @@ namespace rpvoicechat
             // Initialize gui
             configGui = new MainConfig(capi, micManager, audioOutputManager);
             api.Gui.RegisterDialog(new HudIcon(capi, micManager));
+            api.Gui.RegisterDialog(new VoiceLevelIcon(capi, micManager));
 
             // Set up keybinds
             capi.Input.RegisterHotKey("voicechatMenu", "RPVoice: Config menu", GlKeys.P, HotkeyType.GUIOrOtherControls);
