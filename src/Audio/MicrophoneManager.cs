@@ -55,13 +55,17 @@ namespace rpvoicechat
         public MicrophoneManager(ICoreClientAPI capi)
         {
             audioProcessingThread = new Thread(ProcessAudio);
-            audioProcessingThread.Start();
-            gameTickId = capi.Event.RegisterGameTickListener(UpdateCaptureAudioSamples, 100);
             this.capi = capi;
             config = ModConfig.Config;
             MaxInputThreshold = config.MaxInputThreshold;
             SetThreshold(config.InputThreshold);
             capture = new AudioCapture(config.CurrentInputDevice, Frequency, ALFormat.Mono16, BufferSize);
+        }
+
+        public void Launch()
+        {
+            audioProcessingThread.Start();
+            gameTickId = capi.Event.RegisterGameTickListener(UpdateCaptureAudioSamples, 100);
             capture.Start();
         }
 

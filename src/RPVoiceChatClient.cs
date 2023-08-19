@@ -108,6 +108,9 @@ namespace rpvoicechat
                 };
                 client.SendAudioToServer(packet);
             };
+
+            // Ideally this should be called only after PlayerNowPlaying event fired
+            micManager.Launch();
         }
 
         private void Event_KeyUp(KeyEvent e)
