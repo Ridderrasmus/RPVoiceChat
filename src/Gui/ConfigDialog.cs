@@ -99,7 +99,7 @@ namespace rpvoicechat
                 else if (option.SpecialSliderKey != null)
                 {
                     AudioMeter = new GuiElementAudioMeter(capi, switchBounds.FlatCopy().WithFixedWidth(sliderWidth));
-                    AudioMeter.SetCoefficient((100 * _audioInputManager.GetMaxInputThreshold() / _audioInputManager.GetInputThreshold()));
+                    AudioMeter.SetCoefficient((100 / _audioInputManager.GetMaxInputThreshold()));
                     composer.AddInteractiveElement(AudioMeter, option.SpecialSliderKey);
                 }
 
@@ -149,7 +149,7 @@ namespace rpvoicechat
         private void TickUpdate(float obj)
         {
             AudioMeter?.SetThreshold(_audioInputManager.GetInputThreshold());
-            AudioMeter?.UpdateVisuals(_audioInputManager.AmplitudeAverage);
+            AudioMeter?.UpdateVisuals(Math.Max(_audioInputManager.Amplitude, _audioInputManager.AmplitudeAverage));
         }
 
         protected abstract void RefreshValues();
