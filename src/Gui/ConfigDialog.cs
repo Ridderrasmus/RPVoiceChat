@@ -159,9 +159,6 @@ namespace rpvoicechat
 
     public class MainConfig : ConfigDialog
     {
-        private long tickEvent;
-        private double inputAudioAmplitude;
-
         RPVoiceChatConfig _config;
 
         public MainConfig(ICoreClientAPI capi, MicrophoneManager audioInputManager, AudioOutputManager audioOutputManager) : base(capi)
@@ -218,25 +215,6 @@ namespace rpvoicechat
                 SpecialSliderKey = "audioMeter",
                 Tooltip = "Shows your audio amplitude"
             });
-        }
-
-        public override void OnGuiClosed()
-        {
-            base.OnGuiClosed();
-
-            tickEvent = capi.Event.RegisterGameTickListener(OnGameTick, 100);
-        }
-
-        public override void OnGuiOpened()
-        {
-            base.OnGuiOpened();
-
-            capi.Event.UnregisterGameTickListener(tickEvent);
-        }
-
-        private void OnGameTick(float obj)
-        {
-            //
         }
 
         protected override void RefreshValues()
