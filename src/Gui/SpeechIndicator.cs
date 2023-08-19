@@ -87,7 +87,7 @@ namespace rpvoicechat
 
         public void SetupIcon()
         {
-            SingleComposer = capi.Gui.CreateCompo("rpvcicon", dialogBounds)
+            SingleComposer = capi.Gui.CreateCompo("rpvcspeechindicator", dialogBounds)
                 .AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation("rpvoicechat", "textures/gui/" + voice + ".png"))
                 .AddIf(_config.IsMuted)
                 .AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation("rpvoicechat", "textures/gui/muted.png"))
