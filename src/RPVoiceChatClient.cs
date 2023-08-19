@@ -72,8 +72,7 @@ namespace rpvoicechat
 
                 voiceLevelPressed = true;
 
-                var level = micManager.CycleVoiceLevel();
-                capi.ShowChatMessage("RPVoice: Speech volume set to " + level.ToString());
+                micManager.CycleVoiceLevel();
                 return true;
             });
 
