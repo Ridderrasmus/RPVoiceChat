@@ -97,7 +97,7 @@ namespace rpvoicechat
                 if (buffer == null)
                     return;
 
-                audioOutputManager.HandleLoopback(buffer, length, voiceLevel);
+                audioOutputManager.HandleLoopback(buffer, length);
 
                 AudioPacket packet = new AudioPacket()
                 {
@@ -109,8 +109,13 @@ namespace rpvoicechat
                 client.SendAudioToServer(packet);
             };
 
-            // Ideally this should be called only after PlayerNowPlaying event fired
+            capi.Event.LevelFinalize += OnLoad;
+        }
+
+        private void OnLoad()
+        {
             micManager.Launch();
+            audioOutputManager.Launch();
         }
 
         private void Event_KeyUp(KeyEvent e)

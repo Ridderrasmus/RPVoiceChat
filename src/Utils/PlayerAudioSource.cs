@@ -7,6 +7,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using OpenTK;
 using rpvoicechat.src.Utils.Filters;
+using Vintagestory.API.Common.Entities;
 
 public class PlayerAudioSource : IDisposable
 {
@@ -20,6 +21,7 @@ public class PlayerAudioSource : IDisposable
     //private ReverbEffect reverbEffect;
 
     private ICoreClientAPI capi;
+    private AudioOutputManager outputManager;
     private Vec3f lastPos;
     private long gameTickId;
     public bool IsMuffled { get; set; } = false;
@@ -34,7 +36,8 @@ public class PlayerAudioSource : IDisposable
 
     public PlayerAudioSource(IPlayer player, AudioOutputManager manager, ICoreClientAPI capi)
     {
-        this.EffectsExtension = manager.EffectsExtension;
+        EffectsExtension = manager.EffectsExtension;
+        outputManager = manager;
         this.player = player;
         this.capi = capi;
         StartTick();
@@ -90,13 +93,15 @@ public class PlayerAudioSource : IDisposable
 
     public void UpdatePlayer(float dt)
     {
-        if (player.Entity == null || player.Entity.SidedPos == null)
+        EntityPos speakerPos = player.Entity?.SidedPos;
+        EntityPos listenerPos = capi.World.Player.Entity?.SidedPos;
+        if (speakerPos == null || listenerPos == null || !outputManager.isReady)
             return;
 
         // If the player is on the other side of something to the listener, then the player's voice should be muffled
         BlockSelection blocks = new BlockSelection();
         EntitySelection entities = new EntitySelection();
-        capi.World.RayTraceForSelection(player.Entity.Pos.XYZ, capi.World.Player.Entity.Pos.XYZ, ref blocks, ref entities);
+        capi.World.RayTraceForSelection(speakerPos.XYZ, listenerPos.XYZ, ref blocks, ref entities);
         if (blocks != null)
         {
             int blockHitboxSize = 0;
@@ -142,11 +147,11 @@ public class PlayerAudioSource : IDisposable
         {
             if (lastPos == null)
             {
-                lastPos = player.Entity.SidedPos.XYZFloat;
+                lastPos = speakerPos.XYZFloat;
             }
 
-            var entityPos = player.Entity.SidedPos.XYZFloat;
-            var direction = (entityPos - capi.World.Player.Entity.SidedPos.XYZFloat);
+            var entityPos = speakerPos.XYZFloat;
+            var direction = entityPos - listenerPos.XYZFloat;
             direction.Normalize();
 
             var velocity = (lastPos - entityPos) / dt;
@@ -235,7 +240,7 @@ public class PlayerAudioSource : IDisposable
         AL.SourceStop(source);
         Util.CheckError("Error stop playing source", capi);
 
-        buffer.Dispose();
+        buffer?.Dispose();
         AL.DeleteSource(source);
         Util.CheckError("Error deleting source", capi);
 
