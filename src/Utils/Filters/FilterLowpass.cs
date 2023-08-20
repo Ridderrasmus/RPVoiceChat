@@ -9,6 +9,7 @@ namespace rpvoicechat.src.Utils.Filters
 
         private EffectsExtension effectsExtension;
         private int source;
+        private int nullFilter;
         public int filter;
 
         public bool IsEnabled { get; set; } = false;
@@ -16,8 +17,9 @@ namespace rpvoicechat.src.Utils.Filters
 
         public FilterLowpass(EffectsExtension effectsExtension, int source) 
         {
-            this.source = source;
             this.effectsExtension = effectsExtension;
+            this.source = source;
+            nullFilter = effectsExtension.GenFilter();
             GenerateFilter();
         }
 
@@ -51,8 +53,7 @@ namespace rpvoicechat.src.Utils.Filters
             if (!IsEnabled)
                 return;
 
-            effectsExtension.DeleteFilter(filter);
-            GenerateFilter();
+            effectsExtension.BindFilterToSource(source, nullFilter);
             IsEnabled = false;
         }
 
