@@ -6,6 +6,7 @@ namespace rpvoicechat
     public abstract class RPVoiceChatMod : ModSystem
     {
         protected RPVoiceChatConfig config;
+        protected const string modID = "rpvoicechat";
 
         protected INetworkChannel networkChannel;
 

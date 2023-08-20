@@ -2,12 +2,10 @@
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using OpenTK.Audio;
 using OpenTK.Audio.OpenAL;
 using System.Collections.Generic;
-using Vintagestory.API.Util;
 
 namespace rpvoicechat
 {
@@ -34,8 +32,8 @@ namespace rpvoicechat
         private VoiceLevel voiceLevel = VoiceLevel.Talking;
         public bool canSwitchDevice = true;
         public bool keyDownPTT = false;
-        public bool IsTalking = false;
         public bool Transmitting = false;
+        public bool TransmittingOnPreviousStep = false;
 
         private long gameTickId = 0;
 
@@ -49,19 +47,25 @@ namespace rpvoicechat
         public string CurrentInputDevice { get; internal set; }
 
         public event Action<byte[], int, VoiceLevel> OnBufferRecorded;
+        public event Action ClientStartTalking;
+        public event Action ClientStopTalking;
 
         private List<double> recentAmplitudes = new List<double>();
 
         public MicrophoneManager(ICoreClientAPI capi)
         {
             audioProcessingThread = new Thread(ProcessAudio);
-            audioProcessingThread.Start();
-            gameTickId = capi.Event.RegisterGameTickListener(UpdateCaptureAudioSamples, 100);
             this.capi = capi;
             config = ModConfig.Config;
             MaxInputThreshold = config.MaxInputThreshold;
             SetThreshold(config.InputThreshold);
             capture = new AudioCapture(config.CurrentInputDevice, Frequency, ALFormat.Mono16, BufferSize);
+        }
+
+        public void Launch()
+        {
+            audioProcessingThread.Start();
+            gameTickId = capi.Event.RegisterGameTickListener(UpdateCaptureAudioSamples, 100);
             capture.Start();
         }
 
@@ -168,13 +172,15 @@ namespace rpvoicechat
 
                 if (Transmitting)
                 {
-                    IsTalking = true;
+                    if (!TransmittingOnPreviousStep) ClientStartTalking?.Invoke();
                     OnBufferRecorded?.Invoke(data.Data, data.Length, data.VoiceLevel);
                 }
-                else
+                else if (TransmittingOnPreviousStep)
                 {
-                    IsTalking = false;
+                    ClientStopTalking?.Invoke();
                 }
+
+                TransmittingOnPreviousStep = Transmitting;
             }
         }
 

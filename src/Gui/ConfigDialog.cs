@@ -99,7 +99,7 @@ namespace rpvoicechat
                 else if (option.SpecialSliderKey != null)
                 {
                     AudioMeter = new GuiElementAudioMeter(capi, switchBounds.FlatCopy().WithFixedWidth(sliderWidth));
-                    AudioMeter.SetCoefficient((100 * _audioInputManager.GetMaxInputThreshold() / _audioInputManager.GetInputThreshold()));
+                    AudioMeter.SetCoefficient((100 / _audioInputManager.GetMaxInputThreshold()));
                     composer.AddInteractiveElement(AudioMeter, option.SpecialSliderKey);
                 }
 
@@ -149,7 +149,7 @@ namespace rpvoicechat
         private void TickUpdate(float obj)
         {
             AudioMeter?.SetThreshold(_audioInputManager.GetInputThreshold());
-            AudioMeter?.UpdateVisuals(_audioInputManager.AmplitudeAverage);
+            AudioMeter?.UpdateVisuals(Math.Max(_audioInputManager.Amplitude, _audioInputManager.AmplitudeAverage));
         }
 
         protected abstract void RefreshValues();
@@ -159,9 +159,6 @@ namespace rpvoicechat
 
     public class MainConfig : ConfigDialog
     {
-        private long tickEvent;
-        private double inputAudioAmplitude;
-
         RPVoiceChatConfig _config;
 
         public MainConfig(ICoreClientAPI capi, MicrophoneManager audioInputManager, AudioOutputManager audioOutputManager) : base(capi)
@@ -218,25 +215,6 @@ namespace rpvoicechat
                 SpecialSliderKey = "audioMeter",
                 Tooltip = "Shows your audio amplitude"
             });
-        }
-
-        public override void OnGuiClosed()
-        {
-            base.OnGuiClosed();
-
-            tickEvent = capi.Event.RegisterGameTickListener(OnGameTick, 100);
-        }
-
-        public override void OnGuiOpened()
-        {
-            base.OnGuiOpened();
-
-            capi.Event.UnregisterGameTickListener(tickEvent);
-        }
-
-        private void OnGameTick(float obj)
-        {
-            //
         }
 
         protected override void RefreshValues()
