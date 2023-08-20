@@ -8,6 +8,7 @@ namespace rpvoicechat
     {
         private MicrophoneManager micManager;
         private AudioOutputManager audioOutputManager;
+        private PatchManager patchManager;
         private RPVoiceChatNativeNetworkClient client;
 
         protected ICoreClientAPI capi;
@@ -27,10 +28,12 @@ namespace rpvoicechat
         {
             capi = api;
 
-            // Init microphone and audio output manager
+            // Init microphone, audio output and harmony patch managers
             micManager = new MicrophoneManager(capi);
             audioOutputManager = new AudioOutputManager(capi);
-            
+            patchManager = new PatchManager(modID);
+            patchManager.Patch();
+
             // Init voice chat client
             client = new RPVoiceChatNativeNetworkClient(api);
 
@@ -43,7 +46,7 @@ namespace rpvoicechat
 
             // Initialize gui
             configGui = new MainConfig(capi, micManager, audioOutputManager);
-            api.Gui.RegisterDialog(new HudIcon(capi, micManager));
+            api.Gui.RegisterDialog(new SpeechIndicator(capi, micManager));
             api.Gui.RegisterDialog(new VoiceLevelIcon(capi, micManager));
 
             // Set up keybinds
@@ -54,7 +57,7 @@ namespace rpvoicechat
             capi.Event.KeyUp += Event_KeyUp;
 
             // Set up keybind event handlers
-            capi.Input.SetHotKeyHandler("voicechatMenu", (t1) => 
+            capi.Input.SetHotKeyHandler("voicechatMenu", (t1) =>
             {
                 if (voiceMenuPressed)
                     return true;
@@ -64,7 +67,7 @@ namespace rpvoicechat
                 configGui.Toggle();
                 return true;
             });
-            
+
             capi.Input.SetHotKeyHandler("voicechatVoiceLevel", (t1) =>
             {
                 if (voiceLevelPressed)
@@ -105,11 +108,14 @@ namespace rpvoicechat
                 };
                 client.SendAudioToServer(packet);
             };
+
+            // Ideally this should be called only after PlayerNowPlaying event fired
+            micManager.Launch();
         }
 
         private void Event_KeyUp(KeyEvent e)
         {
-            
+
             if (e.KeyCode == capi.Input.HotKeys["voicechatMenu"].CurrentMapping.KeyCode)
                 voiceMenuPressed = false;
             else if (e.KeyCode == capi.Input.HotKeys["voicechatVoiceLevel"].CurrentMapping.KeyCode)
@@ -127,6 +133,7 @@ namespace rpvoicechat
         public override void Dispose()
         {
             micManager?.Dispose();
+            patchManager?.Dispose();
             //client?.Dispose();
             configGui.Dispose();
             //client = null;
