@@ -90,7 +90,12 @@ public class PlayerAudioSource : IDisposable
         // If the player is on the other side of something to the listener, then the player's voice should be muffled
         BlockSelection blocks = new BlockSelection();
         EntitySelection entities = new EntitySelection();
-        capi.World.RayTraceForSelection(speakerPos.XYZ, listenerPos.XYZ, ref blocks, ref entities);
+        capi.World.RayTraceForSelection(
+            LocationUtils.GetLocationOfPlayer(player),
+            LocationUtils.GetLocationOfPlayer(capi),
+            ref blocks,
+            ref entities
+        );
         if (blocks != null)
         {
             int blockHitboxSize = 0;

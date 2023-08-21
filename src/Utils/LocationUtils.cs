@@ -13,10 +13,7 @@ namespace rpvoicechat.Utils
             if (api == null)
                 throw new Exception("api is null");
 
-            if (api.World.Player.Entity.Swimming)
-                return (api.World.Player.Entity.Pos.XYZ + new Vec3d(0, 0.5, 0));
-
-            return GetSpeakerLocation(api.World.Player.Entity.Pos);
+            return GetLocationOfPlayer(api.World.Player);
         }
 
         public static Vec3d GetLocationOfPlayer(IPlayer player)
@@ -24,7 +21,7 @@ namespace rpvoicechat.Utils
             if (player == null)
                 throw new Exception("player is null");
 
-            if (player.Entity.Swimming)
+            if (player.Entity.Swimming || (player.Entity.CurrentControls & EnumEntityActivity.FloorSitting) != 0)
                 return (player.Entity.Pos.XYZ + new Vec3d(0, 0.5, 0));
 
             return GetSpeakerLocation(player.Entity.Pos);
