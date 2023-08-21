@@ -8,6 +8,9 @@ using Vintagestory.API.MathTools;
 using OpenTK;
 using rpvoicechat.src.Utils.Filters;
 using Vintagestory.API.Common.Entities;
+using rpvoicechat.Utils;
+using System.Collections.Generic;
+
 
 public class PlayerAudioSource : IDisposable
 {
@@ -21,14 +24,20 @@ public class PlayerAudioSource : IDisposable
     //private ReverbEffect reverbEffect;
 
     private ICoreClientAPI capi;
-    private AudioOutputManager outputManager;
-    private Vec3f lastPos;
+
+    private Vec3f lastSpeakerCoords;
     private long gameTickId;
     public bool IsMuffled { get; set; } = false;
     public bool IsReverberated { get; set; } = false;
 
     public bool IsLocational { get; set; } = true;
-    public VoiceLevel VoiceLevel { get; private set; } = VoiceLevel.Talking;
+    public VoiceLevel voiceLevel { get; private set; } = VoiceLevel.Talking;
+    private static Dictionary<VoiceLevel, string> configKeyByVoiceLevel = new Dictionary<VoiceLevel, string>
+    {
+        { VoiceLevel.Whispering, "rpvoicechat:distance-whisper" },
+        { VoiceLevel.Talking, "rpvoicechat:distance-talk" },
+        { VoiceLevel.Shouting, "rpvoicechat:distance-shout" },
+    };
 
     private IPlayer player;
 
@@ -43,7 +52,7 @@ public class PlayerAudioSource : IDisposable
         StartTick();
         capi.Event.EnqueueMainThreadTask(() =>
         {
-            lastPos = player.Entity?.SidedPos?.XYZFloat;
+            lastSpeakerCoords = player.Entity?.SidedPos?.XYZFloat;
 
             source = AL.GenSource();
             Util.CheckError("Error gen source", capi);
@@ -64,25 +73,8 @@ public class PlayerAudioSource : IDisposable
 
     public void UpdateVoiceLevel(VoiceLevel voiceLevel)
     {
-        VoiceLevel = voiceLevel;
-        
-        string key = "rpvoicechat:distance-";
-
-        switch (voiceLevel)
-        {
-            case VoiceLevel.Whispering:
-                key = key + "whisper";
-                break;
-            case VoiceLevel.Talking:
-                key = key + "talk";
-                break;
-            case VoiceLevel.Shouting:
-                key = key + "shout";
-                break;
-            default:
-                key = key + "talk";
-                break;
-        }
+        this.voiceLevel = voiceLevel;
+        string key = configKeyByVoiceLevel[voiceLevel];
 
         capi.Event.EnqueueMainThreadTask(() =>
         {
@@ -95,13 +87,19 @@ public class PlayerAudioSource : IDisposable
     {
         EntityPos speakerPos = player.Entity?.SidedPos;
         EntityPos listenerPos = capi.World.Player.Entity?.SidedPos;
-        if (speakerPos == null || listenerPos == null || !outputManager.isReady)
+        if (speakerPos == null || listenerPos == null)
+
             return;
 
         // If the player is on the other side of something to the listener, then the player's voice should be muffled
         BlockSelection blocks = new BlockSelection();
         EntitySelection entities = new EntitySelection();
-        capi.World.RayTraceForSelection(speakerPos.XYZ, listenerPos.XYZ, ref blocks, ref entities);
+        capi.World.RayTraceForSelection(
+            LocationUtils.GetLocationOfPlayer(player),
+            LocationUtils.GetLocationOfPlayer(capi),
+            ref blocks,
+            ref entities
+        );
         if (blocks != null)
         {
             int blockHitboxSize = 0;
@@ -145,27 +143,31 @@ public class PlayerAudioSource : IDisposable
 
         if (IsLocational)
         {
-            if (lastPos == null)
+            if (lastSpeakerCoords == null)
             {
-                lastPos = speakerPos.XYZFloat;
+                lastSpeakerCoords = speakerPos.XYZFloat;
             }
 
-            var entityPos = speakerPos.XYZFloat;
-            var direction = entityPos - listenerPos.XYZFloat;
-            direction.Normalize();
+            var speakerCoords = speakerPos.XYZFloat;
+            var velocity = (lastSpeakerCoords - speakerCoords) / dt;
+            lastSpeakerCoords = speakerCoords;
 
-            var velocity = (lastPos - entityPos) / dt;
-            lastPos = entityPos;
+            // Adjust volume change due to distance based on speaker's voice level
+            string key = configKeyByVoiceLevel[voiceLevel];
+            var maxHearingDistance = capi.World.Config.GetInt(key);
+            float distanceFactor = (float) (1.5 / Math.Sqrt(maxHearingDistance));
+            var relativeSpeakerCoords = LocationUtils.GetRelativeSpeakerLocation(speakerPos, listenerPos);
 
-            AL.Source(source, ALSource3f.Position, entityPos.X, entityPos.Y, entityPos.Z);
+            var sourcePosition = relativeSpeakerCoords * distanceFactor;
+
+            AL.Source(source, ALSource3f.Position, sourcePosition.X, sourcePosition.Y, sourcePosition.Z);
             Util.CheckError("Error setting source pos", capi);
-
-            AL.Source(source, ALSource3f.Direction, direction.X, direction.Y, direction.Z);
-            Util.CheckError("Error setting source direction", capi);
 
             AL.Source(source, ALSource3f.Velocity, velocity.X, velocity.Y, velocity.Z);
             Util.CheckError("Error setting source velocity", capi);
 
+            AL.Source(source, ALSourceb.SourceRelative, true);
+            Util.CheckError("Error making source relative to client", capi);
         }
         else
         {

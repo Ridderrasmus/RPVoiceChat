@@ -9,6 +9,7 @@ namespace rpvoicechat.src.Utils.Filters
 
         private EffectsExtension effectsExtension;
         private int source;
+        private int nullFilter;
         public int filter;
 
         public bool IsEnabled { get; set; } = false;
@@ -16,18 +17,18 @@ namespace rpvoicechat.src.Utils.Filters
 
         public FilterLowpass(EffectsExtension effectsExtension, int source) 
         {
-            this.source = source;
             this.effectsExtension = effectsExtension;
+            this.source = source;
+            nullFilter = effectsExtension.GenFilter();
             GenerateFilter();
         }
 
+        /// <summary>
+        /// Sets the gain at the high-frequency limit of the filter. <br/>
+        /// 1.0 means no change.
+        /// </summary>
+        /// <param name="gain">The gain from 0.0 to 1.0.</param>
         public void SetHFGain(float gain)
-        // Summary:
-        //     Sets the gain at the high-frequency limit of the filter.
-        //     1.0 means no change.
-        //     
-        // Parameters:
-        //   gain: The gain from 0.0 to 1.0.
         {
             effectsExtension.Filter(filter, EfxFilterf.LowpassGainHF, gain);
         }
@@ -51,8 +52,7 @@ namespace rpvoicechat.src.Utils.Filters
             if (!IsEnabled)
                 return;
 
-            effectsExtension.DeleteFilter(filter);
-            GenerateFilter();
+            effectsExtension.BindFilterToSource(source, nullFilter);
             IsEnabled = false;
         }
 
