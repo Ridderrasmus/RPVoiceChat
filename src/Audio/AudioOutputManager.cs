@@ -59,7 +59,7 @@ namespace rpvoicechat
                 {
                     // Update the voice level if it has changed
                     // Not sure about this one, might be better to just update the voice level every time we update the player
-                    if (source.VoiceLevel != packet.VoiceLevel)
+                    if (source.voiceLevel != packet.VoiceLevel)
                         source.UpdateVoiceLevel(packet.VoiceLevel);
 
                     source.QueueAudio(packet.AudioData, packet.Length);

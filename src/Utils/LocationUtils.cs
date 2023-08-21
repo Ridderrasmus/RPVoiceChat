@@ -6,19 +6,8 @@ using Vintagestory.API.MathTools;
 
 namespace rpvoicechat.Utils
 {
-    public class LocationUtils
+    public static class LocationUtils
     {
-        private static readonly LocationUtils _instance = new LocationUtils();
-        public static LocationUtils Instance { get { return _instance; } }
-
-        static LocationUtils()
-        {
-        }
-
-        private LocationUtils()
-        {
-        }
-
         public static Vec3d GetLocationOfPlayer(ICoreClientAPI api)
         {
             if (api == null)
@@ -47,6 +36,26 @@ namespace rpvoicechat.Utils
                 throw new Exception("entity is null");
 
             return GetSpeakerLocation(pos);
+        }
+
+        /// <summary>
+        /// Returns speaker's position from listener's point of view
+        /// </summary>
+        /// <param name="speakerPos">Speaker's position object</param>
+        /// <param name="listenerPos">Listener's position object</param>
+        public static Vec3f GetRelativeSpeakerLocation(EntityPos speakerPos, EntityPos listenerPos)
+        {
+            var relativeSpeakerCoords = speakerPos.XYZFloat - listenerPos.XYZFloat;
+            var listenerHeadAngle = listenerPos.Yaw + listenerPos.HeadYaw - Math.PI / 2;
+            var cs = Math.Cos(listenerHeadAngle);
+            var sn = Math.Sin(listenerHeadAngle);
+            var rotatedVector = new Vec3d(
+                relativeSpeakerCoords.X * cs - relativeSpeakerCoords.Z * sn,
+                relativeSpeakerCoords.Y,
+                relativeSpeakerCoords.X * sn + relativeSpeakerCoords.Z * cs
+            );
+
+            return rotatedVector.ToVec3f();
         }
 
         private static Vec3d GetSpeakerLocation(EntityPos pos)
