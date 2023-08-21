@@ -6,6 +6,12 @@
       "commandLineArgs": "--tracelog --addModPath $(ProjectDir)/bin/$(Configuration)/Mods",
       "workingDirectory": "$(VINTAGE_STORY)"
     },
+    "SecondClient": {
+      "commandName": "Executable",
+      "executablePath": "$(VINTAGE_STORY)/Vintagestory.exe",
+      "commandLineArgs": "--tracelog --addModPath $(ProjectDir)/bin/$(Configuration)/Mods --dataPath $(ProjectDir)/bin/$(Configuration)/VintagestoryData",
+      "workingDirectory": "$(VINTAGE_STORY)"
+    },
     "Server": {
       "commandName": "Executable",
       "executablePath": "$(VINTAGE_STORY)/VintagestoryServer.exe",
