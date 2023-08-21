@@ -11,6 +11,7 @@ using Vintagestory.API.Common.Entities;
 using rpvoicechat.Utils;
 using System.Collections.Generic;
 
+
 public class PlayerAudioSource : IDisposable
 {
     public const int BufferCount = 4;
@@ -23,6 +24,7 @@ public class PlayerAudioSource : IDisposable
     //private ReverbEffect reverbEffect;
 
     private ICoreClientAPI capi;
+
     private Vec3f lastSpeakerCoords;
     private long gameTickId;
     public bool IsMuffled { get; set; } = false;
@@ -43,7 +45,8 @@ public class PlayerAudioSource : IDisposable
 
     public PlayerAudioSource(IPlayer player, AudioOutputManager manager, ICoreClientAPI capi)
     {
-        this.EffectsExtension = manager.EffectsExtension;
+        EffectsExtension = manager.EffectsExtension;
+        outputManager = manager;
         this.player = player;
         this.capi = capi;
         StartTick();
@@ -85,6 +88,7 @@ public class PlayerAudioSource : IDisposable
         EntityPos speakerPos = player.Entity?.SidedPos;
         EntityPos listenerPos = capi.World.Player.Entity?.SidedPos;
         if (speakerPos == null || listenerPos == null)
+
             return;
 
         // If the player is on the other side of something to the listener, then the player's voice should be muffled
@@ -238,7 +242,7 @@ public class PlayerAudioSource : IDisposable
         AL.SourceStop(source);
         Util.CheckError("Error stop playing source", capi);
 
-        buffer.Dispose();
+        buffer?.Dispose();
         AL.DeleteSource(source);
         Util.CheckError("Error deleting source", capi);
 

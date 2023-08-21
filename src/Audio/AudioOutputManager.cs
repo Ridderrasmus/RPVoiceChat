@@ -35,6 +35,7 @@ namespace rpvoicechat
             }
         }
 
+        public bool isReady = false;
         public EffectsExtension EffectsExtension;
         private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
         private PlayerAudioSource localPlayerAudioSource;
@@ -44,15 +45,23 @@ namespace rpvoicechat
             _config = ModConfig.Config;
             IsLoopbackEnabled = _config.IsLoopbackEnabled;
             capi = api;
-            capi.Event.PlayerEntitySpawn += PlayerSpawned;
-            capi.Event.PlayerEntityDespawn += PlayerDespawned;
 
             EffectsExtension = new EffectsExtension();
+        }
+
+        public void Launch()
+        {
+            isReady = true;
+            capi.Event.PlayerEntitySpawn += PlayerSpawned;
+            capi.Event.PlayerEntityDespawn += PlayerDespawned;
+            ClientLoaded();
         }
 
         // Called when the client receives an audio packet supplying the audio packet
         public async void HandleAudioPacket(AudioPacket packet)
         {
+            if (!isReady) return;
+
             await Task.Run(() =>
             {
                 if (playerSources.TryGetValue(packet.PlayerId, out var source))
@@ -83,7 +92,7 @@ namespace rpvoicechat
             });
         }
 
-        public void HandleLoopback(byte[] audioData, int length, VoiceLevel voiceLevel)
+        public void HandleLoopback(byte[] audioData, int length)
         {
             if (!IsLoopbackEnabled)
                 return;
@@ -91,41 +100,40 @@ namespace rpvoicechat
             localPlayerAudioSource.QueueAudio(audioData, length);
         }
 
+        public void ClientLoaded()
+        {
+            localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, this, capi)
+            {
+                IsMuffled = false,
+                IsReverberated = false,
+                IsLocational = false
+            };
+
+            if (!isLoopbackEnabled) return;
+            localPlayerAudioSource.StartPlaying();
+        }
+
         public void PlayerSpawned(IPlayer player)
         {
-            if (player.ClientId == capi.World.Player.ClientId)
-            {
-                localPlayerAudioSource = new PlayerAudioSource(player, this, capi)
-                {
-                    IsMuffled = false,
-                    IsReverberated = false,
-                    IsLocational = false
-                };
+            if (player.ClientId == capi.World.Player.ClientId) return;
 
-                if (isLoopbackEnabled)
-                {
-                    localPlayerAudioSource.StartPlaying();
-                }
+            var playerSource = new PlayerAudioSource(player, this, capi)
+            {
+                IsMuffled = false,
+                IsReverberated = false,
+                IsLocational = true
+            };
+
+            if (playerSources.TryAdd(player.PlayerUID, playerSource) == false)
+            {
+                capi.Logger.Warning($"Failed to add player {player.PlayerName} as source !");
             }
             else
             {
-                var playerSource = new PlayerAudioSource(player, this, capi)
-                {
-                    IsMuffled = false,
-                    IsReverberated = false,
-                    IsLocational = true
-                };
-
-                if (playerSources.TryAdd(player.PlayerUID, playerSource) == false)
-                {
-                    capi.Logger.Warning($"Failed to add player {player.PlayerName} as source !");
-                }
-                else
-                {
-                    playerSource.StartPlaying();
-                }
+                playerSource.StartPlaying();
             }
         }
+
         public void PlayerDespawned(IPlayer player)
         {
             if (player.ClientId == capi.World.Player.ClientId)
