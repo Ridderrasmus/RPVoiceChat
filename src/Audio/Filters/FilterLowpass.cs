@@ -1,8 +1,6 @@
-﻿
+﻿using OpenTK.Audio.OpenAL;
 
-using OpenTK.Audio.OpenAL;
-
-namespace rpvoicechat.src.Utils.Filters
+namespace rpvoicechat
 {
     public class FilterLowpass
     {
@@ -15,7 +13,7 @@ namespace rpvoicechat.src.Utils.Filters
         public bool IsEnabled { get; set; } = false;
 
 
-        public FilterLowpass(EffectsExtension effectsExtension, int source) 
+        public FilterLowpass(EffectsExtension effectsExtension, int source)
         {
             this.effectsExtension = effectsExtension;
             this.source = source;

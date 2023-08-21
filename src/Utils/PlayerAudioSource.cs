@@ -6,7 +6,6 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using OpenTK;
-using rpvoicechat.src.Utils.Filters;
 using Vintagestory.API.Common.Entities;
 using rpvoicechat.Utils;
 using System.Collections.Generic;
@@ -24,6 +23,7 @@ public class PlayerAudioSource : IDisposable
     //private ReverbEffect reverbEffect;
 
     private ICoreClientAPI capi;
+    private AudioOutputManager outputManager;
 
     private Vec3f lastSpeakerCoords;
     private long gameTickId;
@@ -102,19 +102,12 @@ public class PlayerAudioSource : IDisposable
         );
         if (blocks != null)
         {
-            int blockHitboxSize = 0;
-            foreach (Cuboidf val in blocks.Block.CollisionBoxes)
-            {
-                blockHitboxSize += (int) (val.Length * val.Height * val.Width);
-            }
-
-            capi.Logger.Debug("Total hitbox size: " + blockHitboxSize);
 
             if(lowpassFilter == null)
                 lowpassFilter = new FilterLowpass(EffectsExtension, source);
 
             lowpassFilter.Start();
-            //lowpassFilter.SetHFGain(Math.Max((float) 1 - (blockHitboxSize / 10),(float) 0));
+            lowpassFilter.SetHFGain(Math.Max(1.0f - (blocks.Block.CollisionBoxes.Length / 10),(float) 0.1f));
             
         } else
         {
@@ -136,10 +129,18 @@ public class PlayerAudioSource : IDisposable
 
         // If the player is drunk, then the player's voice should be affected
         // Values are temporary currently
-        if (player.Entity.WatchedAttributes.GetFloat("intoxication") > 1.1)
+        if (player.Entity.WatchedAttributes.GetFloat("intoxication") > 0.2)
         {
-
+            var drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
+            var pitch = 1 - (drunkness / 2);
+            AL.Source(source, ALSourcef.Pitch, pitch);
+            Util.CheckError("Error setting source Pitch", capi);
+        } else
+        {
+            AL.Source(source, ALSourcef.Pitch, 1.0f);
+            Util.CheckError("Error setting source Pitch", capi);
         }
+
 
         if (IsLocational)
         {
