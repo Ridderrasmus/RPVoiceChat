@@ -47,6 +47,7 @@ namespace rpvoicechat
         public string CurrentInputDevice { get; internal set; }
 
         public event Action<byte[], int, VoiceLevel> OnBufferRecorded;
+        public event Action<VoiceLevel> VoiceLevelUpdated;
         public event Action ClientStartTalking;
         public event Action ClientStopTalking;
 
@@ -115,12 +116,12 @@ namespace rpvoicechat
                 return;
             }
 
-            // because we would have to copy, its actually faster to just allocate each time here. 
+            // because we would have to copy, its actually faster to just allocate each time here.
             var sampleBuffer = new byte[bufferLength];
             capture.ReadSamples(sampleBuffer, samplesAvailable);
-            
 
-            // this adds some latency and cpu time to our clients, however, it allows for processing to be done before 
+
+            // this adds some latency and cpu time to our clients, however, it allows for processing to be done before
             // we send off the data. It also ensure that the packets arrive in order, if we just used Task.Run()
             // we are not guaranteed an order of the packets finishing
             audioDataQueue.Enqueue(new AudioData()
@@ -137,7 +138,7 @@ namespace rpvoicechat
             {
                 if (!audioDataQueue.TryDequeue(out var data)) Thread.Sleep(30);
 
-                
+
                 double rms = 0;
                 var numSamples = data.Length / SampleToByte;
                 for (var i = 0; i < data.Length; i += SampleToByte)
@@ -254,6 +255,12 @@ namespace rpvoicechat
                 voiceLevel = VoiceLevel.Talking;
             }
 
+            VoiceLevelUpdated?.Invoke(voiceLevel);
+            return voiceLevel;
+        }
+
+        public VoiceLevel GetVoiceLevel()
+        {
             return voiceLevel;
         }
 

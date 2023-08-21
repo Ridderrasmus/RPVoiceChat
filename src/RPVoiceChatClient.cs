@@ -47,6 +47,7 @@ namespace rpvoicechat
             // Initialize gui
             configGui = new MainConfig(capi, micManager, audioOutputManager);
             api.Gui.RegisterDialog(new SpeechIndicator(capi, micManager));
+            api.Gui.RegisterDialog(new VoiceLevelIcon(capi, micManager));
 
             // Set up keybinds
             capi.Input.RegisterHotKey("voicechatMenu", "RPVoice: Config menu", GlKeys.P, HotkeyType.GUIOrOtherControls);
@@ -74,8 +75,7 @@ namespace rpvoicechat
 
                 voiceLevelPressed = true;
 
-                var level = micManager.CycleVoiceLevel();
-                capi.ShowChatMessage("RPVoice: Speech volume set to " + level.ToString());
+                micManager.CycleVoiceLevel();
                 return true;
             });
 
