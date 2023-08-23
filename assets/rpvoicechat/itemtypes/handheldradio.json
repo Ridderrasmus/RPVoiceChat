@@ -1,0 +1,13 @@
+{
+  "code": "handheldradio",
+  "class": "handheldradio",
+  "enabled": false,
+  "creativeinventory": {
+    "general": [ "*" ],
+    "items": [ "*" ],
+    "tools": [ "*" ]
+  },
+  "texture": {
+    "base": "item/handheldradio"
+  }
+}
