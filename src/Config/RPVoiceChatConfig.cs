@@ -16,7 +16,7 @@
         public bool IsLoopbackEnabled = false;
         public bool IsMuted = false;
         public int InputThreshold = 20;
-        public string CurrentInputDevice;
+        public string CurrentInputDevice = OpenTK.Audio.AudioCapture.AvailableDevices[0];
         // These are client settings but they are not
         // accessible from the in-game settings menu and
         // are only meant to be modified by someone who

@@ -51,4 +51,10 @@
   </Content>
 </ItemGroup>
 
+<ItemGroup>
+  <Folder Include="assets\rpvoicechat\itemtypes\" />
+  <Folder Include="assets\rpvoicechat\sounds\item\" />
+  <Folder Include="assets\rpvoicechat\textures\item\" />
+</ItemGroup>
+
 </Project>
