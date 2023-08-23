@@ -1,18 +1,14 @@
-﻿using Vintagestory.API.Common;
+﻿using System.Runtime.CompilerServices;
+using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 
 namespace RPVoiceChat
 {
-    public class BellItem : Item
+    public class HandbellItem : Item
     {
 
-        public override void OnLoaded(ICoreAPI api)
-        {
-            base.OnLoaded(api);
-            this.MaxStackSize = 1;
-        }
-
         // When an entity is attacked with this bell
+        // Called twice it seems. Both clientside and serverside?
         public override void OnAttackingWith(IWorldAccessor world, Entity byEntity, Entity attackedEntity, ItemSlot itemslot)
         {
             base.OnAttackingWith(world, byEntity, attackedEntity, itemslot);
@@ -22,6 +18,7 @@ namespace RPVoiceChat
         }
 
         // When a block is broken with this item
+        // Called twice it seems. Both clientside and serverside?
         public override bool OnBlockBrokenWith(IWorldAccessor world, Entity byEntity, ItemSlot itemslot, BlockSelection blockSel, float dropQuantityMultiplier = 1)
         {
             world.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/item/bell.ogg"), byEntity, null, false, 32);
@@ -31,6 +28,7 @@ namespace RPVoiceChat
         }
 
         // When item is used
+        // Only happens once. Clientside only?
         public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handling)
         {
             IWorldAccessor world = byEntity.World;

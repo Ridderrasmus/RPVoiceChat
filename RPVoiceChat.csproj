@@ -46,15 +46,15 @@
   <Content Include="assets\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </Content>
+  <None Remove="assets\rpvoicechat\itemtypes\handbell.json" />
+  <None Remove="assets\rpvoicechat\textures\item\handbell.png" />
   <Content Include="modinfo.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </Content>
 </ItemGroup>
 
 <ItemGroup>
-  <Folder Include="assets\rpvoicechat\itemtypes\" />
   <Folder Include="assets\rpvoicechat\sounds\item\" />
-  <Folder Include="assets\rpvoicechat\textures\item\" />
 </ItemGroup>
 
 </Project>

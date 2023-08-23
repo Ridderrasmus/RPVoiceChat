@@ -1,0 +1,12 @@
+{
+  "code": "handbell",
+  "class": "handbell",
+  "creativeinventory": {
+    "general": [ "*" ],
+    "items": [ "*" ],
+    "tools": [ "*" ]
+  },
+  "texture": {
+    "base": "item/handbell"
+  }
+}
