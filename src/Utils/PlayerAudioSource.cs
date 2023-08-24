@@ -106,8 +106,14 @@ public class PlayerAudioSource : IDisposable
             if(lowpassFilter == null)
                 lowpassFilter = new FilterLowpass(EffectsExtension, source);
 
-            lowpassFilter.Start();
-            lowpassFilter.SetHFGain(Math.Max(1.0f - (blocks.Block.CollisionBoxes.Length / 10),(float) 0.1f));
+            lowpassFilter?.Start();
+            float muffling = 7.0f;
+            //if (blocks.Block.CollisionBoxes != null)
+            //    muffling = (float)blocks.Block.CollisionBoxes.Length;
+            
+            lowpassFilter?.SetHFGain(Math.Max(1.0f - (muffling / 10), 0.1f));
+            
+
             
         } else
         {
