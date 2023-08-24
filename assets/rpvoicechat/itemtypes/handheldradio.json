@@ -2,6 +2,7 @@
   "code": "handheldradio",
   "class": "handheldradio",
   "enabled": false,
+  "maxstacksize": 1,
   "creativeinventory": {
     "general": [ "*" ],
     "items": [ "*" ],
