@@ -1,6 +1,8 @@
-﻿namespace RPVoiceChat
+﻿using Vintagestory.API.Common;
+
+namespace RPVoiceChat
 {
-    internal class TelegraphWireItem
+    public class TelegraphWireItem : Item
     {
     }
 }

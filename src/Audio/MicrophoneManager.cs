@@ -60,11 +60,16 @@ namespace rpvoicechat
             config = ModConfig.Config;
             MaxInputThreshold = config.MaxInputThreshold;
             SetThreshold(config.InputThreshold);
+
+            if (config.CurrentInputDevice == null || config.CurrentInputDevice == "") return;
+
             capture = new AudioCapture(config.CurrentInputDevice, Frequency, ALFormat.Mono16, BufferSize);
         }
 
         public void Launch()
         {
+            if (capture == null) return;
+
             audioProcessingThread.Start();
             gameTickId = capi.Event.RegisterGameTickListener(UpdateCaptureAudioSamples, 100);
             capture.Start();
@@ -82,6 +87,8 @@ namespace rpvoicechat
 
         public void Dispose()
         {
+            if (capture == null) return;
+
             capi.Event.UnregisterGameTickListener(gameTickId);
             gameTickId = 0;
             audioProcessingThread.Abort();

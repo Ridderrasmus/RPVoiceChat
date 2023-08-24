@@ -49,6 +49,8 @@
   <None Remove="assets\rpvoicechat\itemtypes\handbell.json" />
   <None Remove="assets\rpvoicechat\itemtypes\handheldradio.json" />
   <None Remove="assets\rpvoicechat\itemtypes\telegraphwire.json" />
+  <None Remove="assets\rpvoicechat\recipes\grid\handbell.json" />
+  <None Remove="assets\rpvoicechat\recipes\smithing\telegraphwire.json" />
   <None Remove="assets\rpvoicechat\textures\item\handbell.png" />
   <Content Include="modinfo.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

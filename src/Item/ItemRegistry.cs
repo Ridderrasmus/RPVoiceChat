@@ -9,7 +9,7 @@ namespace RPVoiceChat
         {
             api.RegisterItemClass("handbell", typeof(HandbellItem));
             api.RegisterItemClass("handheldradio", typeof(RadioItem));
-            api.RegisterItemClass("telegraphwire", typeof(TelegraphWireItem))
+            api.RegisterItemClass("telegraphwire", typeof(TelegraphWireItem));
         }
     }
 }

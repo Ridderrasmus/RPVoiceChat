@@ -140,7 +140,7 @@ namespace rpvoicechat
             micManager?.Dispose();
             patchManager?.Dispose();
             //client?.Dispose();
-            configGui.Dispose();
+            configGui?.Dispose();
             //client = null;
         }
     }

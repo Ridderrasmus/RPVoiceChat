@@ -7,6 +7,6 @@
     "items": [ "*" ]
   },
   "texture": {
-    "base": "item/telegraphwire"
+    "base": "item/handbell"
   }
 }
