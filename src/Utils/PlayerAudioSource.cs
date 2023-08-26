@@ -37,6 +37,11 @@ public class PlayerAudioSource : IDisposable
         { VoiceLevel.Talking, "rpvoicechat:distance-talk" },
         { VoiceLevel.Shouting, "rpvoicechat:distance-shout" },
     };
+    /// <summary>
+    /// Distance in blocks at which audio source normally considered quiet. <br />
+    /// Used in calculation of distanceFactor to set volume at the edge of hearing range.
+    /// </summary>
+    private const float quietDistance = 10;
 
     private IPlayer player;
 
@@ -115,9 +120,9 @@ public class PlayerAudioSource : IDisposable
 
         // If the player is drunk, then the player's voice should be affected
         // Values are temporary currently
-        if (player.Entity.WatchedAttributes.GetFloat("intoxication") > 0.2)
+        float drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
+        if (drunkness > 0.2)
         {
-            var drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
             var pitch = 1 - (drunkness / 2);
             AL.Source(source, ALSourcef.Pitch, pitch);
             Util.CheckError("Error setting source Pitch", capi);
@@ -141,8 +146,13 @@ public class PlayerAudioSource : IDisposable
 
             // Adjust volume change due to distance based on speaker's voice level
             string key = configKeyByVoiceLevel[voiceLevel];
-            var maxHearingDistance = capi.World.Config.GetInt(key);
-            float distanceFactor = (float) (1.5 / Math.Sqrt(maxHearingDistance));
+            float maxHearingDistance = capi.World.Config.GetInt(key);
+            float distanceFactor;
+            if (quietDistance < maxHearingDistance)
+                distanceFactor = (float)(Math.Pow(quietDistance, 2) / Math.Pow(maxHearingDistance, 2));
+            else
+                distanceFactor = (float)(Math.Pow(quietDistance, 0.5) / Math.Pow(maxHearingDistance, 0.5));
+
             var relativeSpeakerCoords = LocationUtils.GetRelativeSpeakerLocation(speakerPos, listenerPos);
 
             var sourcePosition = relativeSpeakerCoords * distanceFactor;
