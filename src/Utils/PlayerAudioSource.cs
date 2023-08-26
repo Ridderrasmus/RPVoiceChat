@@ -13,7 +13,7 @@ using System.Collections.Generic;
 
 public class PlayerAudioSource : IDisposable
 {
-    public const int BufferCount = 4;
+    public const int BufferCount = 8;
 
     private int source;
 
