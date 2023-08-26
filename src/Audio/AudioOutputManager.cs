@@ -86,6 +86,7 @@ namespace rpvoicechat
                 // Update the voice level if it has changed
                 if (source.voiceLevel != packet.VoiceLevel)
                     source.UpdateVoiceLevel(packet.VoiceLevel);
+                source.UpdatePlayer();
                 source.QueueAudio(packet.AudioData, packet.Length);
             });
         }
