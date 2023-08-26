@@ -26,7 +26,6 @@ public class PlayerAudioSource : IDisposable
     private AudioOutputManager outputManager;
 
     private Vec3f lastSpeakerCoords;
-    private long gameTickId;
     public bool IsMuffled { get; set; } = false;
     public bool IsReverberated { get; set; } = false;
 
@@ -49,7 +48,6 @@ public class PlayerAudioSource : IDisposable
         outputManager = manager;
         this.player = player;
         this.capi = capi;
-        StartTick();
         capi.Event.EnqueueMainThreadTask(() =>
         {
             lastSpeakerCoords = player.Entity?.SidedPos?.XYZFloat;
@@ -83,32 +81,20 @@ public class PlayerAudioSource : IDisposable
         }, "PlayerAudioSource update max distance");
     }
 
-    public void UpdatePlayer(float dt)
+    public void UpdatePlayer()
     {
         EntityPos speakerPos = player.Entity?.SidedPos;
         EntityPos listenerPos = capi.World.Player.Entity?.SidedPos;
         if (speakerPos == null || listenerPos == null)
-
             return;
 
         // If the player is on the other side of something to the listener, then the player's voice should be muffled
-        BlockSelection blocks = new BlockSelection();
-        EntitySelection entities = new EntitySelection();
-        capi.World.RayTraceForSelection(
-            LocationUtils.GetLocationOfPlayer(player),
-            LocationUtils.GetLocationOfPlayer(capi),
-            ref blocks,
-            ref entities
-        );
-        if (blocks != null)
+        float wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
+        if (wallThickness != 0)
         {
-
-            if(lowpassFilter == null)
-                lowpassFilter = new FilterLowpass(EffectsExtension, source);
-
+            lowpassFilter = lowpassFilter ?? new FilterLowpass(EffectsExtension, source);
             lowpassFilter.Start();
-            lowpassFilter.SetHFGain(Math.Max(1.0f - (blocks.Block.CollisionBoxes.Length / 10),(float) 0.1f));
-            
+            lowpassFilter.SetHFGain(Math.Max(1.0f - (wallThickness / 2), 0.1f));
         } else
         {
             lowpassFilter?.Stop();
@@ -150,7 +136,7 @@ public class PlayerAudioSource : IDisposable
             }
 
             var speakerCoords = speakerPos.XYZFloat;
-            var velocity = (lastSpeakerCoords - speakerCoords) / dt;
+            //var velocity = (lastSpeakerCoords - speakerCoords) / dt;
             lastSpeakerCoords = speakerCoords;
 
             // Adjust volume change due to distance based on speaker's voice level
@@ -164,8 +150,8 @@ public class PlayerAudioSource : IDisposable
             AL.Source(source, ALSource3f.Position, sourcePosition.X, sourcePosition.Y, sourcePosition.Z);
             Util.CheckError("Error setting source pos", capi);
 
-            AL.Source(source, ALSource3f.Velocity, velocity.X, velocity.Y, velocity.Z);
-            Util.CheckError("Error setting source velocity", capi);
+            /*AL.Source(source, ALSource3f.Velocity, velocity.X, velocity.Y, velocity.Z);
+            Util.CheckError("Error setting source velocity", capi);*/
 
             AL.Source(source, ALSourceb.SourceRelative, true);
             Util.CheckError("Error making source relative to client", capi);
@@ -181,24 +167,6 @@ public class PlayerAudioSource : IDisposable
             AL.Source(source, ALSourceb.SourceRelative, true);
             Util.CheckError("Error making source relative to client", capi);
         }
-    }
-
-    public void StartTick()
-    {
-        if(gameTickId != 0)
-            return;
-        capi.Event.EnqueueMainThreadTask(() => { gameTickId = capi.Event.RegisterGameTickListener(UpdatePlayer, 100); }, "PlayerAudioSource Start");
-    }
-
-    public void StopTick()
-    {
-        if(gameTickId == 0)
-            return;
-
-        capi.Event.EnqueueMainThreadTask(() => { 
-            capi.Event.UnregisterGameTickListener(gameTickId);
-            gameTickId = 0;
-        }, "PlayerAudioSource Start");
     }
 
     public void QueueAudio(byte[] audioBytes, int bufferLength)
@@ -220,7 +188,6 @@ public class PlayerAudioSource : IDisposable
 
     public void StartPlaying()
     {
-        StartTick();
         capi.Event.EnqueueMainThreadTask(() =>
         {
             AL.SourcePlay(source);
@@ -230,7 +197,6 @@ public class PlayerAudioSource : IDisposable
 
     public void StopPlaying()
     {
-        StopTick();
         capi.Event.EnqueueMainThreadTask(() =>
         {
             AL.SourceStop(source);
@@ -246,7 +212,5 @@ public class PlayerAudioSource : IDisposable
         buffer?.Dispose();
         AL.DeleteSource(source);
         Util.CheckError("Error deleting source", capi);
-
-        StopTick();
     }
 }
