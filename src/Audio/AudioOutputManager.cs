@@ -64,40 +64,38 @@ namespace rpvoicechat
 
             await Task.Run(() =>
             {
-                if (playerSources.TryGetValue(packet.PlayerId, out var source))
-                {
-                    // Update the voice level if it has changed
-                    // Not sure about this one, might be better to just update the voice level every time we update the player
-                    if (source.voiceLevel != packet.VoiceLevel)
-                        source.UpdateVoiceLevel(packet.VoiceLevel);
+                PlayerAudioSource source;
+                string playerId = packet.PlayerId;
 
-                    source.QueueAudio(packet.AudioData, packet.Length);
-                }
-                else
+                if (!playerSources.TryGetValue(playerId, out source))
                 {
-                    var player = capi.World.PlayerByUid(packet.PlayerId);
+                    var player = capi.World.PlayerByUid(playerId);
                     if (player == null)
                     {
                         capi.Logger.Error("Could not find player for playerId !");
                         return;
                     }
 
-                    var newSource = new PlayerAudioSource(player, this, capi);
-                    newSource.QueueAudio(packet.AudioData, packet.Length);
-                    if (!playerSources.TryAdd(packet.PlayerId, newSource))
+                    source = new PlayerAudioSource(player, this, capi);
+                    if (!playerSources.TryAdd(playerId, source))
                     {
                         capi.Logger.Error("Could not add new player to sources !");
                     }
                 }
+
+                // Update the voice level if it has changed
+                if (source.voiceLevel != packet.VoiceLevel)
+                    source.UpdateVoiceLevel(packet.VoiceLevel);
+                source.QueueAudio(packet.AudioData, packet.Length);
             });
         }
 
-        public void HandleLoopback(byte[] audioData, int length)
+        public void HandleLoopback(AudioPacket packet)
         {
             if (!IsLoopbackEnabled)
                 return;
 
-            localPlayerAudioSource.QueueAudio(audioData, length);
+            localPlayerAudioSource.QueueAudio(packet.AudioData, packet.Length);
         }
 
         public void ClientLoaded()
