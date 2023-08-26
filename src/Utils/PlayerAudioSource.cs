@@ -90,7 +90,7 @@ public class PlayerAudioSource : IDisposable
     {
         EntityPos speakerPos = player.Entity?.SidedPos;
         EntityPos listenerPos = capi.World.Player.Entity?.SidedPos;
-        if (speakerPos == null || listenerPos == null)
+        if (speakerPos == null || listenerPos == null || !outputManager.isReady)
             return;
 
         // If the player is on the other side of something to the listener, then the player's voice should be muffled
