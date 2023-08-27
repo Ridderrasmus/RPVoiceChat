@@ -26,6 +26,7 @@ public class PlayerAudioSource : IDisposable
     private AudioOutputManager outputManager;
 
     private Vec3f lastSpeakerCoords;
+    private DateTime lastSpeakerUpdate;
     public bool IsMuffled { get; set; } = false;
     public bool IsReverberated { get; set; } = false;
 
@@ -56,6 +57,7 @@ public class PlayerAudioSource : IDisposable
         capi.Event.EnqueueMainThreadTask(() =>
         {
             lastSpeakerCoords = player.Entity?.SidedPos?.XYZFloat;
+            lastSpeakerUpdate = DateTime.Now;
 
             source = AL.GenSource();
             Util.CheckError("Error gen source", capi);
@@ -135,33 +137,14 @@ public class PlayerAudioSource : IDisposable
 
         if (IsLocational)
         {
-            if (lastSpeakerCoords == null)
-            {
-                lastSpeakerCoords = speakerPos.XYZFloat;
-            }
-
-            var speakerCoords = speakerPos.XYZFloat;
-            //var velocity = (lastSpeakerCoords - speakerCoords) / dt;
-            lastSpeakerCoords = speakerCoords;
-
-            // Adjust volume change due to distance based on speaker's voice level
-            string key = configKeyByVoiceLevel[voiceLevel];
-            float maxHearingDistance = capi.World.Config.GetInt(key);
-            float distanceFactor;
-            if (quietDistance < maxHearingDistance)
-                distanceFactor = (float)(Math.Pow(quietDistance, 2) / Math.Pow(maxHearingDistance, 2));
-            else
-                distanceFactor = (float)(Math.Pow(quietDistance, 0.5) / Math.Pow(maxHearingDistance, 0.5));
-
-            var relativeSpeakerCoords = LocationUtils.GetRelativeSpeakerLocation(speakerPos, listenerPos);
-
-            var sourcePosition = relativeSpeakerCoords * distanceFactor;
+            var sourcePosition = GetSourcePosition(speakerPos, listenerPos);
+            var velocity = GetVelocity(speakerPos);
 
             AL.Source(source, ALSource3f.Position, sourcePosition.X, sourcePosition.Y, sourcePosition.Z);
             Util.CheckError("Error setting source pos", capi);
 
-            /*AL.Source(source, ALSource3f.Velocity, velocity.X, velocity.Y, velocity.Z);
-            Util.CheckError("Error setting source velocity", capi);*/
+            AL.Source(source, ALSource3f.Velocity, velocity.X, velocity.Y, velocity.Z);
+            Util.CheckError("Error setting source velocity", capi);
 
             AL.Source(source, ALSourceb.SourceRelative, true);
             Util.CheckError("Error making source relative to client", capi);
@@ -177,6 +160,37 @@ public class PlayerAudioSource : IDisposable
             AL.Source(source, ALSourceb.SourceRelative, true);
             Util.CheckError("Error making source relative to client", capi);
         }
+    }
+
+    private Vec3f GetSourcePosition(EntityPos speakerPos, EntityPos listenerPos)
+    {
+        // Adjust volume change due to distance based on speaker's voice level
+        string configKey = configKeyByVoiceLevel[voiceLevel];
+        float maxHearingDistance = capi.World.Config.GetInt(configKey);
+        var exponent = quietDistance < maxHearingDistance ? 2 : 0.5;
+        var distanceFactor = Math.Pow(quietDistance, exponent) / Math.Pow(maxHearingDistance, exponent);
+
+        var relativeSpeakerCoords = LocationUtils.GetRelativeSpeakerLocation(speakerPos, listenerPos);
+        var sourcePosition = relativeSpeakerCoords * (float)distanceFactor;
+
+        return sourcePosition;
+    }
+
+    private Vec3f GetVelocity(EntityPos speakerPos)
+    {
+        var currentTime = DateTime.Now;
+        if (lastSpeakerUpdate == null) lastSpeakerUpdate = currentTime;
+        var dt = (currentTime - lastSpeakerUpdate).TotalSeconds;
+        dt = GameMath.Clamp(dt, 0.1, 1);
+
+        var speakerCoords = speakerPos.XYZFloat;
+        if (lastSpeakerCoords == null || dt == 1) lastSpeakerCoords = speakerCoords;
+
+        var velocity = (lastSpeakerCoords - speakerCoords) / (float)dt;
+        lastSpeakerCoords = speakerCoords;
+        lastSpeakerUpdate = currentTime;
+
+        return velocity;
     }
 
     public void QueueAudio(byte[] audioBytes, int bufferLength)
