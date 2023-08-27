@@ -93,9 +93,9 @@ namespace rpvoicechat
 
         public void HandleLoopback(AudioPacket packet)
         {
-            if (!IsLoopbackEnabled)
-                return;
+            if (!IsLoopbackEnabled) return;
 
+            localPlayerAudioSource.UpdatePlayer();
             localPlayerAudioSource.QueueAudio(packet.AudioData, packet.Length);
         }
 
