@@ -1,10 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	  <TargetFramework>net462</TargetFramework>
-	  <LangVersion>9</LangVersion>
+    <TargetFramework>net462</TargetFramework>
+    <LangVersion>9</LangVersion>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputPath>bin\$(Configuration)\Mods\mod</OutputPath>
+    <RootNamespace>rpvoicechat</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
