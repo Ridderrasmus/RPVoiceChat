@@ -48,7 +48,17 @@ namespace rpvoicechat.Utils
         /// <param name="listenerPos">Listener's position object</param>
         public static Vec3f GetRelativeSpeakerLocation(EntityPos speakerPos, EntityPos listenerPos)
         {
-            var relativeSpeakerCoords = speakerPos.XYZFloat - listenerPos.XYZFloat;
+            return GetRelativeSpeakerLocation(speakerPos.XYZFloat, listenerPos);
+        }
+
+        /// <summary>
+        /// Returns speaker's position from listener's point of view
+        /// </summary>
+        /// <param name="speakerPos">Speaker's position</param>
+        /// <param name="listenerPos">Listener's position object</param>
+        public static Vec3f GetRelativeSpeakerLocation(Vec3f speakerPos, EntityPos listenerPos)
+        {
+            var relativeSpeakerCoords = speakerPos - listenerPos.XYZFloat;
             var listenerHeadAngle = listenerPos.Yaw + listenerPos.HeadYaw - Math.PI / 2;
             var cs = Math.Cos(listenerHeadAngle);
             var sn = Math.Sin(listenerHeadAngle);

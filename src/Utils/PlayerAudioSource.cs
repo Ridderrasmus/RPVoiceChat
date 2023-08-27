@@ -137,8 +137,13 @@ public class PlayerAudioSource : IDisposable
 
         if (IsLocational)
         {
-            var sourcePosition = GetSourcePosition(speakerPos, listenerPos);
-            var velocity = GetVelocity(speakerPos);
+            var sourcePosition = GetRelativeSourcePosition(speakerPos, listenerPos);
+            var velocity = GetRelativeVelocity(speakerPos, listenerPos, sourcePosition);
+
+            // Adjust volume change due to distance based on speaker's voice level
+            var distanceFactor = GetDistanceFactor();
+            sourcePosition *= distanceFactor;
+            velocity *= distanceFactor;
 
             AL.Source(source, ALSource3f.Position, sourcePosition.X, sourcePosition.Y, sourcePosition.Z);
             Util.CheckError("Error setting source pos", capi);
@@ -162,18 +167,30 @@ public class PlayerAudioSource : IDisposable
         }
     }
 
-    private Vec3f GetSourcePosition(EntityPos speakerPos, EntityPos listenerPos)
+    private float GetDistanceFactor()
     {
-        // Adjust volume change due to distance based on speaker's voice level
         string configKey = configKeyByVoiceLevel[voiceLevel];
         float maxHearingDistance = capi.World.Config.GetInt(configKey);
         var exponent = quietDistance < maxHearingDistance ? 2 : 0.5;
         var distanceFactor = Math.Pow(quietDistance, exponent) / Math.Pow(maxHearingDistance, exponent);
 
-        var relativeSpeakerCoords = LocationUtils.GetRelativeSpeakerLocation(speakerPos, listenerPos);
-        var sourcePosition = relativeSpeakerCoords * (float)distanceFactor;
+        return (float)distanceFactor;
+    }
 
-        return sourcePosition;
+    private Vec3f GetRelativeSourcePosition(EntityPos speakerPos, EntityPos listenerPos)
+    {
+        var relativeSourcePosition = LocationUtils.GetRelativeSpeakerLocation(speakerPos, listenerPos);
+        return relativeSourcePosition;
+    }
+
+    private Vec3f GetRelativeVelocity(EntityPos speakerPos, EntityPos listenerPos, Vec3f relativeSpeakerPosition)
+    {
+        var speakerVelocity = GetVelocity(speakerPos);
+        var futureSpeakerPosition = speakerPos.XYZFloat + speakerVelocity;
+        var relativeFuturePosition = LocationUtils.GetRelativeSpeakerLocation(futureSpeakerPosition, listenerPos);
+        var relativeVelocity = relativeSpeakerPosition - relativeFuturePosition;
+
+        return relativeVelocity;
     }
 
     private Vec3f GetVelocity(EntityPos speakerPos)
