@@ -97,8 +97,6 @@ namespace rpvoicechat
                 if (buffer == null)
                     return;
 
-                audioOutputManager.HandleLoopback(buffer, length);
-
                 AudioPacket packet = new AudioPacket()
                 {
                     PlayerId = capi.World.Player.PlayerUID,
@@ -106,6 +104,7 @@ namespace rpvoicechat
                     Length = length,
                     VoiceLevel = voiceLevel
                 };
+                audioOutputManager.HandleLoopback(packet);
                 client.SendAudioToServer(packet);
             };
 

@@ -26,7 +26,7 @@ public class PlayerAudioSource : IDisposable
     private AudioOutputManager outputManager;
 
     private Vec3f lastSpeakerCoords;
-    private long gameTickId;
+    private DateTime lastSpeakerUpdate;
     public bool IsMuffled { get; set; } = false;
     public bool IsReverberated { get; set; } = false;
 
@@ -38,6 +38,11 @@ public class PlayerAudioSource : IDisposable
         { VoiceLevel.Talking, "rpvoicechat:distance-talk" },
         { VoiceLevel.Shouting, "rpvoicechat:distance-shout" },
     };
+    /// <summary>
+    /// Distance in blocks at which audio source normally considered quiet. <br />
+    /// Used in calculation of distanceFactor to set volume at the edge of hearing range.
+    /// </summary>
+    private const float quietDistance = 10;
 
     private IPlayer player;
 
@@ -49,10 +54,10 @@ public class PlayerAudioSource : IDisposable
         outputManager = manager;
         this.player = player;
         this.capi = capi;
-        StartTick();
         capi.Event.EnqueueMainThreadTask(() =>
         {
             lastSpeakerCoords = player.Entity?.SidedPos?.XYZFloat;
+            lastSpeakerUpdate = DateTime.Now;
 
             source = AL.GenSource();
             Util.CheckError("Error gen source", capi);
@@ -83,38 +88,20 @@ public class PlayerAudioSource : IDisposable
         }, "PlayerAudioSource update max distance");
     }
 
-    public void UpdatePlayer(float dt)
+    public void UpdatePlayer()
     {
         EntityPos speakerPos = player.Entity?.SidedPos;
         EntityPos listenerPos = capi.World.Player.Entity?.SidedPos;
-        if (speakerPos == null || listenerPos == null)
-
+        if (speakerPos == null || listenerPos == null || !outputManager.isReady)
             return;
 
         // If the player is on the other side of something to the listener, then the player's voice should be muffled
-        BlockSelection blocks = new BlockSelection();
-        EntitySelection entities = new EntitySelection();
-        capi.World.RayTraceForSelection(
-            LocationUtils.GetLocationOfPlayer(player),
-            LocationUtils.GetLocationOfPlayer(capi),
-            ref blocks,
-            ref entities
-        );
-        if (blocks != null)
+        float wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
+        if (wallThickness != 0)
         {
-
-            if(lowpassFilter == null)
-                lowpassFilter = new FilterLowpass(EffectsExtension, source);
-
-            lowpassFilter?.Start();
-            float muffling = 7.0f;
-            //if (blocks.Block.CollisionBoxes != null)
-            //    muffling = (float)blocks.Block.CollisionBoxes.Length;
-            
-            lowpassFilter?.SetHFGain(Math.Max(1.0f - (muffling / 10), 0.1f));
-            
-
-            
+            lowpassFilter = lowpassFilter ?? new FilterLowpass(EffectsExtension, source);
+            lowpassFilter.Start();
+            lowpassFilter.SetHFGain(Math.Max(1.0f - (wallThickness / 5), 0.1f));
         } else
         {
             lowpassFilter?.Stop();
@@ -135,9 +122,9 @@ public class PlayerAudioSource : IDisposable
 
         // If the player is drunk, then the player's voice should be affected
         // Values are temporary currently
-        if (player.Entity.WatchedAttributes.GetFloat("intoxication") > 0.2)
+        float drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
+        if (drunkness > 0.2)
         {
-            var drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
             var pitch = 1 - (drunkness / 2);
             AL.Source(source, ALSourcef.Pitch, pitch);
             Util.CheckError("Error setting source Pitch", capi);
@@ -150,22 +137,13 @@ public class PlayerAudioSource : IDisposable
 
         if (IsLocational)
         {
-            if (lastSpeakerCoords == null)
-            {
-                lastSpeakerCoords = speakerPos.XYZFloat;
-            }
-
-            var speakerCoords = speakerPos.XYZFloat;
-            var velocity = (lastSpeakerCoords - speakerCoords) / dt;
-            lastSpeakerCoords = speakerCoords;
+            var sourcePosition = GetRelativeSourcePosition(speakerPos, listenerPos);
+            var velocity = GetRelativeVelocity(speakerPos, listenerPos, sourcePosition);
 
             // Adjust volume change due to distance based on speaker's voice level
-            string key = configKeyByVoiceLevel[voiceLevel];
-            var maxHearingDistance = capi.World.Config.GetInt(key);
-            float distanceFactor = (float) (1.5 / Math.Sqrt(maxHearingDistance));
-            var relativeSpeakerCoords = LocationUtils.GetRelativeSpeakerLocation(speakerPos, listenerPos);
-
-            var sourcePosition = relativeSpeakerCoords * distanceFactor;
+            var distanceFactor = GetDistanceFactor();
+            sourcePosition *= distanceFactor;
+            velocity *= distanceFactor;
 
             AL.Source(source, ALSource3f.Position, sourcePosition.X, sourcePosition.Y, sourcePosition.Z);
             Util.CheckError("Error setting source pos", capi);
@@ -189,22 +167,47 @@ public class PlayerAudioSource : IDisposable
         }
     }
 
-    public void StartTick()
+    private float GetDistanceFactor()
     {
-        if(gameTickId != 0)
-            return;
-        capi.Event.EnqueueMainThreadTask(() => { gameTickId = capi.Event.RegisterGameTickListener(UpdatePlayer, 100); }, "PlayerAudioSource Start");
+        string configKey = configKeyByVoiceLevel[voiceLevel];
+        float maxHearingDistance = capi.World.Config.GetInt(configKey);
+        var exponent = quietDistance < maxHearingDistance ? 2 : 0.5;
+        var distanceFactor = Math.Pow(quietDistance, exponent) / Math.Pow(maxHearingDistance, exponent);
+
+        return (float)distanceFactor;
     }
 
-    public void StopTick()
+    private Vec3f GetRelativeSourcePosition(EntityPos speakerPos, EntityPos listenerPos)
     {
-        if(gameTickId == 0)
-            return;
+        var relativeSourcePosition = LocationUtils.GetRelativeSpeakerLocation(speakerPos, listenerPos);
+        return relativeSourcePosition;
+    }
 
-        capi.Event.EnqueueMainThreadTask(() => { 
-            capi.Event.UnregisterGameTickListener(gameTickId);
-            gameTickId = 0;
-        }, "PlayerAudioSource Start");
+    private Vec3f GetRelativeVelocity(EntityPos speakerPos, EntityPos listenerPos, Vec3f relativeSpeakerPosition)
+    {
+        var speakerVelocity = GetVelocity(speakerPos);
+        var futureSpeakerPosition = speakerPos.XYZFloat + speakerVelocity;
+        var relativeFuturePosition = LocationUtils.GetRelativeSpeakerLocation(futureSpeakerPosition, listenerPos);
+        var relativeVelocity = relativeSpeakerPosition - relativeFuturePosition;
+
+        return relativeVelocity;
+    }
+
+    private Vec3f GetVelocity(EntityPos speakerPos)
+    {
+        var currentTime = DateTime.Now;
+        if (lastSpeakerUpdate == null) lastSpeakerUpdate = currentTime;
+        var dt = (currentTime - lastSpeakerUpdate).TotalSeconds;
+        dt = GameMath.Clamp(dt, 0.1, 1);
+
+        var speakerCoords = speakerPos.XYZFloat;
+        if (lastSpeakerCoords == null || dt == 1) lastSpeakerCoords = speakerCoords;
+
+        var velocity = (lastSpeakerCoords - speakerCoords) / (float)dt;
+        lastSpeakerCoords = speakerCoords;
+        lastSpeakerUpdate = currentTime;
+
+        return velocity;
     }
 
     public void QueueAudio(byte[] audioBytes, int bufferLength)
@@ -226,7 +229,6 @@ public class PlayerAudioSource : IDisposable
 
     public void StartPlaying()
     {
-        StartTick();
         capi.Event.EnqueueMainThreadTask(() =>
         {
             AL.SourcePlay(source);
@@ -236,7 +238,6 @@ public class PlayerAudioSource : IDisposable
 
     public void StopPlaying()
     {
-        StopTick();
         capi.Event.EnqueueMainThreadTask(() =>
         {
             AL.SourceStop(source);
@@ -252,7 +253,5 @@ public class PlayerAudioSource : IDisposable
         buffer?.Dispose();
         AL.DeleteSource(source);
         Util.CheckError("Error deleting source", capi);
-
-        StopTick();
     }
 }
