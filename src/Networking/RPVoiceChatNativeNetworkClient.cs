@@ -1,10 +1,11 @@
-﻿using System;
+﻿using RPVoiceChat;
+using System;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
 
 namespace rpvoicechat.Networking
 {
-    public class RPVoiceChatNativeNetworkClient : RPVoiceChatNativeNetwork
+    public class RPVoiceChatNativeNetworkClient : RPVoiceChatNativeNetwork, INetworkClient
     {
         public event Action<AudioPacket> OnAudioReceived;
         private IClientNetworkChannel channel;

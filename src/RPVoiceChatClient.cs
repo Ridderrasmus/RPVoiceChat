@@ -1,4 +1,5 @@
 ﻿using rpvoicechat.Networking;
+using RPVoiceChat;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
@@ -9,7 +10,7 @@ namespace rpvoicechat
         private MicrophoneManager micManager;
         private AudioOutputManager audioOutputManager;
         private PatchManager patchManager;
-        private RPVoiceChatNativeNetworkClient client;
+        private INetworkClient client;
 
         protected ICoreClientAPI capi;
 

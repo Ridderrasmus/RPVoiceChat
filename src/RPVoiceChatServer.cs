@@ -1,5 +1,6 @@
 ﻿using System.Net.Sockets;
 using rpvoicechat.Networking;
+using RPVoiceChat;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;
 using Vintagestory.API.Server;
@@ -9,7 +10,7 @@ namespace rpvoicechat
     public class RPVoiceChatServer : RPVoiceChatMod
     {
         protected ICoreServerAPI sapi;
-        private RPVoiceChatNativeNetworkServer server;
+        private INetworkServer server;
         public override void StartServerSide(ICoreServerAPI api)
         {
             sapi = api;

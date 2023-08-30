@@ -1,8 +1,9 @@
-﻿using Vintagestory.API.Common;
+﻿using RPVoiceChat;
+using Vintagestory.API.Common;
 
 namespace rpvoicechat.Networking
 {
-    public class RPVoiceChatNativeNetwork
+    public class RPVoiceChatNativeNetwork : INetworkCommon
     {
         protected const string ChannelName = "RPAudioChannel";
         public RPVoiceChatNativeNetwork(ICoreAPI api)
