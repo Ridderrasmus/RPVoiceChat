@@ -121,16 +121,9 @@ public class PlayerAudioSource : IDisposable
         // If the player is drunk, then the player's voice should be affected
         // Values are temporary currently
         float drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
-        if (drunkness > 0.2)
-        {
-            var pitch = 1 - (drunkness / 2);
-            AL.Source(source, ALSourcef.Pitch, pitch);
-            Util.CheckError("Error setting source Pitch", capi);
-        } else
-        {
-            AL.Source(source, ALSourcef.Pitch, 1.0f);
-            Util.CheckError("Error setting source Pitch", capi);
-        }
+        float pitch = drunkness <= 0.2 ? 1 : 1 - (drunkness / 5);
+        AL.Source(source, ALSourcef.Pitch, pitch);
+        Util.CheckError("Error setting source Pitch", capi);
 
 
         if (IsLocational)
