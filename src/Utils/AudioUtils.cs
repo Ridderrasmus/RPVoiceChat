@@ -113,19 +113,16 @@ namespace rpvoicechat
 
         public void TryDequeBuffers()
         {
-            // nothing to do
-            if (queuedBuffers.Count == 0)
-                return;
+            if (queuedBuffers.Count == 0) return;
 
-            var buffer = AL.SourceUnqueueBuffer(source);
+            AL.GetSource(source, ALGetSourcei.BuffersProcessed, out var buffersProcessed);
+            if (buffersProcessed == 0) return;
+
+            var processedBuffers = queuedBuffers.GetRange(0, buffersProcessed);
+            AL.SourceUnqueueBuffers(source, buffersProcessed, processedBuffers.ToArray());
             Util.CheckError("Error SourceUnqueueBuffer", capi, ALError.InvalidValue);
-            while (buffer != 0)
-            {
-                queuedBuffers.Remove(buffer);
-                availableBuffers.Add(buffer);
-                buffer = AL.SourceUnqueueBuffer(source);
-                Util.CheckError("Error SourceUnqueueBuffer", capi, ALError.InvalidValue);
-            }
+            queuedBuffers.RemoveRange(0, buffersProcessed);
+            availableBuffers.AddRange(processedBuffers);
         }
 
         public void Dispose()
