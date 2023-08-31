@@ -7,5 +7,6 @@ namespace rpvoicechat
     {
         public string Address { get; set; }
         public int Port { get; set; }
+        public string playeruid { get; set; }
     }
 }

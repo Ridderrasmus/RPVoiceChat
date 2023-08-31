@@ -3,30 +3,42 @@ using rpvoicechat;
 using System;
 using System.IO;
 using System.Net;
+using Vintagestory.API.Client;
 
 namespace RPVoiceChat
 {
     public class RPVoiceChatUDPNetworkClient : RPVoiceChatUDPNetwork, INetworkClient
     {
+        private ICoreClientAPI capi;
+        private IPEndPoint serverEndpoint;
+
         public event Action<AudioPacket> OnAudioReceived;
 
-        public RPVoiceChatUDPNetworkClient() : base()
+        public RPVoiceChatUDPNetworkClient(ICoreClientAPI capi) : base(capi)
         {
-            OnMessageReceived += MessageReceived;
+            this.capi = capi;
 
-            StartListening(52525);
+            capi.Network.GetChannel(ChannelName).SetMessageHandler<ConnectionInfo>(OnHandshakeReceived);
+
+            OnMessageReceived += MessageReceived;
         }
 
-        public RPVoiceChatUDPNetworkClient(int port) : base(port)
+        private void OnHandshakeReceived(ConnectionInfo info)
         {
-            OnMessageReceived += MessageReceived;
+            OpenUDPClient(info.Port);
 
-            StartListening(port);
+            StartListening(info.Port);
+
+            serverEndpoint = new IPEndPoint(IPAddress.Parse(info.Address), info.Port);
         }
 
         public void SendAudioToServer(AudioPacket packet)
         {
-            throw new NotImplementedException();
+            if (UdpClient == null || serverEndpoint == null) throw new Exception("Udp client or server endpoint has not been initialized.");
+
+            var stream = new MemoryStream();
+            Serializer.Serialize(stream, packet);
+            UdpClient.Send(stream.ToArray(), (int)stream.Length, serverEndpoint);
         }
 
         private void MessageReceived(byte[] msg)

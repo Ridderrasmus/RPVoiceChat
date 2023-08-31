@@ -1,24 +1,29 @@
-﻿using System;
+﻿using rpvoicechat;
+using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using Vintagestory.API.Common;
 
 namespace RPVoiceChat
 {
     public class RPVoiceChatUDPNetwork : INetworkCommon
     {
         private Thread _listeningThread;
+        private ICoreAPI api;
 
         protected UdpClient UdpClient;
+        protected const string ChannelName = "RPHandshakeChannel";
 
         public event Action<byte[]> OnMessageReceived;
 
-        public RPVoiceChatUDPNetwork()
+        public RPVoiceChatUDPNetwork(ICoreAPI api)
         {
-            UdpClient = new UdpClient(52525);
+            this.api = api;
+            api.Network.RegisterChannel(ChannelName).RegisterMessageType<ConnectionInfo>();
         }
 
-        public RPVoiceChatUDPNetwork(int port)
+        protected void OpenUDPClient(int port)
         {
             UdpClient = new UdpClient(port);
         }
