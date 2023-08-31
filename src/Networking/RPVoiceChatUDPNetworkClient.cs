@@ -1,8 +1,10 @@
-﻿using ProtoBuf;
+﻿using Open.Nat;
+using ProtoBuf;
 using rpvoicechat;
 using System;
 using System.IO;
 using System.Net;
+using System.Threading.Tasks;
 using Vintagestory.API.Client;
 
 namespace RPVoiceChat
@@ -11,6 +13,7 @@ namespace RPVoiceChat
     {
         private ICoreClientAPI capi;
         private IPEndPoint serverEndpoint;
+        private int localPort;
 
         public event Action<AudioPacket> OnAudioReceived;
 
@@ -25,7 +28,17 @@ namespace RPVoiceChat
 
         private void OnHandshakeReceived(ConnectionInfo info)
         {
-            OpenUDPClient(info.Port);
+            localPort = OpenUDPClient();
+
+            // UPnP using Mono.Nat
+            // (Mainly running this clientside just to be entirely certain that we have the port available)
+            NatDiscoverer discoverer = new NatDiscoverer();
+            NatDevice device = Task.Run(() => discoverer.DiscoverDeviceAsync()).Result;
+
+            if (device != null)
+            {
+                device.CreatePortMapAsync(new Mapping(Protocol.Udp, localPort, localPort, "Vintage Story Voice Chat"));
+            }
 
             StartListening(info.Port);
 
@@ -35,6 +48,7 @@ namespace RPVoiceChat
         public void SendAudioToServer(AudioPacket packet)
         {
             if (UdpClient == null || serverEndpoint == null) throw new Exception("Udp client or server endpoint has not been initialized.");
+            packet.ClientPort = localPort;
 
             var stream = new MemoryStream();
             Serializer.Serialize(stream, packet);

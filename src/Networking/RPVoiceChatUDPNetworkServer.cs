@@ -1,8 +1,10 @@
-﻿using ProtoBuf;
+﻿using Open.Nat;
+using ProtoBuf;
 using rpvoicechat;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 using Vintagestory.API.Server;
 
 namespace RPVoiceChat.src.Networking
@@ -19,7 +21,7 @@ namespace RPVoiceChat.src.Networking
         };
         private string defaultKey = configKeyByVoiceLevel[VoiceLevel.Talking];
 
-        private Dictionary<string, string> playerToAddress = new Dictionary<string, string>();
+        private Dictionary<string, ConnectionInfo> playerToAddress = new Dictionary<string, ConnectionInfo>();
 
         public RPVoiceChatUDPNetworkServer(ICoreServerAPI sapi, int port) : base(sapi)
         {
@@ -32,6 +34,15 @@ namespace RPVoiceChat.src.Networking
 
 
             UdpClient = new UdpClient(port);
+            
+            // UPnP using Mono.Nat
+            NatDiscoverer discoverer = new NatDiscoverer();
+            NatDevice device = Task.Run(() => discoverer.DiscoverDeviceAsync()).Result;
+
+            if (device != null)
+            {
+                device.CreatePortMapAsync(new Mapping(Protocol.Udp, port, port, "Vintage Story Voice Chat"));
+            }
 
             StartListening(port);
 
@@ -41,12 +52,17 @@ namespace RPVoiceChat.src.Networking
         private void SendAudioToAllClientsInRange(AudioPacket packet)
         {
             var playersource = sapi.World.PlayerByUid(packet.PlayerId);
-            string playersourceip;
+            ConnectionInfo playersourceip;
 
             if (!playerToAddress.TryGetValue(packet.PlayerId, out playersourceip))
             {
-                playersourceip = ((IServerPlayer)sapi.World.PlayerByUid(packet.PlayerId)).IpAddress;
+                playersourceip.Address = ((IServerPlayer)sapi.World.PlayerByUid(packet.PlayerId)).IpAddress;
+                playersourceip.Port = packet.ClientPort;
                 playerToAddress.Add(packet.PlayerId, playersourceip);
+            }
+            else if (playersourceip.Port == 0)
+            {
+                playersourceip.Port = packet.ClientPort;
             }
 
             var stream = new MemoryStream();

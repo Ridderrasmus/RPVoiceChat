@@ -28,6 +28,17 @@ namespace RPVoiceChat
             UdpClient = new UdpClient(port);
         }
 
+        protected int OpenUDPClient()
+        {
+            int port = 0;
+            UdpClient = new UdpClient();
+            IPEndPoint endpoint = new IPEndPoint(IPAddress.Any, port);
+            UdpClient.Client.Bind(endpoint);
+
+            port = ((IPEndPoint)UdpClient.Client.LocalEndPoint).Port;
+            return port;
+        }
+
         protected void StartListening(IPEndPoint ipendpoint)
         {
             if (UdpClient == null) throw new Exception("Udp client has not been initialized. Can't start listening.");
@@ -58,7 +69,9 @@ namespace RPVoiceChat
 
         public IPEndPoint GetPublicIP()
         {
-            throw new NotImplementedException();
+            if (UdpClient == null) throw new Exception("Udp client has not been initialized.");
+
+            return new IPEndPoint();
         }
     }
 }

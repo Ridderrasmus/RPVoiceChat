@@ -9,5 +9,6 @@ namespace rpvoicechat
         public byte[] AudioData { get; set; }
         public int Length { get; set; }
         public VoiceLevel VoiceLevel { get; set; }
+        public int ClientPort { get; set; }
     }
 }
