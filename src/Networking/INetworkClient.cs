@@ -1,12 +1,12 @@
 ﻿using rpvoicechat;
 using System;
 
-namespace RPVoiceChat
+namespace RPVoiceChat.Networking
 {
-    public interface INetworkClient : INetworkCommon
+    public interface INetworkClient
     {
-        public void SendAudioToServer(AudioPacket packet);
-
         public event Action<AudioPacket> OnAudioReceived;
+
+        public void SendAudioToServer(AudioPacket packet);
     }
 }

@@ -1,5 +1,5 @@
 ﻿using rpvoicechat.Networking;
-using RPVoiceChat;
+using RPVoiceChat.Networking;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
@@ -36,7 +36,7 @@ namespace rpvoicechat
             patchManager.Patch();
 
             // Init voice chat client
-            client = new RPVoiceChatNativeNetworkClient(api);
+            client = new NativeNetworkClient(api);
 
             // Add voice chat client event handlers
             //client.OnMessageReceived += OnMessageReceived;

@@ -1,6 +1,5 @@
-﻿using System.Net.Sockets;
-using rpvoicechat.Networking;
-using RPVoiceChat;
+﻿using rpvoicechat.Networking;
+using rpvoicechat.Server;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;
 using Vintagestory.API.Server;
@@ -10,12 +9,14 @@ namespace rpvoicechat
     public class RPVoiceChatServer : RPVoiceChatMod
     {
         protected ICoreServerAPI sapi;
-        private INetworkServer server;
+        private GameServer server;
         public override void StartServerSide(ICoreServerAPI api)
         {
             sapi = api;
 
-            server = new RPVoiceChatNativeNetworkServer(sapi);
+            var networkServer = new NativeNetworkServer(sapi);
+            server = new GameServer(sapi, networkServer);
+            server.Launch();
             
             // Register/load world config
             sapi.World.Config.SetInt("rpvoicechat:distance-whisper", sapi.World.Config.GetInt("rpvoicechat:distance-whisper", (int)VoiceLevel.Whispering));
