@@ -97,14 +97,12 @@ public class PlayerAudioSource : IDisposable
 
         // If the player is on the other side of something to the listener, then the player's voice should be muffled
         float wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
+        lowpassFilter?.Stop();
         if (wallThickness != 0)
         {
             lowpassFilter = lowpassFilter ?? new FilterLowpass(EffectsExtension, source);
             lowpassFilter.Start();
             lowpassFilter.SetHFGain(Math.Max(1.0f - (wallThickness / 5), 0.1f));
-        } else
-        {
-            lowpassFilter?.Stop();
         }
 
         // If the player is in a reverberated area, then the player's voice should be reverberated
