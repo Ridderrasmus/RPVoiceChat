@@ -31,12 +31,6 @@ public class PlayerAudioSource : IDisposable
 
     public bool IsLocational { get; set; } = true;
     public VoiceLevel voiceLevel { get; private set; } = VoiceLevel.Talking;
-    private static Dictionary<VoiceLevel, string> configKeyByVoiceLevel = new Dictionary<VoiceLevel, string>
-    {
-        { VoiceLevel.Whispering, "rpvoicechat:distance-whisper" },
-        { VoiceLevel.Talking, "rpvoicechat:distance-talk" },
-        { VoiceLevel.Shouting, "rpvoicechat:distance-shout" },
-    };
     /// <summary>
     /// Distance in blocks at which audio source normally considered quiet. <br />
     /// Used in calculation of distanceFactor to set volume at the edge of hearing range.
@@ -84,11 +78,11 @@ public class PlayerAudioSource : IDisposable
     public void UpdateVoiceLevel(VoiceLevel voiceLevel)
     {
         this.voiceLevel = voiceLevel;
-        string key = configKeyByVoiceLevel[voiceLevel];
+        float distance = WorldConfig.GetVoiceDistance(capi, voiceLevel);
 
         capi.Event.EnqueueMainThreadTask(() =>
         {
-            AL.Source(source, ALSourcef.MaxDistance, (float) capi.World.Config.GetInt(key));
+            AL.Source(source, ALSourcef.MaxDistance, distance);
             Util.CheckError("Error setting max audible distance", capi);
         }, "PlayerAudioSource update max distance");
     }
@@ -164,8 +158,7 @@ public class PlayerAudioSource : IDisposable
 
     private float GetDistanceFactor()
     {
-        string configKey = configKeyByVoiceLevel[voiceLevel];
-        float maxHearingDistance = capi.World.Config.GetInt(configKey);
+        float maxHearingDistance = WorldConfig.GetVoiceDistance(capi, voiceLevel);
         var exponent = quietDistance < maxHearingDistance ? 2 : 0.5;
         var distanceFactor = Math.Pow(quietDistance, exponent) / Math.Pow(maxHearingDistance, exponent);
 
