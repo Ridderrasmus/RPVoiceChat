@@ -126,7 +126,7 @@ public class PlayerAudioSource : IDisposable
         // If the player is drunk, then the player's voice should be affected
         // Values are temporary currently
         int drunkness = (int)(player.Entity.WatchedAttributes.GetFloat("intoxication") * 10);
-        drunkEffect.SetPitchShift(0 - drunkness);
+        drunkEffect?.SetPitchShift(0 - drunkness);
         Util.CheckError("Error setting source Pitch", capi);
 
 
