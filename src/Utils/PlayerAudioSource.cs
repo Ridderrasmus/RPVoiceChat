@@ -9,11 +9,11 @@ using OpenTK;
 using Vintagestory.API.Common.Entities;
 using rpvoicechat.Utils;
 using System.Collections.Generic;
-
+using System.Threading;
 
 public class PlayerAudioSource : IDisposable
 {
-    public const int BufferCount = 4;
+    public const int BufferCount = 20;
 
     private int source;
 
@@ -24,6 +24,7 @@ public class PlayerAudioSource : IDisposable
 
     private ICoreClientAPI capi;
     private AudioOutputManager outputManager;
+    private Thread dequeueAudioThread;
 
     private Vec3f lastSpeakerCoords;
     private DateTime lastSpeakerUpdate;
@@ -50,6 +51,7 @@ public class PlayerAudioSource : IDisposable
 
     public PlayerAudioSource(IPlayer player, AudioOutputManager manager, ICoreClientAPI capi)
     {
+        dequeueAudioThread = new Thread(DequeueAudio);
         EffectsExtension = manager.EffectsExtension;
         outputManager = manager;
         this.player = player;
@@ -73,6 +75,7 @@ public class PlayerAudioSource : IDisposable
             Util.CheckError("Error setting source Pitch", capi);
 
             //reverbEffect = new ReverbEffect(manager.EffectsExtension, source);
+            dequeueAudioThread.Start();
         }, "PlayerAudioSource Init");
     }
 
@@ -205,7 +208,6 @@ public class PlayerAudioSource : IDisposable
     {
         capi.Event.EnqueueMainThreadTask(() =>
         {
-            buffer.TryDequeBuffers();
             buffer.QueueAudio(audioBytes, bufferLength, ALFormat.Mono16, MicrophoneManager.Frequency);
 
             var state = AL.GetSourceState(source);
@@ -216,6 +218,21 @@ public class PlayerAudioSource : IDisposable
                 StartPlaying();
             }
         }, "PlayerAudioSource QueueAudio");
+    }
+
+    private void DequeueAudio()
+    {
+        while (dequeueAudioThread.IsAlive)
+        {
+            if (!outputManager.isReady)
+            {
+                Thread.Sleep(100);
+                continue;
+            }
+            buffer.TryDequeueBuffers();
+
+            Thread.Sleep(30);
+        }
     }
 
     public void StartPlaying()
@@ -238,6 +255,7 @@ public class PlayerAudioSource : IDisposable
 
     public void Dispose()
     {
+        dequeueAudioThread?.Abort();
         AL.SourceStop(source);
         Util.CheckError("Error stop playing source", capi);
 

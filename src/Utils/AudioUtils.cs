@@ -111,7 +111,7 @@ namespace rpvoicechat
             queuedBuffers.Add(currentBuffer);
         }
 
-        public void TryDequeBuffers()
+        public void TryDequeueBuffers()
         {
             if (queuedBuffers.Count == 0) return;
 
