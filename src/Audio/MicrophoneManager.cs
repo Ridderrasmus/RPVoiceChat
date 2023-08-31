@@ -18,7 +18,7 @@ namespace rpvoicechat
 
     public class MicrophoneManager : IDisposable
     {
-        public static int Frequency = 44100;
+        public static int Frequency = 22050;
         public static int BufferSize = (int)(Frequency * 0.5);
         const byte SampleToByte = 2;
         private double MaxInputThreshold;
