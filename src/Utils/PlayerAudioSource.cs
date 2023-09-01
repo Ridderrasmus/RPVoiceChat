@@ -1,14 +1,12 @@
 ﻿using System;
 using OpenTK.Audio.OpenAL;
-using rpvoicechat;
+using RPVoiceChat;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Common.Entities;
-using rpvoicechat.Utils;
-using System.Collections.Generic;
+using RPVoiceChat.Utils;
 using System.Threading;
-using RPVoiceChat;
 
 public class PlayerAudioSource : IDisposable
 {

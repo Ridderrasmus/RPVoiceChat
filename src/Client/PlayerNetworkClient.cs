@@ -2,7 +2,7 @@
 using System;
 using Vintagestory.API.Client;
 
-namespace rpvoicechat.Client
+namespace RPVoiceChat.Client
 {
     public class PlayerNetworkClient
     {

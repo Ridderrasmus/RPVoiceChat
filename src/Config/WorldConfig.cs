@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Vintagestory.API.Common;
 
-namespace rpvoicechat
+namespace RPVoiceChat
 {
     static class WorldConfig
     {

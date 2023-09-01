@@ -9,7 +9,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Util;
 using RPVoiceChat.Networking;
 
-namespace rpvoicechat
+namespace RPVoiceChat
 {
     public class AudioOutputManager
     {

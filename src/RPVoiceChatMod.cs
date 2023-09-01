@@ -1,6 +1,6 @@
 ﻿using Vintagestory.API.Common;
 
-namespace rpvoicechat
+namespace RPVoiceChat
 {
     public abstract class RPVoiceChatMod : ModSystem
     {

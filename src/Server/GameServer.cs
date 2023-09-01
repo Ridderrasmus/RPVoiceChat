@@ -1,7 +1,7 @@
 ﻿using RPVoiceChat.Networking;
 using Vintagestory.API.Server;
 
-namespace rpvoicechat.Server
+namespace RPVoiceChat.Server
 {
     public class GameServer
     {

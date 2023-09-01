@@ -2,7 +2,7 @@
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
-namespace rpvoicechat
+namespace RPVoiceChat
 {
     public class SpeechIndicator : HudElement
     {

@@ -1,5 +1,5 @@
 ﻿using ProtoBuf;
-using rpvoicechat;
+using RPVoiceChat;
 using System.IO;
 
 namespace RPVoiceChat.Networking

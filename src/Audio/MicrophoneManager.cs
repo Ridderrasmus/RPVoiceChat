@@ -7,7 +7,7 @@ using OpenTK.Audio;
 using OpenTK.Audio.OpenAL;
 using System.Collections.Generic;
 
-namespace rpvoicechat
+namespace RPVoiceChat
 {
     struct AudioData
     {

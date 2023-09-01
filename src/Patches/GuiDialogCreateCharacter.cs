@@ -2,7 +2,7 @@
 using System;
 using Vintagestory.GameContent;
 
-namespace rpvoicechat
+namespace RPVoiceChat
 {
     static class GuiDialogCreateCharacterPatch
     {

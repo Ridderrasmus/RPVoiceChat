@@ -1,10 +1,10 @@
 ﻿using RPVoiceChat.Networking;
-using rpvoicechat.Server;
+using RPVoiceChat.Server;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;
 using Vintagestory.API.Server;
 
-namespace rpvoicechat
+namespace RPVoiceChat
 {
     public class RPVoiceChatServer : RPVoiceChatMod
     {

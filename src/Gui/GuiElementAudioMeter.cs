@@ -1,7 +1,7 @@
 ﻿using System;
 using Vintagestory.API.Client;
 
-namespace rpvoicechat
+namespace RPVoiceChat
 {
     public class GuiElementAudioMeter : GuiElementStatbar
     {
