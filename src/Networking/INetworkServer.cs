@@ -1,13 +1,11 @@
-﻿using rpvoicechat;
-using System;
-using Vintagestory.API.Server;
+﻿using System;
 
 namespace RPVoiceChat.Networking
 {
     public interface INetworkServer
     {
-        public event Action<IServerPlayer, AudioPacket> OnReceivedPacket;
+        public event Action<AudioPacket> OnReceivedPacket;
 
-        public void SendPacket(AudioPacket packet, IServerPlayer player);
+        public void SendPacket(INetworkPacket packet, string playerId);
     }
 }

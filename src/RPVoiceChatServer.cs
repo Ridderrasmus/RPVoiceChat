@@ -1,4 +1,4 @@
-﻿using rpvoicechat.Networking;
+﻿using RPVoiceChat.Networking;
 using rpvoicechat.Server;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;

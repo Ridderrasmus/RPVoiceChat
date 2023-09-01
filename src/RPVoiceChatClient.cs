@@ -1,16 +1,16 @@
-﻿using rpvoicechat.Networking;
+﻿using RPVoiceChat.Client;
 using RPVoiceChat.Networking;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
-namespace rpvoicechat
+namespace RPVoiceChat
 {
     public class RPVoiceChatClient : RPVoiceChatMod
     {
         private MicrophoneManager micManager;
         private AudioOutputManager audioOutputManager;
         private PatchManager patchManager;
-        private INetworkClient client;
+        private PlayerNetworkClient client;
 
         protected ICoreClientAPI capi;
 
@@ -36,14 +36,8 @@ namespace rpvoicechat
             patchManager.Patch();
 
             // Init voice chat client
-            client = new NativeNetworkClient(api);
-
-            // Add voice chat client event handlers
-            //client.OnMessageReceived += OnMessageReceived;
-            //client.OnClientConnected += VoiceClientConnected;
-            //client.OnClientDisconnected += VoiceClientDisconnected;
-
-            client.OnAudioReceived += OnAudioReceived;
+            var networkClient = new NativeNetworkClient(api);
+            client = new PlayerNetworkClient(api, networkClient);
 
             // Initialize gui
             configGui = new MainConfig(capi, micManager, audioOutputManager);
@@ -93,22 +87,8 @@ namespace rpvoicechat
             });
 
 
-            micManager.OnBufferRecorded += (buffer, length, voiceLevel) =>
-            {
-                if (buffer == null)
-                    return;
-
-                AudioPacket packet = new AudioPacket()
-                {
-                    PlayerId = capi.World.Player.PlayerUID,
-                    AudioData = buffer,
-                    Length = length,
-                    VoiceLevel = voiceLevel
-                };
-                audioOutputManager.HandleLoopback(packet);
-                client.SendAudioToServer(packet);
-            };
-
+            client.OnAudioReceived += OnAudioReceived;
+            micManager.OnBufferRecorded += OnBufferRecorded;
             capi.Event.LevelFinalize += OnLoad;
         }
 
@@ -130,9 +110,24 @@ namespace rpvoicechat
 
         }
 
-        private void OnAudioReceived(AudioPacket obj)
+        private void OnAudioReceived(AudioPacket packet)
         {
-            audioOutputManager.HandleAudioPacket(obj);
+            audioOutputManager.HandleAudioPacket(packet);
+        }
+
+        private void OnBufferRecorded(byte[] buffer, int length, VoiceLevel voiceLevel)
+        {
+            if (buffer == null) return;
+
+            AudioPacket packet = new AudioPacket()
+            {
+                PlayerId = capi.World.Player.PlayerUID,
+                AudioData = buffer,
+                Length = length,
+                VoiceLevel = voiceLevel
+            };
+            audioOutputManager.HandleLoopback(packet);
+            client.SendAudioToServer(packet);
         }
 
         public override void Dispose()

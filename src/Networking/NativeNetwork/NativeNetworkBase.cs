@@ -1,6 +1,6 @@
 ﻿using Vintagestory.API.Common;
 
-namespace rpvoicechat.Networking
+namespace RPVoiceChat.Networking
 {
     public abstract class NativeNetworkBase
     {

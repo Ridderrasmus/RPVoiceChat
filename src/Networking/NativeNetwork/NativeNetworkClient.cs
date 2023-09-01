@@ -1,9 +1,9 @@
-﻿using RPVoiceChat.Networking;
+﻿using rpvoicechat;
 using System;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
 
-namespace rpvoicechat.Networking
+namespace RPVoiceChat.Networking
 {
     public class NativeNetworkClient : NativeNetworkBase, INetworkClient
     {

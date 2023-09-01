@@ -1,5 +1,4 @@
-﻿using rpvoicechat;
-using System;
+﻿using System;
 
 namespace RPVoiceChat.Networking
 {
