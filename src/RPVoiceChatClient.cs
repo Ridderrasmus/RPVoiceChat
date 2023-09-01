@@ -36,7 +36,7 @@ namespace RPVoiceChat
             patchManager.Patch();
 
             // Init voice chat client
-            var networkClient = new NativeNetworkClient(api);
+            var networkClient = new UDPNetworkClient();
             client = new PlayerNetworkClient(api, networkClient);
 
             // Initialize gui
@@ -134,7 +134,7 @@ namespace RPVoiceChat
         {
             micManager?.Dispose();
             patchManager?.Dispose();
-            //client?.Dispose();
+            client?.Dispose();
             configGui.Dispose();
             //client = null;
         }

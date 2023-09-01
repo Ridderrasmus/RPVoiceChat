@@ -4,7 +4,7 @@ using Vintagestory.API.Client;
 
 namespace RPVoiceChat.Client
 {
-    public class PlayerNetworkClient
+    public class PlayerNetworkClient : IDisposable
     {
         public event Action<AudioPacket> OnAudioReceived;
 
@@ -37,6 +37,13 @@ namespace RPVoiceChat.Client
             var extendedClient = networkClient as IExtendedNetworkClient;
             ConnectionInfo clientConnection = extendedClient.OnHandshakeReceived(serverConnection);
             handshakeChannel.SendPacket(clientConnection);
+        }
+
+        public void Dispose()
+        {
+            if (networkClient is not IDisposable) return;
+            var disposableClient = networkClient as IDisposable;
+            disposableClient.Dispose();
         }
     }
 }

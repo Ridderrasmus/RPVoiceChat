@@ -14,7 +14,7 @@ namespace RPVoiceChat
         {
             sapi = api;
 
-            var networkServer = new NativeNetworkServer(sapi);
+            var networkServer = new UDPNetworkServer(52525);
             server = new GameServer(sapi, networkServer);
             server.Launch();
             
@@ -35,8 +35,6 @@ namespace RPVoiceChat
         private void registerCommands()
         {
             var parsers = sapi.ChatCommands.Parsers;
-
-
 
             sapi.ChatCommands
                 .GetOrCreate("rpvc")
@@ -114,6 +112,11 @@ namespace RPVoiceChat
             sapi.World.Config.SetInt("rpvoicechat:distance-shout", distance);
 
             return TextCommandResult.Success("Shout distance set to " + distance);
+        }
+
+        public override void Dispose()
+        {
+            server?.Dispose();
         }
     }
 }

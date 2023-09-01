@@ -1,9 +1,10 @@
 ﻿using RPVoiceChat.Networking;
+using System;
 using Vintagestory.API.Server;
 
 namespace RPVoiceChat.Server
 {
-    public class GameServer
+    public class GameServer : IDisposable
     {
         private ICoreServerAPI api;
         private INetworkServer networkServer;
@@ -74,6 +75,13 @@ namespace RPVoiceChat.Server
             if (!handshakeRequired) return;
             var extendedServer = networkServer as IExtendedNetworkServer;
             extendedServer.PlayerConnected(player.PlayerUID, playerConnection);
+        }
+
+        public void Dispose()
+        {
+            if (networkServer is not IDisposable) return;
+            var disposableServer = networkServer as IDisposable;
+            disposableServer.Dispose();
         }
     }
 }
