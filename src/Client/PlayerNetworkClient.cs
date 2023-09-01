@@ -21,7 +21,7 @@ namespace RPVoiceChat.Client
                 .RegisterMessageType<ConnectionInfo>()
                 .SetMessageHandler<ConnectionInfo>(OnHandshakeRequest);
 
-            networkClient.OnAudioReceived += OnAudioReceived;
+            networkClient.OnAudioReceived += AudioPacketReceived;
         }
 
         public void SendAudioToServer(AudioPacket packet)
@@ -37,6 +37,11 @@ namespace RPVoiceChat.Client
             var extendedClient = networkClient as IExtendedNetworkClient;
             ConnectionInfo clientConnection = extendedClient.OnHandshakeReceived(serverConnection);
             handshakeChannel.SendPacket(clientConnection);
+        }
+
+        private void AudioPacketReceived(AudioPacket packet)
+        {
+            OnAudioReceived?.Invoke(packet);
         }
 
         public void Dispose()
