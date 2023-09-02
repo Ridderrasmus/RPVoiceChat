@@ -1,5 +1,7 @@
 ﻿using RPVoiceChat.Networking;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using Vintagestory.API.Server;
 
@@ -9,30 +11,53 @@ namespace RPVoiceChat.Server
     {
         private ICoreServerAPI api;
         private INetworkServer networkServer;
-        private bool handshakeRequired;
+        private INetworkServer reserveServer;
         private IServerNetworkChannel handshakeChannel;
+        private Dictionary<string, INetworkServer> serverByTransport;
 
-        public GameServer(ICoreServerAPI sapi, INetworkServer server)
+        public GameServer(ICoreServerAPI sapi, INetworkServer server, INetworkServer _reserveServer = null)
         {
             api = sapi;
             networkServer = server;
-            handshakeRequired = server is IExtendedNetworkServer;
+            reserveServer = _reserveServer;
             handshakeChannel = sapi.Network
                 .RegisterChannel("RPVCHandshake")
                 .RegisterMessageType<ConnectionInfo>()
                 .SetMessageHandler<ConnectionInfo>(FinalizeHandshake);
+
+            if (reserveServer is IExtendedNetworkServer)
+                throw new NotSupportedException("Reserve server requiring handshake is not supported");
         }
 
         public void Launch()
         {
-            if (handshakeRequired)
+            serverByTransport = new Dictionary<string, INetworkServer>();
+            try
             {
                 var extendedServer = networkServer as IExtendedNetworkServer;
-                extendedServer.Launch();
+                extendedServer?.Launch();
                 api.Event.PlayerNowPlaying += PlayerJoined;
                 api.Event.PlayerDisconnect += PlayerLeft;
+                networkServer.OnReceivedPacket += SendAudioToAllClientsInRange;
+                serverByTransport.Add(networkServer.GetTransportID(), networkServer);
+                if (reserveServer == null) return;
+                reserveServer.OnReceivedPacket += SendAudioToAllClientsInRange;
+                serverByTransport.Add(reserveServer.GetTransportID(), reserveServer);
+                return;
             }
-            networkServer.OnReceivedPacket += SendAudioToAllClientsInRange;
+            catch (Exception e)
+            {
+                var unsupportedTransport = networkServer.GetTransportID();
+                api.Logger.Error($"[RPVoiceChat] Failed to launch {unsupportedTransport} server:\n{e}");
+            }
+
+            if (reserveServer == null)
+                throw new Exception("Failed to launch any server");
+
+            api.Logger.Notification($"[RPVoiceChat] Using {reserveServer.GetTransportID()} server from now on");
+            SwapActiveServer(reserveServer);
+            reserveServer = null;
+            Launch();
         }
 
         public void PlayerJoined(IServerPlayer player)
@@ -43,7 +68,7 @@ namespace RPVoiceChat.Server
         public void PlayerLeft(IServerPlayer player)
         {
             var extendedServer = networkServer as IExtendedNetworkServer;
-            extendedServer.PlayerDisconnected(player.PlayerUID);
+            extendedServer?.PlayerDisconnected(player.PlayerUID);
         }
 
         public void SendAudioToAllClientsInRange(AudioPacket packet)
@@ -59,31 +84,60 @@ namespace RPVoiceChat.Server
                     player.Entity.Pos.SquareDistanceTo(closePlayer.Entity.Pos.XYZ) > squareDistance)
                     continue;
 
-                networkServer.SendPacket(packet, closePlayer.PlayerUID);
+                SendPacket(packet, closePlayer.PlayerUID);
             }
+        }
+
+        private void SwapActiveServer(INetworkServer newTransport)
+        {
+            networkServer = newTransport;
         }
 
         private void InitHandshake(IServerPlayer player)
         {
-            if (!handshakeRequired) return;
-            var extendedServer = networkServer as IExtendedNetworkServer;
-            var serverConnection = extendedServer.GetConnection();
+            var serverConnection = networkServer.GetConnection();
+            serverConnection.SupportedTransports = serverByTransport.Keys.ToArray();
             handshakeChannel.SendPacket(serverConnection, player);
         }
 
         private void FinalizeHandshake(IServerPlayer player, ConnectionInfo playerConnection)
         {
-            if (!handshakeRequired) return;
-            var extendedServer = networkServer as IExtendedNetworkServer;
+            var playerTransport = playerConnection.SupportedTransports.FirstOrDefault();
+            if (!serverByTransport.ContainsKey(playerTransport)) return;
+
+            var extendedServer = serverByTransport[playerTransport] as IExtendedNetworkServer;
             playerConnection.Address = IPAddress.Parse(player.IpAddress).MapToIPv4().ToString();
-            extendedServer.PlayerConnected(player.PlayerUID, playerConnection);
+            extendedServer?.PlayerConnected(player.PlayerUID, playerConnection);
+        }
+
+        private void SendPacket(INetworkPacket packet, string playerId)
+        {
+            try
+            {
+                networkServer.SendPacket(packet, playerId);
+                return;
+            }
+            catch (Exception e)
+            {
+                api.Logger.VerboseDebug($"[RPVoiceChat] Couldn't use main server to deliver a packet to {playerId}: {e.Message}");
+            }
+
+            try
+            {
+                reserveServer?.SendPacket(packet, playerId);
+            }
+            catch (Exception e)
+            {
+                api.Logger.VerboseDebug($"[RPVoiceChat] Couldn't use backup server to deliver a packet to {playerId}: {e.Message}");
+            }
         }
 
         public void Dispose()
         {
-            if (networkServer is not IDisposable) return;
             var disposableServer = networkServer as IDisposable;
-            disposableServer.Dispose();
+            var disposableReserveServer = reserveServer as IDisposable;
+            disposableServer?.Dispose();
+            disposableReserveServer?.Dispose();
         }
     }
 }

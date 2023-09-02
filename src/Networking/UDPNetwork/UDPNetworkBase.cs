@@ -16,20 +16,13 @@ namespace RPVoiceChat.Networking
         protected UdpClient UdpClient;
         protected int port;
         protected ConnectionInfo connectionInfo;
+        protected const string _transportID = "UDP";
 
         protected void SetupUpnp(int port)
         {
-            NatDevice device = null;
-            try
-            {
-                // UPnP using Mono.Nat
-                NatDiscoverer discoverer = new NatDiscoverer();
-                device = Task.Run(() => discoverer.DiscoverDeviceAsync()).Result;
-            }
-            catch (Exception e)
-            {
-                Console.Error.WriteLine($"Couldn't discover a device for UPnP: {e}");
-            }
+            // UPnP using Mono.Nat
+            NatDiscoverer discoverer = new NatDiscoverer();
+            NatDevice device = Task.Run(() => discoverer.DiscoverDeviceAsync()).Result;
 
             if (device != null)
             {
@@ -79,6 +72,11 @@ namespace RPVoiceChat.Networking
             }
         }
 
+        public string GetTransportID()
+        {
+            return _transportID;
+        }
+
         public virtual ConnectionInfo GetConnection()
         {
             if (connectionInfo != null) return connectionInfo;
@@ -108,7 +106,9 @@ namespace RPVoiceChat.Networking
 
         public void Dispose()
         {
-            _listeningThread.Abort();
+            _listeningThread?.Abort();
+            UdpClient?.Close();
+            UdpClient?.Dispose();
         }
     }
 }

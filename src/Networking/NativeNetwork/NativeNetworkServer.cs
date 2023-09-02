@@ -15,10 +15,16 @@ namespace RPVoiceChat.Networking
             channel = sapi.Network.GetChannel(ChannelName).SetMessageHandler<AudioPacket>(ReceivedAudioPacketFromClient);
         }
 
+        public ConnectionInfo GetConnection()
+        {
+            var connectionInfo = new ConnectionInfo();
+            return connectionInfo;
+        }
+
         public void SendPacket(INetworkPacket packet, string playerId)
         {
             var player = api.World.PlayerByUid(playerId) as IServerPlayer;
-            channel.SendPacket(packet, player);
+            channel.SendPacket(packet as AudioPacket, player);
         }
 
         private void ReceivedAudioPacketFromClient(IServerPlayer player, AudioPacket packet)

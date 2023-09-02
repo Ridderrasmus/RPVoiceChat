@@ -36,13 +36,14 @@ namespace RPVoiceChat
             patchManager.Patch();
 
             // Init voice chat client
-            var networkClient = new UDPNetworkClient();
-            client = new PlayerNetworkClient(api, networkClient);
+            var mainClient = new UDPNetworkClient();
+            var backupClient = new NativeNetworkClient(capi);
+            client = new PlayerNetworkClient(capi, mainClient, backupClient);
 
             // Initialize gui
             configGui = new MainConfig(capi, micManager, audioOutputManager);
-            api.Gui.RegisterDialog(new SpeechIndicator(capi, micManager));
-            api.Gui.RegisterDialog(new VoiceLevelIcon(capi, micManager));
+            capi.Gui.RegisterDialog(new SpeechIndicator(capi, micManager));
+            capi.Gui.RegisterDialog(new VoiceLevelIcon(capi, micManager));
 
             // Set up keybinds
             capi.Input.RegisterHotKey("voicechatMenu", "RPVoice: Config menu", GlKeys.P, HotkeyType.GUIOrOtherControls);

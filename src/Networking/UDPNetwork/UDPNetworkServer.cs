@@ -13,13 +13,12 @@ namespace RPVoiceChat.Networking
         {
             this.port = port;
 
-            SetupUpnp(port);
-
             OnMessageReceived += MessageReceived;
         }
 
         public void Launch()
         {
+            SetupUpnp(port);
             OpenUDPClient(port);
             StartListening(port);
         }
@@ -41,10 +40,7 @@ namespace RPVoiceChat.Networking
         {
             ConnectionInfo connectionInfo;
             if (!connectionsByPlayer.TryGetValue(playerId, out connectionInfo))
-            {
-                Console.Error.WriteLine($"Attempted to send packet to {playerId}, but no connection info has been found");
-                return;
-            }
+                throw new Exception($"Player {playerId} is not connected to the server");
 
             var data = packet.ToBytes();
             var destination = GetEndPoint(connectionInfo);

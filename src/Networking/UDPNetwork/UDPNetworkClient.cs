@@ -14,7 +14,7 @@ namespace RPVoiceChat.Networking
             OnMessageReceived += MessageReceived;
         }
 
-        public ConnectionInfo OnHandshakeReceived(ConnectionInfo serverConnection)
+        public ConnectionInfo Connect(ConnectionInfo serverConnection)
         {
             serverEndpoint = GetEndPoint(serverConnection);
 

@@ -2,6 +2,6 @@
 {
     public interface IExtendedNetworkClient : INetworkClient
     {
-        public ConnectionInfo OnHandshakeReceived(ConnectionInfo serverConnection);
+        public ConnectionInfo Connect(ConnectionInfo serverConnection);
     }
 }
