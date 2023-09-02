@@ -17,6 +17,7 @@ public class PlayerAudioSource : IDisposable
     public EffectsExtension EffectsExtension;
 
     private CircularAudioBuffer buffer;
+    //private ReverbEffect reverbEffect;
 
     private ICoreClientAPI capi;
     private AudioOutputManager outputManager;
@@ -38,8 +39,6 @@ public class PlayerAudioSource : IDisposable
     private IPlayer player;
 
     private FilterLowpass lowpassFilter;
-    //private ReverbEffect reverbEffect;
-    private EffectPitchShift drunkEffect;
 
     public PlayerAudioSource(IPlayer player, AudioOutputManager manager, ICoreClientAPI capi)
     {
@@ -67,8 +66,6 @@ public class PlayerAudioSource : IDisposable
             Util.CheckError("Error setting source Pitch", capi);
 
             //reverbEffect = new ReverbEffect(manager.EffectsExtension, source);
-            drunkEffect = new EffectPitchShift(EffectsExtension, source);
-
             dequeueAudioThread.Start();
         }, "PlayerAudioSource Init");
     }
@@ -117,8 +114,9 @@ public class PlayerAudioSource : IDisposable
 
         // If the player is drunk, then the player's voice should be affected
         // Values are temporary currently
-        int drunkness = (int)(player.Entity.WatchedAttributes.GetFloat("intoxication") * 10);
-        drunkEffect?.SetPitchShift(0 - drunkness);
+        float drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
+        float pitch = drunkness <= 0.2 ? 1 : 1 - (drunkness / 5);
+        AL.Source(source, ALSourcef.Pitch, pitch);
         Util.CheckError("Error setting source Pitch", capi);
 
 
