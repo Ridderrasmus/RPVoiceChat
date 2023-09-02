@@ -47,8 +47,7 @@ namespace RPVoiceChat.Server
             }
             catch (Exception e)
             {
-                var unsupportedTransport = networkServer.GetTransportID();
-                api.Logger.Error($"[RPVoiceChat] Failed to launch {unsupportedTransport} server:\n{e}");
+                api.Logger.Error($"[RPVoiceChat] Failed to launch {networkServer.GetTransportID()} server:\n{e}");
             }
 
             if (reserveServer == null)

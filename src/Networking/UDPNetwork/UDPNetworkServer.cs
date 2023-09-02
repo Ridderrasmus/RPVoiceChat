@@ -48,12 +48,6 @@ namespace RPVoiceChat.Networking
             UdpClient.Send(data, data.Length, destination);
         }
 
-        private void MessageReceived(byte[] msg)
-        {
-            var packet = AudioPacket.FromBytes(msg);
-            OnReceivedPacket?.Invoke(packet);
-        }
-
         public void PlayerConnected(string playerId, ConnectionInfo connectionInfo)
         {
             connectionsByPlayer.Add(playerId, connectionInfo);
@@ -62,6 +56,12 @@ namespace RPVoiceChat.Networking
         public void PlayerDisconnected(string playerId)
         {
             connectionsByPlayer.Remove(playerId);
+        }
+
+        private void MessageReceived(byte[] msg)
+        {
+            var packet = AudioPacket.FromBytes(msg);
+            OnReceivedPacket?.Invoke(packet);
         }
     }
 }

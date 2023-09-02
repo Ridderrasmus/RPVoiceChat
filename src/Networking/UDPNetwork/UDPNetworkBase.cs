@@ -18,6 +18,24 @@ namespace RPVoiceChat.Networking
         protected ConnectionInfo connectionInfo;
         protected const string _transportID = "UDP";
 
+
+        public string GetTransportID()
+        {
+            return _transportID;
+        }
+
+        public virtual ConnectionInfo GetConnection()
+        {
+            if (connectionInfo != null) return connectionInfo;
+
+            connectionInfo = new ConnectionInfo()
+            {
+                Port = port
+            };
+
+            return connectionInfo;
+        }
+
         protected void SetupUpnp(int port)
         {
             // UPnP using Mono.Nat
@@ -70,23 +88,6 @@ namespace RPVoiceChat.Networking
 
                 OnMessageReceived?.Invoke(msg);
             }
-        }
-
-        public string GetTransportID()
-        {
-            return _transportID;
-        }
-
-        public virtual ConnectionInfo GetConnection()
-        {
-            if (connectionInfo != null) return connectionInfo;
-
-            connectionInfo = new ConnectionInfo()
-            {
-                Port = port
-            };
-
-            return connectionInfo;
         }
 
         protected IPEndPoint GetEndPoint(ConnectionInfo connectionInfo)
