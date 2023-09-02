@@ -36,15 +36,8 @@ namespace RPVoiceChat.Networking
 
         private void MessageReceived(byte[] msg)
         {
-            try
-            {
-                AudioPacket packet = AudioPacket.FromBytes(msg);
-                OnAudioReceived?.Invoke(packet);
-            }
-            catch (Exception e)
-            {
-                Console.Error.WriteLine($"Couldn't parse received message: {e}");
-            }
-}
+            AudioPacket packet = AudioPacket.FromBytes(msg);
+            OnAudioReceived?.Invoke(packet);
+        }
     }
 }
