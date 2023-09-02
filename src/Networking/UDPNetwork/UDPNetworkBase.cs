@@ -14,7 +14,8 @@ namespace RPVoiceChat.Networking
         private Thread _listeningThread;
 
         protected UdpClient UdpClient;
-
+        protected int port;
+        protected ConnectionInfo connectionInfo;
 
         protected void SetupUpnp(int port)
         {
@@ -78,24 +79,31 @@ namespace RPVoiceChat.Networking
             }
         }
 
-        public ConnectionInfo GetConnection()
+        public virtual ConnectionInfo GetConnection()
         {
-            var remoteEndpoint = UdpClient.Client.RemoteEndPoint as IPEndPoint; //TODO: This throws an exception and LocalEndPoint doesn't have the IP address. Has to be resolved in some other way
-            var connection = new ConnectionInfo()
+            if (connectionInfo != null) return connectionInfo;
+
+            connectionInfo = new ConnectionInfo()
             {
-                Address = remoteEndpoint.Address.ToString(),
-                Port = remoteEndpoint.Port
+                Port = port
             };
 
-            return connection;
+            return connectionInfo;
         }
 
-        public IPEndPoint GetEndPoint(ConnectionInfo connectionInfo)
+        protected IPEndPoint GetEndPoint(ConnectionInfo connectionInfo)
         {
             var address = IPAddress.Parse(connectionInfo.Address);
             var endpoint = new IPEndPoint(address, connectionInfo.Port);
 
             return endpoint;
+        }
+
+        protected string GetPublicIP()
+        {
+            string publicIPString = new WebClient().DownloadString("https://ipinfo.io/ip");
+
+            return publicIPString;
         }
 
         public void Dispose()

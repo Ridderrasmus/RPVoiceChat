@@ -1,5 +1,6 @@
 ﻿using RPVoiceChat.Networking;
 using System;
+using System.Net;
 using Vintagestory.API.Server;
 
 namespace RPVoiceChat.Server
@@ -74,6 +75,7 @@ namespace RPVoiceChat.Server
         {
             if (!handshakeRequired) return;
             var extendedServer = networkServer as IExtendedNetworkServer;
+            playerConnection.Address = IPAddress.Parse(player.IpAddress).MapToIPv4().ToString();
             extendedServer.PlayerConnected(player.PlayerUID, playerConnection);
         }
 

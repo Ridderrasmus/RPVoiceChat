@@ -18,8 +18,8 @@ namespace RPVoiceChat.Networking
         {
             serverEndpoint = GetEndPoint(serverConnection);
 
-            var localPort = OpenUDPClient();
-            SetupUpnp(localPort);
+            port = OpenUDPClient();
+            SetupUpnp(port);
             StartListening(serverEndpoint);
 
             var clientConnection = GetConnection();

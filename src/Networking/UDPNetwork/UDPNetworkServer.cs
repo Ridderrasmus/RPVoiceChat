@@ -6,7 +6,6 @@ namespace RPVoiceChat.Networking
     public class UDPNetworkServer : UDPNetworkBase, IExtendedNetworkServer
     {
         public event Action<AudioPacket> OnReceivedPacket;
-        private int port;
 
         private Dictionary<string, ConnectionInfo> connectionsByPlayer = new Dictionary<string, ConnectionInfo>();
 
@@ -23,6 +22,19 @@ namespace RPVoiceChat.Networking
         {
             OpenUDPClient(port);
             StartListening(port);
+        }
+
+        public override ConnectionInfo GetConnection()
+        {
+            if (connectionInfo != null) return connectionInfo;
+
+            connectionInfo = new ConnectionInfo()
+            {
+                Address = GetPublicIP(),
+                Port = port
+            };
+
+            return connectionInfo;
         }
 
         public void SendPacket(INetworkPacket packet, string playerId)
