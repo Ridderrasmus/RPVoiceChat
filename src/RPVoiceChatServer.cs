@@ -14,7 +14,7 @@ namespace RPVoiceChat
         {
             sapi = api;
 
-            var mainServer = new UDPNetworkServer(ModConfig.Config.ServerPort);
+            var mainServer = new UDPNetworkServer(ModConfig.Config.ServerPort, ModConfig.Config.ServerIP);
             var backupServer = new NativeNetworkServer(api);
             server = new GameServer(sapi, mainServer, backupServer);
             server.Launch();

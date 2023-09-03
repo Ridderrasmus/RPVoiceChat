@@ -36,16 +36,34 @@ namespace RPVoiceChat.Networking
             return connectionInfo;
         }
 
+        protected bool IsInternalNetwork(string ip)
+        {
+            return IsInternalNetwork(IPAddress.Parse(ip));
+        }
+
+        protected bool IsInternalNetwork(IPAddress ip)
+        {
+            byte[] ipParts = ip.GetAddressBytes();
+
+            if (ipParts[0] == 10 ||
+               (ipParts[0] == 192 && ipParts[1] == 168) ||
+               (ipParts[0] == 172 && (ipParts[1] >= 16 && ipParts[1] <= 31)) ||
+               (ipParts[0] == 25 || ipParts[0] == 26))
+                return true;
+
+            return false;
+        }
+
         protected void SetupUpnp(int port)
         {
-            // UPnP using Mono.Nat
+            // UPnP using Open.Nat
             NatDiscoverer discoverer = new NatDiscoverer();
-            NatDevice device = Task.Run(() => discoverer.DiscoverDeviceAsync()).Result;
+            Task<NatDevice> task = Task.Run(() => discoverer.DiscoverDeviceAsync());
+            NatDevice device = task.GetAwaiter().GetResult();
+            if (device == null)
+                throw new NatDeviceNotFoundException("NatDiscoverer have not returned the NatDevice");
 
-            if (device != null)
-            {
-                device.CreatePortMapAsync(new Mapping(Protocol.Udp, port, port, "Vintage Story Voice Chat"));
-            }
+            device.CreatePortMapAsync(new Mapping(Protocol.Udp, port, port, "Vintage Story Voice Chat"));
         }
 
         protected void OpenUDPClient(int port)

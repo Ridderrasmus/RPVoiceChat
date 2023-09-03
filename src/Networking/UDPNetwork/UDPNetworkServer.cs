@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 
 namespace RPVoiceChat.Networking
 {
@@ -8,17 +9,20 @@ namespace RPVoiceChat.Networking
         public event Action<AudioPacket> OnReceivedPacket;
 
         private Dictionary<string, ConnectionInfo> connectionsByPlayer = new Dictionary<string, ConnectionInfo>();
+        private IPAddress ip;
 
-        public UDPNetworkServer(int port)
+        public UDPNetworkServer(int port, string ip = null)
         {
             this.port = port;
+            this.ip = IPAddress.Parse(ip ?? GetPublicIP());
 
             OnMessageReceived += MessageReceived;
         }
 
         public void Launch()
         {
-            SetupUpnp(port);
+            if (!IsInternalNetwork(ip))
+                SetupUpnp(port);
             OpenUDPClient(port);
             StartListening(port);
         }
@@ -29,7 +33,7 @@ namespace RPVoiceChat.Networking
 
             connectionInfo = new ConnectionInfo()
             {
-                Address = GetPublicIP(),
+                Address = ip.MapToIPv4().ToString(),
                 Port = port
             };
 

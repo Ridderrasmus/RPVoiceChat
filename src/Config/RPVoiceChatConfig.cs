@@ -7,7 +7,7 @@
         // These are meant to be set by server admins and
         // are used to configure the server
         public int ServerPort = 52525;
-        public int MaximumConnections = 200;
+        public string ServerIP = null;
 
         // --- Client Settings ---
         // These are meant to be set by the client, but are
@@ -31,7 +31,7 @@
         public RPVoiceChatConfig(RPVoiceChatConfig previousConfig)
         {
             ServerPort = previousConfig.ServerPort;
-            MaximumConnections = previousConfig.MaximumConnections;
+            ServerIP = previousConfig.ServerIP;
 
             PushToTalkEnabled = previousConfig.PushToTalkEnabled;
             IsMuted = previousConfig.IsMuted;

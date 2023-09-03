@@ -17,9 +17,10 @@ namespace RPVoiceChat.Networking
         public ConnectionInfo Connect(ConnectionInfo serverConnection)
         {
             serverEndpoint = GetEndPoint(serverConnection);
-
             port = OpenUDPClient();
-            SetupUpnp(port);
+
+            if (!IsInternalNetwork(serverConnection.Address))
+                SetupUpnp(port);
             StartListening(serverEndpoint);
 
             var clientConnection = GetConnection();
