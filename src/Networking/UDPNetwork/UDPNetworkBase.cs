@@ -66,8 +66,10 @@ namespace RPVoiceChat.Networking
 
             // UPnP using Open.Nat
             NatDiscoverer discoverer = new NatDiscoverer();
-            Task<NatDevice> task = Task.Run(() => discoverer.DiscoverDeviceAsync());
+            CancellationTokenSource cts = new CancellationTokenSource(5000);
+            Task<NatDevice> task = Task.Run(() => discoverer.DiscoverDeviceAsync(PortMapper.Upnp, cts));
             NatDevice device = task.GetAwaiter().GetResult();
+
             if (device == null)
                 throw new NatDeviceNotFoundException("NatDiscoverer have not returned the NatDevice");
 

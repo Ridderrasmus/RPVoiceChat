@@ -9,7 +9,7 @@ using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 
-namespace RPVoiceChat
+namespace RPVoiceChat.Utils
 {
     public class AudioUtils
     {
@@ -72,7 +72,7 @@ namespace RPVoiceChat
             if (ignoredErrors == error)
                 return;
 
-            capi.Logger.Error("{0} {1}", Value, AL.GetErrorString(error));
+            Logger.client.Error("{0} {1}", Value, AL.GetErrorString(error));
         }
     }
 
@@ -98,7 +98,7 @@ namespace RPVoiceChat
             // we arent playing back audio fast enough, better to skip the audio
             if (availableBuffers.Count == 0)
             {
-                capi.Logger.Debug("CircularAudioBuffer had to skip queuing audio");
+                Logger.client.Debug("CircularAudioBuffer had to skip queuing audio");
                 return;
             }
 
