@@ -83,7 +83,7 @@ namespace RPVoiceChat.Networking
             }
             catch (TaskCanceledException)
             {
-                logger.Warning("Device discovery got abortted, assuming public IP");
+                logger.Warning("Device discovery got aborted, assuming public IP");
             }
         }
 
