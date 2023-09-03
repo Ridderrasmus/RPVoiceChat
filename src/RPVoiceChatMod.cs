@@ -1,4 +1,5 @@
-﻿using Vintagestory.API.Common;
+﻿using RPVoiceChat.Utils;
+using Vintagestory.API.Common;
 
 namespace RPVoiceChat
 {
@@ -11,6 +12,7 @@ namespace RPVoiceChat
         {
             ModConfig.ReadConfig(api);
             config = ModConfig.Config;
+            new Logger(api);
         }
     }
 }
