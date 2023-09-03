@@ -19,6 +19,7 @@
         // stored here for persistence across sessions
         public bool PushToTalkEnabled = false;
         public bool IsLoopbackEnabled = false;
+        public bool IsHUDShown = true;
         public bool IsMuted = false;
         public int InputThreshold = 20;
         public string CurrentInputDevice;
@@ -41,6 +42,7 @@
             ServerIP = previousConfig.ServerIP;
 
             PushToTalkEnabled = previousConfig.PushToTalkEnabled;
+            IsHUDShown = previousConfig.IsHUDShown;
             IsMuted = previousConfig.IsMuted;
             InputThreshold = previousConfig.InputThreshold;
             CurrentInputDevice = previousConfig.CurrentInputDevice;
