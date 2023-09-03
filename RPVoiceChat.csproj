@@ -1,13 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	  <TargetFramework>net462</TargetFramework>
-	  <LangVersion>9</LangVersion>
+    <TargetFramework>net462</TargetFramework>
+    <LangVersion>9</LangVersion>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputPath>bin\$(Configuration)\Mods\mod</OutputPath>
+    <RootNamespace>RPVoiceChat</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
+    <Reference Include="open.nat">
+      <HintPath>$(VINTAGE_STORY)/Lib/Open.Nat.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="mono.nat">
+      <HintPath>$(VINTAGE_STORY)/Lib/Mono.Nat.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="cairo-sharp">
       <HintPath>$(VINTAGE_STORY)/Lib/cairo-sharp.dll</HintPath>
 	  <Private>false</Private>

@@ -1,19 +1,25 @@
-﻿namespace rpvoicechat
+﻿namespace RPVoiceChat
 {
     public class RPVoiceChatConfig
     {
+
+        // --- Shared Config ---
+        // These are meant to be set by anyone and
+        // are used to change mod behavior
+        public bool ManualPortForwarding = false;
 
         // --- Server Config ---
         // These are meant to be set by server admins and
         // are used to configure the server
         public int ServerPort = 52525;
-        public int MaximumConnections = 200;
+        public string ServerIP = null;
 
         // --- Client Settings ---
         // These are meant to be set by the client, but are
         // stored here for persistence across sessions
         public bool PushToTalkEnabled = false;
         public bool IsLoopbackEnabled = false;
+        public bool IsHUDShown = true;
         public bool IsMuted = false;
         public int InputThreshold = 20;
         public string CurrentInputDevice = OpenTK.Audio.AudioCapture.DefaultDevice;
@@ -30,10 +36,13 @@
 
         public RPVoiceChatConfig(RPVoiceChatConfig previousConfig)
         {
+            ManualPortForwarding = previousConfig.ManualPortForwarding;
+
             ServerPort = previousConfig.ServerPort;
-            MaximumConnections = previousConfig.MaximumConnections;
+            ServerIP = previousConfig.ServerIP;
 
             PushToTalkEnabled = previousConfig.PushToTalkEnabled;
+            IsHUDShown = previousConfig.IsHUDShown;
             IsMuted = previousConfig.IsMuted;
             InputThreshold = previousConfig.InputThreshold;
             CurrentInputDevice = previousConfig.CurrentInputDevice;

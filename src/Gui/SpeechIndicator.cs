@@ -2,7 +2,7 @@
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
-namespace rpvoicechat
+namespace RPVoiceChat
 {
     public class SpeechIndicator : HudElement
     {
@@ -79,7 +79,7 @@ namespace rpvoicechat
 
         private void UpdateDisplay()
         {
-            bool shouldDisplay = _config.IsMuted || isTalking;
+            bool shouldDisplay = (_config.IsMuted || isTalking) && _config.IsHUDShown;
             bool successful = shouldDisplay ? TryOpen() : TryClose();
 
             if (!successful) bindToMainThread(UpdateDisplay)();

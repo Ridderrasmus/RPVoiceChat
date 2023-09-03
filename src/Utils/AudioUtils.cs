@@ -9,7 +9,7 @@ using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 
-namespace rpvoicechat
+namespace RPVoiceChat.Utils
 {
     public class AudioUtils
     {
@@ -72,7 +72,7 @@ namespace rpvoicechat
             if (ignoredErrors == error)
                 return;
 
-            capi.Logger.Error("{0} {1}", Value, AL.GetErrorString(error));
+            Logger.client.Error("{0} {1}", Value, AL.GetErrorString(error));
         }
     }
 
@@ -98,7 +98,7 @@ namespace rpvoicechat
             // we arent playing back audio fast enough, better to skip the audio
             if (availableBuffers.Count == 0)
             {
-                capi.Logger.Debug("CircularAudioBuffer had to skip queuing audio");
+                Logger.client.Debug("CircularAudioBuffer had to skip queuing audio");
                 return;
             }
 
@@ -111,21 +111,18 @@ namespace rpvoicechat
             queuedBuffers.Add(currentBuffer);
         }
 
-        public void TryDequeBuffers()
+        public void TryDequeueBuffers()
         {
-            // nothing to do
-            if (queuedBuffers.Count == 0)
-                return;
+            if (queuedBuffers.Count == 0) return;
 
-            var buffer = AL.SourceUnqueueBuffer(source);
+            AL.GetSource(source, ALGetSourcei.BuffersProcessed, out var buffersProcessed);
+            if (buffersProcessed == 0) return;
+
+            var processedBuffers = queuedBuffers.GetRange(0, buffersProcessed);
+            AL.SourceUnqueueBuffers(source, buffersProcessed, processedBuffers.ToArray());
             Util.CheckError("Error SourceUnqueueBuffer", capi, ALError.InvalidValue);
-            while (buffer != 0)
-            {
-                queuedBuffers.Remove(buffer);
-                availableBuffers.Add(buffer);
-                buffer = AL.SourceUnqueueBuffer(source);
-                Util.CheckError("Error SourceUnqueueBuffer", capi, ALError.InvalidValue);
-            }
+            queuedBuffers.RemoveRange(0, buffersProcessed);
+            availableBuffers.AddRange(processedBuffers);
         }
 
         public void Dispose()

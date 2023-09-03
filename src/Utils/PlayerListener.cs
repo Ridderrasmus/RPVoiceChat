@@ -1,7 +1,7 @@
 ﻿using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
 
-namespace rpvoicechat
+namespace RPVoiceChat
 {
     public class PlayerListener
     {
