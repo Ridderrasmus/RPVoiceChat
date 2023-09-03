@@ -37,6 +37,7 @@ namespace RPVoiceChat
 
             // Init voice chat client
             var mainClient = new UDPNetworkClient();
+            if (ModConfig.Config.ManualPortForwarding) mainClient.TogglePortForwarding(false);
             var backupClient = new NativeNetworkClient(capi);
             client = new PlayerNetworkClient(capi, mainClient, backupClient);
 

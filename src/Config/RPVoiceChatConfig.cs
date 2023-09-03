@@ -3,6 +3,11 @@
     public class RPVoiceChatConfig
     {
 
+        // --- Shared Config ---
+        // These are meant to be set by anyone and
+        // are used to change mod behavior
+        public bool ManualPortForwarding = false;
+
         // --- Server Config ---
         // These are meant to be set by server admins and
         // are used to configure the server
@@ -30,6 +35,8 @@
 
         public RPVoiceChatConfig(RPVoiceChatConfig previousConfig)
         {
+            ManualPortForwarding = previousConfig.ManualPortForwarding;
+
             ServerPort = previousConfig.ServerPort;
             ServerIP = previousConfig.ServerIP;
 

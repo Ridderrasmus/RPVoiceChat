@@ -17,6 +17,7 @@ namespace RPVoiceChat.Networking
         protected int port;
         protected ConnectionInfo connectionInfo;
         protected const string _transportID = "UDP";
+        protected bool upnpEnabled = true;
 
 
         public string GetTransportID()
@@ -34,6 +35,11 @@ namespace RPVoiceChat.Networking
             };
 
             return connectionInfo;
+        }
+
+        public void TogglePortForwarding(bool? state = null)
+        {
+            upnpEnabled = state ?? !upnpEnabled;
         }
 
         protected bool IsInternalNetwork(string ip)
@@ -56,6 +62,8 @@ namespace RPVoiceChat.Networking
 
         protected void SetupUpnp(int port)
         {
+            if (!upnpEnabled) return;
+
             // UPnP using Open.Nat
             NatDiscoverer discoverer = new NatDiscoverer();
             Task<NatDevice> task = Task.Run(() => discoverer.DiscoverDeviceAsync());
