@@ -91,6 +91,10 @@ public class PlayerAudioSource : IDisposable
 
         // If the player is on the other side of something to the listener, then the player's voice should be muffled
         float wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
+        
+        if (capi.World.Player.Entity.Swimming)
+            wallThickness += 1.0f;
+
         lowpassFilter?.Stop();
         if (wallThickness != 0)
         {
@@ -112,12 +116,14 @@ public class PlayerAudioSource : IDisposable
 
         }
 
+        /* --------- DISABLED FOR NOW ---------
         // If the player is drunk, then the player's voice should be affected
         // Values are temporary currently
         float drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
         float pitch = drunkness <= 0.2 ? 1 : 1 - (drunkness / 5);
         AL.Source(source, ALSourcef.Pitch, pitch);
         Util.CheckError("Error setting source Pitch", capi);
+        */
 
 
         if (IsLocational)
