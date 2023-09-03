@@ -1,4 +1,5 @@
 ﻿using RPVoiceChat.Networking;
+using RPVoiceChat.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -47,13 +48,13 @@ namespace RPVoiceChat.Server
             }
             catch (Exception e)
             {
-                api.Logger.Error($"[RPVoiceChat] Failed to launch {networkServer.GetTransportID()} server:\n{e}");
+                Logger.server.Error($"Failed to launch {networkServer.GetTransportID()} server:\n{e}");
             }
 
             if (reserveServer == null)
                 throw new Exception("Failed to launch any server");
 
-            api.Logger.Notification($"[RPVoiceChat] Using {reserveServer.GetTransportID()} server from now on");
+            Logger.server.Notification($"Using {reserveServer.GetTransportID()} server from now on");
             SwapActiveServer(reserveServer);
             reserveServer = null;
             Launch();
@@ -118,7 +119,7 @@ namespace RPVoiceChat.Server
             }
             catch (Exception e)
             {
-                api.Logger.VerboseDebug($"[RPVoiceChat] Couldn't use main server to deliver a packet to {playerId}: {e.Message}");
+                Logger.server.VerboseDebug($"Couldn't use main server to deliver a packet to {playerId}: {e.Message}");
             }
 
             try
@@ -127,7 +128,7 @@ namespace RPVoiceChat.Server
             }
             catch (Exception e)
             {
-                api.Logger.VerboseDebug($"[RPVoiceChat] Couldn't use backup server to deliver a packet to {playerId}: {e.Message}");
+                Logger.server.VerboseDebug($"Couldn't use backup server to deliver a packet to {playerId}: {e.Message}");
             }
         }
 

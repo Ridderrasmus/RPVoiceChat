@@ -1,4 +1,5 @@
 ﻿using RPVoiceChat.Networking;
+using RPVoiceChat.Utils;
 using System;
 using System.Linq;
 using Vintagestory.API.Client;
@@ -55,13 +56,13 @@ namespace RPVoiceChat.Client
             }
             catch (Exception e)
             {
-                api.Logger.Warning($"[RPVoiceChat] Failed to connect with the {clientTransportID} client: {e.Message}");
+                Logger.client.Warning($"Failed to connect with the {clientTransportID} client: {e.Message}");
             }
 
             if (reserveClient == null)
                 throw new Exception($"Failed to connect to the server. Required transport: {serverConnection.SupportedTransports}");
 
-            api.Logger.Notification($"[RPVoiceChat] Using {reserveClient.GetTransportID()} client from now on");
+            Logger.client.Notification($"Using {reserveClient.GetTransportID()} client from now on");
             SwapActiveClient(reserveClient);
             reserveClient = null;
             OnHandshakeRequest(serverConnection);

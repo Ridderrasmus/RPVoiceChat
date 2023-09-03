@@ -11,6 +11,8 @@ namespace RPVoiceChat.Networking
 
         public UDPNetworkClient()
         {
+            logger = Utils.Logger.client;
+
             OnMessageReceived += MessageReceived;
         }
 

@@ -15,6 +15,7 @@ namespace RPVoiceChat.Networking
         {
             this.port = port;
             this.ip = IPAddress.Parse(ip ?? GetPublicIP());
+            logger = Utils.Logger.server;
 
             OnMessageReceived += MessageReceived;
         }

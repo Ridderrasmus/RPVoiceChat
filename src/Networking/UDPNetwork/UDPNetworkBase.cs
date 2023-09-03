@@ -1,4 +1,5 @@
 ﻿using Open.Nat;
+using RPVoiceChat.Utils;
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -18,6 +19,7 @@ namespace RPVoiceChat.Networking
         protected ConnectionInfo connectionInfo;
         protected const string _transportID = "UDP";
         protected bool upnpEnabled = true;
+        protected Logger logger;
 
 
         public string GetTransportID()
@@ -64,14 +66,25 @@ namespace RPVoiceChat.Networking
         {
             if (!upnpEnabled) return;
 
-            // UPnP using Open.Nat
-            NatDiscoverer discoverer = new NatDiscoverer();
-            Task<NatDevice> task = Task.Run(() => discoverer.DiscoverDeviceAsync());
-            NatDevice device = task.GetAwaiter().GetResult();
-            if (device == null)
-                throw new NatDeviceNotFoundException("NatDiscoverer have not returned the NatDevice");
+            try
+            {
+                // UPnP using Open.Nat
+                logger.VerboseDebug("Attempting to portforward with UPnP");
+                NatDiscoverer discoverer = new NatDiscoverer();
+                CancellationTokenSource cts = new CancellationTokenSource(5000);
+                Task<NatDevice> task = Task.Run(() => discoverer.DiscoverDeviceAsync(PortMapper.Upnp, cts));
+                NatDevice device = task.GetAwaiter().GetResult();
 
-            device.CreatePortMapAsync(new Mapping(Protocol.Udp, port, port, "Vintage Story Voice Chat"));
+                if (device == null)
+                    throw new NatDeviceNotFoundException("NatDiscoverer have not returned the NatDevice");
+
+                logger.VerboseDebug("Found a UPnP device, creating port map");
+                device.CreatePortMapAsync(new Mapping(Protocol.Udp, port, port, "Vintage Story Voice Chat"));
+            }
+            catch (TaskCanceledException)
+            {
+                logger.Warning("Device discovery got aborted, assuming public IP");
+            }
         }
 
         protected void OpenUDPClient(int port)
