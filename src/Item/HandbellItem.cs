@@ -1,4 +1,6 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -7,15 +9,26 @@ namespace RPVoiceChat
 {
     public class HandbellItem : Item
     {
+        private Random Random = new Random();
 
-        public ILoadedSound handbellring;
+        private List<AssetLocation> handbellring = new List<AssetLocation>();
+        private List<AssetLocation> handbellattackring = new List<AssetLocation>();
+        private List<AssetLocation> handbellblockbreakring = new List<AssetLocation>();
+
+        private int audibleDistance = 16;
+
 
         public override void OnLoaded(ICoreAPI api)
         {
             base.OnLoaded(api);
-
-            
+            for (int i = 1; i < 4; i++)
+            {
+                handbellring.Add(new AssetLocation("rpvoicechat", "sounds/item/handbell/handbell_ring_" + i + ".ogg"));
+                handbellattackring.Add(new AssetLocation("rpvoicechat", "sounds/item/handbell/handbell_hit_" + i + ".ogg"));
+                handbellblockbreakring.Add(new AssetLocation("rpvoicechat", "sounds/item/handbell/handbell_blockbreak_" + i + ".ogg"));
+            }
         }
+        
 
         // When an entity is attacked with this bell
         // Called twice it seems. Both clientside and serverside?
@@ -24,7 +37,8 @@ namespace RPVoiceChat
             base.OnAttackingWith(world, byEntity, attackedEntity, itemslot);
             if (!world.Side.IsServer()) return;
 
-            world.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/item/handbell/handbell_hit_1.ogg"), byEntity, null, false, 32);
+            int rand = Random.Next(handbellattackring.Count);
+            world.PlaySoundAt(handbellattackring[rand], byEntity, null, false, audibleDistance);
             world.Api.Logger.Debug("Bell sound played");
         }
 
@@ -34,7 +48,9 @@ namespace RPVoiceChat
         {
             if (!world.Side.IsServer()) return base.OnBlockBrokenWith(world, byEntity, itemslot, blockSel, dropQuantityMultiplier);
 
-            world.PlaySoundFor(new AssetLocation("rpvoicechat", "sounds/item/handbell/handbell_blockbreak_1.ogg"), (IPlayer)byEntity);
+            int rand = Random.Next(handbellblockbreakring.Count);
+
+            world.PlaySoundAt(handbellblockbreakring[rand], byEntity, null, false, audibleDistance);
             world.Api.Logger.Debug("Bell sound played");
 
             return base.OnBlockBrokenWith(world, byEntity, itemslot, blockSel, dropQuantityMultiplier);
@@ -45,7 +61,10 @@ namespace RPVoiceChat
         public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handling)
         {
             IWorldAccessor world = byEntity.World;
-            world.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/item/handbell/handbell_ring_1.ogg"), byEntity, null, false, 10);
+
+            int rand = Random.Next(handbellring.Count);
+
+            world.PlaySoundAt(handbellring[rand], byEntity, null, false, audibleDistance);
             world.Api.Logger.Debug("Bell sound played");
 
             base.OnHeldInteractStart(slot, byEntity, blockSel, entitySel, firstEvent, ref handling);

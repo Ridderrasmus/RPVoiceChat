@@ -1,9 +1,9 @@
 {
   "code": "handbell",
   "class": "handbell",
-  "enabled": false,
+  "enabled": true,
   "maxstacksize": 1,
-  "attackpower": 1.0,
+  "attackpower": 0.5,
   "creativeinventory": {
     "general": [ "*" ],
     "items": [ "*" ],
