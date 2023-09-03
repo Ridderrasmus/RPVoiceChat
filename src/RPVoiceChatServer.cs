@@ -1,20 +1,24 @@
-﻿using System.Net.Sockets;
-using rpvoicechat.Networking;
+﻿using RPVoiceChat.Networking;
+using RPVoiceChat.Server;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;
 using Vintagestory.API.Server;
 
-namespace rpvoicechat
+namespace RPVoiceChat
 {
     public class RPVoiceChatServer : RPVoiceChatMod
     {
         protected ICoreServerAPI sapi;
-        private RPVoiceChatNativeNetworkServer server;
+        private GameServer server;
         public override void StartServerSide(ICoreServerAPI api)
         {
             sapi = api;
 
-            server = new RPVoiceChatNativeNetworkServer(sapi);
+            var mainServer = new UDPNetworkServer(ModConfig.Config.ServerPort, ModConfig.Config.ServerIP);
+            if (ModConfig.Config.ManualPortForwarding) mainServer.TogglePortForwarding(false);
+            var backupServer = new NativeNetworkServer(api);
+            server = new GameServer(sapi, mainServer, backupServer);
+            server.Launch();
             
             // Register/load world config
             sapi.World.Config.SetInt("rpvoicechat:distance-whisper", sapi.World.Config.GetInt("rpvoicechat:distance-whisper", (int)VoiceLevel.Whispering));
@@ -33,8 +37,6 @@ namespace rpvoicechat
         private void registerCommands()
         {
             var parsers = sapi.ChatCommands.Parsers;
-
-
 
             sapi.ChatCommands
                 .GetOrCreate("rpvc")
@@ -112,6 +114,11 @@ namespace rpvoicechat
             sapi.World.Config.SetInt("rpvoicechat:distance-shout", distance);
 
             return TextCommandResult.Success("Shout distance set to " + distance);
+        }
+
+        public override void Dispose()
+        {
+            server?.Dispose();
         }
     }
 }

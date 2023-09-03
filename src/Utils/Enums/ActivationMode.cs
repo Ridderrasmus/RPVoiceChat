@@ -1,6 +1,6 @@
 ﻿
 
-namespace rpvoicechat
+namespace RPVoiceChat
 {
     public enum ActivationMode
     {

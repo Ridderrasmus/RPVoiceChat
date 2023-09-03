@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
-namespace rpvoicechat
+namespace RPVoiceChat
 {
     public class VoiceLevelIcon : HudElement
     {
@@ -24,9 +24,12 @@ namespace rpvoicechat
         };
 
         VoiceLevel currentVoiceLevel;
+        
+        private RPVoiceChatConfig _config;
 
-        public VoiceLevelIcon(ICoreClientAPI capi, MicrophoneManager microphoneManager) : base(capi)
+        public VoiceLevelIcon(ICoreClientAPI capi, MicrophoneManager microphoneManager, RPVoiceChatConfig config) : base(capi)
         {
+            this._config = config;
             microphoneManager.VoiceLevelUpdated += OnVoiceLevelUpdated;
             currentVoiceLevel = microphoneManager.GetVoiceLevel();
         }
@@ -44,6 +47,13 @@ namespace rpvoicechat
 
         public void SetupIcon()
         {
+            if(!_config.IsHUDShown)
+            {
+                TryClose();
+                return;
+            }
+
+
             string voiceLevel = textureNameByVoiceLevel[currentVoiceLevel];
             SingleComposer = capi.Gui.CreateCompo("rpvcvoicelevelicon", dialogBounds)
                 .AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation("rpvoicechat", $"textures/gui/{voiceLevel}.png"))

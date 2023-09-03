@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
-namespace rpvoicechat
+namespace RPVoiceChat
 {
     public abstract class ConfigDialog : GuiDialog
     {
@@ -174,7 +174,7 @@ namespace rpvoicechat
                 Tooltip = "Input device",
                 DropdownNames = _audioInputManager.GetInputDeviceNames(),
                 DropdownValues = _audioInputManager.GetInputDeviceNames(),
-                DropdownSelect = changeInputDevice
+                DropdownSelect = OnChangeInputDevice
             });
 
             RegisterOption(new ConfigOption
@@ -182,7 +182,7 @@ namespace rpvoicechat
                 Text = "Push To Talk",
                 SwitchKey = "togglePushToTalk",
                 Tooltip = "Use push to talk instead of voice activation",
-                ToggleAction = togglePushToTalk
+                ToggleAction = OnTogglePushToTalk
             });
 
             RegisterOption(new ConfigOption
@@ -190,7 +190,7 @@ namespace rpvoicechat
                 Text = "Mute",
                 SwitchKey = "muteMicrophone",
                 Tooltip = "Mute your microphone",
-                ToggleAction = toggleMuted
+                ToggleAction = OnToggleMuted
             });
 
             RegisterOption(new ConfigOption
@@ -206,7 +206,7 @@ namespace rpvoicechat
                 Text = "Audio Input Threshold",
                 SliderKey = "inputThreshold",
                 Tooltip = "At which threshold your audio starts transmitting",
-                SlideAction = slideInputThreshold
+                SlideAction = SlideInputThreshold
             });
 
             RegisterOption(new ConfigOption
@@ -214,6 +214,14 @@ namespace rpvoicechat
                 Text = "Audio Meter",
                 SpecialSliderKey = "audioMeter",
                 Tooltip = "Shows your audio amplitude"
+            });
+
+            RegisterOption(new ConfigOption
+            {
+                Text = "Toggle HUD",
+                SwitchKey = "toggleHUD",
+                Tooltip = "Toggle visibility of HUD elements",
+                ToggleAction = OnToggleHUD
             });
         }
 
@@ -224,9 +232,17 @@ namespace rpvoicechat
 
             SingleComposer.GetSwitch("togglePushToTalk").On = _config.PushToTalkEnabled;
             SingleComposer.GetSwitch("muteMicrophone").On = _config.IsMuted;
+            SingleComposer.GetSwitch("toggleHUD").On = _config.IsHUDShown;
             SingleComposer.GetSlider("inputThreshold").SetValues(_config.InputThreshold, 0, 100, 1);
             SingleComposer.GetDropDown("inputDevice").SetSelectedValue(_config.CurrentInputDevice);
             SingleComposer.GetSwitch("loopback").On = _config.IsLoopbackEnabled;
+        }
+
+        private void OnToggleHUD(bool enabled)
+        {
+            _config.IsHUDShown = enabled;
+            ModConfig.Save(capi);
+            _audioInputManager.SetVoiceLevel(_audioInputManager.GetVoiceLevel());
         }
 
         protected void OnToggleLoopback(bool enabled)
@@ -236,12 +252,12 @@ namespace rpvoicechat
             _audioOutputManager.IsLoopbackEnabled = enabled;
         }
 
-        private void changeInputDevice(string value, bool selected)
+        private void OnChangeInputDevice(string value, bool selected)
         {
             _audioInputManager.SetInputDevice(value);
         }
 
-        private bool slideInputThreshold(int threshold)
+        private bool SlideInputThreshold(int threshold)
         {
             _config.InputThreshold = threshold;
             _audioInputManager.SetThreshold(threshold);
@@ -250,13 +266,13 @@ namespace rpvoicechat
             return true;
         }
 
-        private void toggleMuted(bool enabled)
+        private void OnToggleMuted(bool enabled)
         {
             _config.IsMuted = enabled;
             ModConfig.Save(capi);
         }
 
-        private void togglePushToTalk(bool enabled)
+        private void OnTogglePushToTalk(bool enabled)
         {
             _config.PushToTalkEnabled = enabled;
             ModConfig.Save(capi);

@@ -1,6 +1,6 @@
 ﻿using OpenTK.Audio.OpenAL;
 
-namespace rpvoicechat
+namespace RPVoiceChat
 {
     public class EffectWahwah
     {
