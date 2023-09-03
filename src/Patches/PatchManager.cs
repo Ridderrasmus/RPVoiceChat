@@ -1,7 +1,7 @@
 ﻿using HarmonyLib;
 using System;
 
-namespace rpvoicechat
+namespace RPVoiceChat
 {
     class PatchManager : IDisposable
     {

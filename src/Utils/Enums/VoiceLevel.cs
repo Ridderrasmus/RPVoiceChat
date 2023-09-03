@@ -1,4 +1,4 @@
-﻿namespace rpvoicechat
+﻿namespace RPVoiceChat
 {
     public enum VoiceLevel
     {

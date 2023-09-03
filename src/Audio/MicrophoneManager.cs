@@ -7,7 +7,7 @@ using OpenTK.Audio;
 using OpenTK.Audio.OpenAL;
 using System.Collections.Generic;
 
-namespace rpvoicechat
+namespace RPVoiceChat
 {
     struct AudioData
     {
@@ -18,7 +18,7 @@ namespace rpvoicechat
 
     public class MicrophoneManager : IDisposable
     {
-        public static int Frequency = 44100;
+        public static int Frequency = 22050;
         public static int BufferSize = (int)(Frequency * 0.5);
         const byte SampleToByte = 2;
         private double MaxInputThreshold;
@@ -97,24 +97,14 @@ namespace rpvoicechat
         public void UpdateCaptureAudioSamples(float deltaTime)
         {
             bool isMuted = config.IsMuted;
+            var clientEntity = capi.World.Player?.Entity;
 
-
-            if (!capi.World.Player.Entity.Alive || capi.World.Player.Entity.AnimManager.IsAnimationActive("sleep"))
-            {
+            if (isMuted || clientEntity == null || !clientEntity.Alive || clientEntity.AnimManager.IsAnimationActive("sleep"))
                 return;
-            }
-
-            if (isMuted)
-            {
-                return;
-            }
 
             int samplesAvailable = capture.AvailableSamples;
             int bufferLength = samplesAvailable * SampleToByte;
-            if (samplesAvailable <= 0)
-            {
-                return;
-            }
+            if (samplesAvailable <= 0) return;
 
             // because we would have to copy, its actually faster to just allocate each time here.
             var sampleBuffer = new byte[bufferLength];
@@ -147,7 +137,7 @@ namespace rpvoicechat
                     rms += sample*sample;
                 }
 
-                var calc = Math.Abs(Math.Sqrt(rms / numSamples));
+                var calc = Math.Sqrt(rms / numSamples);
                 if (double.IsNaN(calc)) calc = 0.000001;
                 Amplitude = calc;
 
