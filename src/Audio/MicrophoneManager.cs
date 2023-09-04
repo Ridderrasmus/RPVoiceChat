@@ -6,6 +6,7 @@ using Vintagestory.API.Client;
 using OpenTK.Audio;
 using OpenTK.Audio.OpenAL;
 using System.Collections.Generic;
+using RPVoiceChat.Utils;
 
 namespace RPVoiceChat
 {
@@ -20,6 +21,7 @@ namespace RPVoiceChat
     {
         public static int Frequency = 22050;
         public static int BufferSize = (int)(Frequency * 0.5);
+        public static ALFormat InputFormat = ALFormat.Mono16;
         const byte SampleToByte = 2;
         private double MaxInputThreshold;
         readonly ICoreClientAPI capi;
@@ -60,14 +62,18 @@ namespace RPVoiceChat
             config = ModConfig.Config;
             MaxInputThreshold = config.MaxInputThreshold;
             SetThreshold(config.InputThreshold);
-            capture = new AudioCapture(config.CurrentInputDevice, Frequency, ALFormat.Mono16, BufferSize);
+
+            CreateNewCapture(config.CurrentInputDevice);
+            
+                capture = new AudioCapture(config.CurrentInputDevice, Frequency, InputFormat, BufferSize);
+            
         }
 
         public void Launch()
         {
             audioProcessingThread.Start();
             gameTickId = capi.Event.RegisterGameTickListener(UpdateCaptureAudioSamples, 100);
-            capture.Start();
+            capture?.Start();
         }
 
         public double GetMaxInputThreshold()
@@ -82,11 +88,12 @@ namespace RPVoiceChat
 
         public void Dispose()
         {
+
             capi.Event.UnregisterGameTickListener(gameTickId);
             gameTickId = 0;
-            audioProcessingThread.Abort();
-            capture.Stop();
-            capture.Dispose();
+            audioProcessingThread?.Abort();
+            capture?.Stop();
+            capture?.Dispose();
         }
 
         public void SetThreshold(int threshold)
@@ -99,7 +106,7 @@ namespace RPVoiceChat
             bool isMuted = config.IsMuted;
             var clientEntity = capi.World.Player?.Entity;
 
-            if (isMuted || clientEntity == null || !clientEntity.Alive || clientEntity.AnimManager.IsAnimationActive("sleep"))
+            if (isMuted || clientEntity == null || capture == null || !clientEntity.Alive || clientEntity.AnimManager.IsAnimationActive("sleep"))
                 return;
 
             int samplesAvailable = capture.AvailableSamples;
@@ -205,22 +212,33 @@ namespace RPVoiceChat
 
         private AudioCapture CreateNewCapture(string deviceName)
         {
-            if (capture.CurrentDevice == deviceName)
+            if (capture != null)
             {
-                return capture;
+
+                if (capture.CurrentDevice == deviceName)
+                {
+                    return capture;
+                }
+
+                if (capture.IsRunning)
+                {
+                    capture.Stop();
+                }
+                capture.Dispose();
+
             }
 
-            if (capture.IsRunning)
-            {
-                capture.Stop();
+            AudioCapture newCapture = null;
+            try
+            { 
+                newCapture = new AudioCapture(deviceName, Frequency, InputFormat, BufferSize);
             }
-            capture.Dispose();
-
-            var newCapture = new AudioCapture(deviceName, Frequency, ALFormat.Mono16, BufferSize);
+            catch
+            {
+                Logger.client.Error("Could not create audio capture device, is there any microphone plugged in?");
+            }
             config.CurrentInputDevice = deviceName;
             ModConfig.Save(capi);
-
-            newCapture.Start();
 
             return newCapture;
         }
@@ -263,6 +281,7 @@ namespace RPVoiceChat
         public void SetInputDevice(string deviceId)
         {
             capture = CreateNewCapture(deviceId);
+            capture?.Start();
         }
     }
 }
