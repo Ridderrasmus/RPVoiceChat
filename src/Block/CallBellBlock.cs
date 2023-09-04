@@ -23,9 +23,10 @@ namespace RPVoiceChat
 
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
-            // How do we handle block interaction???
+            var rand = Random.Next(CallBellRings.Count);
+            world.PlaySoundAt(CallBellRings[rand], byPlayer, null, false, AudibleDistance);
 
-            return true;
+            return base.OnBlockInteractStart(world, byPlayer, blockSel);
         }
 
     }

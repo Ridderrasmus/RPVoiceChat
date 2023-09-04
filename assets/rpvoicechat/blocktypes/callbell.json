@@ -1,5 +1,6 @@
 {
   "code": "callbell",
+  "class": "callbell",
   "creativeinventory": {
     "general": [ "*" ]
   },
