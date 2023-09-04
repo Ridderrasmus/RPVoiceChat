@@ -63,6 +63,7 @@
   <None Remove="assets\rpvoicechat\recipes\grid\handbell.json" />
   <None Remove="assets\rpvoicechat\recipes\grid\handheldradio.json" />
   <None Remove="assets\rpvoicechat\recipes\smithing\telegraphwire.json" />
+  <None Remove="assets\rpvoicechat\shapes\block\callbell.json" />
   <None Remove="assets\rpvoicechat\sounds\soundconfig.json" />
   <None Remove="assets\rpvoicechat\textures\block\callbell.png" />
   <None Remove="assets\rpvoicechat\textures\item\handbell.png" />

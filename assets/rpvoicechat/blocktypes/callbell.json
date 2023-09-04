@@ -5,13 +5,53 @@
     "general": [ "*" ]
   },
   "blockmaterial": "Stone",
-  "drawtype": "Cube",
-  "textures": {
-    "all": { "base": "block/callbell" }
+  "drawtype": "json",
+  "shape": {
+    "base": "block/callbell"
+  },
+  "rainPermeable": true,
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "lightAbsorption": 0,
+  "collisionbox": {
+    "x1": 0.42,
+    "y1": 0,
+    "z1": 0.42,
+    "x2": 0.58,
+    "y2": 0.1,
+    "z2": 0.58
+  },
+  "selectionbox": {
+    "x1": 0.42,
+    "y1": 0,
+    "z1": 0.42,
+    "x2": 0.58,
+    "y2": 0.1,
+    "z2": 0.58
   },
   "resistance": 2,
   "sounds": {
     "place": "game:block/anvil",
     "walk": "game:walk/stone"
+  },
+  "guiTransform": {
+    "translation": {
+      "x": 0,
+      "y": -30,
+      "z": 0
+    },
+    "scale": 4
+  },
+  "fpHandTransform": {
+    "translation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scale": 4
   }
 }
