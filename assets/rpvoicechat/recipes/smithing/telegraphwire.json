@@ -1,24 +1,25 @@
 ﻿{
-    "ingredient": {
-        "type": "item",
-        "code": "game:ingot-copper"
-    },
-    "pattern": [
-        [
-            "_#######_",
-            "#_______#",
-            "__####__#",
-            "_#____#_#",
-            "_#_##_#_#",
-            "_#_#__#_#",
-            "_#__##__#",
-            "_#______#",
-            "__######_"
-        ]
-    ],
-    "name": "Telegraph Wire",
-    "output": {
-        "type": "item",
-        "code": "telegraphwire"
-    }
+  "enabled": false,
+  "ingredient": {
+    "type": "item",
+    "code": "game:ingot-copper"
+  },
+  "pattern": [
+    [
+      "_#######_",
+      "#_______#",
+      "__####__#",
+      "_#____#_#",
+      "_#_##_#_#",
+      "_#_#__#_#",
+      "_#__##__#",
+      "_#______#",
+      "__######_"
+    ]
+  ],
+  "name": "Telegraph Wire",
+  "output": {
+    "type": "item",
+    "code": "telegraphwire"
+  }
 }

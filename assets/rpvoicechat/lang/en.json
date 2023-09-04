@@ -2,5 +2,7 @@
   "item-handbell": "Handbell",
   "item-handheldradio": "Handheld Radio",
   "item-telegraphwire": "Telegraph Wire",
-  "item-radiocase": "Radio Case"
+  "item-radiocase": "Radio Case",
+
+  "block-callbell": "Call Bell"
 }

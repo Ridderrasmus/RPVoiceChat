@@ -19,6 +19,7 @@ namespace RPVoiceChat
         {
             base.Start(api);
             ItemRegistry.RegisterItems(api);
+            BlockRegistry.RegisterBlocks(api);
         }
     }
 }

@@ -1,0 +1,16 @@
+{
+  "code": "callbell",
+  "creativeinventory": {
+    "general": [ "*" ]
+  },
+  "blockmaterial": "Stone",
+  "drawtype": "Cube",
+  "textures": {
+    "all": { "base": "block/callbell" }
+  },
+  "resistance": 2,
+  "sounds": {
+    "place": "game:block/anvil",
+    "walk": "game:walk/stone"
+  }
+}

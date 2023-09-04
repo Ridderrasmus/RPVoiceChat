@@ -1,12 +1,33 @@
 {
+  "enabled": false,
   "ingredientPattern": "___,___,___",
   "ingredients": {
-    "S": { "type": "item", "code": "game:stick", "quantity":  1},
-    "P": { "type": "item", "code": "game:metalplate-silver", "quantity":  1 },
-    "H": { "type": "item", "code": "game:hammer-*", "isTool": true, "toolDurabilityCost":  2 },
-    "B": { "type": "item", "code": "game:metalbit-silver", "quantity":  1 }
+    "S": {
+      "type": "item",
+      "code": "game:stick",
+      "quantity": 1
+    },
+    "P": {
+      "type": "item",
+      "code": "game:metalplate-silver",
+      "quantity": 1
+    },
+    "H": {
+      "type": "item",
+      "code": "game:hammer-*",
+      "isTool": true,
+      "toolDurabilityCost": 2
+    },
+    "B": {
+      "type": "item",
+      "code": "game:metalbit-silver",
+      "quantity": 1
+    }
   },
   "width": 3,
   "height": 3,
-  "output": { "type": "item", "code": "handheldradio"}
+  "output": {
+    "type": "item",
+    "code": "handheldradio"
+  }
 }
