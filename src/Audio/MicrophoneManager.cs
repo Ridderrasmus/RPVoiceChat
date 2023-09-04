@@ -182,7 +182,7 @@ namespace RPVoiceChat
                 Amplitude = data.Amplitude;
                 recentAmplitudes.Add(Amplitude);
 
-                if (recentAmplitudes.Count > 20)
+                if (recentAmplitudes.Count > 3)
                 {
                     recentAmplitudes.RemoveAt(0);
 
