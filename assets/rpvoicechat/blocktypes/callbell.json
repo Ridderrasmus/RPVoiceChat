@@ -33,7 +33,7 @@
     "y2": 0.1,
     "z2": 0.58
   },
-  "resistance": 2,
+  "resistance": 1,
   "sounds": {
     "place": "game:block/anvil",
     "walk": "game:walk/stone"
