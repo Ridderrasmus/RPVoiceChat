@@ -3,7 +3,7 @@
   "class": "handbell",
   "enabled": true,
   "maxstacksize": 1,
-  "attackpower": 0.5,
+  "attackpower": 0.3,
   "creativeinventory": {
     "general": [ "*" ],
     "items": [ "*" ],
