@@ -25,6 +25,7 @@ namespace RPVoiceChat.Utils
         public void Error(string message, params object[] args)
         {
             api.Logger.Error($"[RPVoiceChat] {message}", args);
+            api.Logger.VerboseDebug($"[Error] [RPVoiceChat] {message}", args);
         }
 
         public void Debug(string message)
@@ -55,6 +56,7 @@ namespace RPVoiceChat.Utils
         public void Warning(string message, params object[] args)
         {
             api.Logger.Warning($"[RPVoiceChat] {message}", args);
+            api.Logger.VerboseDebug($"[Warning] [RPVoiceChat] {message}", args);
         }
 
         public void Notification(string message)
@@ -65,6 +67,7 @@ namespace RPVoiceChat.Utils
         public void Notification(string message, params object[] args)
         {
             api.Logger.Notification($"[RPVoiceChat] {message}", args);
+            api.Logger.VerboseDebug($"[Notification] [RPVoiceChat] {message}", args);
         }
     }
 }

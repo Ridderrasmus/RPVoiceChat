@@ -35,15 +35,20 @@ namespace RPVoiceChat.Server
             serverByTransport = new Dictionary<string, INetworkServer>();
             try
             {
+                Logger.server.Notification($"Launching {networkServer.GetTransportID()} server");
                 var extendedServer = networkServer as IExtendedNetworkServer;
                 extendedServer?.Launch();
                 api.Event.PlayerNowPlaying += PlayerJoined;
                 api.Event.PlayerDisconnect += PlayerLeft;
                 networkServer.OnReceivedPacket += SendAudioToAllClientsInRange;
                 serverByTransport.Add(networkServer.GetTransportID(), networkServer);
+                Logger.server.Notification($"{networkServer.GetTransportID()} server started");
+
                 if (reserveServer == null) return;
+                Logger.server.Notification($"Launching {reserveServer.GetTransportID()} server");
                 reserveServer.OnReceivedPacket += SendAudioToAllClientsInRange;
                 serverByTransport.Add(reserveServer.GetTransportID(), reserveServer);
+                Logger.server.Notification($"{reserveServer.GetTransportID()} server started");
                 return;
             }
             catch (Exception e)
