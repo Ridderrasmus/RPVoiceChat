@@ -64,9 +64,6 @@ namespace RPVoiceChat
             SetThreshold(config.InputThreshold);
 
             CreateNewCapture(config.CurrentInputDevice);
-            
-                capture = new AudioCapture(config.CurrentInputDevice, Frequency, InputFormat, BufferSize);
-            
         }
 
         public void Launch()
