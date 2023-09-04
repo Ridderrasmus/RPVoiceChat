@@ -173,7 +173,11 @@ namespace RPVoiceChat
         {
             while (audioProcessingThread.IsAlive)
             {
-                if (!audioDataQueue.TryDequeue(out var data)) Thread.Sleep(30);
+                if (!audioDataQueue.TryDequeue(out var data))
+                {
+                    Thread.Sleep(30);
+                    continue;
+                }
 
                 Amplitude = data.Amplitude;
                 recentAmplitudes.Add(Amplitude);
