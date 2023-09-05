@@ -313,7 +313,7 @@ namespace RPVoiceChat
                 for (var channelIndex = 0; channelIndex < channelCount; channelIndex++)
                 {
                     var sampleIndex = rawSampleIndex + channelIndex * monoSampleSize;
-                    var sample = BitConverter.ToInt16(rawSamples, sampleIndex);
+                    int sample = BitConverter.ToInt16(rawSamples, sampleIndex);
                     sampleSums[channelIndex] += Math.Abs(sample);
                 }
             }
