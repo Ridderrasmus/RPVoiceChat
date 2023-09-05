@@ -3,19 +3,19 @@
     "Client": {
       "commandName": "Executable",
       "executablePath": "$(VINTAGE_STORY)/Vintagestory.exe",
-      "commandLineArgs": "--tracelog --addModPath $(ProjectDir)/bin/$(Configuration)/Mods",
+      "commandLineArgs": "--tracelog --addModPath $(ProjectDir)/bin/$(Configuration)/Mods --dataPath $(ProjectDir)/bin/$(Configuration)/VintagestoryDataClient1",
       "workingDirectory": "$(VINTAGE_STORY)"
     },
     "SecondClient": {
       "commandName": "Executable",
       "executablePath": "$(VINTAGE_STORY)/Vintagestory.exe",
-      "commandLineArgs": "--tracelog --addModPath $(ProjectDir)/bin/$(Configuration)/Mods --dataPath $(ProjectDir)/bin/$(Configuration)/VintagestoryData",
+      "commandLineArgs": "--tracelog --addModPath $(ProjectDir)/bin/$(Configuration)/Mods --dataPath $(ProjectDir)/bin/$(Configuration)/VintagestoryDataClient2",
       "workingDirectory": "$(VINTAGE_STORY)"
     },
     "Server": {
       "commandName": "Executable",
       "executablePath": "$(VINTAGE_STORY)/VintagestoryServer.exe",
-      "commandLineArgs": "--tracelog --addModPath $(ProjectDir)/bin/$(Configuration)/Mods",
+      "commandLineArgs": "--tracelog --addModPath $(ProjectDir)/bin/$(Configuration)/Mods --dataPath $(ProjectDir)/bin/$(Configuration)/VintagestoryDataServer",
       "workingDirectory": "$(VINTAGE_STORY)"
     }
   }

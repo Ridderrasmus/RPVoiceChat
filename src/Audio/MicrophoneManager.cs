@@ -6,6 +6,7 @@ using Vintagestory.API.Client;
 using OpenTK.Audio;
 using OpenTK.Audio.OpenAL;
 using System.Collections.Generic;
+using RPVoiceChat.Utils;
 
 namespace RPVoiceChat
 {
@@ -14,13 +15,16 @@ namespace RPVoiceChat
         public byte[] Data;
         public int Length;
         public VoiceLevel VoiceLevel;
+        public double Amplitude;
     }
 
     public class MicrophoneManager : IDisposable
     {
         public static int Frequency = 22050;
-        public static int BufferSize = (int)(Frequency * 0.5);
-        const byte SampleToByte = 2;
+        public ALFormat InputFormat { get; private set; }
+        private int BufferSize = (int)(Frequency * 0.5);
+        private int channelCount;
+        private const byte SampleToByte = 2;
         private double MaxInputThreshold;
         readonly ICoreClientAPI capi;
 
@@ -60,14 +64,15 @@ namespace RPVoiceChat
             config = ModConfig.Config;
             MaxInputThreshold = config.MaxInputThreshold;
             SetThreshold(config.InputThreshold);
-            capture = new AudioCapture(config.CurrentInputDevice, Frequency, ALFormat.Mono16, BufferSize);
+
+            capture = CreateNewCapture(config.CurrentInputDevice);
         }
 
         public void Launch()
         {
             audioProcessingThread.Start();
             gameTickId = capi.Event.RegisterGameTickListener(UpdateCaptureAudioSamples, 100);
-            capture.Start();
+            capture?.Start();
         }
 
         public double GetMaxInputThreshold()
@@ -82,11 +87,12 @@ namespace RPVoiceChat
 
         public void Dispose()
         {
+
             capi.Event.UnregisterGameTickListener(gameTickId);
             gameTickId = 0;
-            audioProcessingThread.Abort();
-            capture.Stop();
-            capture.Dispose();
+            audioProcessingThread?.Abort();
+            capture?.Stop();
+            capture?.Dispose();
         }
 
         public void SetThreshold(int threshold)
@@ -99,52 +105,84 @@ namespace RPVoiceChat
             bool isMuted = config.IsMuted;
             var clientEntity = capi.World.Player?.Entity;
 
-            if (isMuted || clientEntity == null || !clientEntity.Alive || clientEntity.AnimManager.IsAnimationActive("sleep"))
+            if (isMuted || clientEntity == null || capture == null || !clientEntity.Alive || clientEntity.AnimManager.IsAnimationActive("sleep"))
                 return;
 
             int samplesAvailable = capture.AvailableSamples;
-            int bufferLength = samplesAvailable * SampleToByte;
+            int bufferLength = samplesAvailable * SampleToByte * channelCount;
             if (samplesAvailable <= 0) return;
 
             // because we would have to copy, its actually faster to just allocate each time here.
             var sampleBuffer = new byte[bufferLength];
             capture.ReadSamples(sampleBuffer, samplesAvailable);
 
-
             // this adds some latency and cpu time to our clients, however, it allows for processing to be done before
             // we send off the data. It also ensure that the packets arrive in order, if we just used Task.Run()
             // we are not guaranteed an order of the packets finishing
-            audioDataQueue.Enqueue(new AudioData()
+            AudioData data = PreprocessRawAudio(sampleBuffer);
+            audioDataQueue.Enqueue(data);
+        }
+
+        /// <summary>
+        /// Converts audio to Mono16 and calculates amplitude
+        /// </summary>
+        private AudioData PreprocessRawAudio(byte[] rawSamples)
+        {
+            var monoSamplesCount = rawSamples.Length / channelCount;
+            byte[] monoSamples = new byte[monoSamplesCount];
+
+            var rawSampleSize = SampleToByte * channelCount;
+            var monoSampleSize = SampleToByte;
+            double sampleSquareSum = 0;
+
+            for (var rawSampleIndex = 0; rawSampleIndex < rawSamples.Length; rawSampleIndex += rawSampleSize)
             {
-                Data = sampleBuffer,
-                Length = bufferLength,
-                VoiceLevel = voiceLevel
-            });
+                double monoSample = 0;
+
+                int[] usedChannels = DetectAudioChannels(rawSamples);
+                for (var channelIndex = 0; channelIndex < channelCount; channelIndex++)
+                {
+                    if (!usedChannels.Contains(channelIndex)) continue;
+                    var sampleIndex = rawSampleIndex + channelIndex * monoSampleSize;
+                    var sample = BitConverter.ToInt16(rawSamples, sampleIndex);
+                    monoSample += sample;
+                }
+                monoSample = monoSample / usedChannels.Length;
+
+                var monoBytes = BitConverter.GetBytes((short)monoSample);
+                var monoSampleIndex = rawSampleIndex / rawSampleSize * monoSampleSize;
+                for (var j = 0; j < monoSampleSize; j++)
+                    monoSamples[monoSampleIndex + j] = monoBytes[j];
+
+                sampleSquareSum += Math.Pow(monoSample / short.MaxValue, 2);
+            }
+
+            var numSamples = monoSamplesCount / SampleToByte;
+            var amplitude = Math.Sqrt(sampleSquareSum / numSamples);
+
+            return new AudioData()
+            {
+                Data = monoSamples,
+                Length = monoSamplesCount,
+                VoiceLevel = voiceLevel,
+                Amplitude = amplitude
+            };
         }
 
         private void ProcessAudio()
         {
             while (audioProcessingThread.IsAlive)
             {
-                if (!audioDataQueue.TryDequeue(out var data)) Thread.Sleep(30);
-
-
-                double rms = 0;
-                var numSamples = data.Length / SampleToByte;
-                for (var i = 0; i < data.Length; i += SampleToByte)
+                if (!audioDataQueue.TryDequeue(out var data))
                 {
-                    var sample = ((BitConverter.ToInt16(data.Data, i) / (double)short.MaxValue));
-                    rms += sample*sample;
+                    Thread.Sleep(30);
+                    continue;
                 }
 
-                var calc = Math.Sqrt(rms / numSamples);
-                if (double.IsNaN(calc)) calc = 0.000001;
-                Amplitude = calc;
-
-
+                Amplitude = data.Amplitude;
                 recentAmplitudes.Add(Amplitude);
 
-                if (recentAmplitudes.Count > 20)
+                if (recentAmplitudes.Count > 3)
                 {
                     recentAmplitudes.RemoveAt(0);
 
@@ -203,26 +241,90 @@ namespace RPVoiceChat
             return isRecording;
         }
 
-        private AudioCapture CreateNewCapture(string deviceName)
+        private AudioCapture CreateNewCapture(string deviceName, ALFormat? captureFormat = null)
         {
-            if (capture.CurrentDevice == deviceName)
-            {
+            ALFormat format = captureFormat ?? GetDefaultInputFormat();
+            if (capture?.CurrentDevice == deviceName && capture?.SampleFormat == format)
                 return capture;
-            }
 
-            if (capture.IsRunning)
+            capture?.Stop();
+            capture?.Dispose();
+            SetInputFormat(format);
+
+            AudioCapture newCapture = null;
+            try
             {
-                capture.Stop();
+                newCapture = new AudioCapture(deviceName, Frequency, InputFormat, BufferSize);
             }
-            capture.Dispose();
-
-            var newCapture = new AudioCapture(deviceName, Frequency, ALFormat.Mono16, BufferSize);
+            catch
+            {
+                Logger.client.Error("Could not create audio capture device, is there any microphone plugged in?");
+            }
             config.CurrentInputDevice = deviceName;
             ModConfig.Save(capi);
 
-            newCapture.Start();
-
             return newCapture;
+        }
+
+        private ALFormat GetDefaultInputFormat()
+        {
+            var format = ALFormat.Mono16;
+            var supportedFormats = AL.Get(ALGetString.Extensions);
+            if (supportedFormats.Contains("AL_EXT_MCFORMATS"))
+                format = ALFormat.MultiQuad16Ext;
+
+            return format;
+        }
+
+        private void SetInputFormat(ALFormat format)
+        {
+            switch (format)
+            {
+                case ALFormat.Mono16:
+                    InputFormat = format;
+                    channelCount = 1;
+                    break;
+                case ALFormat.MultiQuad16Ext:
+                    InputFormat = format;
+                    channelCount = 4;
+                    break;
+                default:
+                    throw new NotSupportedException($"Format {format} is not supported for capture");
+            }
+        }
+
+        /// <summary>
+        /// Attempts to guess how many audio channels capture device uses
+        /// </summary>
+        /// <returns>
+        /// Indices of channels containing audio data
+        /// </returns>
+        private int[] DetectAudioChannels(byte[] rawSamples)
+        {
+            const int depth = 10;
+            List<int> usedChannels = new List<int>();
+            var sampleSums = new int[channelCount];
+
+            var rawSampleSize = SampleToByte * channelCount;
+            int monoSampleSize = SampleToByte;
+
+            for (var rawSampleIndex = 0; rawSampleIndex < rawSampleSize*depth; rawSampleIndex += rawSampleSize)
+            {
+                for (var channelIndex = 0; channelIndex < channelCount; channelIndex++)
+                {
+                    var sampleIndex = rawSampleIndex + channelIndex * monoSampleSize;
+                    int sample = BitConverter.ToInt16(rawSamples, sampleIndex);
+                    sampleSums[channelIndex] += Math.Abs(sample);
+                }
+            }
+
+            for (var channelIndex = 0; channelIndex < channelCount; channelIndex++)
+            {
+                var averageSampleValue = sampleSums[channelIndex] / depth;
+                if (averageSampleValue > 5) usedChannels.Add(channelIndex);
+            }
+
+            return usedChannels.ToArray();
         }
 
         public string[] GetInputDeviceNames()
@@ -263,6 +365,7 @@ namespace RPVoiceChat
         public void SetInputDevice(string deviceId)
         {
             capture = CreateNewCapture(deviceId);
+            capture?.Start();
         }
     }
 }

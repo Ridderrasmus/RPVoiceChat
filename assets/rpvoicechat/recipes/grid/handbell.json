@@ -1,0 +1,10 @@
+{
+  "ingredientPattern": "S,C",
+  "ingredients": {
+    "S": { "type": "item", "code": "game:stick", "quantity":  1},
+    "C": { "type": "block", "code": "callbell", "quantity":  1 }
+  },
+  "width": 1,
+  "height": 2,
+  "output": { "type": "item", "code": "handbell"}
+}

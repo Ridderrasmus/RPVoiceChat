@@ -14,5 +14,11 @@ namespace RPVoiceChat
             config = ModConfig.Config;
             new Logger(api);
         }
+
+        public override void Start(ICoreAPI api)
+        {
+            ItemRegistry.RegisterItems(api);
+            BlockRegistry.RegisterBlocks(api);
+        }
     }
 }

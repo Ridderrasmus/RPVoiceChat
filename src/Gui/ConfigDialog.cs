@@ -149,7 +149,9 @@ namespace RPVoiceChat
         private void TickUpdate(float obj)
         {
             AudioMeter?.SetThreshold(_audioInputManager.GetInputThreshold());
-            AudioMeter?.UpdateVisuals(Math.Max(_audioInputManager.Amplitude, _audioInputManager.AmplitudeAverage));
+            var amplitude = Math.Max(_audioInputManager.Amplitude, _audioInputManager.AmplitudeAverage);
+            if (ModConfig.Config.IsMuted) amplitude = 0;
+            AudioMeter?.UpdateVisuals(amplitude);
         }
 
         protected abstract void RefreshValues();

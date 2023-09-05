@@ -1,0 +1,12 @@
+{
+  "code": "telegraphwire",
+  "class": "telegraphwire",
+  "enabled": false,
+  "creativeinventory": {
+    "general": [ "*" ],
+    "items": [ "*" ]
+  },
+  "texture": {
+    "base": "item/handbell"
+  }
+}

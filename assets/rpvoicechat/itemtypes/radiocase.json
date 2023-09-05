@@ -1,0 +1,12 @@
+{
+  "code": "radiocase",
+  "enabled": false,
+  "maxstacksize": 4,
+  "creativeinventory": {
+    "general": [ "*" ],
+    "items": [ "*" ]
+  },
+  "texture": {
+    "base": "item/radiocase"
+  }
+}

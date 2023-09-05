@@ -1,3 +1,13 @@
 {
-    "hello": "hello world!"
+  "item-handbell": "Handbell",
+  "item-handheldradio": "Handheld Radio",
+  "item-telegraphwire": "Telegraph Wire",
+  "item-radiocase": "Radio Case",
+
+  "itemdesc-handbell": "A small handbell. The silver of the bell seems to have a weird purplep shimmer to it...",
+
+  "block-callbell": "Call Bell",
+
+  "blockdesc-callbell": "A small bell that can be rung to call someone."
+
 }
