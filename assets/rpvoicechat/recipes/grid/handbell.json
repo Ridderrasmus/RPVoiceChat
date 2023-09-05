@@ -1,12 +1,10 @@
 {
-  "ingredientPattern": "S_,PH,B_",
+  "ingredientPattern": "S,C",
   "ingredients": {
     "S": { "type": "item", "code": "game:stick", "quantity":  1},
-    "P": { "type": "item", "code": "game:metalplate-silver", "quantity":  1 },
-    "H": { "type": "item", "code": "game:hammer-*", "isTool": true, "toolDurabilityCost":  2 },
-    "B": { "type": "item", "code": "game:metalbit-silver", "quantity":  1 }
+    "C": { "type": "block", "code": "callbell", "quantity":  1 }
   },
-  "width": 2,
-  "height": 3,
+  "width": 1,
+  "height": 2,
   "output": { "type": "item", "code": "handbell"}
 }
