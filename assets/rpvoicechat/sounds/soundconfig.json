@@ -1,0 +1,7 @@
+﻿{
+    "soundsets": {
+        "handbell/blockbreak": ["handbell/handbell_blockbreak_1", "handbell/handbell_blockbreak_2", "handbell/handbell_blockbreak_3"],
+        "handbell/mobhit": [ "handbell/handbell_hit_1", "handbell/handbell_hit_2", "handbell/handbell_hit_3"],
+        "handbell/ring": ["handbell/handbell_ring_1", "handbell/handbell_ring_2", "handbell/handbell_ring_3"]
+    }
+}
