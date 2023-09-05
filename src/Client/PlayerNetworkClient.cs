@@ -52,6 +52,7 @@ namespace RPVoiceChat.Client
                 clientConnection.SupportedTransports = new string[] { clientTransportID };
                 handshakeChannel.SendPacket(clientConnection);
                 isConnected = true;
+                Logger.client.Notification($"Successfully connected with the {clientTransportID} client");
                 return;
             }
             catch (Exception e)
