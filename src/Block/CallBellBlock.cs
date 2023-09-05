@@ -42,7 +42,7 @@ namespace RPVoiceChat
             if (!world.Side.IsServer()) return;
 
             var rand = Random.Next(CallBellRings.Count);
-            byPlayer.Entity.World.PlaySoundAt(CallBellRings[rand], byPlayer.Entity, null, false, AudibleDistance, Volume);
+            byPlayer.Entity.World.PlaySoundAt(CallBellRings[rand], blockSel.Position.X, blockSel.Position.Y, blockSel.Position.Z, null, false, AudibleDistance, Volume);
 
             base.OnBlockInteractStop(secondsUsed, world, byPlayer, blockSel);
         }
