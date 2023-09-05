@@ -17,7 +17,6 @@ namespace RPVoiceChat
 
         public override void Start(ICoreAPI api)
         {
-            base.Start(api);
             ItemRegistry.RegisterItems(api);
             BlockRegistry.RegisterBlocks(api);
         }
