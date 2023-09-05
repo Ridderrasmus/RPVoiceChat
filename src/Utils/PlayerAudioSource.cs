@@ -100,7 +100,7 @@ public class PlayerAudioSource : IDisposable
         {
             lowpassFilter = lowpassFilter ?? new FilterLowpass(EffectsExtension, source);
             lowpassFilter.Start();
-            lowpassFilter.SetHFGain(Math.Max(1.0f - (wallThickness / 5), 0.1f));
+            lowpassFilter.SetHFGain(Math.Max(1.0f - (wallThickness / 2), 0.1f));
         }
 
         // If the player is in a reverberated area, then the player's voice should be reverberated
