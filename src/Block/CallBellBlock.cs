@@ -11,6 +11,7 @@ namespace RPVoiceChat
         private List<AssetLocation> CallBellRings = new List<AssetLocation>();
 
         private int AudibleDistance = 16;
+        private float Volume = 0.6f;
 
         public override void OnLoaded(ICoreAPI api)
         {
@@ -23,10 +24,27 @@ namespace RPVoiceChat
 
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
-            var rand = Random.Next(CallBellRings.Count);
-            world.PlaySoundAt(CallBellRings[rand], byPlayer, null, false, AudibleDistance);
+            return true;
+        }
 
-            return base.OnBlockInteractStart(world, byPlayer, blockSel);
+        public override bool OnBlockInteractStep(float secondsUsed, IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
+        {
+            return true;
+        }
+
+        public override bool OnBlockInteractCancel(float secondsUsed, IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel, EnumItemUseCancelReason cancelReason)
+        {
+            return true;
+        }
+
+        public override void OnBlockInteractStop(float secondsUsed, IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
+        {
+            if (!world.Side.IsServer()) return;
+
+            var rand = Random.Next(CallBellRings.Count);
+            byPlayer.Entity.World.PlaySoundAt(CallBellRings[rand], byPlayer.Entity, null, false, AudibleDistance, Volume);
+
+            base.OnBlockInteractStop(secondsUsed, world, byPlayer, blockSel);
         }
 
     }

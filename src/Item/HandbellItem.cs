@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Text;
-using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 
@@ -16,7 +13,8 @@ namespace RPVoiceChat
         private List<AssetLocation> handbellattackring = new List<AssetLocation>();
         private List<AssetLocation> handbellblockbreakring = new List<AssetLocation>();
 
-        private int audibleDistance = 16;
+        private int AudibleDistance = 16;
+        private float Volume = 0.6f;
 
         public override void OnLoaded(ICoreAPI api)
         {
@@ -38,8 +36,7 @@ namespace RPVoiceChat
             if (!world.Side.IsServer()) return;
 
             int rand = Random.Next(handbellattackring.Count);
-            world.PlaySoundAt(handbellattackring[rand], byEntity, null, false, audibleDistance);
-            world.Api.Logger.Debug("Bell sound played");
+            world.PlaySoundAt(handbellattackring[rand], byEntity, null, false, AudibleDistance, Volume);
         }
 
         // When a block is broken with this item
@@ -50,29 +47,38 @@ namespace RPVoiceChat
 
             int rand = Random.Next(handbellblockbreakring.Count);
 
-            world.PlaySoundAt(handbellblockbreakring[rand], byEntity, null, false, audibleDistance);
-            world.Api.Logger.Debug("Bell sound played");
+            world.PlaySoundAt(handbellblockbreakring[rand], byEntity, null, false, AudibleDistance, Volume);
 
             return base.OnBlockBrokenWith(world, byEntity, itemslot, blockSel, dropQuantityMultiplier);
         }
 
-        // When item is used
-        // Only happens once. Clientside only?
-        public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handling)
+        public override void OnHeldInteractStop(float secondsUsed, ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel)
         {
             IWorldAccessor world = byEntity.World;
+            if (!world.Side.IsServer()) return;
 
             int rand = Random.Next(handbellring.Count);
 
-            world.PlaySoundAt(handbellring[rand], byEntity, null, false, audibleDistance);
-            world.Api.Logger.Debug("Bell sound played");
+            IPlayer byPlayer = null;
+            if (byEntity is EntityPlayer) byPlayer = byEntity.World.PlayerByUid((byEntity as EntityPlayer).PlayerUID);
 
-            base.OnHeldInteractStart(slot, byEntity, blockSel, entitySel, firstEvent, ref handling);
+            byPlayer.Entity.World.PlaySoundAt(handbellring[rand], byEntity, null, false, AudibleDistance, Volume);
+            world.Logger.Debug("Played sound");
         }
 
-        public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
+        public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handling)
         {
-            base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
+            handling = EnumHandHandling.Handled;
+        }
+
+        public override bool OnHeldInteractCancel(float secondsUsed, ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, EnumItemUseCancelReason cancelReason)
+        {
+            return true;
+        }
+
+        public override bool OnHeldInteractStep(float secondsUsed, ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel)
+        {
+            return true;
         }
     }
 }
