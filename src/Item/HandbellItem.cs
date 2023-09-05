@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -16,7 +17,6 @@ namespace RPVoiceChat
         private List<AssetLocation> handbellblockbreakring = new List<AssetLocation>();
 
         private int audibleDistance = 16;
-
 
         public override void OnLoaded(ICoreAPI api)
         {
@@ -68,6 +68,11 @@ namespace RPVoiceChat
             world.Api.Logger.Debug("Bell sound played");
 
             base.OnHeldInteractStart(slot, byEntity, blockSel, entitySel, firstEvent, ref handling);
+        }
+
+        public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
+        {
+            base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
         }
     }
 }

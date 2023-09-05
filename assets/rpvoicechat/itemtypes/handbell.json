@@ -9,7 +9,7 @@
     "items": [ "*" ],
     "tools": [ "*" ]
   },
-  "texture": {
+  "shape": {
     "base": "item/handbell"
   }
 }
