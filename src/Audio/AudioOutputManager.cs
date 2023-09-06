@@ -9,6 +9,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Util;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
+using Concentus.Structs;
 
 namespace RPVoiceChat
 {
@@ -39,6 +40,7 @@ namespace RPVoiceChat
 
         public bool isReady = false;
         public EffectsExtension EffectsExtension;
+        private OpusDecoder decoder;
         private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
         private PlayerAudioSource localPlayerAudioSource;
 
@@ -49,6 +51,7 @@ namespace RPVoiceChat
             capi = api;
 
             EffectsExtension = new EffectsExtension();
+            decoder = new OpusDecoder(MicrophoneManager.Frequency, 1);
         }
 
         public void Launch()
@@ -89,7 +92,22 @@ namespace RPVoiceChat
                 if (source.voiceLevel != packet.VoiceLevel)
                     source.UpdateVoiceLevel(packet.VoiceLevel);
                 source.UpdatePlayer();
-                source.QueueAudio(packet.AudioData, packet.Length);
+
+                // Decode the audio data
+                float[] outBuffer = new float[960];
+                int samples = decoder.Decode(packet.AudioData, 0, packet.Length, outBuffer, 0, 960, false);
+
+                // Convert the audio data to a byte array
+                byte[] byteBuffer = new byte[samples * 2];
+                for (int i = 0; i < samples; i++)
+                {
+                    short val = (short)(outBuffer[i] * short.MaxValue);
+                    byteBuffer[i * 2] = (byte)(val & 0xFF);
+                    byteBuffer[i * 2 + 1] = (byte)(val >> 8);
+                }
+
+                // Queue the audio data
+                source.QueueAudio(byteBuffer, samples * 2);
             });
         }
 

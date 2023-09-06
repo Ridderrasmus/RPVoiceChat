@@ -1,4 +1,5 @@
-﻿using RPVoiceChat.Client;
+﻿using Concentus.Structs;
+using RPVoiceChat.Client;
 using RPVoiceChat.Networking;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;

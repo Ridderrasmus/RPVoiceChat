@@ -7,6 +7,8 @@ using OpenTK.Audio;
 using OpenTK.Audio.OpenAL;
 using System.Collections.Generic;
 using RPVoiceChat.Utils;
+using Concentus.Structs;
+using Concentus.Enums;
 
 namespace RPVoiceChat
 {
@@ -20,7 +22,7 @@ namespace RPVoiceChat
 
     public class MicrophoneManager : IDisposable
     {
-        public static int Frequency = 22050;
+        public static int Frequency = 24000;
         public ALFormat InputFormat { get; private set; }
         private int BufferSize = (int)(Frequency * 0.5);
         private int channelCount;
@@ -32,6 +34,7 @@ namespace RPVoiceChat
         private RPVoiceChatConfig config;
         private ConcurrentQueue<AudioData> audioDataQueue = new ConcurrentQueue<AudioData>();
         private Thread audioProcessingThread;
+        private OpusEncoder encoder;
 
         private VoiceLevel voiceLevel = VoiceLevel.Talking;
         public bool canSwitchDevice = true;
@@ -60,6 +63,7 @@ namespace RPVoiceChat
         public MicrophoneManager(ICoreClientAPI capi)
         {
             audioProcessingThread = new Thread(ProcessAudio);
+            encoder = OpusEncoder.Create(Frequency, 1, OpusApplication.OPUS_APPLICATION_VOIP);
             this.capi = capi;
             config = ModConfig.Config;
             MaxInputThreshold = config.MaxInputThreshold;
@@ -129,7 +133,7 @@ namespace RPVoiceChat
         private AudioData PreprocessRawAudio(byte[] rawSamples)
         {
             var monoSamplesCount = rawSamples.Length / channelCount;
-            byte[] monoSamples = new byte[monoSamplesCount];
+            short[] monoSamples = new short[monoSamplesCount];
 
             var rawSampleSize = SampleToByte * channelCount;
             var monoSampleSize = SampleToByte;
@@ -149,10 +153,8 @@ namespace RPVoiceChat
                 }
                 monoSample = monoSample / usedChannels.Length;
 
-                var monoBytes = BitConverter.GetBytes((short)monoSample);
-                var monoSampleIndex = rawSampleIndex / rawSampleSize * monoSampleSize;
-                for (var j = 0; j < monoSampleSize; j++)
-                    monoSamples[monoSampleIndex + j] = monoBytes[j];
+                var monoSampleIndex = rawSampleIndex / rawSampleSize;
+                monoSamples[monoSampleIndex] = (short)monoSample;
 
                 sampleSquareSum += Math.Pow(monoSample / short.MaxValue, 2);
             }
@@ -160,13 +162,25 @@ namespace RPVoiceChat
             var numSamples = monoSamplesCount / SampleToByte;
             var amplitude = Math.Sqrt(sampleSquareSum / numSamples);
 
+            byte[] opusEncodedAudio = EncodeOpus(monoSamples);
+
             return new AudioData()
             {
-                Data = monoSamples,
-                Length = monoSamplesCount,
+                Data = opusEncodedAudio,
+                Length = opusEncodedAudio.Length,
                 VoiceLevel = voiceLevel,
                 Amplitude = amplitude
             };
+        }
+
+        // Probably smart to bring this out into its own OpusCodec class to do encoding/decoding through
+        // Also unable to test due to the PC I am working on
+        private byte[] EncodeOpus(short[] audioData)
+        {
+            byte[] encodedData = new byte[audioData.Length * 2];
+            int bytesEncoded = encoder.Encode(audioData, 0, audioData.Length, encodedData, 0, encodedData.Length);
+            Array.Resize(ref encodedData, bytesEncoded);
+            return encodedData;
         }
 
         private void ProcessAudio()

@@ -60,4 +60,8 @@
   </Content>
 </ItemGroup>
 
+<ItemGroup>
+  <PackageReference Include="Concentus" Version="1.1.7" />
+</ItemGroup>
+
 </Project>
