@@ -8,16 +8,8 @@ using OpenTK.Audio.OpenAL;
 using System.Collections.Generic;
 using RPVoiceChat.Utils;
 
-namespace RPVoiceChat
+namespace RPVoiceChat.Audio
 {
-    struct AudioData
-    {
-        public byte[] Data;
-        public int Length;
-        public VoiceLevel VoiceLevel;
-        public double Amplitude;
-    }
-
     public class MicrophoneManager : IDisposable
     {
         public static int Frequency = 22050;
