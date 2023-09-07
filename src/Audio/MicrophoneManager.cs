@@ -27,7 +27,6 @@ namespace RPVoiceChat.Audio
 
         private VoiceLevel voiceLevel = VoiceLevel.Talking;
         public bool canSwitchDevice = true;
-        public bool keyDownPTT = false;
         public bool Transmitting = false;
         public bool TransmittingOnPreviousStep = false;
 
@@ -39,10 +38,7 @@ namespace RPVoiceChat.Audio
         public double Amplitude { get; set; }
         public double AmplitudeAverage { get; set; }
 
-        public ActivationMode CurrentActivationMode { get; private set; } = ActivationMode.VoiceActivation;
-        public string CurrentInputDevice { get; internal set; }
-
-        public event Action<byte[], int, VoiceLevel> OnBufferRecorded;
+        public event Action<AudioData> OnBufferRecorded;
         public event Action<VoiceLevel> VoiceLevelUpdated;
         public event Action ClientStartTalking;
         public event Action ClientStopTalking;
@@ -153,10 +149,11 @@ namespace RPVoiceChat.Audio
 
             return new AudioData()
             {
-                Data = monoSamples,
-                Length = monoSamplesCount,
-                VoiceLevel = voiceLevel,
-                Amplitude = amplitude
+                data = monoSamples,
+                frequency = Frequency,
+                format = InputFormat,
+                amplitude = amplitude,
+                voiceLevel = voiceLevel,
             };
         }
 
@@ -170,7 +167,7 @@ namespace RPVoiceChat.Audio
                     continue;
                 }
 
-                Amplitude = data.Amplitude;
+                Amplitude = data.amplitude;
                 recentAmplitudes.Add(Amplitude);
 
                 if (recentAmplitudes.Count > 3)
@@ -193,7 +190,7 @@ namespace RPVoiceChat.Audio
                 if (Transmitting)
                 {
                     if (!TransmittingOnPreviousStep) ClientStartTalking?.Invoke();
-                    OnBufferRecorded?.Invoke(data.Data, data.Length, data.VoiceLevel);
+                    OnBufferRecorded?.Invoke(data);
                 }
                 else if (TransmittingOnPreviousStep)
                 {

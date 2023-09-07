@@ -1,5 +1,5 @@
 ﻿using ProtoBuf;
-using RPVoiceChat;
+using RPVoiceChat.Audio;
 using System.IO;
 
 namespace RPVoiceChat.Networking
@@ -11,6 +11,14 @@ namespace RPVoiceChat.Networking
         public byte[] AudioData { get; set; }
         public int Length { get; set; }
         public VoiceLevel VoiceLevel { get; set; }
+
+        public AudioPacket(string playerId, AudioData audioData)
+        {
+            PlayerId = playerId;
+            AudioData = audioData.data;
+            Length = audioData.data.Length;
+            VoiceLevel = audioData.voiceLevel;
+        }
 
         public byte[] ToBytes()
         {
