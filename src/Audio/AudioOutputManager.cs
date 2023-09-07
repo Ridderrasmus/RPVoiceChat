@@ -36,7 +36,6 @@ namespace RPVoiceChat
 
         public bool isReady = false;
         public EffectsExtension EffectsExtension;
-        private OpusDecoder decoder;
         private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
         private PlayerAudioSource localPlayerAudioSource;
 
@@ -47,7 +46,6 @@ namespace RPVoiceChat
             capi = api;
 
             EffectsExtension = new EffectsExtension();
-            decoder = new OpusDecoder(MicrophoneManager.Frequency, 1);
         }
 
         public void Launch()
@@ -90,21 +88,21 @@ namespace RPVoiceChat
                 source.UpdatePlayer();
 
                 // Decode the audio data
-                int frameSize = 960;
-                float[] outBuffer = new float[frameSize];
-                int samples = decoder.Decode(packet.AudioData, 0, packet.Length, outBuffer, 0, frameSize, false);
+                short[] audio = OpusHandler.Decode(packet.AudioData);
 
                 // Convert the audio data to a byte array
-                byte[] byteBuffer = new byte[samples * 2];
-                for (int i = 0; i < samples; i++)
+                byte[] byteBuffer = new byte[audio.Length * 2];
+                for (int i = 0; i < audio.Length; i++)
                 {
-                    short val = (short)(outBuffer[i] * short.MaxValue);
+                    short val = (short)(audio[i] * short.MaxValue);
                     byteBuffer[i * 2] = (byte)(val & 0xFF);
                     byteBuffer[i * 2 + 1] = (byte)(val >> 8);
                 }
 
+                Logger.client.Debug($"Received audio packet with length {byteBuffer.Length} it looks like: {byteBuffer.ToString()}");
+
                 // Queue the audio data
-                source.QueueAudio(byteBuffer, samples * 2);
+                source.QueueAudio(byteBuffer, byteBuffer.Length);
             });
         }
 

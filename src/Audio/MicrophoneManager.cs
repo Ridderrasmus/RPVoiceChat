@@ -30,7 +30,6 @@ namespace RPVoiceChat
         private double MaxInputThreshold;
         readonly ICoreClientAPI capi;
 
-        private OpusEncoder encoder;
         private AudioCapture capture;
         private RPVoiceChatConfig config;
         private ConcurrentQueue<AudioData> audioDataQueue = new ConcurrentQueue<AudioData>();
@@ -63,7 +62,6 @@ namespace RPVoiceChat
         public MicrophoneManager(ICoreClientAPI capi)
         {
             audioProcessingThread = new Thread(ProcessAudio);
-            encoder = OpusEncoder.Create(Frequency, 1, OpusApplication.OPUS_APPLICATION_VOIP);
             this.capi = capi;
             config = ModConfig.Config;
             MaxInputThreshold = config.MaxInputThreshold;
@@ -166,7 +164,7 @@ namespace RPVoiceChat
 
             try
             {
-                opusEncodedAudio = EncodeOpus(monoSamples);
+                opusEncodedAudio = OpusHandler.Encode(monoSamples);
             }
             catch
             {
@@ -181,16 +179,6 @@ namespace RPVoiceChat
                 VoiceLevel = voiceLevel,
                 Amplitude = amplitude
             };
-        }
-
-        // Probably smart to bring this out into its own OpusCodec class to do encoding/decoding through
-        // Also unable to test due to the PC I am working on
-        private byte[] EncodeOpus(short[] audioData)
-        {
-            byte[] encodedData = new byte[audioData.Length * 2];
-            int bytesEncoded = encoder.Encode(audioData, 0, 960, encodedData, 0, encodedData.Length);
-            Array.Resize(ref encodedData, bytesEncoded);
-            return encodedData;
         }
 
         private void ProcessAudio()
