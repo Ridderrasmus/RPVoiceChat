@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using OpenTK.Audio.OpenAL;
 using Vintagestory.API.Util;
 
@@ -72,16 +73,21 @@ namespace RPVoiceChat.Utils
 
     public class CircularAudioBuffer : IDisposable
     {
+        private Thread dequeueAudioThread;
         private List<int> availableBuffers = new List<int>();
         private List<int> queuedBuffers = new List<int>();
         private int[] buffers;
         private int source;
+
         public CircularAudioBuffer(int source, int bufferCount)
         {
             this.source = source;
             buffers = AL.GenBuffers(bufferCount);
             Util.CheckError("Error gen buffers");
             availableBuffers.AddRange(buffers);
+
+            dequeueAudioThread = new Thread(DequeueAudio);
+            dequeueAudioThread.Start();
         }
 
         public void QueueAudio(byte[] audio, int length, ALFormat format, int frequency)
@@ -102,6 +108,15 @@ namespace RPVoiceChat.Utils
             queuedBuffers.Add(currentBuffer);
         }
 
+        private void DequeueAudio()
+        {
+            while (dequeueAudioThread.IsAlive)
+            {
+                TryDequeueBuffers();
+                Thread.Sleep(30);
+            }
+        }
+
         public void TryDequeueBuffers()
         {
             if (queuedBuffers.Count == 0) return;
@@ -118,6 +133,7 @@ namespace RPVoiceChat.Utils
 
         public void Dispose()
         {
+            dequeueAudioThread?.Abort();
             AL.DeleteBuffers(buffers);
         }
     }

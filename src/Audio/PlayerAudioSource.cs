@@ -22,7 +22,6 @@ namespace RPVoiceChat.Audio
 
         private ICoreClientAPI capi;
         private AudioOutputManager outputManager;
-        private Thread dequeueAudioThread;
 
         private Vec3f lastSpeakerCoords;
         private DateTime lastSpeakerUpdate;
@@ -43,7 +42,6 @@ namespace RPVoiceChat.Audio
 
         public PlayerAudioSource(IPlayer player, AudioOutputManager manager, ICoreClientAPI capi)
         {
-            dequeueAudioThread = new Thread(DequeueAudio);
             EffectsExtension = manager.EffectsExtension;
             outputManager = manager;
             this.player = player;
@@ -65,9 +63,6 @@ namespace RPVoiceChat.Audio
                 Util.CheckError("Error setting source Gain");
                 AL.Source(source, ALSourcef.Pitch, 1.0f);
                 Util.CheckError("Error setting source Pitch");
-
-            //reverbEffect = new ReverbEffect(manager.EffectsExtension, source);
-            dequeueAudioThread.Start();
             }, "PlayerAudioSource Init");
         }
 
@@ -217,18 +212,26 @@ namespace RPVoiceChat.Audio
             }, "PlayerAudioSource QueueAudio");
         }
 
-        private void DequeueAudio()
+        public void DequeueAudio(float _)
         {
-            while (dequeueAudioThread.IsAlive)
-            {
-                if (!outputManager.isReady)
-                {
-                    Thread.Sleep(100);
-                    continue;
-                }
-                buffer.TryDequeueBuffers();
+            AudioData audio;
 
-                Thread.Sleep(30);
+            lock (orderingQueue.SyncRoot)
+            {
+                audio = orderingQueue.GetByIndex(0) as AudioData;
+                lastAudioSequenceNumber = (long)orderingQueue.GetKey(0);
+                orderingQueue.RemoveAt(0);
+            }
+
+            byte[] audioBytes = audio.data;
+            buffer.QueueAudio(audioBytes, audioBytes.Length, audio.format, audio.frequency);
+
+            var state = AL.GetSourceState(source);
+            Util.CheckError("Error getting source state");
+            // the source can stop playing if it finishes everything in queue
+            if (state != ALSourceState.Playing)
+            {
+                StartPlaying();
             }
         }
 
@@ -236,6 +239,7 @@ namespace RPVoiceChat.Audio
         {
             capi.Event.EnqueueMainThreadTask(() =>
             {
+                buffer.TryDequeueBuffers();
                 AL.SourcePlay(source);
                 Util.CheckError("Error playing source");
             }, "PlayerAudioSource StartPlaying");
@@ -252,7 +256,6 @@ namespace RPVoiceChat.Audio
 
         public void Dispose()
         {
-            dequeueAudioThread?.Abort();
             AL.SourceStop(source);
             Util.CheckError("Error stop playing source");
 
