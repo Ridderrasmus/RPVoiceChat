@@ -53,17 +53,17 @@ public class PlayerAudioSource : IDisposable
             lastSpeakerUpdate = DateTime.Now;
 
             source = AL.GenSource();
-            Util.CheckError("Error gen source", capi);
-            buffer = new CircularAudioBuffer(source, BufferCount, capi);
+            Util.CheckError("Error gen source");
+            buffer = new CircularAudioBuffer(source, BufferCount);
 
             AL.Source(source, ALSourceb.Looping, false);
-            Util.CheckError("Error setting source looping", capi);
+            Util.CheckError("Error setting source looping");
             AL.Source(source, ALSourceb.SourceRelative, false);
-            Util.CheckError("Error setting source SourceRelative", capi);
+            Util.CheckError("Error setting source SourceRelative");
             AL.Source(source, ALSourcef.Gain, 1.0f);
-            Util.CheckError("Error setting source Gain", capi);
+            Util.CheckError("Error setting source Gain");
             AL.Source(source, ALSourcef.Pitch, 1.0f);
-            Util.CheckError("Error setting source Pitch", capi);
+            Util.CheckError("Error setting source Pitch");
 
             //reverbEffect = new ReverbEffect(manager.EffectsExtension, source);
             dequeueAudioThread.Start();
@@ -78,7 +78,7 @@ public class PlayerAudioSource : IDisposable
         capi.Event.EnqueueMainThreadTask(() =>
         {
             AL.Source(source, ALSourcef.MaxDistance, distance);
-            Util.CheckError("Error setting max audible distance", capi);
+            Util.CheckError("Error setting max audible distance");
         }, "PlayerAudioSource update max distance");
     }
 
@@ -137,24 +137,24 @@ public class PlayerAudioSource : IDisposable
             velocity *= distanceFactor;
 
             AL.Source(source, ALSource3f.Position, sourcePosition.X, sourcePosition.Y, sourcePosition.Z);
-            Util.CheckError("Error setting source pos", capi);
+            Util.CheckError("Error setting source pos");
 
             AL.Source(source, ALSource3f.Velocity, velocity.X, velocity.Y, velocity.Z);
-            Util.CheckError("Error setting source velocity", capi);
+            Util.CheckError("Error setting source velocity");
 
             AL.Source(source, ALSourceb.SourceRelative, true);
-            Util.CheckError("Error making source relative to client", capi);
+            Util.CheckError("Error making source relative to client");
         }
         else
         {
             AL.Source(source, ALSource3f.Position, 0, 0, 0);
-            Util.CheckError("Error setting source direction", capi);
+            Util.CheckError("Error setting source direction");
 
             AL.Source(source, ALSource3f.Velocity, 0, 0, 0);
-            Util.CheckError("Error setting source velocity", capi);
+            Util.CheckError("Error setting source velocity");
 
             AL.Source(source, ALSourceb.SourceRelative, true);
-            Util.CheckError("Error making source relative to client", capi);
+            Util.CheckError("Error making source relative to client");
         }
     }
 
@@ -207,7 +207,7 @@ public class PlayerAudioSource : IDisposable
             buffer.QueueAudio(audioBytes, bufferLength, ALFormat.Mono16, MicrophoneManager.Frequency);
 
             var state = AL.GetSourceState(source);
-            Util.CheckError("Error getting source state", capi);
+            Util.CheckError("Error getting source state");
             // the source can stop playing if it finishes everything in queue
             if (state != ALSourceState.Playing)
             {
@@ -236,7 +236,7 @@ public class PlayerAudioSource : IDisposable
         capi.Event.EnqueueMainThreadTask(() =>
         {
             AL.SourcePlay(source);
-            Util.CheckError("Error playing source", capi);
+            Util.CheckError("Error playing source");
         }, "PlayerAudioSource StartPlaying");
     }
 
@@ -245,7 +245,7 @@ public class PlayerAudioSource : IDisposable
         capi.Event.EnqueueMainThreadTask(() =>
         {
             AL.SourceStop(source);
-            Util.CheckError("Error stop playing source", capi);
+            Util.CheckError("Error stop playing source");
         }, "PlayerAudioSource StopPlaying");
     }
 
@@ -253,10 +253,10 @@ public class PlayerAudioSource : IDisposable
     {
         dequeueAudioThread?.Abort();
         AL.SourceStop(source);
-        Util.CheckError("Error stop playing source", capi);
+        Util.CheckError("Error stop playing source");
 
         buffer?.Dispose();
         AL.DeleteSource(source);
-        Util.CheckError("Error deleting source", capi);
+        Util.CheckError("Error deleting source");
     }
 }

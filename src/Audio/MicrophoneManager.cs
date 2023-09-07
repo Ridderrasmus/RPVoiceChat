@@ -87,7 +87,6 @@ namespace RPVoiceChat
 
         public void Dispose()
         {
-
             capi.Event.UnregisterGameTickListener(gameTickId);
             gameTickId = 0;
             audioProcessingThread?.Abort();

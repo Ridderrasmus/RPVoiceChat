@@ -1,12 +1,6 @@
 ﻿using System;
-using OpenTK.Audio;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using OpenTK.Audio.OpenAL;
-using Vintagestory.API.Client;
-using Vintagestory.API.Common;
-using Vintagestory.API.Common.Entities;
-using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 
 namespace RPVoiceChat.Utils
@@ -64,7 +58,7 @@ namespace RPVoiceChat.Utils
 
     public class Util
     {
-        public static void CheckError(string Value, ICoreAPI capi, ALError ignoredErrors = ALError.NoError)
+        public static void CheckError(string Value, ALError ignoredErrors = ALError.NoError)
         {
             var error = AL.GetError();
             if (error == ALError.NoError) return;
@@ -82,15 +76,12 @@ namespace RPVoiceChat.Utils
         private List<int> queuedBuffers = new List<int>();
         private int[] buffers;
         private int source;
-        private ICoreClientAPI capi;
-        public CircularAudioBuffer(int source, int bufferCount, ICoreClientAPI capi)
+        public CircularAudioBuffer(int source, int bufferCount)
         {
             this.source = source;
             buffers = AL.GenBuffers(bufferCount);
-            Util.CheckError("Error gen buffers", capi);
+            Util.CheckError("Error gen buffers");
             availableBuffers.AddRange(buffers);
-            this.capi = capi;
-
         }
 
         public void QueueAudio(byte[] audio, int length, ALFormat format, int frequency)
@@ -105,9 +96,9 @@ namespace RPVoiceChat.Utils
             var currentBuffer = availableBuffers.PopOne();
 
             AL.BufferData(currentBuffer, format, audio, length, frequency);
-            Util.CheckError("Error buffer data", capi);
+            Util.CheckError("Error buffer data");
             AL.SourceQueueBuffer(source, currentBuffer);
-            Util.CheckError("Error SourceQueueBuffer", capi);
+            Util.CheckError("Error SourceQueueBuffer");
             queuedBuffers.Add(currentBuffer);
         }
 
@@ -120,7 +111,7 @@ namespace RPVoiceChat.Utils
 
             var processedBuffers = queuedBuffers.GetRange(0, buffersProcessed);
             AL.SourceUnqueueBuffers(source, buffersProcessed, processedBuffers.ToArray());
-            Util.CheckError("Error SourceUnqueueBuffer", capi, ALError.InvalidValue);
+            Util.CheckError("Error SourceUnqueueBuffer", ALError.InvalidValue);
             queuedBuffers.RemoveRange(0, buffersProcessed);
             availableBuffers.AddRange(processedBuffers);
         }
