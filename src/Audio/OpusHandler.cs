@@ -5,23 +5,21 @@ using System.Text;
 
 namespace RPVoiceChat
 {
-    public class OpusHandler
+    public static class OpusHandler
     {
-        private OpusEncoder encoder;
-        private OpusDecoder decoder;
-        private int frameSize;
-        private int sampleRate;
-        private int channels;
-        private int maxPacketSize;
-        private byte[] encodedData;
+        private static OpusEncoder encoder;
+        private static OpusDecoder decoder;
+        private static int frameSize;
+        private static int sampleRate;
+        private static int channels;
+        private static int maxPacketSize;
 
-        public OpusHandler(int sampleRate, int channels)
+        static OpusHandler()
         {
-            this.frameSize = 960;
-            this.sampleRate = sampleRate;
-            this.channels = channels;
+            sampleRate = MicrophoneManager.Frequency;
+            channels = 1;
+            frameSize = 960;
             maxPacketSize = 4000;
-            encodedData = new byte[maxPacketSize];
 
             encoder = new OpusEncoder(sampleRate, channels, OpusApplication.OPUS_APPLICATION_VOIP);
             decoder = new OpusDecoder(sampleRate, channels);
@@ -29,15 +27,16 @@ namespace RPVoiceChat
             encoder.Bitrate = 16000;
         }
 
-        public byte[] Encode(short[] pcmData)
+        public static byte[] Encode(short[] pcmData)
         {
+            byte[] encodedData = new byte[maxPacketSize];
             int encodedLength = encoder.Encode(pcmData, 0, frameSize, encodedData, 0, maxPacketSize);
             byte[] encoded = new byte[encodedLength];
             Array.Copy(encodedData, encoded, encodedLength);
             return encoded;
         }
 
-        public short[] Decode(byte[] encodedData)
+        public static short[] Decode(byte[] encodedData)
         {
             short[] decodedData = new short[maxPacketSize];
             int decodedLength = decoder.Decode(encodedData, 0, encodedData.Length, decodedData, 0, frameSize, false);
@@ -46,7 +45,7 @@ namespace RPVoiceChat
             return decoded;
         }
 
-        public void SetBitrate(int bitrate)
+        public static void SetBitrate(int bitrate)
         {
             encoder.Bitrate = bitrate;
         }
