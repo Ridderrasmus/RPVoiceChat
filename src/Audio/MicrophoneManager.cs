@@ -30,11 +30,11 @@ namespace RPVoiceChat
         private double MaxInputThreshold;
         readonly ICoreClientAPI capi;
 
+        private OpusEncoder encoder;
         private AudioCapture capture;
         private RPVoiceChatConfig config;
         private ConcurrentQueue<AudioData> audioDataQueue = new ConcurrentQueue<AudioData>();
         private Thread audioProcessingThread;
-        private OpusEncoder encoder;
 
         private VoiceLevel voiceLevel = VoiceLevel.Talking;
         public bool canSwitchDevice = true;
