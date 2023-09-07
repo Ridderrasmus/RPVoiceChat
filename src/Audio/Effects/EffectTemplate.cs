@@ -2,7 +2,7 @@
 
 namespace RPVoiceChat
 {
-    public class EffectWahwah
+    public class EffectTemplate
     {
         private EffectsExtension effectsExtension;
         private int source;
@@ -10,7 +10,7 @@ namespace RPVoiceChat
     
         public bool IsEnabled { get; set; } = false;
 
-        public EffectWahwah(EffectsExtension effectsExtension, int source)
+        public EffectTemplate(EffectsExtension effectsExtension, int source)
         {
             this.source = source;
             this.effectsExtension = effectsExtension;

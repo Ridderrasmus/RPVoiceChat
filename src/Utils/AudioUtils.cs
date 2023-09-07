@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using OpenTK.Audio.OpenAL;
-using Vintagestory.API.Util;
+﻿using OpenTK.Audio.OpenAL;
 
 namespace RPVoiceChat.Utils
 {
@@ -68,101 +64,6 @@ namespace RPVoiceChat.Utils
                 return;
 
             Logger.client.Error("{0} {1}", Value, AL.GetErrorString(error));
-        }
-    }
-
-    public class CircularAudioBuffer : IDisposable
-    {
-        private Thread dequeueAudioThread;
-        private List<int> availableBuffers = new List<int>();
-        private List<int> queuedBuffers = new List<int>();
-        private int[] buffers;
-        private int source;
-
-        public CircularAudioBuffer(int source, int bufferCount)
-        {
-            this.source = source;
-            buffers = AL.GenBuffers(bufferCount);
-            Util.CheckError("Error gen buffers");
-            availableBuffers.AddRange(buffers);
-
-            dequeueAudioThread = new Thread(DequeueAudio);
-            dequeueAudioThread.Start();
-        }
-
-        public void QueueAudio(byte[] audio, int length, ALFormat format, int frequency)
-        {
-            // we arent playing back audio fast enough, better to skip the audio
-            if (availableBuffers.Count == 0)
-            {
-                Logger.client.Debug("CircularAudioBuffer had to skip queuing audio");
-                return;
-            }
-
-            var currentBuffer = availableBuffers.PopOne();
-
-            AL.BufferData(currentBuffer, format, audio, length, frequency);
-            Util.CheckError("Error buffer data");
-            AL.SourceQueueBuffer(source, currentBuffer);
-            Util.CheckError("Error SourceQueueBuffer");
-            queuedBuffers.Add(currentBuffer);
-        }
-
-        private void DequeueAudio()
-        {
-            while (dequeueAudioThread.IsAlive)
-            {
-                TryDequeueBuffers();
-                Thread.Sleep(30);
-            }
-        }
-
-        public void TryDequeueBuffers()
-        {
-            if (queuedBuffers.Count == 0) return;
-
-            AL.GetSource(source, ALGetSourcei.BuffersProcessed, out var buffersProcessed);
-            if (buffersProcessed == 0) return;
-
-            var processedBuffers = queuedBuffers.GetRange(0, buffersProcessed);
-            AL.SourceUnqueueBuffers(source, buffersProcessed, processedBuffers.ToArray());
-            Util.CheckError("Error SourceUnqueueBuffer", ALError.InvalidValue);
-            queuedBuffers.RemoveRange(0, buffersProcessed);
-            availableBuffers.AddRange(processedBuffers);
-        }
-
-        public void Dispose()
-        {
-            dequeueAudioThread?.Abort();
-            AL.DeleteBuffers(buffers);
-        }
-    }
-
-    // Because reverb is a little more complex than the other effects, it has its own class
-    public class ReverbEffect
-    {
-        private int effect;
-        private int slot;
-        private EffectsExtension efx;
-        public ReverbEffect(EffectsExtension efx, int source)
-        {
-            
-            this.efx = efx;
-            effect = efx.GenEffect();
-            slot = efx.GenAuxiliaryEffectSlot();
-
-            efx.BindEffect(effect, EfxEffectType.Reverb);
-            efx.Effect(effect, EfxEffectf.ReverbDecayTime, 3.0f);
-            efx.Effect(effect, EfxEffectf.ReverbDecayHFRatio, 0.91f);
-            efx.Effect(effect, EfxEffectf.ReverbDensity, 0.7f);
-            efx.Effect(effect, EfxEffectf.ReverbDiffusion, 0.9f);
-            efx.Effect(effect, EfxEffectf.ReverbRoomRolloffFactor, 3.1f);
-            efx.Effect(effect, EfxEffectf.ReverbReflectionsGain, 0.723f);
-            efx.Effect(effect, EfxEffectf.ReverbReflectionsDelay, 0.03f);
-            efx.Effect(effect, EfxEffectf.ReverbGain, 0.23f);
-
-            efx.AuxiliaryEffectSlot(slot, EfxAuxiliaryi.EffectslotEffect, effect);
-            efx.BindSourceToAuxiliarySlot(source, slot, 0, 0);
         }
     }
 }
