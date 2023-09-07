@@ -94,7 +94,8 @@ namespace RPVoiceChat.Utils
         }
 
         /// <summary>
-        /// Casts a ray between two given positions
+        /// Casts a ray between two given positions <br />
+        /// <b>May be inaccurate as game's API is bugged</b>
         /// </summary>
         /// <returns>Two lists containing blocks and entities intersected by the ray</returns>
         public static RayTraceResults RayTraceThrough(ICoreClientAPI capi, Vec3d from, Vec3d to)
@@ -109,19 +110,26 @@ namespace RPVoiceChat.Utils
                 return !visitedBlocks.Contains(blockEntry);
             };
 
-            for (var i = 0; i < maxRayTraceDistance; i++)
+            try
             {
-                BlockSelection blockSelection = new BlockSelection();
-                EntitySelection entitySelection = new EntitySelection();
-                capi.World.RayTraceForSelection(from, to, ref blockSelection, ref entitySelection, blockFilter, entityFilter);
-
-                if (blockSelection == null && entitySelection == null) break;
-                if (entitySelection?.Entity != null) visitedEntities.Add(entitySelection.Entity);
-                if (blockSelection?.Block != null && blockSelection?.Position is BlockPos)
+                for (var i = 0; i < maxRayTraceDistance; i++)
                 {
-                    var blockEntry = new BlockEntry(blockSelection.Position.Copy(), blockSelection.Block);
-                    visitedBlocks.Add(blockEntry);
+                    BlockSelection blockSelection = new BlockSelection();
+                    EntitySelection entitySelection = new EntitySelection();
+                    capi.World.RayTraceForSelection(from, to, ref blockSelection, ref entitySelection, blockFilter, entityFilter);
+
+                    if (blockSelection == null && entitySelection == null) break;
+                    if (entitySelection?.Entity != null) visitedEntities.Add(entitySelection.Entity);
+                    if (blockSelection?.Block != null && blockSelection?.Position is BlockPos)
+                    {
+                        var blockEntry = new BlockEntry(blockSelection.Position.Copy(), blockSelection.Block);
+                        visitedBlocks.Add(blockEntry);
+                    }
                 }
+            }
+            catch (Exception e)
+            {
+                Logger.client.Error($"Ray trace API threw an exception:\n{e}");
             }
 
             return new RayTraceResults(visitedBlocks, visitedEntities);
