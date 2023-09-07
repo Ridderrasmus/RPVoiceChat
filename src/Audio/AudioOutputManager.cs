@@ -1,12 +1,8 @@
 ﻿using Vintagestory.API.Client;
-using Vintagestory.API.Common.Entities;
 using System.Collections.Concurrent;
-using System.Linq;
 using System.Threading.Tasks;
-using OpenTK.Audio;
 using OpenTK.Audio.OpenAL;
 using Vintagestory.API.Common;
-using Vintagestory.API.Util;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
 using Concentus.Structs;
@@ -94,8 +90,9 @@ namespace RPVoiceChat
                 source.UpdatePlayer();
 
                 // Decode the audio data
-                float[] outBuffer = new float[960];
-                int samples = decoder.Decode(packet.AudioData, 0, packet.Length, outBuffer, 0, 960, false);
+                int frameSize = 960;
+                float[] outBuffer = new float[frameSize];
+                int samples = decoder.Decode(packet.AudioData, 0, packet.Length, outBuffer, 0, frameSize, false);
 
                 // Convert the audio data to a byte array
                 byte[] byteBuffer = new byte[samples * 2];

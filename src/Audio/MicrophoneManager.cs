@@ -162,7 +162,17 @@ namespace RPVoiceChat
             var numSamples = monoSamplesCount / SampleToByte;
             var amplitude = Math.Sqrt(sampleSquareSum / numSamples);
 
-            byte[] opusEncodedAudio = EncodeOpus(monoSamples);
+            byte[] opusEncodedAudio;
+
+            try
+            {
+                opusEncodedAudio = EncodeOpus(monoSamples);
+            }
+            catch
+            {
+                Logger.client.Error("Couldn't encode audio");
+                opusEncodedAudio = new byte[0];
+            }
 
             return new AudioData()
             {
@@ -178,7 +188,7 @@ namespace RPVoiceChat
         private byte[] EncodeOpus(short[] audioData)
         {
             byte[] encodedData = new byte[audioData.Length * 2];
-            int bytesEncoded = encoder.Encode(audioData, 0, audioData.Length, encodedData, 0, encodedData.Length);
+            int bytesEncoded = encoder.Encode(audioData, 0, 960, encodedData, 0, encodedData.Length);
             Array.Resize(ref encodedData, bytesEncoded);
             return encodedData;
         }

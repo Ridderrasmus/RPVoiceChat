@@ -1,12 +1,8 @@
 ﻿using System;
-using OpenTK.Audio;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using OpenTK.Audio.OpenAL;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Common.Entities;
-using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 
 namespace RPVoiceChat.Utils
