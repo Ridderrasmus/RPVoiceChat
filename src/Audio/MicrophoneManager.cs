@@ -14,6 +14,7 @@ namespace RPVoiceChat.Audio
     {
         public static int Frequency = 22050;
         public ALFormat InputFormat { get; private set; }
+        private ALFormat OutputFormat = ALFormat.Mono16;
         private int BufferSize = (int)(Frequency * 0.5);
         private int channelCount;
         private const byte SampleToByte = 2;
@@ -151,7 +152,7 @@ namespace RPVoiceChat.Audio
             {
                 data = monoSamples,
                 frequency = Frequency,
-                format = InputFormat,
+                format = OutputFormat,
                 amplitude = amplitude,
                 voiceLevel = voiceLevel,
             };

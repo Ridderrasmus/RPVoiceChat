@@ -6,6 +6,7 @@ using Vintagestory.API.MathTools;
 using Vintagestory.API.Common.Entities;
 using RPVoiceChat.Utils;
 using System.Threading;
+using System.Collections;
 
 namespace RPVoiceChat.Audio
 {
@@ -18,7 +19,9 @@ namespace RPVoiceChat.Audio
         public EffectsExtension EffectsExtension;
 
         private CircularAudioBuffer buffer;
-        //private ReverbEffect reverbEffect;
+        private SortedList orderingQueue = SortedList.Synchronized(new SortedList());
+        private int orderingDelay = 100;
+        private long lastAudioSequenceNumber = -1;
 
         private ICoreClientAPI capi;
         private AudioOutputManager outputManager;
@@ -105,7 +108,7 @@ namespace RPVoiceChat.Audio
 
             }
 
-            // If the player has a temporal stability of less than 0.7, then the player's voice should be distorted
+            // If the player has a temporal stability of less than 0.5, then the player's voice should be distorted
             // Values are temporary currently
             if (player.Entity.WatchedAttributes.GetDouble("temporalStability") < 0.5)
             {
@@ -196,20 +199,25 @@ namespace RPVoiceChat.Audio
             return velocity;
         }
 
-        public void QueueAudio(byte[] audioBytes, int bufferLength)
+        public void EnqueueAudio(AudioData audio, long sequenceNumber)
         {
+            if (orderingQueue.ContainsKey(sequenceNumber))
+            {
+                Logger.client.Debug("Audio sequence already received, skipping enqueueing");
+                return;
+            }
+
+            if (lastAudioSequenceNumber > sequenceNumber)
+            {
+                Logger.client.Debug("Audio sequence arrived too late, skipping enqueueing");
+                return;
+            }
+
+            orderingQueue.Add(sequenceNumber, audio);
             capi.Event.EnqueueMainThreadTask(() =>
             {
-                buffer.QueueAudio(audioBytes, bufferLength, ALFormat.Mono16, MicrophoneManager.Frequency);
-
-                var state = AL.GetSourceState(source);
-                Util.CheckError("Error getting source state");
-            // the source can stop playing if it finishes everything in queue
-            if (state != ALSourceState.Playing)
-                {
-                    StartPlaying();
-                }
-            }, "PlayerAudioSource QueueAudio");
+                capi.Event.RegisterCallback(DequeueAudio, orderingDelay);
+            }, "PlayerAudioSource EnqueueAudio");
         }
 
         public void DequeueAudio(float _)

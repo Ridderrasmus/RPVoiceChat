@@ -16,6 +16,8 @@ namespace RPVoiceChat.Networking
         public ALFormat Format { get; set; }
         public long SequenceNumber { get; set; }
 
+        public AudioPacket() { }
+
         public AudioPacket(string playerId, AudioData audioData, long sequenceNumber)
         {
             PlayerId = playerId;
