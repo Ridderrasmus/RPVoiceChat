@@ -1,5 +1,7 @@
-﻿using RPVoiceChat.Client;
+﻿using RPVoiceChat.Audio;
+using RPVoiceChat.Client;
 using RPVoiceChat.Networking;
+using System;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
@@ -117,17 +119,13 @@ namespace RPVoiceChat
             audioOutputManager.HandleAudioPacket(packet);
         }
 
-        private void OnBufferRecorded(byte[] buffer, int length, VoiceLevel voiceLevel)
+        private void OnBufferRecorded(AudioData audioData)
         {
-            if (buffer == null) return;
+            if (audioData.data == null) return;
 
-            AudioPacket packet = new AudioPacket()
-            {
-                PlayerId = capi.World.Player.PlayerUID,
-                AudioData = buffer,
-                Length = length,
-                VoiceLevel = voiceLevel
-            };
+            string sender = capi.World.Player.PlayerUID;
+            var sequenceNumber = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            AudioPacket packet = new AudioPacket(sender, audioData, sequenceNumber);
             audioOutputManager.HandleLoopback(packet);
             client.SendAudioToServer(packet);
         }

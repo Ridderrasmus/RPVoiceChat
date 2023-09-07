@@ -8,20 +8,13 @@ using OpenTK.Audio.OpenAL;
 using System.Collections.Generic;
 using RPVoiceChat.Utils;
 
-namespace RPVoiceChat
+namespace RPVoiceChat.Audio
 {
-    struct AudioData
-    {
-        public byte[] Data;
-        public int Length;
-        public VoiceLevel VoiceLevel;
-        public double Amplitude;
-    }
-
     public class MicrophoneManager : IDisposable
     {
         public static int Frequency = 22050;
         public ALFormat InputFormat { get; private set; }
+        private ALFormat OutputFormat = ALFormat.Mono16;
         private int BufferSize = (int)(Frequency * 0.5);
         private int channelCount;
         private const byte SampleToByte = 2;
@@ -35,7 +28,6 @@ namespace RPVoiceChat
 
         private VoiceLevel voiceLevel = VoiceLevel.Talking;
         public bool canSwitchDevice = true;
-        public bool keyDownPTT = false;
         public bool Transmitting = false;
         public bool TransmittingOnPreviousStep = false;
 
@@ -47,10 +39,7 @@ namespace RPVoiceChat
         public double Amplitude { get; set; }
         public double AmplitudeAverage { get; set; }
 
-        public ActivationMode CurrentActivationMode { get; private set; } = ActivationMode.VoiceActivation;
-        public string CurrentInputDevice { get; internal set; }
-
-        public event Action<byte[], int, VoiceLevel> OnBufferRecorded;
+        public event Action<AudioData> OnBufferRecorded;
         public event Action<VoiceLevel> VoiceLevelUpdated;
         public event Action ClientStartTalking;
         public event Action ClientStopTalking;
@@ -87,7 +76,6 @@ namespace RPVoiceChat
 
         public void Dispose()
         {
-
             capi.Event.UnregisterGameTickListener(gameTickId);
             gameTickId = 0;
             audioProcessingThread?.Abort();
@@ -162,10 +150,11 @@ namespace RPVoiceChat
 
             return new AudioData()
             {
-                Data = monoSamples,
-                Length = monoSamplesCount,
-                VoiceLevel = voiceLevel,
-                Amplitude = amplitude
+                data = monoSamples,
+                frequency = Frequency,
+                format = OutputFormat,
+                amplitude = amplitude,
+                voiceLevel = voiceLevel,
             };
         }
 
@@ -179,7 +168,7 @@ namespace RPVoiceChat
                     continue;
                 }
 
-                Amplitude = data.Amplitude;
+                Amplitude = data.amplitude;
                 recentAmplitudes.Add(Amplitude);
 
                 if (recentAmplitudes.Count > 3)
@@ -202,7 +191,7 @@ namespace RPVoiceChat
                 if (Transmitting)
                 {
                     if (!TransmittingOnPreviousStep) ClientStartTalking?.Invoke();
-                    OnBufferRecorded?.Invoke(data.Data, data.Length, data.VoiceLevel);
+                    OnBufferRecorded?.Invoke(data);
                 }
                 else if (TransmittingOnPreviousStep)
                 {

@@ -10,7 +10,7 @@ using Vintagestory.API.Util;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
 
-namespace RPVoiceChat
+namespace RPVoiceChat.Audio
 {
     public class AudioOutputManager
     {
@@ -68,6 +68,13 @@ namespace RPVoiceChat
             {
                 PlayerAudioSource source;
                 string playerId = packet.PlayerId;
+                AudioData audioData = new AudioData(packet);
+
+                if (audioData.data.Length != packet.Length)
+                {
+                    Logger.client.Debug("Audio packet payload has invalid length, dropping packet");
+                    return;
+                }
 
                 if (!playerSources.TryGetValue(playerId, out source))
                 {
@@ -89,7 +96,7 @@ namespace RPVoiceChat
                 if (source.voiceLevel != packet.VoiceLevel)
                     source.UpdateVoiceLevel(packet.VoiceLevel);
                 source.UpdatePlayer();
-                source.QueueAudio(packet.AudioData, packet.Length);
+                source.EnqueueAudio(audioData, packet.SequenceNumber);
             });
         }
 
@@ -97,8 +104,10 @@ namespace RPVoiceChat
         {
             if (!IsLoopbackEnabled) return;
 
+            AudioData audioData = new AudioData(packet);
+
             localPlayerAudioSource.UpdatePlayer();
-            localPlayerAudioSource.QueueAudio(packet.AudioData, packet.Length);
+            localPlayerAudioSource.EnqueueAudio(audioData, packet.SequenceNumber);
         }
 
         public void ClientLoaded()
