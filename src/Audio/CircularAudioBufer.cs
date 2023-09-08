@@ -54,13 +54,18 @@ namespace RPVoiceChat.Audio
         {
             if (queuedBuffers.Count == 0) return;
 
-            OALW.GetSource(source, ALGetSourcei.BuffersProcessed, out var buffersProcessed);
-            if (buffersProcessed == 0) return;
-
-            var processedBuffers = queuedBuffers.GetRange(0, buffersProcessed);
-            OALW.SourceUnqueueBuffers(source, buffersProcessed, processedBuffers.ToArray());
-            queuedBuffers.RemoveRange(0, buffersProcessed);
-            availableBuffers.AddRange(processedBuffers);
+            OALW.ExecuteInContext(() =>
+            {
+                var buffer = AL.SourceUnqueueBuffer(source);
+                OALW.CheckError("Error SourceUnqueueBuffer", ALError.InvalidValue);
+                while (buffer != 0)
+                {
+                    queuedBuffers.Remove(buffer);
+                    availableBuffers.Add(buffer);
+                    buffer = AL.SourceUnqueueBuffer(source);
+                    OALW.CheckError("Error SourceUnqueueBuffer", ALError.InvalidValue);
+                }
+            });
         }
 
         public void Dispose()
