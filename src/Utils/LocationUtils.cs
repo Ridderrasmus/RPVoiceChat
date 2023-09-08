@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -13,6 +14,12 @@ namespace RPVoiceChat.Utils
     public static class LocationUtils
     {
         private static int maxRayTraceDistance = 100;
+        private static string[] transparentBlocks = new string[]
+        {
+            "BlockGroundStorage",
+            "BlockPie",
+            "BlockSupportBeam"
+        };
 
         public static Vec3d GetLocationOfPlayer(ICoreClientAPI api)
         {
@@ -85,6 +92,7 @@ namespace RPVoiceChat.Utils
             foreach (BlockEntry blockEntry in obstructingBlocks)
             {
                 var block = blockEntry.Item2;
+                if (transparentBlocks.Contains(block.Class)) continue;
                 var collisionBoxes = block?.CollisionBoxes ?? new Cuboidf[0];
                 foreach (Cuboidf box in collisionBoxes)
                     thickness += box.Length * box.Height * box.Width;
