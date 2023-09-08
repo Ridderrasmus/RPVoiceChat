@@ -31,7 +31,8 @@ namespace RPVoiceChat
         {
             capi = api;
 
-            // Init microphone, audio output and harmony patch managers
+            // Init audio context, microphone, audio output and harmony patch managers
+            OALW.InitContext();
             micManager = new MicrophoneManager(capi);
             audioOutputManager = new AudioOutputManager(capi);
             patchManager = new PatchManager(modID);

@@ -5,7 +5,6 @@ using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Common.Entities;
 using RPVoiceChat.Utils;
-using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -32,7 +31,7 @@ namespace RPVoiceChat.Audio
 
         public bool IsLocational { get; set; } = true;
         public VoiceLevel voiceLevel { get; private set; } = VoiceLevel.Talking;
-        public Dictionary<VoiceLevel, float> referenceDistanceByVoiceLevel = new Dictionary<VoiceLevel, float>()
+        private Dictionary<VoiceLevel, float> referenceDistanceByVoiceLevel = new Dictionary<VoiceLevel, float>()
         {
             { VoiceLevel.Whispering, 1.25f },
             { VoiceLevel.Talking, 2.25f },
@@ -54,18 +53,13 @@ namespace RPVoiceChat.Audio
                 lastSpeakerCoords = player.Entity?.SidedPos?.XYZFloat;
                 lastSpeakerUpdate = DateTime.Now;
 
-                source = AL.GenSource();
-                Util.CheckError("Error gen source");
+                source = OALW.GenSource();
                 buffer = new CircularAudioBuffer(source, BufferCount);
 
-                AL.Source(source, ALSourceb.Looping, false);
-                Util.CheckError("Error setting source looping");
-                AL.Source(source, ALSourceb.SourceRelative, true);
-                Util.CheckError("Error setting source SourceRelative");
-                AL.Source(source, ALSourcef.Gain, 1.0f);
-                Util.CheckError("Error setting source Gain");
-                AL.Source(source, ALSourcef.Pitch, 1.0f);
-                Util.CheckError("Error setting source Pitch");
+                OALW.Source(source, ALSourceb.Looping, false);
+                OALW.Source(source, ALSourceb.SourceRelative, true);
+                OALW.Source(source, ALSourcef.Gain, 1.0f);
+                OALW.Source(source, ALSourcef.Pitch, 1.0f);
 
                 UpdateVoiceLevel(voiceLevel);
             }, "PlayerAudioSource Init");
@@ -78,13 +72,8 @@ namespace RPVoiceChat.Audio
             float distanceFactor = GetDistanceFactor();
             float rolloffFactor = referenceDistance * distanceFactor;
 
-            capi.Event.EnqueueMainThreadTask(() =>
-            {
-                AL.Source(source, ALSourcef.ReferenceDistance, referenceDistance);
-                Util.CheckError("Error setting source ReferenceDistance");
-                AL.Source(source, ALSourcef.RolloffFactor, rolloffFactor);
-                Util.CheckError("Error setting source RolloffFactor");
-            }, "PlayerAudioSource update max distance");
+            OALW.Source(source, ALSourcef.ReferenceDistance, referenceDistance);
+            OALW.Source(source, ALSourcef.RolloffFactor, rolloffFactor);
         }
 
         public void UpdatePlayer()
@@ -126,8 +115,7 @@ namespace RPVoiceChat.Audio
             // Values are temporary currently
             float drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
             float pitch = drunkness <= 0.2 ? 1 : 1 - (drunkness / 5);
-            AL.Source(source, ALSourcef.Pitch, pitch);
-            Util.CheckError("Error setting source Pitch", capi);
+            OALW.Source(source, ALSourcef.Pitch, pitch);
             */
 
             var sourcePosition = new Vec3f();
@@ -138,14 +126,9 @@ namespace RPVoiceChat.Audio
                 velocity = GetRelativeVelocity(speakerPos, listenerPos, sourcePosition);
             }
 
-            AL.Source(source, ALSource3f.Position, sourcePosition.X, sourcePosition.Y, sourcePosition.Z);
-            Util.CheckError("Error setting source pos");
-
-            AL.Source(source, ALSource3f.Velocity, velocity.X, velocity.Y, velocity.Z);
-            Util.CheckError("Error setting source velocity");
-
-            AL.Source(source, ALSourceb.SourceRelative, true);
-            Util.CheckError("Error making source relative to client");
+            OALW.Source(source, ALSource3f.Position, sourcePosition.X, sourcePosition.Y, sourcePosition.Z);
+            OALW.Source(source, ALSource3f.Velocity, velocity.X, velocity.Y, velocity.Z);
+            OALW.Source(source, ALSourceb.SourceRelative, true);
         }
 
         private float GetDistanceFactor()
@@ -227,8 +210,7 @@ namespace RPVoiceChat.Audio
             byte[] audioBytes = audio.data;
             buffer.QueueAudio(audioBytes, audioBytes.Length, audio.format, audio.frequency);
 
-            var state = AL.GetSourceState(source);
-            Util.CheckError("Error getting source state");
+            var state = OALW.GetSourceState(source);
             // the source can stop playing if it finishes everything in queue
             if (state != ALSourceState.Playing)
             {
@@ -241,8 +223,7 @@ namespace RPVoiceChat.Audio
             capi.Event.EnqueueMainThreadTask(() =>
             {
                 buffer.TryDequeueBuffers();
-                AL.SourcePlay(source);
-                Util.CheckError("Error playing source");
+                OALW.SourcePlay(source);
             }, "PlayerAudioSource StartPlaying");
         }
 
@@ -250,19 +231,16 @@ namespace RPVoiceChat.Audio
         {
             capi.Event.EnqueueMainThreadTask(() =>
             {
-                AL.SourceStop(source);
-                Util.CheckError("Error stop playing source");
+                OALW.SourceStop(source);
             }, "PlayerAudioSource StopPlaying");
         }
 
         public void Dispose()
         {
-            AL.SourceStop(source);
-            Util.CheckError("Error stop playing source");
+            OALW.SourceStop(source);
 
             buffer?.Dispose();
-            AL.DeleteSource(source);
-            Util.CheckError("Error deleting source");
+            OALW.DeleteSource(source);
         }
     }
 }
