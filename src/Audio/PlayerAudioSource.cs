@@ -29,8 +29,6 @@ namespace RPVoiceChat.Audio
 
         private Vec3f lastSpeakerCoords;
         private DateTime lastSpeakerUpdate;
-        public bool IsMuffled { get; set; } = false;
-        public bool IsReverberated { get; set; } = false;
 
         public bool IsLocational { get; set; } = true;
         public VoiceLevel voiceLevel { get; private set; } = VoiceLevel.Talking;
@@ -98,7 +96,6 @@ namespace RPVoiceChat.Audio
 
             // If the player is on the other side of something to the listener, then the player's voice should be muffled
             float wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
-
             if (capi.World.Player.Entity.Swimming)
                 wallThickness += 1.0f;
 
@@ -111,7 +108,8 @@ namespace RPVoiceChat.Audio
             }
 
             // If the player is in a reverberated area, then the player's voice should be reverberated
-            if (IsReverberated)
+            bool isReverberated = false;
+            if (isReverberated)
             {
 
             }
