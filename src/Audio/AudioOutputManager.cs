@@ -41,12 +41,14 @@ namespace RPVoiceChat.Audio
         public EffectsExtension EffectsExtension;
         private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
         private PlayerAudioSource localPlayerAudioSource;
+        private PlayerListener listener;
 
         public AudioOutputManager(ICoreClientAPI api)
         {
             _config = ModConfig.Config;
             IsLoopbackEnabled = _config.IsLoopbackEnabled;
             capi = api;
+            listener = new PlayerListener(api);
 
             EffectsExtension = new EffectsExtension();
         }

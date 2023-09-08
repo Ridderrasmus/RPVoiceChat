@@ -21,6 +21,8 @@
         public bool IsLoopbackEnabled = false;
         public bool IsHUDShown = true;
         public bool IsMuted = false;
+        public int OutputGain = 200;
+        public int InputGain = 100;
         public int InputThreshold = 20;
         public string CurrentInputDevice = OpenTK.Audio.AudioCapture.DefaultDevice;
         // These are client settings but they are not
@@ -44,6 +46,8 @@
             PushToTalkEnabled = previousConfig.PushToTalkEnabled;
             IsHUDShown = previousConfig.IsHUDShown;
             IsMuted = previousConfig.IsMuted;
+            OutputGain = previousConfig.OutputGain;
+            InputGain = previousConfig.InputGain;
             InputThreshold = previousConfig.InputThreshold;
             CurrentInputDevice = previousConfig.CurrentInputDevice;
             IsLoopbackEnabled = previousConfig.IsLoopbackEnabled;

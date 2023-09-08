@@ -206,6 +206,22 @@ namespace RPVoiceChat
 
             RegisterOption(new ConfigOption
             {
+                Text = "Players Volume Level",
+                SliderKey = "outputGain",
+                Tooltip = "How much to increase volume of other players",
+                SlideAction = SlideOutputGain
+            });
+
+            RegisterOption(new ConfigOption
+            {
+                Text = "Recording Volume",
+                SliderKey = "inputGain",
+                Tooltip = "Changes your own volume",
+                SlideAction = SlideInputGain
+            });
+
+            RegisterOption(new ConfigOption
+            {
                 Text = "Audio Input Threshold",
                 SliderKey = "inputThreshold",
                 Tooltip = "At which threshold your audio starts transmitting",
@@ -236,6 +252,8 @@ namespace RPVoiceChat
             SingleComposer.GetSwitch("togglePushToTalk").On = _config.PushToTalkEnabled;
             SingleComposer.GetSwitch("muteMicrophone").On = _config.IsMuted;
             SingleComposer.GetSwitch("toggleHUD").On = _config.IsHUDShown;
+            SingleComposer.GetSlider("inputGain").SetValues(_config.InputGain, 0, 100, 1, "%");
+            SingleComposer.GetSlider("outputGain").SetValues(_config.OutputGain, 0, 200, 1, "%");
             SingleComposer.GetSlider("inputThreshold").SetValues(_config.InputThreshold, 0, 100, 1);
             SingleComposer.GetDropDown("inputDevice").SetSelectedValue(_config.CurrentInputDevice);
             SingleComposer.GetSwitch("loopback").On = _config.IsLoopbackEnabled;
@@ -257,6 +275,23 @@ namespace RPVoiceChat
         private void OnChangeInputDevice(string value, bool selected)
         {
             _audioInputManager.SetInputDevice(value);
+        }
+
+        private bool SlideOutputGain(int gain)
+        {
+            _config.OutputGain = gain;
+            ModConfig.Save(capi);
+
+            return true;
+        }
+
+        private bool SlideInputGain(int gain)
+        {
+            _config.InputGain = gain;
+            ModConfig.Save(capi);
+            _audioInputManager.SetGain(gain);
+
+            return true;
         }
 
         private bool SlideInputThreshold(int threshold)

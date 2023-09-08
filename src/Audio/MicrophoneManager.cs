@@ -16,6 +16,7 @@ namespace RPVoiceChat.Audio
         public ALFormat InputFormat { get; private set; }
         private ALFormat OutputFormat = ALFormat.Mono16;
         private int BufferSize = (int)(Frequency * 0.5);
+        private float gain = 1;
         private int channelCount;
         private const byte SampleToByte = 2;
         private double MaxInputThreshold;
@@ -53,6 +54,7 @@ namespace RPVoiceChat.Audio
             config = ModConfig.Config;
             MaxInputThreshold = config.MaxInputThreshold;
             SetThreshold(config.InputThreshold);
+            SetGain(config.InputGain);
 
             capture = CreateNewCapture(config.CurrentInputDevice);
         }
@@ -88,6 +90,11 @@ namespace RPVoiceChat.Audio
             inputThreshold = (threshold / 100.0) * MaxInputThreshold;
         }
 
+        public void SetGain(int newGain)
+        {
+            gain = newGain / 100f;
+        }
+
         public void UpdateCaptureAudioSamples(float deltaTime)
         {
             bool isMuted = config.IsMuted;
@@ -112,7 +119,7 @@ namespace RPVoiceChat.Audio
         }
 
         /// <summary>
-        /// Converts audio to Mono16 and calculates amplitude
+        /// Converts audio to Mono16, applies gain and calculates amplitude
         /// </summary>
         private AudioData PreprocessRawAudio(byte[] rawSamples)
         {
@@ -136,6 +143,7 @@ namespace RPVoiceChat.Audio
                     monoSample += sample;
                 }
                 monoSample = monoSample / usedChannels.Length;
+                monoSample = monoSample * gain;
 
                 var monoBytes = BitConverter.GetBytes((short)monoSample);
                 var monoSampleIndex = rawSampleIndex / rawSampleSize * monoSampleSize;
