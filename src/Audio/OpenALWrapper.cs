@@ -22,170 +22,130 @@ namespace RPVoiceChat.Audio
             context = Alc.CreateContext(device, attrs);
         }
 
-        public static void Source(int source, ALSourceb property, bool value)
+        public static void ExecuteInContext(Action action)
         {
             if (context == null) throw new Exception("OpenAL audio context has not been initialized.");
             var ctx = SetCurrentContext();
 
-            AL.Source(source, property, value);
-            CheckError($"Error setting source {property}");
+            action();
 
             ResetContext(ctx);
+        }
+
+        public static T ExecuteInContext<T>(Func<T> function)
+        {
+            if (context == null) throw new Exception("OpenAL audio context has not been initialized.");
+            var ctx = SetCurrentContext();
+
+            var result = function();
+
+            ResetContext(ctx);
+            return result;
+        }
+
+        public static void Source(int source, ALSourceb property, bool value)
+        {
+            ExecuteInContext(() =>
+            {
+                AL.Source(source, property, value);
+                CheckError($"Error setting source {property}");
+            });
         }
 
         public static void Source(int source, ALSourcef property, float value)
         {
-            if (context == null) throw new Exception("OpenAL audio context has not been initialized.");
-            var ctx = SetCurrentContext();
-
-            AL.Source(source, property, value);
-            CheckError($"Error setting source {property}");
-
-            ResetContext(ctx);
-        }
-
-        public static void Source(int source, ALSource3f property, float value1, float value2, float value3)
-        {
-            if (context == null) throw new Exception("OpenAL audio context has not been initialized.");
-            var ctx = SetCurrentContext();
-
-            AL.Source(source, property, value1, value2, value3);
-            CheckError($"Error setting source {property}");
-
-            ResetContext(ctx);
+            ExecuteInContext(() =>
+            {
+                AL.Source(source, property, value);
+                CheckError($"Error setting source {property}");
+            });
         }
 
         public static void Listener(ALListenerf property, float value)
         {
-            if (context == null) throw new Exception("OpenAL audio context has not been initialized.");
-            var ctx = SetCurrentContext();
-
-            AL.Listener(property, value);
-            CheckError($"Error setting listener's {property}");
-
-            ResetContext(ctx);
+            ExecuteInContext(() =>
+            {
+                AL.Listener(property, value);
+                CheckError($"Error setting listener's {property}");
+            });
         }
 
         public static int GenSource()
         {
-            if (context == null) throw new Exception("OpenAL audio context has not been initialized.");
-            var ctx = SetCurrentContext();
+            return ExecuteInContext(() =>
+            {
+                var source = AL.GenSource();
+                CheckError("Error generating source");
 
-            var source = AL.GenSource();
-            CheckError("Error gen source");
-
-            ResetContext(ctx);
-            return source;
-        }
-
-        public static void GetSource(int source, ALGetSourcei property, out int result)
-        {
-            if (context == null) throw new Exception("OpenAL audio context has not been initialized.");
-            var ctx = SetCurrentContext();
-
-            AL.GetSource(source, property, out result);
-
-            ResetContext(ctx);
+                return source;
+            });
         }
 
         public static ALSourceState GetSourceState(int source)
         {
-            if (context == null) throw new Exception("OpenAL audio context has not been initialized.");
-            var ctx = SetCurrentContext();
+            return ExecuteInContext(() =>
+            {
+                var state = AL.GetSourceState(source);
+                CheckError("Error getting source state");
 
-            var state = AL.GetSourceState(source);
-            CheckError("Error getting source state");
-
-            ResetContext(ctx);
-            return state;
+                return state;
+            });
         }
 
         public static void SourcePlay(int source)
         {
-            if (context == null) throw new Exception("OpenAL audio context has not been initialized.");
-            var ctx = SetCurrentContext();
-
-            AL.SourcePlay(source);
-            CheckError("Error playing source");
-
-            ResetContext(ctx);
+            ExecuteInContext(() =>
+            {
+                AL.SourcePlay(source);
+                CheckError("Error playing source");
+            });
         }
 
         public static void SourceStop(int source)
         {
-            if (context == null) throw new Exception("OpenAL audio context has not been initialized.");
-            var ctx = SetCurrentContext();
-
-            AL.SourceStop(source);
-            CheckError("Error stop playing source");
-
-            ResetContext(ctx);
+            ExecuteInContext(() =>
+            {
+                AL.SourceStop(source);
+                CheckError("Error stop playing source");
+            });
         }
 
         public static void DeleteSource(int source)
         {
-            if (context == null) throw new Exception("OpenAL audio context has not been initialized.");
-            var ctx = SetCurrentContext();
-
-            AL.DeleteSource(source);
-            CheckError("Error deleting source");
-
-            ResetContext(ctx);
+            ExecuteInContext(() =>
+            {
+                AL.DeleteSource(source);
+                CheckError("Error deleting source");
+            });
         }
 
         public static int[] GenBuffers(int bufferCount)
         {
-            if (context == null) throw new Exception("OpenAL audio context has not been initialized.");
-            var ctx = SetCurrentContext();
+            return ExecuteInContext(() =>
+            {
+                var buffers = AL.GenBuffers(bufferCount);
+                CheckError("Error gen buffers");
 
-            var buffers = AL.GenBuffers(bufferCount);
-            CheckError("Error gen buffers");
-
-            ResetContext(ctx);
-            return buffers;
-        }
-
-        public static void BufferData(int buffer, ALFormat format, byte[] audio, int length, int frequency)
-        {
-            if (context == null) throw new Exception("OpenAL audio context has not been initialized.");
-            var ctx = SetCurrentContext();
-
-            AL.BufferData(buffer, format, audio, length, frequency);
-            CheckError("Error buffer data");
-
-            ResetContext(ctx);
-        }
-
-        public static void SourceQueueBuffer(int source, int buffer)
-        {
-            if (context == null) throw new Exception("OpenAL audio context has not been initialized.");
-            var ctx = SetCurrentContext();
-
-            AL.SourceQueueBuffer(source, buffer);
-            CheckError("Error SourceQueueBuffer");
-
-            ResetContext(ctx);
-        }
-
-        public static void SourceUnqueueBuffers(int source, int bufferCount, int[] buffers)
-        {
-            if (context == null) throw new Exception("OpenAL audio context has not been initialized.");
-            var ctx = SetCurrentContext();
-
-            AL.SourceUnqueueBuffers(source, bufferCount, buffers);
-            CheckError("Error SourceUnqueueBuffer", ALError.InvalidValue);
-
-            ResetContext(ctx);
+                return buffers;
+            });
         }
 
         public static void DeleteBuffers(int[] buffers)
         {
-            if (context == null) throw new Exception("OpenAL audio context has not been initialized.");
-            var ctx = SetCurrentContext();
+            ExecuteInContext(() =>
+            {
+                AL.DeleteBuffers(buffers);
+                CheckError("Error deleting buffers");
+            });
+        }
 
-            AL.DeleteBuffers(buffers);
+        public static void CheckError(string Value, ALError ignoredErrors = ALError.NoError)
+        {
+            var error = AL.GetError();
+            if (error == ALError.NoError) return;
+            if (ignoredErrors == error) return;
 
-            ResetContext(ctx);
+            Logger.client.Error("{0} {1}", Value, AL.GetErrorString(error));
         }
 
         private static ContextHandle? SetCurrentContext()
@@ -203,17 +163,6 @@ namespace RPVoiceChat.Audio
             if (ctx == null) return;
 
             Alc.MakeContextCurrent((ContextHandle)ctx);
-        }
-
-        private static void CheckError(string Value, ALError ignoredErrors = ALError.NoError)
-        {
-            var error = AL.GetError();
-            if (error == ALError.NoError) return;
-
-            if (ignoredErrors == error)
-                return;
-
-            Logger.client.Error("{0} {1}", Value, AL.GetErrorString(error));
         }
     }
 }
