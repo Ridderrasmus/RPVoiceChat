@@ -36,8 +36,11 @@ namespace RPVoiceChat.Audio
 
             var currentBuffer = availableBuffers.PopOne();
 
-            OALW.BufferData(currentBuffer, format, audio, length, frequency);
-            OALW.SourceQueueBuffer(source, currentBuffer);
+            OALW.ExecuteInContext(() =>
+            {
+                AL.BufferData(currentBuffer, format, audio, length, frequency);
+                AL.SourceQueueBuffer(source, currentBuffer);
+            });
             queuedBuffers.Add(currentBuffer);
         }
 
