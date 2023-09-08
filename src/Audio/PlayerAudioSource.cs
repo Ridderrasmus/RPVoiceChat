@@ -7,6 +7,7 @@ using Vintagestory.API.Common.Entities;
 using RPVoiceChat.Utils;
 using System.Threading;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace RPVoiceChat.Audio
 {
@@ -33,11 +34,12 @@ namespace RPVoiceChat.Audio
 
         public bool IsLocational { get; set; } = true;
         public VoiceLevel voiceLevel { get; private set; } = VoiceLevel.Talking;
-        /// <summary>
-        /// Distance in blocks at which audio source normally considered quiet. <br />
-        /// Used in calculation of distanceFactor to set volume at the edge of hearing range.
-        /// </summary>
-        private const float quietDistance = 10;
+        public Dictionary<VoiceLevel, float> referenceDistanceByVoiceLevel = new Dictionary<VoiceLevel, float>()
+        {
+            { VoiceLevel.Whispering, 1.25f },
+            { VoiceLevel.Talking, 2.25f },
+            { VoiceLevel.Shouting, 6.25f },
+        };
 
         private IPlayer player;
 
@@ -60,24 +62,30 @@ namespace RPVoiceChat.Audio
 
                 AL.Source(source, ALSourceb.Looping, false);
                 Util.CheckError("Error setting source looping");
-                AL.Source(source, ALSourceb.SourceRelative, false);
+                AL.Source(source, ALSourceb.SourceRelative, true);
                 Util.CheckError("Error setting source SourceRelative");
                 AL.Source(source, ALSourcef.Gain, 1.0f);
                 Util.CheckError("Error setting source Gain");
                 AL.Source(source, ALSourcef.Pitch, 1.0f);
                 Util.CheckError("Error setting source Pitch");
+
+                UpdateVoiceLevel(voiceLevel);
             }, "PlayerAudioSource Init");
         }
 
         public void UpdateVoiceLevel(VoiceLevel voiceLevel)
         {
             this.voiceLevel = voiceLevel;
-            float distance = WorldConfig.GetVoiceDistance(capi, voiceLevel);
+            float referenceDistance = referenceDistanceByVoiceLevel[voiceLevel];
+            float distanceFactor = GetDistanceFactor();
+            float rolloffFactor = referenceDistance * distanceFactor;
 
             capi.Event.EnqueueMainThreadTask(() =>
             {
-                AL.Source(source, ALSourcef.MaxDistance, distance);
-                Util.CheckError("Error setting max audible distance");
+                AL.Source(source, ALSourcef.ReferenceDistance, referenceDistance);
+                Util.CheckError("Error setting source ReferenceDistance");
+                AL.Source(source, ALSourcef.RolloffFactor, rolloffFactor);
+                Util.CheckError("Error setting source RolloffFactor");
             }, "PlayerAudioSource update max distance");
         }
 
@@ -124,44 +132,31 @@ namespace RPVoiceChat.Audio
             Util.CheckError("Error setting source Pitch", capi);
             */
 
-
+            var sourcePosition = new Vec3f();
+            var velocity = new Vec3f();
             if (IsLocational)
             {
-                var sourcePosition = GetRelativeSourcePosition(speakerPos, listenerPos);
-                var velocity = GetRelativeVelocity(speakerPos, listenerPos, sourcePosition);
-
-                // Adjust volume change due to distance based on speaker's voice level
-                var distanceFactor = GetDistanceFactor();
-                sourcePosition *= distanceFactor;
-                velocity *= distanceFactor;
-
-                AL.Source(source, ALSource3f.Position, sourcePosition.X, sourcePosition.Y, sourcePosition.Z);
-                Util.CheckError("Error setting source pos");
-
-                AL.Source(source, ALSource3f.Velocity, velocity.X, velocity.Y, velocity.Z);
-                Util.CheckError("Error setting source velocity");
-
-                AL.Source(source, ALSourceb.SourceRelative, true);
-                Util.CheckError("Error making source relative to client");
+                sourcePosition = GetRelativeSourcePosition(speakerPos, listenerPos);
+                velocity = GetRelativeVelocity(speakerPos, listenerPos, sourcePosition);
             }
-            else
-            {
-                AL.Source(source, ALSource3f.Position, 0, 0, 0);
-                Util.CheckError("Error setting source direction");
 
-                AL.Source(source, ALSource3f.Velocity, 0, 0, 0);
-                Util.CheckError("Error setting source velocity");
+            AL.Source(source, ALSource3f.Position, sourcePosition.X, sourcePosition.Y, sourcePosition.Z);
+            Util.CheckError("Error setting source pos");
 
-                AL.Source(source, ALSourceb.SourceRelative, true);
-                Util.CheckError("Error making source relative to client");
-            }
+            AL.Source(source, ALSource3f.Velocity, velocity.X, velocity.Y, velocity.Z);
+            Util.CheckError("Error setting source velocity");
+
+            AL.Source(source, ALSourceb.SourceRelative, true);
+            Util.CheckError("Error making source relative to client");
         }
 
         private float GetDistanceFactor()
         {
+            // Distance in blocks at which audio source normally considered quiet.
+            const float quietDistance = 10;
             float maxHearingDistance = WorldConfig.GetVoiceDistance(capi, voiceLevel);
-            var exponent = quietDistance < maxHearingDistance ? 2 : 0.5;
-            var distanceFactor = Math.Pow(quietDistance, exponent) / Math.Pow(maxHearingDistance, exponent);
+            var exponent = quietDistance < maxHearingDistance ? 2 : -0.33;
+            var distanceFactor = Math.Pow(quietDistance / maxHearingDistance, exponent);
 
             return (float)distanceFactor;
         }
