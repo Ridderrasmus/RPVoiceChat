@@ -25,14 +25,13 @@ namespace RPVoiceChat
         };
 
         VoiceLevel currentVoiceLevel;
-        
-        private RPVoiceChatConfig _config;
 
-        public VoiceLevelIcon(ICoreClientAPI capi, MicrophoneManager microphoneManager, RPVoiceChatConfig config) : base(capi)
+        public VoiceLevelIcon(ICoreClientAPI capi, MicrophoneManager microphoneManager) : base(capi)
         {
-            this._config = config;
-            microphoneManager.VoiceLevelUpdated += OnVoiceLevelUpdated;
             currentVoiceLevel = microphoneManager.GetVoiceLevel();
+
+            microphoneManager.VoiceLevelUpdated += OnVoiceLevelUpdated;
+            ModConfig.ConfigUpdated += bindToMainThread(OnConfigUpdate);
         }
 
         public override void OnOwnPlayerDataReceived()
@@ -40,27 +39,38 @@ namespace RPVoiceChat
             SetupIcon();
         }
 
+        private Action bindToMainThread(Action function)
+        {
+            return () => { capi.Event.EnqueueMainThreadTask(function, "rpvoicechat:VoiceLevelIcon"); };
+        }
+
         private void OnVoiceLevelUpdated(VoiceLevel voiceLevel)
         {
             currentVoiceLevel = voiceLevel;
-            capi.Event.EnqueueMainThreadTask(SetupIcon, "rpvoicechat:VoiceLevelIcon");
+            bindToMainThread(SetupIcon)();
+        }
+
+        private void OnConfigUpdate()
+        {
+            SetupIcon();
+        }
+
+        private void UpdateDisplay()
+        {
+            bool shouldDisplay = ModConfig.Config.IsHUDShown;
+            bool successful = shouldDisplay ? TryOpen() : TryClose();
+
+            if (!successful) bindToMainThread(UpdateDisplay)();
         }
 
         public void SetupIcon()
         {
-            if(!_config.IsHUDShown)
-            {
-                TryClose();
-                return;
-            }
-
-
             string voiceLevel = textureNameByVoiceLevel[currentVoiceLevel];
             SingleComposer = capi.Gui.CreateCompo("rpvcvoicelevelicon", dialogBounds)
                 .AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation("rpvoicechat", $"textures/gui/{voiceLevel}.png"))
                 .Compose();
 
-            TryOpen();
+            UpdateDisplay();
         }
     }
 }

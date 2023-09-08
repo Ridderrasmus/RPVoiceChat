@@ -340,12 +340,6 @@ namespace RPVoiceChat.Audio
             return voiceLevel;
         }
 
-        public void SetVoiceLevel(VoiceLevel level)
-        {
-            voiceLevel = level;
-            VoiceLevelUpdated?.Invoke(voiceLevel);
-        }
-
         public VoiceLevel GetVoiceLevel()
         {
             return voiceLevel;

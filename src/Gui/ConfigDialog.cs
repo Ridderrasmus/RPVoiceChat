@@ -245,7 +245,6 @@ namespace RPVoiceChat
         {
             _config.IsHUDShown = enabled;
             ModConfig.Save(capi);
-            _audioInputManager.SetVoiceLevel(_audioInputManager.GetVoiceLevel());
         }
 
         protected void OnToggleLoopback(bool enabled)
