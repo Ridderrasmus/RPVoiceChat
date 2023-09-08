@@ -9,7 +9,7 @@ namespace RPVoiceChat.Audio
     public class PlayerListener
     {
         private ICoreClientAPI capi;
-        private float gain = 1;
+        private float gain;
 
         public PlayerListener(ICoreClientAPI api)
         {
