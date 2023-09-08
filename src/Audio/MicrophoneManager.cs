@@ -16,7 +16,7 @@ namespace RPVoiceChat.Audio
         public ALFormat InputFormat { get; private set; }
         private ALFormat OutputFormat = ALFormat.Mono16;
         private int BufferSize = (int)(Frequency * 0.5);
-        private float gain = 1;
+        private float gain;
         private int channelCount;
         private const byte SampleToByte = 2;
         private double MaxInputThreshold;
