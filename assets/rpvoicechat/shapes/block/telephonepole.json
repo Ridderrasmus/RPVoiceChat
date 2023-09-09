@@ -8,9 +8,9 @@
 	"textureSizes": {
 	},
 	"textures": {
-		"quartzglass": "block/glass/quartzglass",
-		"copper": "block/metal/ingot/copper",
-		"silversolder": "block/metal/ingot/silversolder"
+		"quartzglass": "game:block/glass/quartzglass",
+		"copper": "game:block/metal/ingot/copper",
+		"silversolder": "game:block/metal/ingot/silversolder"
 	},
 	"elements": [
 		{

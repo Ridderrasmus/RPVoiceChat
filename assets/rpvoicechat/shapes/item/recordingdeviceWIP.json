@@ -18,11 +18,11 @@
 		"frame": [16,16]
 	},
 	"textures": {
-		"quartzglass": "block/glass/quartzglass",
-		"vinegar": "block/liquid/vinegar",
-		"steel12": "block/metal/sheet-plain/steel1",
-		"cupronickel1": "block/metal/sheet/cupronickel1",
-		"rusty-iron": "block/metal/tarnished/rusty-iron"
+		"quartzglass": "game:block/glass/quartzglass",
+		"vinegar": "game:block/liquid/vinegar",
+		"steel12": "game:block/metal/sheet-plain/steel1",
+		"cupronickel1": "game:block/metal/sheet/cupronickel1",
+		"rusty-iron": "game:block/metal/tarnished/rusty-iron"
 	},
 	"elements": [
 		{

@@ -18,14 +18,14 @@
 		"lead": [16,16]
 	},
 	"textures": {
-		"red": "block/liquid/dye/red",
-		"copper": "block/metal/ingot/copper",
-		"lead": "block/metal/ingot/lead",
-		"silversolder": "block/metal/ingot/silversolder",
-		"steel": "block/metal/ingot/steel",
-		"gold": "block/metal/tarnished/gold",
-		"basalt1": "block/stone/cobblestone/basalt1",
-		"temporalgear": "item/resource/temporalgear"
+		"red": "game:block/liquid/dye/red",
+		"copper": "game:block/metal/ingot/copper",
+		"lead": "game:block/metal/ingot/lead",
+		"silversolder": "game:block/metal/ingot/silversolder",
+		"steel": "game:block/metal/ingot/steel",
+		"gold": "game:block/metal/tarnished/gold",
+		"basalt1": "game:block/stone/cobblestone/basalt1",
+		"temporalgear": "game:item/resource/temporalgear"
 	},
 	"elements": [
 		{

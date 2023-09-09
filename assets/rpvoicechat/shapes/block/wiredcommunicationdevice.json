@@ -8,12 +8,12 @@
 	"textureSizes": {
 	},
 	"textures": {
-		"plain": "block/leather/plain",
-		"lead": "block/metal/ingot/lead",
-		"steel": "block/metal/ingot/steel",
-		"gold": "block/metal/tarnished/gold",
-		"rusty-iron": "block/metal/tarnished/rusty-iron",
-		"basalt1": "block/stone/cobblestone/basalt1"
+		"plain": "game:block/leather/plain",
+		"lead": "game:block/metal/ingot/lead",
+		"steel": "game:block/metal/ingot/steel",
+		"gold": "game:block/metal/tarnished/gold",
+		"rusty-iron": "game:block/metal/tarnished/rusty-iron",
+		"basalt1": "game:block/stone/cobblestone/basalt1"
 	},
 	"elements": [
 		{

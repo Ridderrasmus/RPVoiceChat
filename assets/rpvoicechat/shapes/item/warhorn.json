@@ -8,7 +8,7 @@
 	"textureSizes": {
 	},
 	"textures": {
-		"sheep-bighorn-male": "C:/Users/Admin/AppData/Roaming/Vintagestory/assets/survival/textures/entity/sheep/sheep-bighorn-male"
+		"sheep-bighorn-male": "game:entity/sheep/sheep-bighorn-male"
 	},
 	"elements": [
 		{
