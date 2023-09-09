@@ -53,11 +53,24 @@
 
 <ItemGroup>
   <Content Include="assets\**">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
   </Content>
+  <None Remove="assets\rpvoicechat\blocktypes\claymold\royalhornheadmold.json" />
+  <None Remove="assets\rpvoicechat\recipes\clayforming\royalhornhead.json" />
+  <None Remove="assets\rpvoicechat\recipes\grid\royalhornheadtemp.json" />
+  <None Remove="assets\rpvoicechat\recipes\smithing\royalhornhandle.json" />
+  <None Remove="assets\rpvoicechat\shapes\block\clay\mold\hornhead.json" />
   <Content Include="modinfo.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </Content>
 </ItemGroup>
+
+<ItemGroup>
+  <PackageReference Include="Concentus" Version="1.1.7" />
+</ItemGroup>
+
+<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+  <Exec Command="rmdir -r $(ProjectDir)bin\$(Configuration)\Mods\mod" />
+</Target>
 
 </Project>

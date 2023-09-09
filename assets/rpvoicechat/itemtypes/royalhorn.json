@@ -1,0 +1,13 @@
+{
+  "code": "royalhorn",
+  "enabled": true,
+  "maxstacksize": 1,
+  "creativeinventory": {
+    "general": [ "*" ],
+    "items": [ "*" ],
+    "tools": [ "*" ]
+  },
+  "shape": {
+    "base": "item/royalhorn"
+  }
+}

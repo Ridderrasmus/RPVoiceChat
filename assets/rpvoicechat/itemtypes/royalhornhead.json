@@ -1,0 +1,12 @@
+{
+  "code": "royalhornhead",
+  "enabled": true,
+  "maxstacksize": 1,
+  "creativeinventory": {
+    "general": [ "*" ],
+    "items": [ "*" ]
+  },
+  "shape": {
+    "base": "item/royalhornhead"
+  }
+}
