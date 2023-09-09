@@ -41,7 +41,7 @@ namespace RPVoiceChat
             {
                 Logger.client.Error($"Couldn't encode audio:\n{e}");
             }
-            
+
             return encoded;
         }
 
@@ -52,6 +52,7 @@ namespace RPVoiceChat
             int decodedLength = decoder.Decode(encodedData, 0, encodedData.Length, decodedData, 0, frameSize, false);
             short[] decoded = new short[decodedLength];
             Array.Copy(decodedData, decoded, decodedLength);
+
             return ToBytes(decoded);
         }
 

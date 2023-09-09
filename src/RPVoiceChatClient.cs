@@ -1,6 +1,7 @@
-﻿using Concentus.Structs;
+using RPVoiceChat.Audio;
 using RPVoiceChat.Client;
 using RPVoiceChat.Networking;
+using System;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
@@ -30,7 +31,8 @@ namespace RPVoiceChat
         {
             capi = api;
 
-            // Init microphone, audio output and harmony patch managers
+            // Init audio context, microphone, audio output and harmony patch managers
+            OALW.InitContext();
             micManager = new MicrophoneManager(capi);
             audioOutputManager = new AudioOutputManager(capi);
             patchManager = new PatchManager(modID);
@@ -45,7 +47,7 @@ namespace RPVoiceChat
             // Initialize gui
             configGui = new MainConfig(capi, micManager, audioOutputManager);
             capi.Gui.RegisterDialog(new SpeechIndicator(capi, micManager));
-            capi.Gui.RegisterDialog(new VoiceLevelIcon(capi, micManager, config));
+            capi.Gui.RegisterDialog(new VoiceLevelIcon(capi, micManager));
 
             // Set up keybinds
             capi.Input.RegisterHotKey("voicechatMenu", "RPVoice: Config menu", GlKeys.P, HotkeyType.GUIOrOtherControls);
@@ -118,17 +120,13 @@ namespace RPVoiceChat
             audioOutputManager.HandleAudioPacket(packet);
         }
 
-        private void OnBufferRecorded(byte[] buffer, int length, VoiceLevel voiceLevel)
+        private void OnBufferRecorded(AudioData audioData)
         {
-            if (buffer == null) return;
+            if (audioData.data == null) return;
 
-            AudioPacket packet = new AudioPacket()
-            {
-                PlayerId = capi.World.Player.PlayerUID,
-                AudioData = buffer,
-                Length = length,
-                VoiceLevel = voiceLevel
-            };
+            string sender = capi.World.Player.PlayerUID;
+            var sequenceNumber = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            AudioPacket packet = new AudioPacket(sender, audioData, sequenceNumber);
             audioOutputManager.HandleLoopback(packet);
             client.SendAudioToServer(packet);
         }

@@ -6,7 +6,7 @@ using Vintagestory.API.Common;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
 
-namespace RPVoiceChat
+namespace RPVoiceChat.Audio
 {
     public class AudioOutputManager
     {
@@ -37,12 +37,14 @@ namespace RPVoiceChat
         public EffectsExtension EffectsExtension;
         private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
         private PlayerAudioSource localPlayerAudioSource;
+        private PlayerListener listener;
 
         public AudioOutputManager(ICoreClientAPI api)
         {
             _config = ModConfig.Config;
             IsLoopbackEnabled = _config.IsLoopbackEnabled;
             capi = api;
+            listener = new PlayerListener(api);
 
             EffectsExtension = new EffectsExtension();
         }
@@ -64,6 +66,13 @@ namespace RPVoiceChat
             {
                 PlayerAudioSource source;
                 string playerId = packet.PlayerId;
+                AudioData audioData = new AudioData(packet);
+
+                if (audioData.data.Length != packet.Length)
+                {
+                    Logger.client.Debug("Audio packet payload has invalid length, dropping packet");
+                    return;
+                }
 
                 if (!playerSources.TryGetValue(playerId, out source))
                 {
@@ -85,7 +94,7 @@ namespace RPVoiceChat
                 if (source.voiceLevel != packet.VoiceLevel)
                     source.UpdateVoiceLevel(packet.VoiceLevel);
                 source.UpdatePlayer();
-                source.QueueAudio(packet.AudioData, packet.Length);
+                source.EnqueueAudio(audioData, packet.SequenceNumber);
             });
         }
 
@@ -93,17 +102,17 @@ namespace RPVoiceChat
         {
             if (!IsLoopbackEnabled) return;
 
+            AudioData audioData = new AudioData(packet);
+
             localPlayerAudioSource.UpdatePlayer();
-            localPlayerAudioSource.QueueAudio(packet.AudioData, packet.Length);
+            localPlayerAudioSource.EnqueueAudio(audioData, packet.SequenceNumber);
         }
 
         public void ClientLoaded()
         {
             localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, this, capi)
             {
-                IsMuffled = false,
-                IsReverberated = false,
-                IsLocational = false
+                IsLocational = false,
             };
 
             if (!isLoopbackEnabled) return;
@@ -116,9 +125,7 @@ namespace RPVoiceChat
 
             var playerSource = new PlayerAudioSource(player, this, capi)
             {
-                IsMuffled = false,
-                IsReverberated = false,
-                IsLocational = true
+                IsLocational = true,
             };
 
             if (playerSources.TryAdd(player.PlayerUID, playerSource) == false)
