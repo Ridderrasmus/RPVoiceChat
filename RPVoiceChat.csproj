@@ -60,6 +60,7 @@
   <None Remove="assets\rpvoicechat\recipes\grid\royalhornheadtemp.json" />
   <None Remove="assets\rpvoicechat\recipes\smithing\royalhornhandle.json" />
   <None Remove="assets\rpvoicechat\shapes\block\clay\mold\hornhead.json" />
+  <None Remove="assets\rpvoicechat\sounds\item\royalhorn\royalhorn.ogg" />
   <Content Include="modinfo.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </Content>
