@@ -1,5 +1,6 @@
 {
   "code": "royalhorn",
+  "class": "soundemittingitem",
   "enabled": true,
   "maxstacksize": 1,
   "creativeinventory": {
@@ -9,5 +10,13 @@
   },
   "shape": {
     "base": "item/royalhorn"
+  },
+  "attributes": {
+    "soundAudibleDistance": 16,
+    "soundVolume": 0.6,
+    "rightClickSounds": [
+      "item/royalhorn/royalhorn"
+
+    ]
   }
 }
