@@ -114,9 +114,7 @@ namespace RPVoiceChat.Audio
         {
             localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, this, capi)
             {
-                IsMuffled = false,
-                IsReverberated = false,
-                IsLocational = false
+                IsLocational = false,
             };
 
             if (!isLoopbackEnabled) return;
@@ -129,9 +127,7 @@ namespace RPVoiceChat.Audio
 
             var playerSource = new PlayerAudioSource(player, this, capi)
             {
-                IsMuffled = false,
-                IsReverberated = false,
-                IsLocational = true
+                IsLocational = true,
             };
 
             if (playerSources.TryAdd(player.PlayerUID, playerSource) == false)
