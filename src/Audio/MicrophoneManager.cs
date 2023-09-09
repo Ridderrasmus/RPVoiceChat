@@ -13,7 +13,7 @@ namespace RPVoiceChat.Audio
 {
     public class MicrophoneManager : IDisposable
     {
-        public static int Frequency = 24000;
+        public static int Frequency = 48000;
         public ALFormat InputFormat { get; private set; }
         private ALFormat OutputFormat;
         private int BufferSize = (int)(Frequency * 0.5);
