@@ -15,6 +15,7 @@
   "attributes": {
     "soundAudibleDistance": 16,
     "soundVolume": 0.6,
+    "cooldownTime": 2,
     "rightClickSounds": [
       "item/handbell/handbell_ring_1",
       "item/handbell/handbell_ring_2",

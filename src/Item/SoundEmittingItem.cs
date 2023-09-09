@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
+using Vintagestory.GameContent;
 
 namespace RPVoiceChat
 {
@@ -12,13 +13,21 @@ namespace RPVoiceChat
 
         protected int AudibleDistance = 16;
         protected float Volume = 0.6f;
+        protected int CooldownTime = 2;
+
+        private bool isUsable = true;
+        private int time = 0;
+
+        private long cooldownThreadID = 0;
 
         public override void OnLoaded(ICoreAPI api)
         {
+            this.api = api;
             base.OnLoaded(api);
 
-            AudibleDistance = (int)(Attributes?["soundAudibleDistance"].AsInt(0));
-            Volume = (float)(Attributes?["soundVolume"].AsFloat(0f));
+            AudibleDistance = (int)(Attributes?["soundAudibleDistance"].AsInt(AudibleDistance));
+            Volume = (float)(Attributes?["soundVolume"].AsFloat(Volume));
+            CooldownTime = (int)(Attributes?["cooldownTime"].AsInt(CooldownTime));
         }
 
 
@@ -30,12 +39,8 @@ namespace RPVoiceChat
             if (!world.Side.IsServer()) return;
 
 
-            string[] attackSounds = slot.Itemstack.Item.Attributes?["attackSounds"].AsArray<string>(new string[0]);
-
-            if (attackSounds == null || attackSounds.Length == 0) return;
-
-            string sound = attackSounds[Random.Next(attackSounds.Length)];
-            world.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/" + sound + ".ogg"), byEntity, null, false, AudibleDistance, Volume);
+            if (byEntity is EntityPlayer)
+                PlaySound("rightClickSounds", byEntity.World.PlayerByUid((byEntity as EntityPlayer).PlayerUID));
         }
 
         // When a block is broken with this item
@@ -44,13 +49,8 @@ namespace RPVoiceChat
         {
             if (!world.Side.IsServer()) return base.OnBlockBrokenWith(world, byEntity, slot, blockSel, dropQuantityMultiplier);
 
-            string[] breakBlockSounds = slot.Itemstack.Item.Attributes?["breakBlockSounds"].AsArray<string>(new string[0]);
-
-            if (breakBlockSounds == null || breakBlockSounds.Length == 0) return base.OnBlockBrokenWith(world, byEntity, slot, blockSel, dropQuantityMultiplier);
-
-            string sound = breakBlockSounds[Random.Next(breakBlockSounds.Length)];
-
-            world.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/" + sound + ".ogg"), byEntity, null, false, AudibleDistance, Volume);
+            if (byEntity is EntityPlayer)
+                PlaySound("breakBlockSounds", byEntity.World.PlayerByUid((byEntity as EntityPlayer).PlayerUID));
 
             return base.OnBlockBrokenWith(world, byEntity, slot, blockSel, dropQuantityMultiplier);
         }
@@ -60,16 +60,8 @@ namespace RPVoiceChat
             IWorldAccessor world = byEntity.World;
             if (!world.Side.IsServer()) return;
 
-            string[] rightClickSounds = slot.Itemstack.Item.Attributes?["rightClickSounds"].AsArray<string>(new string[0]);
-            
-            if (rightClickSounds == null || rightClickSounds.Length == 0) return;
-
-            string sound = rightClickSounds[Random.Next(rightClickSounds.Length)];
-
-            IPlayer byPlayer = null;
-            if (byEntity is EntityPlayer) byPlayer = byEntity.World.PlayerByUid((byEntity as EntityPlayer).PlayerUID);
-
-            byPlayer.Entity.World.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/" + sound + ".ogg"), byEntity, null, false, AudibleDistance, Volume);
+            if (byEntity is EntityPlayer)
+                PlaySound("rightClickSounds", byEntity.World.PlayerByUid((byEntity as EntityPlayer).PlayerUID));
         }
 
         public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handling)
@@ -85,6 +77,52 @@ namespace RPVoiceChat
         public override bool OnHeldInteractStep(float secondsUsed, ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel)
         {
             return true;
+        }
+
+        private void PlaySound(string soundSource, IPlayer player)
+        {
+            PlaySound(soundSource, player, false);
+        }
+
+        private void PlaySound(string soundSource, IPlayer player, bool dualCall)
+        {
+            if (!isUsable) return;
+            isUsable = false;
+
+            if (player == null) return;
+
+            string[] soundList = Attributes?[soundSource].AsArray<string>(new string[0]);
+
+            if (soundList == null || soundList.Length == 0) return;
+
+            string sound = soundList[Random.Next(soundList.Length)];
+
+            if (dualCall)
+                player.Entity.World.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/" + sound + ".ogg"), player, player, false, AudibleDistance, Volume);
+            else
+                player.Entity.World.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/" + sound + ".ogg"), player, null, false, AudibleDistance, Volume);
+
+            StartCountdown();
+        }
+
+
+        private void StartCountdown()
+        {
+            if (cooldownThreadID == 0)
+                cooldownThreadID = api.Event.RegisterGameTickListener(Cooldown, 1000);
+        }
+
+        private void Cooldown(float dt)
+        {
+            time++;
+
+            if (time >= CooldownTime || time < 0)
+            {
+                api.Event.UnregisterGameTickListener(cooldownThreadID);
+                cooldownThreadID = 0;
+                time = 0;
+                isUsable = true;
+            }
         }
     }
 }
