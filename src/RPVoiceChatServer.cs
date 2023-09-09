@@ -29,7 +29,6 @@ namespace RPVoiceChat
             registerCommands();
         }
 
-
         public override bool ShouldLoad(EnumAppSide forSide)
         {
             return forSide == EnumAppSide.Server;

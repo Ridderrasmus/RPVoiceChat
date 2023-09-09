@@ -5,7 +5,6 @@ using OpenTK.Audio.OpenAL;
 using Vintagestory.API.Common;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
-using Concentus.Structs;
 
 namespace RPVoiceChat
 {
@@ -86,23 +85,7 @@ namespace RPVoiceChat
                 if (source.voiceLevel != packet.VoiceLevel)
                     source.UpdateVoiceLevel(packet.VoiceLevel);
                 source.UpdatePlayer();
-
-                // Decode the audio data
-                short[] audio = OpusHandler.Decode(packet.AudioData);
-
-                // Convert the audio data to a byte array
-                byte[] byteBuffer = new byte[audio.Length * 2];
-                for (int i = 0; i < audio.Length; i++)
-                {
-                    short val = (short)(audio[i] * short.MaxValue);
-                    byteBuffer[i * 2] = (byte)(val & 0xFF);
-                    byteBuffer[i * 2 + 1] = (byte)(val >> 8);
-                }
-
-                Logger.client.Debug($"Received audio packet with length {byteBuffer.Length} it looks like: {byteBuffer.ToString()}");
-
-                // Queue the audio data
-                source.QueueAudio(byteBuffer, byteBuffer.Length);
+                source.QueueAudio(packet.AudioData, packet.Length);
             });
         }
 

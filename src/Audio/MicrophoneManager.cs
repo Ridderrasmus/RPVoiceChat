@@ -7,8 +7,7 @@ using OpenTK.Audio;
 using OpenTK.Audio.OpenAL;
 using System.Collections.Generic;
 using RPVoiceChat.Utils;
-using Concentus.Structs;
-using Concentus.Enums;
+using RPVoiceChat.Audio;
 
 namespace RPVoiceChat
 {
@@ -31,6 +30,7 @@ namespace RPVoiceChat
         readonly ICoreClientAPI capi;
 
         private AudioCapture capture;
+        private IAudioCodec codec;
         private RPVoiceChatConfig config;
         private ConcurrentQueue<AudioData> audioDataQueue = new ConcurrentQueue<AudioData>();
         private Thread audioProcessingThread;
@@ -68,6 +68,7 @@ namespace RPVoiceChat
             SetThreshold(config.InputThreshold);
 
             capture = CreateNewCapture(config.CurrentInputDevice);
+            codec = new OpusCodec(Frequency, channelCount);
         }
 
         public void Launch()
@@ -160,17 +161,7 @@ namespace RPVoiceChat
             var numSamples = monoSamplesCount / SampleToByte;
             var amplitude = Math.Sqrt(sampleSquareSum / numSamples);
 
-            byte[] opusEncodedAudio;
-
-            try
-            {
-                opusEncodedAudio = OpusHandler.Encode(monoSamples);
-            }
-            catch
-            {
-                Logger.client.Error("Couldn't encode audio");
-                opusEncodedAudio = new byte[0];
-            }
+            byte[] opusEncodedAudio = codec.Encode(monoSamples);
 
             return new AudioData()
             {
