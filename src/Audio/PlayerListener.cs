@@ -1,45 +1,36 @@
-﻿using Vintagestory.API.Common.Entities;
-using Vintagestory.API.MathTools;
+﻿using OpenTK;
+using OpenTK.Audio;
+using OpenTK.Audio.OpenAL;
+using RPVoiceChat.Utils;
+using Vintagestory.API.Client;
 
 namespace RPVoiceChat.Audio
 {
     public class PlayerListener
     {
-        private Vec3d listenerPos;
-        private float facing;
+        private ICoreClientAPI capi;
+        private float gain;
 
-        public PlayerListener(Vec3d listenerPos, float facing)
+        public PlayerListener(ICoreClientAPI api)
         {
-            this.listenerPos = listenerPos;
-            this.facing = facing;
+            capi = api;
+            SetGain(ModConfig.Config.OutputGain);
+
+            ModConfig.ConfigUpdated += OnConfigUpdate;
         }
 
-        public PlayerListener(EntityPos pos)
+        public void SetGain(float newGain)
         {
-            this.listenerPos.Set(pos.X, pos.Y, pos.Z);
-            this.facing = pos.Yaw + pos.HeadYaw;
+            newGain /= 100f;
+            if (newGain == gain) return;
+
+            gain = newGain;
+            OALW.Listener(ALListenerf.Gain, gain);
         }
 
-        public void UpdateListener(Vec3d listenerPos, float facing)
+        private void OnConfigUpdate()
         {
-            this.listenerPos.Set(listenerPos);
-            this.facing = facing;
-        }
-
-        public void UpdateListener(EntityPos pos)
-        {
-            this.listenerPos.Set(pos.X, pos.Y, pos.Z);
-            this.facing = pos.Yaw + pos.HeadYaw;
-        }
-
-        public Vec3d GetListenerPos()
-        {
-            return listenerPos;
-        }
-
-        public float GetFacing()
-        {
-            return facing;
+            SetGain(ModConfig.Config.OutputGain);
         }
     }
 }

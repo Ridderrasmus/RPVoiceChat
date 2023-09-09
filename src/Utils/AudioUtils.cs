@@ -1,6 +1,4 @@
-﻿using OpenTK.Audio.OpenAL;
-
-namespace RPVoiceChat.Utils
+﻿namespace RPVoiceChat.Utils
 {
     public class AudioUtils
     {
@@ -51,19 +49,5 @@ namespace RPVoiceChat.Utils
 
         //    return filteredAudioData;
         //}
-    }
-
-    public class Util
-    {
-        public static void CheckError(string Value, ALError ignoredErrors = ALError.NoError)
-        {
-            var error = AL.GetError();
-            if (error == ALError.NoError) return;
-
-            if (ignoredErrors == error)
-                return;
-
-            Logger.client.Error("{0} {1}", Value, AL.GetErrorString(error));
-        }
     }
 }

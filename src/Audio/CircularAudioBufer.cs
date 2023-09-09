@@ -18,8 +18,7 @@ namespace RPVoiceChat.Audio
         public CircularAudioBuffer(int source, int bufferCount)
         {
             this.source = source;
-            buffers = AL.GenBuffers(bufferCount);
-            Util.CheckError("Error gen buffers");
+            buffers = OALW.GenBuffers(bufferCount);
             availableBuffers.AddRange(buffers);
 
             dequeueAudioThread = new Thread(DequeueAudio);
@@ -37,10 +36,13 @@ namespace RPVoiceChat.Audio
 
             var currentBuffer = availableBuffers.PopOne();
 
-            AL.BufferData(currentBuffer, format, audio, length, frequency);
-            Util.CheckError("Error buffer data");
-            AL.SourceQueueBuffer(source, currentBuffer);
-            Util.CheckError("Error SourceQueueBuffer");
+            OALW.ExecuteInContext(() =>
+            {
+                AL.BufferData(currentBuffer, format, audio, length, frequency);
+                OALW.CheckError("Error buffer data");
+                AL.SourceQueueBuffer(source, currentBuffer);
+                OALW.CheckError("Error SourceQueueBuffer");
+            });
             queuedBuffers.Add(currentBuffer);
         }
 
@@ -57,20 +59,24 @@ namespace RPVoiceChat.Audio
         {
             if (queuedBuffers.Count == 0) return;
 
-            AL.GetSource(source, ALGetSourcei.BuffersProcessed, out var buffersProcessed);
-            if (buffersProcessed == 0) return;
-
-            var processedBuffers = queuedBuffers.GetRange(0, buffersProcessed);
-            AL.SourceUnqueueBuffers(source, buffersProcessed, processedBuffers.ToArray());
-            Util.CheckError("Error SourceUnqueueBuffer", ALError.InvalidValue);
-            queuedBuffers.RemoveRange(0, buffersProcessed);
-            availableBuffers.AddRange(processedBuffers);
+            OALW.ExecuteInContext(() =>
+            {
+                var buffer = AL.SourceUnqueueBuffer(source);
+                OALW.CheckError("Error SourceUnqueueBuffer", ALError.InvalidValue);
+                while (buffer != 0)
+                {
+                    queuedBuffers.Remove(buffer);
+                    availableBuffers.Add(buffer);
+                    buffer = AL.SourceUnqueueBuffer(source);
+                    OALW.CheckError("Error SourceUnqueueBuffer", ALError.InvalidValue);
+                }
+            });
         }
 
         public void Dispose()
         {
             dequeueAudioThread?.Abort();
-            AL.DeleteBuffers(buffers);
+            OALW.DeleteBuffers(buffers);
         }
     }
 }
