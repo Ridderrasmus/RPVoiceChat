@@ -15,10 +15,11 @@ namespace RPVoiceChat.Audio
     {
         public static int Frequency = 24000;
         public ALFormat InputFormat { get; private set; }
-        private ALFormat OutputFormat = ALFormat.Mono16;
+        private ALFormat OutputFormat;
         private int BufferSize = (int)(Frequency * 0.5);
         private float gain;
-        private int channelCount;
+        private int InputChannelCount;
+        private int OutputChannelCount;
         private const byte SampleToByte = 2;
         private double MaxInputThreshold;
         readonly ICoreClientAPI capi;
@@ -59,7 +60,7 @@ namespace RPVoiceChat.Audio
             SetGain(config.InputGain);
 
             capture = CreateNewCapture(config.CurrentInputDevice);
-            codec = new OpusCodec(Frequency, channelCount);
+            codec = CreateNewCodec(ALFormat.Mono16);
         }
 
         public void Launch()
@@ -107,16 +108,15 @@ namespace RPVoiceChat.Audio
                 return;
 
             int samplesAvailable = capture.AvailableSamples;
-            int bufferLength = samplesAvailable * SampleToByte * channelCount;
-            if (samplesAvailable <= 0) return;
+            int frameSize = codec.GetFrameSize();
+            int samplesToRead = samplesAvailable - samplesAvailable % frameSize;
 
-            // because we would have to copy, its actually faster to just allocate each time here.
+            int bufferLength = samplesToRead * SampleToByte * InputChannelCount;
+            if (samplesToRead <= 0) return;
+
             var sampleBuffer = new byte[bufferLength];
-            capture.ReadSamples(sampleBuffer, samplesAvailable);
+            capture.ReadSamples(sampleBuffer, samplesToRead);
 
-            // this adds some latency and cpu time to our clients, however, it allows for processing to be done before
-            // we send off the data. It also ensure that the packets arrive in order, if we just used Task.Run()
-            // we are not guaranteed an order of the packets finishing
             AudioData data = PreprocessRawAudio(sampleBuffer);
             audioDataQueue.Enqueue(data);
         }
@@ -126,38 +126,36 @@ namespace RPVoiceChat.Audio
         /// </summary>
         private AudioData PreprocessRawAudio(byte[] rawSamples)
         {
-            var monoSamplesCount = rawSamples.Length / channelCount;
-            short[] monoSamples = new short[monoSamplesCount];
+            var rawSampleSize = SampleToByte * InputChannelCount;
+            var pcmCount = rawSamples.Length / rawSampleSize;
+            short[] pcms = new short[pcmCount];
 
-            var rawSampleSize = SampleToByte * channelCount;
-            var monoSampleSize = SampleToByte;
             double sampleSquareSum = 0;
 
             for (var rawSampleIndex = 0; rawSampleIndex < rawSamples.Length; rawSampleIndex += rawSampleSize)
             {
-                double monoSample = 0;
+                double pcm = 0;
 
                 int[] usedChannels = DetectAudioChannels(rawSamples);
-                for (var channelIndex = 0; channelIndex < channelCount; channelIndex++)
+                for (var channelIndex = 0; channelIndex < InputChannelCount; channelIndex++)
                 {
                     if (!usedChannels.Contains(channelIndex)) continue;
-                    var sampleIndex = rawSampleIndex + channelIndex * monoSampleSize;
+                    var sampleIndex = rawSampleIndex + channelIndex * SampleToByte;
                     var sample = BitConverter.ToInt16(rawSamples, sampleIndex);
-                    monoSample += sample;
+                    pcm += sample;
                 }
-                monoSample = monoSample / usedChannels.Length;
-                monoSample = monoSample * gain;
+                pcm = pcm / usedChannels.Length;
+                pcm = pcm * gain;
 
-                var monoSampleIndex = rawSampleIndex / rawSampleSize;
-                monoSamples[monoSampleIndex] = (short)monoSample;
+                var pcmIndex = rawSampleIndex / rawSampleSize;
+                pcms[pcmIndex] = (short)pcm;
 
-                sampleSquareSum += Math.Pow(monoSample / short.MaxValue, 2);
+                sampleSquareSum += Math.Pow(pcm / short.MaxValue, 2);
             }
 
-            var numSamples = monoSamplesCount / SampleToByte;
-            var amplitude = Math.Sqrt(sampleSquareSum / numSamples);
+            var amplitude = Math.Sqrt(sampleSquareSum / pcmCount);
 
-            byte[] opusEncodedAudio = codec.Encode(monoSamples);
+            byte[] opusEncodedAudio = codec.Encode(pcms);
 
             return new AudioData()
             {
@@ -266,6 +264,15 @@ namespace RPVoiceChat.Audio
             return newCapture;
         }
 
+        private IAudioCodec CreateNewCodec(ALFormat outputFormat)
+        {
+            SetOutputFormat(outputFormat);
+
+            var codec = new OpusCodec(Frequency, OutputChannelCount);
+
+            return codec;
+        }
+
         private ALFormat GetDefaultInputFormat()
         {
             var format = ALFormat.Mono16;
@@ -278,19 +285,14 @@ namespace RPVoiceChat.Audio
 
         private void SetInputFormat(ALFormat format)
         {
-            switch (format)
-            {
-                case ALFormat.Mono16:
-                    InputFormat = format;
-                    channelCount = 1;
-                    break;
-                case ALFormat.MultiQuad16Ext:
-                    InputFormat = format;
-                    channelCount = 4;
-                    break;
-                default:
-                    throw new NotSupportedException($"Format {format} is not supported for capture");
-            }
+            InputFormat = format;
+            InputChannelCount = AudioUtils.ChannelsPerFormat(format);
+        }
+
+        private void SetOutputFormat(ALFormat format)
+        {
+            OutputFormat = format;
+            OutputChannelCount = AudioUtils.ChannelsPerFormat(format);
         }
 
         /// <summary>
@@ -303,14 +305,14 @@ namespace RPVoiceChat.Audio
         {
             const int depth = 10;
             List<int> usedChannels = new List<int>();
-            var sampleSums = new int[channelCount];
+            var sampleSums = new int[InputChannelCount];
 
-            var rawSampleSize = SampleToByte * channelCount;
+            var rawSampleSize = SampleToByte * InputChannelCount;
             int monoSampleSize = SampleToByte;
 
             for (var rawSampleIndex = 0; rawSampleIndex < rawSampleSize*depth; rawSampleIndex += rawSampleSize)
             {
-                for (var channelIndex = 0; channelIndex < channelCount; channelIndex++)
+                for (var channelIndex = 0; channelIndex < InputChannelCount; channelIndex++)
                 {
                     var sampleIndex = rawSampleIndex + channelIndex * monoSampleSize;
                     int sample = BitConverter.ToInt16(rawSamples, sampleIndex);
@@ -318,7 +320,7 @@ namespace RPVoiceChat.Audio
                 }
             }
 
-            for (var channelIndex = 0; channelIndex < channelCount; channelIndex++)
+            for (var channelIndex = 0; channelIndex < InputChannelCount; channelIndex++)
             {
                 var averageSampleValue = sampleSums[channelIndex] / depth;
                 if (averageSampleValue > 5) usedChannels.Add(channelIndex);

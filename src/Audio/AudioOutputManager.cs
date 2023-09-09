@@ -66,11 +66,12 @@ namespace RPVoiceChat.Audio
             {
                 PlayerAudioSource source;
                 string playerId = packet.PlayerId;
-                AudioData audioData = new AudioData(packet);
+                IAudioCodec codec = new OpusCodec(packet.Frequency, AudioUtils.ChannelsPerFormat(packet.Format));
+                AudioData audioData = AudioData.FromPacket(packet, codec);
 
-                if (audioData.data.Length != packet.Length)
+                if (packet.AudioData.Length != packet.Length)
                 {
-                    Logger.client.Debug("Audio packet payload has invalid length, dropping packet");
+                    Logger.client.Debug("Audio packet payload had invalid length, dropping packet");
                     return;
                 }
 
@@ -102,7 +103,8 @@ namespace RPVoiceChat.Audio
         {
             if (!IsLoopbackEnabled) return;
 
-            AudioData audioData = new AudioData(packet);
+            IAudioCodec codec = new OpusCodec(packet.Frequency, AudioUtils.ChannelsPerFormat(packet.Format));
+            AudioData audioData = AudioData.FromPacket(packet, codec);
 
             localPlayerAudioSource.UpdatePlayer();
             localPlayerAudioSource.EnqueueAudio(audioData, packet.SequenceNumber);
