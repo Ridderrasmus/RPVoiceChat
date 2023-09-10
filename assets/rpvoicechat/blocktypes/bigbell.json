@@ -1,0 +1,65 @@
+{
+  "code": "bigbell",
+  "class": "soundemittingblock",
+  "creativeinventory": {
+    "general": [ "*" ]
+  },
+  "blockmaterial": "Metal",
+  "drawtype": "json",
+  "shape": {
+    "base": "block/bigbell"
+  },
+  "attributes": {
+    "soundAudibleDistance": 832,
+    "soundVolume": 0.6,
+    "cooldownTime": 6,
+    "blockInteractSounds": [
+      "block/churchbell/bigbell"
+    ]
+  },
+  "rainPermeable": true,
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "lightAbsorption": 0,
+  "collisionbox": {
+    "x1": 1,
+    "y1": 1,
+    "z1": 1,
+    "x2": 1,
+    "y2": 1,
+    "z2": 1
+  },
+  "selectionbox": {
+    "x1": 1,
+    "y1": 1,
+    "z1": 1,
+    "x2": 1,
+    "y2": 1,
+    "z2": 1
+  },
+  "resistance": 1,
+  "sounds": {
+    "place": "game:block/anvil",
+    "walk": "game:walk/stone"
+  },
+  "guiTransform": {
+    "translation": {
+      "x": 0,
+      "y": -30,
+      "z": 0
+    },
+    "scale": 4
+  },
+  "fpHandTransform": {
+    "translation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scale": 4
+  }
+}

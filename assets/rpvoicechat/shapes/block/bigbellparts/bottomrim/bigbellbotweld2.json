@@ -8,9 +8,9 @@
 	"textureSizes": {
 	},
 	"textures": {
-		"lead": "C:/Users/Admin/AppData/Roaming/Vintagestory/assets/survival/textures/block/metal/ingot/lead",
-		"steel": "C:/Users/Admin/AppData/Roaming/Vintagestory/assets/survival/textures/block/metal/ingot/steel",
-		"tin": "C:/Users/Admin/AppData/Roaming/Vintagestory/assets/survival/textures/block/metal/ingot/tin"
+		"lead": "game:block/metal/ingot/lead",
+		"steel": "game:block/metal/ingot/steel",
+		"tin": "game:block/metal/ingot/tin"
 	},
 	"elements": [
 		{
