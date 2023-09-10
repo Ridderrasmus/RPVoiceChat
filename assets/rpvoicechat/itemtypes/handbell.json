@@ -1,6 +1,6 @@
 {
   "code": "handbell",
-  "class": "handbell",
+  "class": "soundemittingitem",
   "enabled": true,
   "maxstacksize": 1,
   "attackpower": 0.3,
@@ -11,5 +11,25 @@
   },
   "shape": {
     "base": "item/handbell"
+  },
+  "attributes": {
+    "soundAudibleDistance": 16,
+    "soundVolume": 0.6,
+    "cooldownTime": 2,
+    "rightClickSounds": [
+      "item/handbell/handbell_ring_1",
+      "item/handbell/handbell_ring_2",
+      "item/handbell/handbell_ring_3"
+    ],
+    "breakBlockSounds": [
+      "item/handbell/handbell_blockbreak_1",
+      "item/handbell/handbell_blockbreak_2",
+      "item/handbell/handbell_blockbreak_3"
+    ],
+    "attackSounds": [
+      "item/handbell/handbell_hit_1",
+      "item/handbell/handbell_hit_2",
+      "item/handbell/handbell_hit_3"
+    ]
   }
 }

@@ -7,7 +7,7 @@ namespace RPVoiceChat
     {
         public static void RegisterItems(ICoreAPI api)
         {
-            api.RegisterItemClass("handbell", typeof(HandbellItem));
+            api.RegisterItemClass("soundemittingitem", typeof(SoundEmittingItem));
             api.RegisterItemClass("handheldradio", typeof(RadioItem));
             api.RegisterItemClass("telegraphwire", typeof(TelegraphWireItem));
         }

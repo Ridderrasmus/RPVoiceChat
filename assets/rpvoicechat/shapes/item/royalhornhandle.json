@@ -1,0 +1,125 @@
+{
+	"editor": {
+		"allAngles": false,
+		"entityTextureMode": false
+	},
+	"textureWidth": 16,
+	"textureHeight": 16,
+	"textureSizes": {
+		"blackbronze": [16,16],
+		"chain-rust": [4,4],
+		"purple": [16,16],
+		"brass": [16,16]
+	},
+	"textures": {
+		"blackbronze": "game:block/metal/ingot/blackbronze",
+		"brass": "game:block/metal/ingot/brass"
+	},
+	"elements": [
+		{
+			"name": "MainBody",
+			"from": [ -6.0, 14.0, 8.0 ],
+			"to": [ 4.0, 15.0, 9.0 ],
+			"rotationOrigin": [ -6.0, 14.0, 8.0 ],
+			"rotationX": -45.0,
+			"faces": {
+				"north": { "texture": "#brass", "uv": [ 3.5, 5.5, 13.5, 6.5 ] },
+				"east": { "texture": "#brass", "uv": [ 0.5, 6.5, 1.5, 7.5 ] },
+				"south": { "texture": "#brass", "uv": [ 2.0, 6.0, 12.0, 7.0 ] },
+				"west": { "texture": "#brass", "uv": [ 4.0, 10.5, 5.0, 11.5 ] },
+				"up": { "texture": "#brass", "uv": [ 4.5, 1.0, 14.5, 2.0 ] },
+				"down": { "texture": "#brass", "uv": [ 2.0, 12.5, 12.0, 13.5 ] }
+			},
+			"children": [
+				{
+					"name": "MainBody3",
+					"from": [ 10.0, -0.1, -0.1 ],
+					"to": [ 17.0, 1.1, 1.1 ],
+					"rotationOrigin": [ 10.0, 0.5, 0.5 ],
+					"faces": {
+						"north": { "texture": "#brass", "uv": [ 0.5, 9.0, 7.5, 10.0 ] },
+						"east": { "texture": "#brass", "uv": [ 6.5, 5.5, 7.5, 6.5 ] },
+						"south": { "texture": "#brass", "uv": [ 3.0, 6.5, 10.0, 7.5 ] },
+						"west": { "texture": "#brass", "uv": [ 6.5, 7.0, 7.5, 8.0 ] },
+						"up": { "texture": "#brass", "uv": [ 6.0, 12.5, 13.0, 13.5 ] },
+						"down": { "texture": "#brass", "uv": [ 4.5, 10.5, 11.5, 11.5 ] }
+					}
+				},
+				{
+					"name": "MainBody4",
+					"from": [ 17.0, -0.2, -0.2 ],
+					"to": [ 28.0, 1.2, 1.2 ],
+					"rotationOrigin": [ 17.0, 0.5, 0.5 ],
+					"faces": {
+						"north": { "texture": "#brass", "uv": [ 4.0, 12.5, 15.0, 13.5 ] },
+						"east": { "texture": "#brass", "uv": [ 8.0, 6.5, 9.0, 7.5 ] },
+						"south": { "texture": "#brass", "uv": [ 0.5, 4.5, 11.5, 5.5 ] },
+						"west": { "texture": "#brass", "uv": [ 0.0, 14.0, 1.0, 15.0 ] },
+						"up": { "texture": "#brass", "uv": [ 2.5, 6.5, 13.5, 7.5 ] },
+						"down": { "texture": "#brass", "uv": [ 4.5, 4.0, 15.5, 5.0 ] }
+					}
+				},
+				{
+					"name": "MainBody5",
+					"from": [ 25.0, -0.3, -0.3 ],
+					"to": [ 28.0, 1.3, 1.3 ],
+					"rotationOrigin": [ 25.0, 0.5, 0.5 ],
+					"faces": {
+						"north": { "texture": "#brass", "uv": [ 2.5, 9.0, 5.5, 10.5 ] },
+						"east": { "texture": "#brass", "uv": [ 8.5, 9.5, 10.0, 11.0 ] },
+						"south": { "texture": "#brass", "uv": [ 8.5, 12.0, 11.5, 13.5 ] },
+						"west": { "texture": "#brass", "uv": [ 6.5, 11.0, 8.0, 12.5 ] },
+						"up": { "texture": "#brass", "uv": [ 3.5, 8.0, 6.5, 9.5 ] },
+						"down": { "texture": "#brass", "uv": [ 4.0, 2.5, 7.0, 4.0 ] }
+					},
+					"children": [
+						{
+							"name": "Cube15",
+							"from": [ 0.0, 0.0, 0.0 ],
+							"to": [ 3.0, 1.6, 1.6 ],
+							"rotationOrigin": [ 0.0, 0.8, 0.8 ],
+							"rotationX": -45.0,
+							"faces": {
+								"north": { "texture": "#brass", "uv": [ 0.0, 8.5, 3.0, 10.0 ] },
+								"east": { "texture": "#brass", "uv": [ 9.0, 0.5, 10.5, 2.0 ] },
+								"south": { "texture": "#brass", "uv": [ 12.5, 3.0, 15.5, 4.5 ] },
+								"west": { "texture": "#brass", "uv": [ 1.5, 1.5, 3.0, 3.0 ] },
+								"up": { "texture": "#brass", "uv": [ 1.5, 2.0, 4.5, 3.5 ] },
+								"down": { "texture": "#brass", "uv": [ 6.0, 4.0, 9.0, 5.5 ] }
+							}
+						}
+					]
+				},
+				{
+					"name": "MainBody2",
+					"from": [ -13.0, 0.1, 0.1 ],
+					"to": [ 0.0, 0.9, 0.9 ],
+					"rotationOrigin": [ -13.0, 0.1, 0.1 ],
+					"faces": {
+						"north": { "texture": "#brass", "uv": [ 2.0, 14.0, 15.0, 14.5 ] },
+						"east": { "texture": "#brass", "uv": [ 11.0, 6.5, 11.5, 7.0 ] },
+						"south": { "texture": "#brass", "uv": [ 1.0, 7.5, 14.0, 8.0 ] },
+						"west": { "texture": "#brass", "uv": [ 0.0, 12.5, 0.5, 13.0 ] },
+						"up": { "texture": "#brass", "uv": [ 0.0, 3.5, 13.0, 4.0 ] },
+						"down": { "texture": "#brass", "uv": [ 1.0, 1.5, 14.0, 2.0 ] }
+					},
+					"children": [
+						{
+							"name": "MouthPiece",
+							"from": [ -0.1, -0.1, -0.1 ],
+							"to": [ 0.4, 0.9, 0.9 ],
+							"rotationOrigin": [ -0.1, -0.1, -0.1 ],
+							"faces": {
+								"north": { "texture": "#blackbronze", "uv": [ 9.5, 0.0, 10.0, 1.0 ] },
+								"east": { "texture": "#blackbronze", "uv": [ 6.5, 8.0, 7.5, 9.0 ] },
+								"south": { "texture": "#blackbronze", "uv": [ 8.0, 11.0, 8.5, 12.0 ] },
+								"west": { "texture": "#blackbronze", "uv": [ 11.0, 4.5, 12.0, 5.5 ] },
+								"up": { "texture": "#blackbronze", "uv": [ 10.5, 11.5, 11.0, 12.5 ] },
+								"down": { "texture": "#blackbronze", "uv": [ 13.0, 12.0, 13.5, 13.0 ] }
+							}
+						}
+					]
+				}
+			]
+		}
+	]}

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -13,6 +14,12 @@ namespace RPVoiceChat.Utils
     public static class LocationUtils
     {
         private static int maxRayTraceDistance = 100;
+        private static string[] transparentBlocks = new string[]
+        {
+            "BlockGroundStorage",
+            "BlockPie",
+            "BlockSupportBeam"
+        };
 
         public static Vec3d GetLocationOfPlayer(ICoreClientAPI api)
         {
@@ -84,8 +91,20 @@ namespace RPVoiceChat.Utils
             float thickness = 0;
             foreach (BlockEntry blockEntry in obstructingBlocks)
             {
+                var blockPos = blockEntry.Item1;
                 var block = blockEntry.Item2;
-                var collisionBoxes = block?.CollisionBoxes ?? new Cuboidf[0];
+                if (transparentBlocks.Contains(block?.Class)) continue;
+
+                var collisionBoxes = new Cuboidf[0];
+                try
+                {
+                    collisionBoxes = block?.GetCollisionBoxes(capi.World.BlockAccessor, blockPos) ?? collisionBoxes;
+                }
+                catch(Exception e)
+                {
+                    Logger.client.Warning($"Couldn't retrieve collision boxes for {block.Class} at {blockPos}:\n{e}");
+                }
+
                 foreach (Cuboidf box in collisionBoxes)
                     thickness += box.Length * box.Height * box.Width;
             }
@@ -94,7 +113,8 @@ namespace RPVoiceChat.Utils
         }
 
         /// <summary>
-        /// Casts a ray between two given positions
+        /// Casts a ray between two given positions <br />
+        /// <b>May be inaccurate as game's API is bugged</b>
         /// </summary>
         /// <returns>Two lists containing blocks and entities intersected by the ray</returns>
         public static RayTraceResults RayTraceThrough(ICoreClientAPI capi, Vec3d from, Vec3d to)
@@ -109,19 +129,26 @@ namespace RPVoiceChat.Utils
                 return !visitedBlocks.Contains(blockEntry);
             };
 
-            for (var i = 0; i < maxRayTraceDistance; i++)
+            try
             {
-                BlockSelection blockSelection = new BlockSelection();
-                EntitySelection entitySelection = new EntitySelection();
-                capi.World.RayTraceForSelection(from, to, ref blockSelection, ref entitySelection, blockFilter, entityFilter);
-
-                if (blockSelection == null && entitySelection == null) break;
-                if (entitySelection?.Entity != null) visitedEntities.Add(entitySelection.Entity);
-                if (blockSelection?.Block != null && blockSelection?.Position is BlockPos)
+                for (var i = 0; i < maxRayTraceDistance; i++)
                 {
-                    var blockEntry = new BlockEntry(blockSelection.Position.Copy(), blockSelection.Block);
-                    visitedBlocks.Add(blockEntry);
+                    BlockSelection blockSelection = new BlockSelection();
+                    EntitySelection entitySelection = new EntitySelection();
+                    capi.World.RayTraceForSelection(from, to, ref blockSelection, ref entitySelection, blockFilter, entityFilter);
+
+                    if (blockSelection == null && entitySelection == null) break;
+                    if (entitySelection?.Entity != null) visitedEntities.Add(entitySelection.Entity);
+                    if (blockSelection?.Block != null && blockSelection?.Position is BlockPos)
+                    {
+                        var blockEntry = new BlockEntry(blockSelection.Position.Copy(), blockSelection.Block);
+                        visitedBlocks.Add(blockEntry);
+                    }
                 }
+            }
+            catch (Exception e)
+            {
+                Logger.client.Error($"Ray trace API threw an exception:\n{e}");
             }
 
             return new RayTraceResults(visitedBlocks, visitedEntities);

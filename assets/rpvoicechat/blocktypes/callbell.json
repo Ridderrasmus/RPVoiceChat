@@ -1,6 +1,6 @@
 {
   "code": "callbell",
-  "class": "callbell",
+  "class": "soundemittingblock",
   "creativeinventory": {
     "general": [ "*" ]
   },
@@ -8,6 +8,16 @@
   "drawtype": "json",
   "shape": {
     "base": "block/callbell"
+  },
+  "attributes": {
+    "soundAudibleDistance": 16,
+    "soundVolume": 0.6,
+    "cooldownTime": 1,
+    "blockInteractSounds": [
+      "block/callbell/callbell_1",
+      "block/callbell/callbell_2",
+      "block/callbell/callbell_3"
+    ]
   },
   "rainPermeable": true,
   "sidesolid": {
