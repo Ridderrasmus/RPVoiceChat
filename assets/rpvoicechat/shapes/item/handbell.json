@@ -10,7 +10,7 @@
 	"textures": {
 		"command02-insidealt": "game:block/meta/command02-insidealt",
 		"silversolder": "game:block/metal/ingot/silversolder",
-		"plain2": "game:stone/quartz/full/plain2"
+		"plain2": "game:block/stone/quartz/full/plain2"
 	},
 	"elements": [
 		{

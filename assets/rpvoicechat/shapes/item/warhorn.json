@@ -1,0 +1,179 @@
+{
+	"editor": {
+		"allAngles": false,
+		"entityTextureMode": false
+	},
+	"textureWidth": 16,
+	"textureHeight": 16,
+	"textureSizes": {
+	},
+	"textures": {
+		"sheep-bighorn-male": "game:entity/sheep/sheep-bighorn-male"
+	},
+	"elements": [
+		{
+			"name": "L horn 24",
+			"from": [ 8.96, 3.12, 5.96 ],
+			"to": [ 16.96, 5.12, 7.96 ],
+			"rotationOrigin": [ 9.9654, 4.1246, 6.9616 ],
+			"rotationX": -180.0,
+			"rotationZ": -45.0,
+			"faces": {
+				"north": { "texture": "#sheep-bighorn-male", "uv": [ 0.0, 7.5, 11.25, 10.75 ], "rotation": 270, "autoUv": false },
+				"east": { "texture": "#sheep-bighorn-male", "uv": [ 13.875, 7.5833, 15.875, 8.5833 ], "rotation": 180, "autoUv": false },
+				"south": { "texture": "#sheep-bighorn-male", "uv": [ 0.0, 7.5, 11.25, 10.75 ], "rotation": 90, "autoUv": false },
+				"up": { "texture": "#sheep-bighorn-male", "uv": [ 0.125, 7.5, 11.25, 10.75 ], "rotation": 90, "autoUv": false },
+				"down": { "texture": "#sheep-bighorn-male", "uv": [ 0.0, 7.5833, 11.25, 10.75 ], "rotation": 270, "autoUv": false }
+			},
+			"children": [
+				{
+					"name": "L horn 23",
+					"from": [ -4.288, -3.1196, -0.9818 ],
+					"to": [ 1.712, 0.8804, 3.0182 ],
+					"rotationOrigin": [ -3.088, -1.1196, -0.1818 ],
+					"rotationX": 8.682,
+					"rotationY": 4.981,
+					"rotationZ": 29.622,
+					"faces": {
+						"north": { "texture": "#sheep-bighorn-male", "uv": [ 0.0, 7.4167, 11.25, 10.75 ], "rotation": 270, "autoUv": false },
+						"east": { "texture": "#sheep-bighorn-male", "uv": [ 13.625, 7.4167, 16.0, 8.5833 ], "rotation": 180, "autoUv": false },
+						"south": { "texture": "#sheep-bighorn-male", "uv": [ 0.125, 7.6667, 11.25, 10.6667 ], "rotation": 90, "autoUv": false },
+						"west": { "texture": "#sheep-bighorn-male", "uv": [ 13.625, 7.4167, 16.0, 8.5833 ], "autoUv": false },
+						"up": { "texture": "#sheep-bighorn-male", "uv": [ 0.0, 7.5833, 11.25, 10.75 ], "rotation": 90, "autoUv": false },
+						"down": { "texture": "#sheep-bighorn-male", "uv": [ 0.0, 7.5833, 11.25, 10.5833 ], "rotation": 270, "autoUv": false }
+					},
+					"children": [
+						{
+							"name": "L horn 22",
+							"from": [ -3.258, -5.74, -0.1586 ],
+							"to": [ 4.742, -1.74, 3.8414 ],
+							"rotationOrigin": [ -3.258, -3.74, 1.0414 ],
+							"rotationX": 13.124,
+							"rotationY": 21.469,
+							"rotationZ": 57.501,
+							"faces": {
+								"north": { "texture": "#sheep-bighorn-male", "uv": [ 0.125, 7.5833, 11.125, 10.75 ], "rotation": 270, "autoUv": false },
+								"east": { "texture": "#sheep-bighorn-male", "uv": [ 13.75, 7.4167, 16.0, 8.6667 ], "rotation": 180, "autoUv": false },
+								"south": { "texture": "#sheep-bighorn-male", "uv": [ 0.0, 7.5833, 11.25, 10.6667 ], "rotation": 90, "autoUv": false },
+								"west": { "texture": "#sheep-bighorn-male", "uv": [ 13.625, 7.5, 16.0, 8.6667 ], "autoUv": false },
+								"up": { "texture": "#sheep-bighorn-male", "uv": [ 0.0, 7.5833, 11.125, 10.75 ], "rotation": 90, "autoUv": false },
+								"down": { "texture": "#sheep-bighorn-male", "uv": [ 0.0, 7.5, 11.25, 10.6667 ], "rotation": 270, "autoUv": false }
+							}
+						}
+					]
+				}
+			]
+		}
+	],
+	"animations": [
+		{
+			"name": "Walk",
+			"code": "walk",
+			"quantityframes": 90,
+			"onActivityStopped": "EaseOut",
+			"onAnimationEnd": "Repeat",
+			"keyframes": [
+
+			]
+		},
+
+		{
+			"name": "Run",
+			"code": "run",
+			"quantityframes": 40,
+			"onActivityStopped": "EaseOut",
+			"onAnimationEnd": "Repeat",
+			"keyframes": [
+
+			]
+		},
+
+		{
+			"name": "Look",
+			"code": "look",
+			"quantityframes": 160,
+			"onActivityStopped": "EaseOut",
+			"onAnimationEnd": "Stop",
+			"keyframes": [
+
+			]
+		},
+
+		{
+			"name": "Idle",
+			"code": "idle",
+			"quantityframes": 80,
+			"onActivityStopped": "EaseOut",
+			"onAnimationEnd": "Repeat",
+			"keyframes": [
+
+			]
+		},
+
+		{
+			"name": "Death",
+			"code": "death",
+			"quantityframes": 120,
+			"onActivityStopped": "Stop",
+			"onAnimationEnd": "Hold",
+			"keyframes": [
+
+			]
+		},
+
+		{
+			"name": "Attack",
+			"code": "attack",
+			"quantityframes": 75,
+			"onActivityStopped": "PlayTillEnd",
+			"onAnimationEnd": "Stop",
+			"keyframes": [
+
+			]
+		},
+
+		{
+			"name": "Eat",
+			"code": "eat",
+			"quantityframes": 120,
+			"onActivityStopped": "Stop",
+			"onAnimationEnd": "Stop",
+			"keyframes": [
+
+			]
+		},
+
+		{
+			"name": "Hurt",
+			"code": "hurt",
+			"quantityframes": 30,
+			"onActivityStopped": "PlayTillEnd",
+			"onAnimationEnd": "Stop",
+			"keyframes": [
+
+			]
+		},
+
+		{
+			"name": "Sit",
+			"code": "sit",
+			"quantityframes": 30,
+			"onActivityStopped": "EaseOut",
+			"onAnimationEnd": "Repeat",
+			"keyframes": [
+
+			]
+		},
+
+		{
+			"name": "Sleep",
+			"code": "sleep",
+			"quantityframes": 30,
+			"onActivityStopped": "EaseOut",
+			"onAnimationEnd": "Repeat",
+			"keyframes": [
+
+			]
+		}
+	]
+}
