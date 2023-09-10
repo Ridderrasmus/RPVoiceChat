@@ -27,8 +27,8 @@ namespace RPVoiceChat
             encoder.Bitrate = 40000;
             encoder.Complexity = 10;
             encoder.SignalType = OpusSignal.OPUS_SIGNAL_VOICE;
-            encoder.ForceMode = OpusMode.MODE_SILK_ONLY;
-            encoder.UseDTX = true;
+            encoder.ForceMode = OpusMode.MODE_AUTO;
+            encoder.UseDTX = false;
             encoder.UseInbandFEC = false;
             encoder.UseVBR = true;
         }
@@ -46,7 +46,7 @@ namespace RPVoiceChat
                     int encodedLength = encoder.Encode(pcmData, pcmOffset, frameSize, encodedData, 0, maxPacketSize);
                     byte[] packetSize = BitConverter.GetBytes(encodedLength);
 
-                    encoded.Write(packetSize, 0, 4);
+                    encoded.Write(packetSize, 0, packetSize.Length);
                     encoded.Write(encodedData, 0, encodedLength);
                 }
             }
@@ -73,7 +73,7 @@ namespace RPVoiceChat
 
                         short[] decodedData = new short[frameSize];
                         int decodedLength = decoder.Decode(encodedPacket, 0, packetSize, decodedData, 0, frameSize, false);
-                        byte[] decodedPacket = ToBytes(decodedData, 0, decodedData.Length);
+                        byte[] decodedPacket = ToBytes(decodedData, 0, decodedLength);
 
                         decoded.Write(decodedPacket, 0, decodedPacket.Length);
                     }
