@@ -7,7 +7,6 @@ using OpenTK.Audio;
 using OpenTK.Audio.OpenAL;
 using System.Collections.Generic;
 using RPVoiceChat.Utils;
-using RPVoiceChat.Audio;
 
 namespace RPVoiceChat.Audio
 {
