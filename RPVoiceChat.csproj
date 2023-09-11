@@ -56,6 +56,7 @@
     <Content Include="assets\**">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Remove="assets\rpvoicechat\blocktypes\bigbellparts\bigbellbotpart.json" />
     <Content Include="modinfo.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

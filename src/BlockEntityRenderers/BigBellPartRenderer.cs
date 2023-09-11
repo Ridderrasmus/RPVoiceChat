@@ -51,15 +51,16 @@ namespace RPVoiceChat.BlockEntityRenderers
             prog.ViewMatrix = rpi.CameraMatrixOriginf;
             prog.ProjectionMatrix = rpi.CurrentProjectionMatrix;
 
-            if (blockEntityBigBellPart.BigBellPartMeshRef != null)
+            for (int i = 0; i < blockEntityBigBellPart.BigBellPartMeshRef.Length; i++)
             {
-                rpi.RenderMesh(blockEntityBigBellPart.BigBellPartMeshRef);
+                rpi.RenderMesh(blockEntityBigBellPart.BigBellPartMeshRef[i]);
             }
 
-            if (blockEntityBigBellPart.FluxMeshRef != null)
+            for (int i = 0; i < blockEntityBigBellPart.FluxMeshRef.Length; i++)
             {
+                if (blockEntityBigBellPart.FluxMeshRef[i] == null) continue;
                 prog.ExtraGlow = 0;
-                rpi.RenderMesh(blockEntityBigBellPart.FluxMeshRef);
+                rpi.RenderMesh(blockEntityBigBellPart.FluxMeshRef[i]);
             }
 
             prog.Stop();

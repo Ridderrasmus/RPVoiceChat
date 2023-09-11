@@ -1,4 +1,5 @@
 ﻿using RPVoiceChat.BlockEntityRenderers;
+using System;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
@@ -8,10 +9,13 @@ namespace RPVoiceChat.BlockEntities
 {
     public class BlockEntityBigBellPart : BlockEntityContainer
     {
-        public MeshRef BigBellPartMeshRef;
-        public MeshRef FluxMeshRef;
+        public MeshRef BaseModelRef;
+        public MeshRef[] BigBellPartMeshRef = new MeshRef[3];
+        public MeshRef[] FluxMeshRef = new MeshRef[3];
 
         InventoryGeneric inv;
+
+        public ItemSlot[] BellPartSlots = new ItemSlot[4];
 
         public int hammerHits;
         BigBellPartRenderer renderer;
@@ -42,38 +46,27 @@ namespace RPVoiceChat.BlockEntities
             
             var capi = Api as ICoreClientAPI;
 
-            BigBellPartMeshRef = capi.TesselatorManager.GetDefaultBlockMeshRef(Block);
+            BaseModelRef = capi.TesselatorManager.GetDefaultBlockMeshRef(Block);
 
             // If the inventory contains flux, then we want to render the flux mesh
-            if (!inv[4].Empty && FluxMeshRef == null)
+            for (int i = 0; i < BellPartSlots.Length; i++)
             {
+                if (BellPartSlots[i].Empty) continue;
+
                 MeshData meshdata;
                 capi.Tesselator.TesselateShape(Block, Shape.TryGet(Api, "shapes/block/bigbellparts/bottomrim/bigbellbotweld1.json"), out meshdata);
-                FluxMeshRef = capi.Render.UploadMesh(meshdata);
+                meshdata.Rotate(new Vec3f(0.5f, 0f, 0.5f), 0, 0.25f * (1 + i), 0f);
+                FluxMeshRef[i] = capi.Render.UploadMesh(meshdata);
             }
 
-            // If the inventory contains the second big bell part, then we want to render the big bell part mesh
-            if (inv[1].Empty && BigBellPartMeshRef!= null)
-            {
-                
-            }
-
-            // If the inventory contains the third big bell part, then we want to render the big bell part mesh
-            if (inv[2].Empty && BigBellPartMeshRef != null)
-            {
-                
-            }
-
-            // If the inventory contains the fourth big bell part, then we want to render the big bell part mesh
-            if (inv[3].Empty && BigBellPartMeshRef != null)
+            // If the inventory contains the big bell parts, then we want to render the big bell part mesh
+            for (int i = 0; i < inv[1].StackSize; i++)
             {
                 MeshData meshdata;
                 capi.Tesselator.TesselateShape(Block, Shape.TryGet(Api, "shapes/block/bigbellparts/bottomrim/bigbellbotpart.json"), out meshdata);
-                BigBellPartMeshRef = capi.Render.UploadMesh(meshdata);
+                meshdata.Rotate(new Vec3f(0.5f, 0f, 0.5f), 0, 0.25f * (1 + i), 0f);
+                BigBellPartMeshRef[i] = capi.Render.UploadMesh(meshdata);
             }
-
-            
-            
         }
 
         public override void OnBlockPlaced(ItemStack byItemStack = null)
@@ -99,6 +92,8 @@ namespace RPVoiceChat.BlockEntities
 
         private bool TestReadyToMerge(bool triggerMessage = true)
         {
+            return false;
+
             var itemstack1 = inv[0].Itemstack;
             var itemstack2 = inv[1].Itemstack;
             var itemstack3 = inv[2].Itemstack;
@@ -132,7 +127,37 @@ namespace RPVoiceChat.BlockEntities
                 return false;
             }
 
+            return true;
+        }
 
+        public bool OnInteract(IPlayer byPlayer)
+        {
+            ItemSlot hotbarslot = byPlayer.InventoryManager.ActiveHotbarSlot;
+            ICoreClientAPI capi = Api as ICoreClientAPI;
+
+            if (hotbarslot.Itemstack.Collectible.Code.Path == "powderedborax")
+            {
+                if (inv[4].Empty)
+                {
+                    inv[4].Itemstack = hotbarslot.TakeOut(1);
+                    return true;
+                } else if (inv[4].Itemstack.StackSize < 3)
+                {
+                    inv[4].Itemstack.StackSize++;
+                    hotbarslot.TakeOut(1);
+                    return true;
+                } else
+                {
+                    capi.TriggerIngameError(capi.World.Player, "toomuchborax", "This doesn't need more borax");
+                    return false;
+                }
+            }
+
+            
+            for (int i = 0; i < 4; i++)
+            {
+                if (!inv[i].Empty) continue;
+            }
 
             return true;
         }
@@ -142,8 +167,12 @@ namespace RPVoiceChat.BlockEntities
             base.OnBlockUnloaded();
 
             renderer?.Dispose();
-            FluxMeshRef?.Dispose();
-            BigBellPartMeshRef?.Dispose();
+
+            foreach (MeshRef meshref in FluxMeshRef)
+                meshref?.Dispose();
+            
+            foreach (MeshRef meshref in BigBellPartMeshRef)
+                meshref?.Dispose();
         }
 
         public override void OnBlockRemoved()
@@ -151,8 +180,12 @@ namespace RPVoiceChat.BlockEntities
             base.OnBlockRemoved();
 
             renderer?.Dispose();
-            FluxMeshRef?.Dispose();
-            BigBellPartMeshRef?.Dispose();
+
+            foreach (MeshRef meshref in FluxMeshRef)
+                meshref?.Dispose();
+
+            foreach (MeshRef meshref in BigBellPartMeshRef)
+                meshref?.Dispose();
         }
     }
 }

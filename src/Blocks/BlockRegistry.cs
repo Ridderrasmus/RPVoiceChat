@@ -7,6 +7,7 @@ namespace RPVoiceChat.Blocks
         public static void RegisterBlocks(ICoreAPI api)
         {
             api.RegisterBlockClass("soundemittingblock", typeof(SoundEmittingBlock));
+            api.RegisterBlockClass("bigbellpart", typeof(BigBellPartBlock));
         }
     }
 }
