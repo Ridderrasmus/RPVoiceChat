@@ -8,15 +8,19 @@ namespace RPVoiceChat.Audio
     public static class OALW
     {
         private static ContextHandle context;
+        private static ContextHandle _activeContext;
         private static object audio_context_lock = new object();
 
         public static void InitContext()
         {
-            if (context != null) Alc.DestroyContext(context);
+            lock (audio_context_lock)
+            {
+                if (context != null) Alc.DestroyContext(context);
 
-            var device = Alc.OpenDevice(null);
-            var attrs = new int[0];
-            context = Alc.CreateContext(device, attrs);
+                var device = Alc.OpenDevice(null);
+                var attrs = new int[0];
+                context = Alc.CreateContext(device, attrs);
+            }
         }
 
         public static void ExecuteInContext(Action action)
@@ -142,7 +146,13 @@ namespace RPVoiceChat.Audio
             if (error == ALError.NoError) return;
             if (ignoredErrors == error) return;
 
-            Logger.client.Error("{0} {1}", Value, AL.GetErrorString(error));
+            if (_activeContext != context)
+            {
+                Logger.client.Error("Calling CheckError outside of mod context is incorrect");
+                return;
+            }
+
+            Logger.client.Debug("{0} {1}", Value, AL.GetErrorString(error));
         }
 
         private static ContextHandle? SetCurrentContext()
@@ -153,6 +163,7 @@ namespace RPVoiceChat.Audio
                 if (oldContext == context) return null;
 
                 Alc.MakeContextCurrent(context);
+                _activeContext = context;
 
                 return oldContext;
             }
@@ -165,6 +176,7 @@ namespace RPVoiceChat.Audio
                 if (ctx == null) return;
 
                 Alc.MakeContextCurrent((ContextHandle)ctx);
+                _activeContext = (ContextHandle)ctx;
             }
         }
     }

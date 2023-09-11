@@ -252,10 +252,11 @@ namespace RPVoiceChat.Audio
             try
             {
                 newCapture = new AudioCapture(deviceName, Frequency, InputFormat, BufferSize);
+                Logger.client.Debug($"Succesfully created an audio capture device with arguments: {deviceName}, {Frequency}, {InputFormat}, {BufferSize}");
             }
             catch(Exception e)
             {
-                Logger.client.Error($"Could not create audio capture device, is there any microphone plugged in?\n{e}");
+                Logger.client.Error($"Could not create audio capture device {deviceName} in {InputFormat} format:\n{e}");
             }
             config.CurrentInputDevice = deviceName;
             ModConfig.Save(capi);
@@ -276,7 +277,6 @@ namespace RPVoiceChat.Audio
         {
             var format = ALFormat.Mono16;
             var supportedFormats = AL.Get(ALGetString.Extensions);
-            OALW.CheckError("Error get supported extensions");
             if (supportedFormats.Contains("AL_EXT_MCFORMATS"))
                 format = ALFormat.MultiQuad16Ext;
             else
