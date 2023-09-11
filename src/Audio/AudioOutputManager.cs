@@ -79,14 +79,14 @@ namespace RPVoiceChat.Audio
                     var player = capi.World.PlayerByUid(playerId);
                     if (player == null)
                     {
-                        Logger.client.Error("Could not find player for playerId !");
+                        Logger.client.Error($"Could not find player for playerId {playerId}");
                         return;
                     }
 
                     source = new PlayerAudioSource(player, this, capi);
                     if (!playerSources.TryAdd(playerId, source))
                     {
-                        Logger.client.Error("Could not add new player to sources !");
+                        Logger.client.Debug("Could not add new player to sources");
                     }
                 }
 
