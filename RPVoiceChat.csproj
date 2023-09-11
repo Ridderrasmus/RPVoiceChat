@@ -56,8 +56,7 @@
     <Content Include="assets\**">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Remove="assets\rpvoicechat\blocktypes\bigbell.json" />
-    <None Remove="assets\rpvoicechat\recipes\smithing\bellpartbot.json" />
+    <None Remove="assets\rpvoicechat\blocktypes\bigbellparts\bigbellbotpart.json" />
     <Content Include="modinfo.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -67,10 +66,6 @@
     <PackageReference Include="Concentus" Version="1.1.7" />
     <PackageReference Include="NETStandard.Library" Version="2.0.3" />
   </ItemGroup>
-
-<ItemGroup>
-  <PackageReference Include="Concentus" Version="1.1.7" />
-</ItemGroup>
 
 <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
   <Exec Command="rmdir -r $(ProjectDir)bin\$(Configuration)\Mods\mod" />

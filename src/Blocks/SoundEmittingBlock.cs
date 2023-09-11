@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using Vintagestory.API.Common;
 
-namespace RPVoiceChat
+namespace RPVoiceChat.Blocks
 {
     public class SoundEmittingBlock : Block
     {
