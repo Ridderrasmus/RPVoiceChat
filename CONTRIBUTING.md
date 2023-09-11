@@ -13,14 +13,16 @@ If you have a question about the mod, please feel free to shoot us a discord mes
 
 ## <a name="issue"></a> I found a bug! What do I do?
 
-If you find a bug in the mod, please [open an issue](https://github.com/Ridderrasmus/RPVoiceChat/issues/55) as it helps us keep track of what needs to be fixed. 
+If you find a bug in the mod, please [open an issue](https://github.com/Ridderrasmus/RPVoiceChat/issues/new?assignees=&labels=bug&projects=&template=bug_report.md&title=%5BBUG%5D+Bug+report+title) as it helps us keep track of what needs to be fixed. 
 Please include as much information as possible, including:
 - The version of the mod you are using
 - The version of Vintage Story you are using
+- If you are using any other mods
 - The steps to reproduce the bug (if possible)
 - Game logs ideally (Game logs are located in the folder called `Logs` in the same direcory as the `Mods` folder)
 	- Debug logs and crash logs are most useful
-- Expected behaviour vs actual behaviour
+- Expected behaviour
+- Screenshots if applicable
 - Any other information you think might be relevant
 
 Even better you could submit a [pull request](#contribute) with a fix for the bug!
