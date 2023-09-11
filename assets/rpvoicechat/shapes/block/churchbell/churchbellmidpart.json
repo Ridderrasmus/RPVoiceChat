@@ -589,6 +589,7 @@
 					"name": "middlerimpart",
 					"from": [ -16.0, 0.0, -20.0 ],
 					"to": [ 16.0, 20.0, -16.0 ],
+					"renderInEditor": false,
 					"rotationOrigin": [ -16.0, 0.0, -20.0 ],
 					"faces": {
 						"north": { "texture": "#tin", "uv": [ 7.0, 10.5, 15.0, 15.5 ], "autoUv": false },
@@ -619,6 +620,7 @@
 					"name": "middlerimpart2",
 					"from": [ 16.0, 0.0, -16.0 ],
 					"to": [ 20.0, 20.0, 16.0 ],
+					"renderInEditor": false,
 					"rotationOrigin": [ 16.0, 0.0, -16.0 ],
 					"faces": {
 						"north": { "texture": "#tin", "uv": [ 0.5, 0.5, 1.5, 5.5 ], "autoUv": false },
@@ -649,6 +651,7 @@
 					"name": "middlerimpart3",
 					"from": [ -20.0, 0.0, -16.0 ],
 					"to": [ -16.0, 20.0, 16.0 ],
+					"renderInEditor": false,
 					"rotationOrigin": [ -20.0, 0.0, -16.0 ],
 					"faces": {
 						"north": { "texture": "#tin", "uv": [ 0.0, 7.5, 1.0, 12.5 ], "autoUv": false },
@@ -723,6 +726,7 @@
 					"name": "CornerSE",
 					"from": [ 16.0, 0.0, 16.0 ],
 					"to": [ 20.0, 16.0, 20.0 ],
+					"renderInEditor": false,
 					"rotationOrigin": [ 16.0, 0.0, 16.0 ],
 					"faces": {
 						"north": { "texture": "#tin", "uv": [ 5.5, 7.5, 6.5, 11.5 ], "autoUv": false },
@@ -737,6 +741,7 @@
 					"name": "CornerNE",
 					"from": [ 16.0, 0.0, -20.0 ],
 					"to": [ 20.0, 16.0, -16.0 ],
+					"renderInEditor": false,
 					"rotationOrigin": [ 16.0, 0.0, -20.0 ],
 					"faces": {
 						"north": { "texture": "#tin", "uv": [ 8.0, 8.0, 9.0, 12.0 ], "autoUv": false },
@@ -751,6 +756,7 @@
 					"name": "CornerNW",
 					"from": [ -20.0, 0.0, -20.0 ],
 					"to": [ -16.0, 16.0, -16.0 ],
+					"renderInEditor": false,
 					"rotationOrigin": [ -20.0, 0.0, -20.0 ],
 					"faces": {
 						"north": { "texture": "#tin", "uv": [ 12.5, 4.5, 13.5, 8.5 ], "autoUv": false },

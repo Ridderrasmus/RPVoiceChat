@@ -57,6 +57,7 @@
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Remove="assets\rpvoicechat\blocktypes\bigbell.json" />
+    <None Remove="assets\rpvoicechat\recipes\smithing\bellpartbot.json" />
     <Content Include="modinfo.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

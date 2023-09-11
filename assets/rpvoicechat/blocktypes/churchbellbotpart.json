@@ -1,21 +1,12 @@
 {
-  "code": "churchbell",
-  "class": "soundemittingblock",
+  "code": "churchbellbotpart",
   "creativeinventory": {
     "general": [ "*" ]
   },
   "blockmaterial": "Metal",
   "drawtype": "json",
   "shape": {
-    "base": "block/churchbell/bigbell"
-  },
-  "attributes": {
-    "soundAudibleDistance": 832,
-    "soundVolume": 0.6,
-    "cooldownTime": 6,
-    "blockInteractSounds": [
-      "block/churchbell/bigbell"
-    ]
+    "base": "block/churchbell/churchbellbotpart"
   },
   "rainPermeable": true,
   "sidesolid": {
@@ -26,20 +17,20 @@
   },
   "lightAbsorption": 0,
   "collisionbox": {
-    "x1": -1.25,
+    "x1": 0.42,
     "y1": 0,
-    "z1": -1.25,
-    "x2": 2.25,
-    "y2": 4.5,
-    "z2": 2.25
+    "z1": 0.42,
+    "x2": 0.58,
+    "y2": 0.1,
+    "z2": 0.58
   },
   "selectionbox": {
-    "x1": -1.25,
+    "x1": 0.42,
     "y1": 0,
-    "z1": -1.25,
-    "x2": 2.25,
-    "y2": 4.5,
-    "z2": 2.25
+    "z1": 0.42,
+    "x2": 0.58,
+    "y2": 0.1,
+    "z2": 0.58
   },
   "resistance": 1,
   "sounds": {
