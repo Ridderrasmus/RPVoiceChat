@@ -2,16 +2,13 @@
 using OpenTK.Audio.OpenAL;
 using RPVoiceChat.Utils;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RPVoiceChat.Audio
 {
     public static class OALW
     {
         private static ContextHandle context;
+        private static object audio_context_lock = new object();
 
         public static void InitContext()
         {
@@ -150,19 +147,25 @@ namespace RPVoiceChat.Audio
 
         private static ContextHandle? SetCurrentContext()
         {
-            var oldContext = Alc.GetCurrentContext();
-            if (oldContext == context) return null;
+            lock (audio_context_lock)
+            {
+                var oldContext = Alc.GetCurrentContext();
+                if (oldContext == context) return null;
 
-            Alc.MakeContextCurrent(context);
+                Alc.MakeContextCurrent(context);
 
-            return oldContext;
+                return oldContext;
+            }
         }
 
         private static void ResetContext(ContextHandle? ctx)
         {
-            if (ctx == null) return;
+            lock (audio_context_lock)
+            {
+                if (ctx == null) return;
 
-            Alc.MakeContextCurrent((ContextHandle)ctx);
+                Alc.MakeContextCurrent((ContextHandle)ctx);
+            }
         }
     }
 }
