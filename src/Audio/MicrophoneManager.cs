@@ -276,6 +276,7 @@ namespace RPVoiceChat.Audio
         {
             var format = ALFormat.Mono16;
             var supportedFormats = AL.Get(ALGetString.Extensions);
+            OALW.CheckError("Error get supported extensions");
             if (supportedFormats.Contains("AL_EXT_MCFORMATS"))
                 format = ALFormat.MultiQuad16Ext;
             else

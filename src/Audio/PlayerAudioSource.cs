@@ -48,29 +48,27 @@ namespace RPVoiceChat.Audio
             outputManager = manager;
             this.player = player;
             this.capi = capi;
-            capi.Event.EnqueueMainThreadTask(() =>
+
+            lastSpeakerCoords = player.Entity?.SidedPos?.XYZFloat;
+            lastSpeakerUpdate = DateTime.Now;
+
+            OALW.ExecuteInContext(() =>
             {
-                lastSpeakerCoords = player.Entity?.SidedPos?.XYZFloat;
-                lastSpeakerUpdate = DateTime.Now;
+                source = AL.GenSource();
+                OALW.CheckError("Error gen source");
+                buffer = new CircularAudioBuffer(source, BufferCount);
 
-                OALW.ExecuteInContext(() =>
-                {
-                    source = AL.GenSource();
-                    OALW.CheckError("Error gen source");
-                    buffer = new CircularAudioBuffer(source, BufferCount);
+                AL.Source(source, ALSourceb.Looping, false);
+                OALW.CheckError("Error setting source looping");
+                AL.Source(source, ALSourceb.SourceRelative, true);
+                OALW.CheckError("Error setting source SourceRelative");
+                AL.Source(source, ALSourcef.Gain, 1.0f);
+                OALW.CheckError("Error setting source Gain");
+                AL.Source(source, ALSourcef.Pitch, 1.0f);
+                OALW.CheckError("Error setting source Pitch");
+            });
 
-                    AL.Source(source, ALSourceb.Looping, false);
-                    OALW.CheckError("Error setting source looping");
-                    AL.Source(source, ALSourceb.SourceRelative, true);
-                    OALW.CheckError("Error setting source SourceRelative");
-                    AL.Source(source, ALSourcef.Gain, 1.0f);
-                    OALW.CheckError("Error setting source Gain");
-                    AL.Source(source, ALSourcef.Pitch, 1.0f);
-                    OALW.CheckError("Error setting source Pitch");
-                });
-
-                UpdateVoiceLevel(voiceLevel);
-            }, "PlayerAudioSource Init");
+            UpdateVoiceLevel(voiceLevel);
         }
 
         public void UpdateVoiceLevel(VoiceLevel voiceLevel)
@@ -96,13 +94,13 @@ namespace RPVoiceChat.Audio
             if (speakerPos == null || listenerPos == null || !outputManager.isReady)
                 return;
 
+            // If the player is on the other side of something to the listener, then the player's voice should be muffled
+            float wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
+            if (capi.World.Player.Entity.Swimming)
+                wallThickness += 1.0f;
+
             OALW.ExecuteInContext(() =>
             {
-                // If the player is on the other side of something to the listener, then the player's voice should be muffled
-                float wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
-                if (capi.World.Player.Entity.Swimming)
-                    wallThickness += 1.0f;
-
                 lowpassFilter?.Stop();
                 if (wallThickness != 0)
                 {
