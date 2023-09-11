@@ -1,4 +1,7 @@
-﻿using RPVoiceChat.Utils;
+﻿using RPVoiceChat.BlockEntities;
+using RPVoiceChat.Blocks;
+using RPVoiceChat.Items;
+using RPVoiceChat.Utils;
 using Vintagestory.API.Common;
 
 namespace RPVoiceChat
@@ -19,6 +22,7 @@ namespace RPVoiceChat
         {
             ItemRegistry.RegisterItems(api);
             BlockRegistry.RegisterBlocks(api);
+            BlockEntityRegistry.RegisterBlockEntities(api);
         }
     }
 }
