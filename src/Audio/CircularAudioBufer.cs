@@ -62,7 +62,7 @@ namespace RPVoiceChat.Audio
             OALW.ExecuteInContext(() =>
             {
                 AL.GetSource(source, ALGetSourcei.BuffersProcessed, out var buffersProcessed);
-                OALW.CheckError("Error get BuffersProcessed", ALError.InvalidName);
+                OALW.CheckError("Error get BuffersProcessed", ALError.InvalidValue);
                 if (buffersProcessed == 0) return;
 
                 var buffer = AL.SourceUnqueueBuffer(source);
