@@ -38,6 +38,7 @@ namespace RPVoiceChat.Audio
         private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
         private PlayerAudioSource localPlayerAudioSource;
         private PlayerListener listener;
+        private ConcurrentDictionary<string, IAudioCodec> codecs = new ConcurrentDictionary<string, IAudioCodec>();
 
         public AudioOutputManager(ICoreClientAPI api)
         {
@@ -66,8 +67,6 @@ namespace RPVoiceChat.Audio
             {
                 PlayerAudioSource source;
                 string playerId = packet.PlayerId;
-                IAudioCodec codec = new OpusCodec(packet.Frequency, AudioUtils.ChannelsPerFormat(packet.Format));
-                AudioData audioData = AudioData.FromPacket(packet, codec);
 
                 if (packet.AudioData.Length != packet.Length)
                 {
@@ -80,34 +79,47 @@ namespace RPVoiceChat.Audio
                     var player = capi.World.PlayerByUid(playerId);
                     if (player == null)
                     {
-                        Logger.client.Error("Could not find player for playerId !");
+                        Logger.client.Error($"Could not find player for playerId {playerId}");
                         return;
                     }
 
                     source = new PlayerAudioSource(player, this, capi);
                     if (!playerSources.TryAdd(playerId, source))
                     {
-                        Logger.client.Error("Could not add new player to sources !");
+                        Logger.client.Debug("Could not add new player to sources");
                     }
                 }
 
-                // Update the voice level if it has changed
-                if (source.voiceLevel != packet.VoiceLevel)
-                    source.UpdateVoiceLevel(packet.VoiceLevel);
-                source.UpdatePlayer();
-                source.EnqueueAudio(audioData, packet.SequenceNumber);
+                HandleAudioPacket(packet, source);
             });
+        }
+
+        public void HandleAudioPacket(AudioPacket packet, PlayerAudioSource source)
+        {
+            int frequency = packet.Frequency;
+            int channels = AudioUtils.ChannelsPerFormat(packet.Format);
+            string codecSettings = $"{frequency}:{channels}";
+
+            IAudioCodec codec;
+            if (!codecs.TryGetValue(codecSettings, out codec))
+            {
+                codec = new OpusCodec(frequency, channels);
+                codecs.TryAdd(codecSettings, codec);
+            }
+            AudioData audioData = AudioData.FromPacket(packet, codec);
+
+            // Update the voice level if it has changed
+            if (source.voiceLevel != packet.VoiceLevel)
+                source.UpdateVoiceLevel(packet.VoiceLevel);
+            source.UpdatePlayer();
+            source.EnqueueAudio(audioData, packet.SequenceNumber);
         }
 
         public void HandleLoopback(AudioPacket packet)
         {
             if (!IsLoopbackEnabled) return;
 
-            IAudioCodec codec = new OpusCodec(packet.Frequency, AudioUtils.ChannelsPerFormat(packet.Format));
-            AudioData audioData = AudioData.FromPacket(packet, codec);
-
-            localPlayerAudioSource.UpdatePlayer();
-            localPlayerAudioSource.EnqueueAudio(audioData, packet.SequenceNumber);
+            HandleAudioPacket(packet, localPlayerAudioSource);
         }
 
         public void ClientLoaded()

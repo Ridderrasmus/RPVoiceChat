@@ -7,7 +7,6 @@ using OpenTK.Audio;
 using OpenTK.Audio.OpenAL;
 using System.Collections.Generic;
 using RPVoiceChat.Utils;
-using RPVoiceChat.Audio;
 
 namespace RPVoiceChat.Audio
 {
@@ -253,10 +252,11 @@ namespace RPVoiceChat.Audio
             try
             {
                 newCapture = new AudioCapture(deviceName, Frequency, InputFormat, BufferSize);
+                Logger.client.Debug($"Succesfully created an audio capture device with arguments: {deviceName}, {Frequency}, {InputFormat}, {BufferSize}");
             }
-            catch
+            catch(Exception e)
             {
-                Logger.client.Error("Could not create audio capture device, is there any microphone plugged in?");
+                Logger.client.Error($"Could not create audio capture device {deviceName} in {InputFormat} format:\n{e}");
             }
             config.CurrentInputDevice = deviceName;
             ModConfig.Save(capi);
@@ -279,6 +279,8 @@ namespace RPVoiceChat.Audio
             var supportedFormats = AL.Get(ALGetString.Extensions);
             if (supportedFormats.Contains("AL_EXT_MCFORMATS"))
                 format = ALFormat.MultiQuad16Ext;
+            else
+                Logger.client.Warning($"Multichannel audio capture is not available.");
 
             return format;
         }

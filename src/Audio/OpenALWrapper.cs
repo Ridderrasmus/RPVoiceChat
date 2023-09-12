@@ -2,24 +2,25 @@
 using OpenTK.Audio.OpenAL;
 using RPVoiceChat.Utils;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RPVoiceChat.Audio
 {
     public static class OALW
     {
         private static ContextHandle context;
+        private static ContextHandle _activeContext;
+        private static object audio_context_lock = new object();
 
         public static void InitContext()
         {
-            if (context != null) Alc.DestroyContext(context);
+            lock (audio_context_lock)
+            {
+                if (context != null) Alc.DestroyContext(context);
 
-            var device = Alc.OpenDevice(null);
-            var attrs = new int[0];
-            context = Alc.CreateContext(device, attrs);
+                var device = Alc.OpenDevice(null);
+                var attrs = new int[0];
+                context = Alc.CreateContext(device, attrs);
+            }
         }
 
         public static void ExecuteInContext(Action action)
@@ -145,24 +146,38 @@ namespace RPVoiceChat.Audio
             if (error == ALError.NoError) return;
             if (ignoredErrors == error) return;
 
-            Logger.client.Error("{0} {1}", Value, AL.GetErrorString(error));
+            if (_activeContext != context)
+            {
+                Logger.client.Error("Calling CheckError outside of mod context is incorrect");
+                return;
+            }
+
+            Logger.client.Debug("{0} {1}", Value, AL.GetErrorString(error));
         }
 
         private static ContextHandle? SetCurrentContext()
         {
-            var oldContext = Alc.GetCurrentContext();
-            if (oldContext == context) return null;
+            lock (audio_context_lock)
+            {
+                var oldContext = Alc.GetCurrentContext();
+                if (oldContext == context) return null;
 
-            Alc.MakeContextCurrent(context);
+                Alc.MakeContextCurrent(context);
+                _activeContext = context;
 
-            return oldContext;
+                return oldContext;
+            }
         }
 
         private static void ResetContext(ContextHandle? ctx)
         {
-            if (ctx == null) return;
+            lock (audio_context_lock)
+            {
+                if (ctx == null) return;
 
-            Alc.MakeContextCurrent((ContextHandle)ctx);
+                Alc.MakeContextCurrent((ContextHandle)ctx);
+                _activeContext = (ContextHandle)ctx;
+            }
         }
     }
 }
