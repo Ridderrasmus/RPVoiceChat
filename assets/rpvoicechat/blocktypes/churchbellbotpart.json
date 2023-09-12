@@ -1,5 +1,6 @@
 {
   "code": "churchbellbotpart",
+  "enabled": false,
   "creativeinventory": {
     "general": [ "*" ]
   },
