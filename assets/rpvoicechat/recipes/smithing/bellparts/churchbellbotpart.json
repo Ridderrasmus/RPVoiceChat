@@ -1,0 +1,19 @@
+﻿{
+  "enabled": true,
+  "ingredient": {
+    "type": "item",
+    "code": "game:ingot-tin"
+  },
+  "pattern": [
+    [
+      "___########___",
+      "##############",
+      "##############"
+    ]
+  ],
+  "name": "Bell Bottom Part",
+  "output": {
+    "type": "block",
+    "code": "churchbellbotpart"
+  }
+}

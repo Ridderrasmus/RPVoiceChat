@@ -1,5 +1,5 @@
 {
-  "code": "churchbellbotpart",
+  "code": "churchbelltopmost",
   "enabled": true,
   "creativeinventory": {
     "general": [ "*" ]
@@ -7,7 +7,7 @@
   "blockmaterial": "Metal",
   "drawtype": "json",
   "shape": {
-    "base": "block/churchbell/churchbellbotpart"
+    "base": "block/churchbell/churchbelltopmost"
   },
   "rainPermeable": true,
   "sidesolid": {

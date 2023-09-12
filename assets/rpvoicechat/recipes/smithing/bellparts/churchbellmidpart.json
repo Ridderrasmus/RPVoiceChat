@@ -6,13 +6,15 @@
   },
   "pattern": [
     [
-      "___########___",
-      "##############"
+      "____######____",
+      "_############_",
+      "_############_",
+      "_############_"
     ]
   ],
-  "name": "Bell Bottom Part",
+  "name": "Bell Middle Part",
   "output": {
     "type": "block",
-    "code": "churchbellbotpart"
+    "code": "churchbellmidpart"
   }
 }
