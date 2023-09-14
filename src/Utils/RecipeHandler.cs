@@ -1,4 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
@@ -10,79 +14,101 @@ namespace RPVoiceChat.Utils
 {
     public class RecipeHandler
     {
-        private ICoreServerAPI sapi;
+        private ICoreAPI api;
         private RPVoiceChatConfig config;
 
+        private IAsset recipeDict;
 
-        
         public AssetLocation recipeDictionaryPath = new AssetLocation("rpvoicechat:config/recipedictionary.json");
 
-        public RecipeHandler(ICoreServerAPI sapi, RPVoiceChatConfig config)
+        // Temporary hardcoded dictionary of recipes to disable (Should be replaced with json file defined above)
+        private Dictionary<string, string[]> recipeDictionary = new Dictionary<string, string[]>() {
+            { "item-callbell", new string[] { "callbell" } },
+            { "item-handbell", new string[] { "callbell", "handbell" } },
+            { "item-royalhorn", new string[] { "royalhorn", "royalhornheadtemp", "royalhornhandle" } },
+            { "item-royalhornhead", new string[] { "royalhornhead" } },
+            { "item-royalhornhandle", new string[] { "royalhornhandle" } }
+        };
+
+        public RecipeHandler(ICoreAPI api)
         {
-            this.sapi = sapi;
-            this.config = config;
+            this.api = api;
+            this.config = ModConfig.Config;
+
         }
 
-        public void DisableGridRecipes()
+        public void DisableRecipes()
         {
+            // Temporarily ditched this because it's not working
+            recipeDict = api.Assets.TryGet(recipeDictionaryPath);
+            if (recipeDict == null)
+            {
+                Logger.server.Error("Recipe dictionary not found at " + recipeDictionaryPath);
+                return;
+            }
+            else
+            {
+                Logger.server.Debug("Recipe dictionary found at " + recipeDictionaryPath);
+            }
+
             List<string> disabledRecipes = new List<string>();
 
             foreach (string itemToDisable in config.DisabledRecipes)
             {
                 string[] recipes = GetRecipesFromCode(itemToDisable);
-                if (recipes != null)
-                    foreach (string recipe in recipes)
-                        if (recipe != "item-code")
-                            disabledRecipes.Add(recipe);
+                
+                if (recipes == null) continue;
+                
+                foreach (string recipe in recipes)
+                    disabledRecipes.Add(recipe + ".json");
             };
 
-
-            foreach (GridRecipe recipe in sapi.World.GridRecipes)
+            foreach (SmithingRecipe recipe in api.GetSmithingRecipes())
             {
                 string recipeName = recipe.Name.GetName();
-                if (disabledRecipes.Contains(recipeName) && config.DisabledRecipes.Contains(recipeName))
+                if (disabledRecipes.Contains(recipeName))
                 {
-                    Logger.server.Notification("Disabled recipe: " + recipeName);
+                    api.Logger.Notification("Disabled smithing recipe: " + recipeName);
                     recipe.Enabled = false;
                 }
             }
 
-            foreach (SmithingRecipe recipe in sapi.GetSmithingRecipes())
+            foreach (ClayFormingRecipe recipe in api.GetClayformingRecipes())
             {
                 string recipeName = recipe.Name.GetName();
-                if (disabledRecipes.Contains(recipeName) && config.DisabledRecipes.Contains(recipeName))
+                if (disabledRecipes.Contains(recipeName))
                 {
-                    Logger.server.Notification("Disabled recipe: " + recipeName);
+                    api.Logger.Notification("Disabled clayforming recipe: " + recipeName);
                     recipe.Enabled = false;
                 }
             }
 
-            foreach (ClayFormingRecipe recipe in sapi.GetClayformingRecipes())
+            foreach (KnappingRecipe recipe in api.GetKnappingRecipes())
             {
                 string recipeName = recipe.Name.GetName();
-                if (disabledRecipes.Contains(recipeName) && config.DisabledRecipes.Contains(recipeName))
+                if (disabledRecipes.Contains(recipeName))
                 {
-                    Logger.server.Notification("Disabled recipe: " + recipeName);
+                    api.Logger.Notification("Disabled knapping recipe: " + recipeName);
                     recipe.Enabled = false;
                 }
             }
 
-            foreach (KnappingRecipe recipe in sapi.GetKnappingRecipes())
+            foreach (BarrelRecipe recipe in api.GetBarrelRecipes())
             {
                 string recipeName = recipe.Name.GetName();
-                if (disabledRecipes.Contains(recipeName) && config.DisabledRecipes.Contains(recipeName))
+                if (disabledRecipes.Contains(recipeName))
                 {
-                    Logger.server.Notification("Disabled recipe: " + recipeName);
+                    api.Logger.Notification("Disabled barrel recipe: " + recipeName);
                     recipe.Enabled = false;
                 }
             }
-
-            foreach (BarrelRecipe recipe in sapi.GetBarrelRecipes())
+            
+            foreach (GridRecipe recipe in api.World.GridRecipes)
             {
                 string recipeName = recipe.Name.GetName();
-                if (disabledRecipes.Contains(recipeName) && config.DisabledRecipes.Contains(recipeName))
+                if (disabledRecipes.Contains(recipeName))
                 {
-                    Logger.server.Notification("Disabled recipe: " + recipeName);
+                    api.Logger.Notification("Disabled grid recipe: " + recipeName);
                     recipe.Enabled = false;
                 }
             }
@@ -95,18 +121,18 @@ namespace RPVoiceChat.Utils
         /// <returns></returns>
         private string[] GetRecipesFromCode(string code)
         {
-            IAsset recipeDict = sapi.Assets.TryGet(recipeDictionaryPath);
-            JsonObject jsonrecipeDict = recipeDict.ToObject<JsonObject>();
+            if (code == "item-code") return null;
+            
 
-
-            if (jsonrecipeDict.KeyExists(code))
+            if (recipeDictionary.ContainsKey(code))
             {
-                return jsonrecipeDict[code].AsArray<string>();
+                return recipeDictionary[code];
             }
             else
             {
                 return null;
             }
+
         }
     }
 }
