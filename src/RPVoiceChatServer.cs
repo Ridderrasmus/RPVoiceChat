@@ -1,4 +1,5 @@
 ﻿using RPVoiceChat.Networking;
+using RPVoiceChat.Networking.Packets;
 using RPVoiceChat.Server;
 using RPVoiceChat.Utils;
 using Vintagestory.API.Common;
@@ -28,6 +29,12 @@ namespace RPVoiceChat
             sapi.World.Config.SetInt("rpvoicechat:distance-talk", sapi.World.Config.GetInt("rpvoicechat:distance-talk", (int)VoiceLevel.Talking));
             sapi.World.Config.SetInt("rpvoicechat:distance-shout", sapi.World.Config.GetInt("rpvoicechat:distance-shout", (int)VoiceLevel.Shouting));
 
+            // Event to sync disabled recipes with clients
+            //sapi.Event.PlayerCreate += (IServerPlayer player) =>
+            //{
+            //    server.SendNativePacketToPlayer(new DisabledRecipesPacket(RecipeHandler.DisabledRecipes), player);
+            //};)
+
             // Register commands
             registerCommands();
         }
@@ -41,8 +48,8 @@ namespace RPVoiceChat
 
         public override void AssetsLoaded(ICoreAPI api)
         {
-            RecipeHandler recipeHandler = new RecipeHandler(api);
-            recipeHandler.DisableRecipes();
+            
+            RecipeHandler.DisableRecipes();
         }
 
         private void registerCommands()

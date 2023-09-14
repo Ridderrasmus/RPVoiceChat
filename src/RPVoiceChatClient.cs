@@ -49,6 +49,10 @@ namespace RPVoiceChat
             capi.Gui.RegisterDialog(new SpeechIndicator(capi, micManager));
             capi.Gui.RegisterDialog(new VoiceLevelIcon(capi, micManager));
 
+            // TEMP:
+            GridRecipe recipe = capi.World.GridRecipes.Find((s) => { return s.Name.GetName() == "handbell.json"; } );
+            recipe.Enabled = false;
+
             // Set up keybinds
             capi.Input.RegisterHotKey("voicechatMenu", "RPVoice: Config menu", GlKeys.P, HotkeyType.GUIOrOtherControls);
             capi.Input.RegisterHotKey("voicechatVoiceLevel", "RPVoice: Change speech volume", GlKeys.Tab, HotkeyType.GUIOrOtherControls, false, false, true);

@@ -30,6 +30,8 @@ namespace RPVoiceChat.Utils
             { "item-royalhornhandle", new string[] { "royalhornhandle" } }
         };
 
+        public List<string> DisabledRecipes { get; private set; } = new List<string>();
+
         public RecipeHandler(ICoreAPI api)
         {
             this.api = api;
@@ -51,8 +53,6 @@ namespace RPVoiceChat.Utils
                 Logger.server.Debug("Recipe dictionary found at " + recipeDictionaryPath);
             }
 
-            List<string> disabledRecipes = new List<string>();
-
             foreach (string itemToDisable in config.DisabledRecipes)
             {
                 string[] recipes = GetRecipesFromCode(itemToDisable);
@@ -60,13 +60,13 @@ namespace RPVoiceChat.Utils
                 if (recipes == null) continue;
                 
                 foreach (string recipe in recipes)
-                    disabledRecipes.Add(recipe + ".json");
+                    DisabledRecipes.Add(recipe + ".json");
             };
 
             foreach (SmithingRecipe recipe in api.GetSmithingRecipes())
             {
                 string recipeName = recipe.Name.GetName();
-                if (disabledRecipes.Contains(recipeName))
+                if (DisabledRecipes.Contains(recipeName))
                 {
                     api.Logger.Notification("Disabled smithing recipe: " + recipeName);
                     recipe.Enabled = false;
@@ -76,7 +76,7 @@ namespace RPVoiceChat.Utils
             foreach (ClayFormingRecipe recipe in api.GetClayformingRecipes())
             {
                 string recipeName = recipe.Name.GetName();
-                if (disabledRecipes.Contains(recipeName))
+                if (DisabledRecipes.Contains(recipeName))
                 {
                     api.Logger.Notification("Disabled clayforming recipe: " + recipeName);
                     recipe.Enabled = false;
@@ -86,7 +86,7 @@ namespace RPVoiceChat.Utils
             foreach (KnappingRecipe recipe in api.GetKnappingRecipes())
             {
                 string recipeName = recipe.Name.GetName();
-                if (disabledRecipes.Contains(recipeName))
+                if (DisabledRecipes.Contains(recipeName))
                 {
                     api.Logger.Notification("Disabled knapping recipe: " + recipeName);
                     recipe.Enabled = false;
@@ -96,7 +96,7 @@ namespace RPVoiceChat.Utils
             foreach (BarrelRecipe recipe in api.GetBarrelRecipes())
             {
                 string recipeName = recipe.Name.GetName();
-                if (disabledRecipes.Contains(recipeName))
+                if (DisabledRecipes.Contains(recipeName))
                 {
                     api.Logger.Notification("Disabled barrel recipe: " + recipeName);
                     recipe.Enabled = false;
@@ -106,7 +106,7 @@ namespace RPVoiceChat.Utils
             foreach (GridRecipe recipe in api.World.GridRecipes)
             {
                 string recipeName = recipe.Name.GetName();
-                if (disabledRecipes.Contains(recipeName))
+                if (DisabledRecipes.Contains(recipeName))
                 {
                     api.Logger.Notification("Disabled grid recipe: " + recipeName);
                     recipe.Enabled = false;
