@@ -60,6 +60,7 @@
     <None Remove="assets\rpvoicechat\blocktypes\churchbellmidpart.json" />
     <None Remove="assets\rpvoicechat\blocktypes\churchbelltopmost.json" />
     <None Remove="assets\rpvoicechat\blocktypes\churchbelltoppart.json" />
+    <None Remove="assets\rpvoicechat\config\recipedictionary.json" />
     <None Remove="assets\rpvoicechat\recipes\smithing\bellparts\churchbellmidpart.json" />
     <None Remove="assets\rpvoicechat\recipes\smithing\bellparts\churchbelltopmost.json" />
     <None Remove="assets\rpvoicechat\recipes\smithing\bellparts\churchbelltoppart.json" />

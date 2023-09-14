@@ -1,13 +1,72 @@
 ﻿using System.Collections.Generic;
+using Vintagestory.API.Client;
+using Vintagestory.API.Common;
+using Vintagestory.API.Datastructures;
+using Vintagestory.API.Server;
+using Vintagestory.API.Util;
 
 namespace RPVoiceChat.Utils
 {
     public class RecipeHandler
     {
+        private ICoreServerAPI sapi;
+        private RPVoiceChatConfig config;
 
-        public Dictionary<string, List<string>> itemCodeToRecipes = new Dictionary<string, List<string>>()
+
+        
+        public AssetLocation recipeDictionaryPath = new AssetLocation("rpvoicechat:config/recipedictionary.json");
+
+        public RecipeHandler(ICoreServerAPI sapi, RPVoiceChatConfig config)
         {
-            { "item-callbell", new List<string> { "callbell" }  }
-        };
+            this.sapi = sapi;
+            this.config = config;
+        }
+
+        public void DisableGridRecipes()
+        {
+            List<string> disabledRecipes = new List<string>();
+
+
+            foreach (string itemToDisable in config.DisabledRecipes)
+            {
+                var recipes = GetRecipesFromCode(itemToDisable);
+                if (recipes != null)
+                    foreach (string recipe in recipes)
+                        disabledRecipes.Add(recipe);
+            };
+
+
+
+
+            foreach (GridRecipe recipe in sapi.World.GridRecipes)
+            {
+                var recipeName = recipe.Name.GetName();
+                if (disabledRecipes.Contains(recipeName) && config.DisabledRecipes.Contains(recipeName))
+                {
+                    Logger.server.Notification("Disabled recipe: " + recipeName);
+                    recipe.Enabled = false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the recipes used to craft an item from its code
+        /// </summary>
+        /// <param name="code">The item code of what you want to gather the recipes for</param>
+        /// <returns></returns>
+        private string[] GetRecipesFromCode(string code)
+        {
+            IAsset recipeDict = sapi.Assets.TryGet(recipeDictionaryPath);
+            JsonObject jsonrecipeDict = recipeDict.ToObject<JsonObject>();
+
+            if (jsonrecipeDict["gridrecipes"].KeyExists(code))
+            {
+                return jsonrecipeDict[code].AsArray<string>();
+            }
+            else
+            {
+                return null;
+            }
+        }
     }
 }
