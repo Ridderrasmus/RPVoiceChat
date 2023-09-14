@@ -12,22 +12,19 @@ namespace RPVoiceChat.Audio
 {
     public class PlayerAudioSource : IDisposable
     {
-        public const int BufferCount = 20;
-
+        private const int BufferCount = 20;
         private int source;
-
-        public EffectsExtension EffectsExtension;
-
         private CircularAudioBuffer buffer;
         private SortedList orderingQueue = SortedList.Synchronized(new SortedList());
         private int orderingDelay = 100;
         private long lastAudioSequenceNumber = -1;
+        private Dictionary<string, IAudioCodec> codecs = new Dictionary<string, IAudioCodec>();
+        private FilterLowpass lowpassFilter;
+        private EffectsExtension EffectsExtension;
 
         private ICoreClientAPI capi;
+        private IPlayer player;
         private AudioOutputManager outputManager;
-
-        private Vec3f lastSpeakerCoords;
-        private DateTime lastSpeakerUpdate;
 
         public bool IsLocational { get; set; } = true;
         public VoiceLevel voiceLevel { get; private set; } = VoiceLevel.Talking;
@@ -37,10 +34,8 @@ namespace RPVoiceChat.Audio
             { VoiceLevel.Talking, 2.25f },
             { VoiceLevel.Shouting, 6.25f },
         };
-
-        private IPlayer player;
-
-        private FilterLowpass lowpassFilter;
+        private Vec3f lastSpeakerCoords;
+        private DateTime lastSpeakerUpdate;
 
         public PlayerAudioSource(IPlayer player, AudioOutputManager manager, ICoreClientAPI capi)
         {
@@ -87,6 +82,20 @@ namespace RPVoiceChat.Audio
             });
         }
 
+        public IAudioCodec GetOrCreateAudioCodec(int frequency, int channels)
+        {
+            string codecSettings = $"{frequency}:{channels}";
+            IAudioCodec codec;
+
+            if (!codecs.TryGetValue(codecSettings, out codec))
+            {
+                codec = new OpusCodec(frequency, channels);
+                codecs.Add(codecSettings, codec);
+            }
+
+            return codec;
+        }
+
         public void UpdatePlayer()
         {
             EntityPos speakerPos = player.Entity?.SidedPos;
@@ -99,47 +108,48 @@ namespace RPVoiceChat.Audio
             if (capi.World.Player.Entity.Swimming)
                 wallThickness += 1.0f;
 
+            lowpassFilter?.Stop();
+            if (wallThickness != 0)
+            {
+                lowpassFilter = lowpassFilter ?? new FilterLowpass(EffectsExtension, source);
+                lowpassFilter.Start();
+                lowpassFilter.SetHFGain(Math.Max(1.0f - (wallThickness / 2), 0.1f));
+            }
+
+            // If the player is in a reverberated area, then the player's voice should be reverberated
+            bool isReverberated = false;
+            if (isReverberated)
+            {
+
+            }
+
+            // If the player has a temporal stability of less than 0.5, then the player's voice should be distorted
+            // Values are temporary currently
+            if (player.Entity.WatchedAttributes.GetDouble("temporalStability") < 0.5)
+            {
+
+            }
+
+            /* --------- DISABLED FOR NOW ---------
+            // If the player is drunk, then the player's voice should be affected
+            // Values are temporary currently
+            float drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
+            float pitch = drunkness <= 0.2 ? 1 : 1 - (drunkness / 5);
+            AL.Source(source, ALSourcef.Pitch, pitch);
+            OALW.CheckError("Error setting source Pitch");
+            */
+
+            var sourcePosition = new Vec3f();
+            var velocity = new Vec3f();
+            if (IsLocational)
+            {
+                sourcePosition = GetRelativeSourcePosition(speakerPos, listenerPos);
+                velocity = GetRelativeVelocity(speakerPos, listenerPos, sourcePosition);
+            }
+
             OALW.ExecuteInContext(() =>
             {
-                lowpassFilter?.Stop();
-                if (wallThickness != 0)
-                {
-                    lowpassFilter = lowpassFilter ?? new FilterLowpass(EffectsExtension, source);
-                    lowpassFilter.Start();
-                    lowpassFilter.SetHFGain(Math.Max(1.0f - (wallThickness / 2), 0.1f));
-                }
-
-                // If the player is in a reverberated area, then the player's voice should be reverberated
-                bool isReverberated = false;
-                if (isReverberated)
-                {
-
-                }
-
-                // If the player has a temporal stability of less than 0.5, then the player's voice should be distorted
-                // Values are temporary currently
-                if (player.Entity.WatchedAttributes.GetDouble("temporalStability") < 0.5)
-                {
-
-                }
-
-                /* --------- DISABLED FOR NOW ---------
-                // If the player is drunk, then the player's voice should be affected
-                // Values are temporary currently
-                float drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
-                float pitch = drunkness <= 0.2 ? 1 : 1 - (drunkness / 5);
-                AL.Source(source, ALSourcef.Pitch, pitch);
-                OALW.CheckError("Error setting source Pitch");
-                */
-
-                var sourcePosition = new Vec3f();
-                var velocity = new Vec3f();
-                if (IsLocational)
-                {
-                    sourcePosition = GetRelativeSourcePosition(speakerPos, listenerPos);
-                    velocity = GetRelativeVelocity(speakerPos, listenerPos, sourcePosition);
-                }
-
+                OALW.ClearError();
                 AL.Source(source, ALSource3f.Position, sourcePosition.X, sourcePosition.Y, sourcePosition.Z);
                 OALW.CheckError("Error setting source pos");
                 AL.Source(source, ALSource3f.Velocity, velocity.X, velocity.Y, velocity.Z);

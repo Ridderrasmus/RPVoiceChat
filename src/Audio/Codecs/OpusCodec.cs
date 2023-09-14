@@ -27,7 +27,7 @@ namespace RPVoiceChat
             encoder.Bitrate = 40000;
             encoder.Complexity = 10;
             encoder.SignalType = OpusSignal.OPUS_SIGNAL_VOICE;
-            encoder.ForceMode = OpusMode.MODE_AUTO;
+            encoder.ForceMode = OpusMode.MODE_SILK_ONLY;
             encoder.UseDTX = false;
             encoder.UseInbandFEC = false;
             encoder.UseVBR = true;
@@ -35,7 +35,7 @@ namespace RPVoiceChat
 
         public byte[] Encode(short[] pcmData)
         {
-            const int maxPacketSize = 1275;
+            const int maxPacketSize = 1276;
             var encoded = new MemoryStream();
 
             try

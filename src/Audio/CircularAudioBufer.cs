@@ -14,6 +14,7 @@ namespace RPVoiceChat.Audio
         private List<int> queuedBuffers = new List<int>();
         private int[] buffers;
         private int source;
+        private object dequeue_buffers_lock = new object();
 
         public CircularAudioBuffer(int source, int bufferCount)
         {
@@ -38,6 +39,7 @@ namespace RPVoiceChat.Audio
 
             OALW.ExecuteInContext(() =>
             {
+                OALW.ClearError();
                 AL.BufferData(currentBuffer, format, audio, length, frequency);
                 OALW.CheckError("Error buffer data");
                 AL.SourceQueueBuffer(source, currentBuffer);
@@ -59,22 +61,22 @@ namespace RPVoiceChat.Audio
         {
             if (queuedBuffers.Count == 0) return;
 
-            OALW.ExecuteInContext(() =>
+            lock (dequeue_buffers_lock)
             {
-                AL.GetSource(source, ALGetSourcei.BuffersProcessed, out var buffersProcessed);
-                OALW.CheckError("Error get BuffersProcessed", ALError.InvalidValue);
-                if (buffersProcessed == 0) return;
-
-                var buffer = AL.SourceUnqueueBuffer(source);
-                OALW.CheckError("Error SourceUnqueueBuffer", ALError.InvalidValue);
-                while (buffer != 0)
+                OALW.ExecuteInContext(() =>
                 {
-                    queuedBuffers.Remove(buffer);
-                    availableBuffers.Add(buffer);
-                    buffer = AL.SourceUnqueueBuffer(source);
+                    OALW.ClearError();
+                    var buffer = AL.SourceUnqueueBuffer(source);
                     OALW.CheckError("Error SourceUnqueueBuffer", ALError.InvalidValue);
-                }
-            });
+                    while (buffer != 0)
+                    {
+                        queuedBuffers.Remove(buffer);
+                        availableBuffers.Add(buffer);
+                        buffer = AL.SourceUnqueueBuffer(source);
+                        OALW.CheckError("Error SourceUnqueueBuffer", ALError.InvalidValue);
+                    }
+                });
+            }
         }
 
         public void Dispose()

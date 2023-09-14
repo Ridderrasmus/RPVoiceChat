@@ -140,6 +140,11 @@ namespace RPVoiceChat.Audio
             });
         }
 
+        public static void ClearError()
+        {
+            AL.GetError();
+        }
+
         public static void CheckError(string Value, ALError ignoredErrors = ALError.NoError)
         {
             var error = AL.GetError();
@@ -148,7 +153,7 @@ namespace RPVoiceChat.Audio
 
             if (_activeContext != context)
             {
-                Logger.client.Error("Calling CheckError outside of mod context is incorrect");
+                Logger.client.Debug($"Calling CheckError outside of mod context is incorrect. Marker of incorrect call: \"{Value}\"");
                 return;
             }
 
