@@ -4,6 +4,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
+using Vintagestory.GameContent;
 
 namespace RPVoiceChat.Utils
 {
@@ -26,21 +27,59 @@ namespace RPVoiceChat.Utils
         {
             List<string> disabledRecipes = new List<string>();
 
-
             foreach (string itemToDisable in config.DisabledRecipes)
             {
-                var recipes = GetRecipesFromCode(itemToDisable);
+                string[] recipes = GetRecipesFromCode(itemToDisable);
                 if (recipes != null)
                     foreach (string recipe in recipes)
-                        disabledRecipes.Add(recipe);
+                        if (recipe != "item-code")
+                            disabledRecipes.Add(recipe);
             };
-
-
 
 
             foreach (GridRecipe recipe in sapi.World.GridRecipes)
             {
-                var recipeName = recipe.Name.GetName();
+                string recipeName = recipe.Name.GetName();
+                if (disabledRecipes.Contains(recipeName) && config.DisabledRecipes.Contains(recipeName))
+                {
+                    Logger.server.Notification("Disabled recipe: " + recipeName);
+                    recipe.Enabled = false;
+                }
+            }
+
+            foreach (SmithingRecipe recipe in sapi.GetSmithingRecipes())
+            {
+                string recipeName = recipe.Name.GetName();
+                if (disabledRecipes.Contains(recipeName) && config.DisabledRecipes.Contains(recipeName))
+                {
+                    Logger.server.Notification("Disabled recipe: " + recipeName);
+                    recipe.Enabled = false;
+                }
+            }
+
+            foreach (ClayFormingRecipe recipe in sapi.GetClayformingRecipes())
+            {
+                string recipeName = recipe.Name.GetName();
+                if (disabledRecipes.Contains(recipeName) && config.DisabledRecipes.Contains(recipeName))
+                {
+                    Logger.server.Notification("Disabled recipe: " + recipeName);
+                    recipe.Enabled = false;
+                }
+            }
+
+            foreach (KnappingRecipe recipe in sapi.GetKnappingRecipes())
+            {
+                string recipeName = recipe.Name.GetName();
+                if (disabledRecipes.Contains(recipeName) && config.DisabledRecipes.Contains(recipeName))
+                {
+                    Logger.server.Notification("Disabled recipe: " + recipeName);
+                    recipe.Enabled = false;
+                }
+            }
+
+            foreach (BarrelRecipe recipe in sapi.GetBarrelRecipes())
+            {
+                string recipeName = recipe.Name.GetName();
                 if (disabledRecipes.Contains(recipeName) && config.DisabledRecipes.Contains(recipeName))
                 {
                     Logger.server.Notification("Disabled recipe: " + recipeName);
@@ -59,7 +98,8 @@ namespace RPVoiceChat.Utils
             IAsset recipeDict = sapi.Assets.TryGet(recipeDictionaryPath);
             JsonObject jsonrecipeDict = recipeDict.ToObject<JsonObject>();
 
-            if (jsonrecipeDict["gridrecipes"].KeyExists(code))
+
+            if (jsonrecipeDict.KeyExists(code))
             {
                 return jsonrecipeDict[code].AsArray<string>();
             }

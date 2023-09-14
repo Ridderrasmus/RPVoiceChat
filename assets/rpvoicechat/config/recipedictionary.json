@@ -1,6 +1,7 @@
 {
-  "gridrecipes": [
-    { "item-callbell": [ "" ] },
-    { "item-royalhorn" : [ "" ] }
-  ]
+  "item-callbell": [ "callbell" ],
+  "item-handbell": [ "callbell", "handbell" ],
+  "item-royalhorn": [ "royalhorn", "royalhornheadtemp", "royalhornhandle" ],
+  "item-royalhornhead": [ "royalhornhead" ],
+  "item-royalhornhandle": [ "royalhornhandle" ]
 }
