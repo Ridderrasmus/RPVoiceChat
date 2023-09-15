@@ -28,6 +28,7 @@ namespace RPVoiceChat.Audio
         private RPVoiceChatConfig config;
         private ConcurrentQueue<AudioData> audioDataQueue = new ConcurrentQueue<AudioData>();
         private Thread audioProcessingThread;
+        private CancellationTokenSource audioProcessingCTS;
 
         private VoiceLevel voiceLevel = VoiceLevel.Talking;
         public bool canSwitchDevice = true;
@@ -52,6 +53,7 @@ namespace RPVoiceChat.Audio
         public MicrophoneManager(ICoreClientAPI capi)
         {
             audioProcessingThread = new Thread(ProcessAudio);
+            audioProcessingCTS = new CancellationTokenSource();
             this.capi = capi;
             config = ModConfig.Config;
             MaxInputThreshold = config.MaxInputThreshold;
@@ -64,7 +66,7 @@ namespace RPVoiceChat.Audio
 
         public void Launch()
         {
-            audioProcessingThread.Start();
+            audioProcessingThread.Start(audioProcessingCTS.Token);
             gameTickId = capi.Event.RegisterGameTickListener(UpdateCaptureAudioSamples, 100);
             capture?.Start();
         }
@@ -83,7 +85,8 @@ namespace RPVoiceChat.Audio
         {
             capi.Event.UnregisterGameTickListener(gameTickId);
             gameTickId = 0;
-            audioProcessingThread?.Abort();
+            audioProcessingCTS?.Cancel();
+            audioProcessingCTS?.Dispose();
             capture?.Stop();
             capture?.Dispose();
         }
@@ -166,10 +169,13 @@ namespace RPVoiceChat.Audio
             };
         }
 
-        private void ProcessAudio()
+        private void ProcessAudio(object cancellationToken)
         {
+            CancellationToken ct = (CancellationToken)cancellationToken;
             while (audioProcessingThread.IsAlive)
             {
+                ct.ThrowIfCancellationRequested();
+
                 if (!audioDataQueue.TryDequeue(out var data))
                 {
                     Thread.Sleep(30);
@@ -276,7 +282,7 @@ namespace RPVoiceChat.Audio
         private ALFormat GetDefaultInputFormat()
         {
             var format = ALFormat.Mono16;
-            var supportedFormats = AL.Get(ALGetString.Extensions);
+            var supportedFormats = AL.Get(ALGetString.Extensions) ?? "";
             if (supportedFormats.Contains("AL_EXT_MCFORMATS"))
                 format = ALFormat.MultiQuad16Ext;
             else

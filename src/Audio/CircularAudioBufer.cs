@@ -10,6 +10,7 @@ namespace RPVoiceChat.Audio
     public class CircularAudioBuffer : IDisposable
     {
         private Thread dequeueAudioThread;
+        private CancellationTokenSource dequeueAudioCTS;
         private List<int> availableBuffers = new List<int>();
         private List<int> queuedBuffers = new List<int>();
         private int[] buffers;
@@ -22,7 +23,8 @@ namespace RPVoiceChat.Audio
             availableBuffers.AddRange(buffers);
 
             dequeueAudioThread = new Thread(DequeueAudio);
-            dequeueAudioThread.Start();
+            dequeueAudioCTS = new CancellationTokenSource();
+            dequeueAudioThread.Start(dequeueAudioCTS.Token);
         }
 
         public void QueueAudio(byte[] audio, int length, ALFormat format, int frequency)
@@ -46,10 +48,13 @@ namespace RPVoiceChat.Audio
             queuedBuffers.Add(currentBuffer);
         }
 
-        private void DequeueAudio()
+        private void DequeueAudio(object cancellationToken)
         {
+            CancellationToken ct = (CancellationToken)cancellationToken;
             while (dequeueAudioThread.IsAlive)
             {
+                ct.ThrowIfCancellationRequested();
+
                 TryDequeueBuffers();
                 Thread.Sleep(30);
             }
@@ -79,7 +84,8 @@ namespace RPVoiceChat.Audio
 
         public void Dispose()
         {
-            dequeueAudioThread?.Abort();
+            dequeueAudioCTS?.Cancel();
+            dequeueAudioCTS?.Dispose();
             OALW.DeleteBuffers(buffers);
         }
     }
