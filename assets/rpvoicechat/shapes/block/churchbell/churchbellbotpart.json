@@ -9,7 +9,8 @@
 	},
 	"textures": {
 		"steel": "game:block/metal/ingot/steel",
-		"tin": "game:block/metal/ingot/tin"
+		"tin": "game:block/metal/ingot/tin",
+		"chalk2": "game:block/stone/rock/chalk2"
 	},
 	"elements": [
 		{

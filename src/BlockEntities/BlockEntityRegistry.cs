@@ -6,7 +6,7 @@ namespace RPVoiceChat.BlockEntities
     {
         public static void RegisterBlockEntities(ICoreAPI api)
         {
-            api.RegisterBlockEntityClass("BigBellPart", typeof(BlockEntityBigBellPart));
+            api.RegisterBlockEntityClass("ChurchBellPart", typeof(BlockEntityChurchBellPart));
         }
     }
 }
