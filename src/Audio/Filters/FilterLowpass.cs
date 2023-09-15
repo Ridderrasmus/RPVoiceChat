@@ -1,4 +1,5 @@
 ﻿using OpenTK.Audio.OpenAL;
+using RPVoiceChat.Audio;
 
 namespace RPVoiceChat
 {
@@ -15,10 +16,13 @@ namespace RPVoiceChat
 
         public FilterLowpass(EffectsExtension effectsExtension, int source)
         {
-            this.effectsExtension = effectsExtension;
-            this.source = source;
-            nullFilter = effectsExtension.GenFilter();
-            GenerateFilter();
+            OALW.ExecuteInContext(() =>
+            {
+                this.effectsExtension = effectsExtension;
+                this.source = source;
+                nullFilter = effectsExtension.GenFilter();
+                GenerateFilter();
+            });
         }
 
         /// <summary>
@@ -41,7 +45,7 @@ namespace RPVoiceChat
             if (IsEnabled)
                 return;
 
-            effectsExtension.BindFilterToSource(source, filter);
+            OALW.ExecuteInContext(() => effectsExtension.BindFilterToSource(source, filter));
             IsEnabled = true;
         }
 
@@ -50,7 +54,7 @@ namespace RPVoiceChat
             if (!IsEnabled)
                 return;
 
-            effectsExtension.BindFilterToSource(source, nullFilter);
+            OALW.ExecuteInContext(() => effectsExtension.BindFilterToSource(source, nullFilter));
             IsEnabled = false;
         }
 
