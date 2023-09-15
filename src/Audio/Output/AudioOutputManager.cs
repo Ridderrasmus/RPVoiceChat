@@ -34,7 +34,6 @@ namespace RPVoiceChat.Audio
         }
 
         public bool isReady = false;
-        public EffectsExtension EffectsExtension;
         private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
         private PlayerAudioSource localPlayerAudioSource;
         private PlayerListener listener;
@@ -46,8 +45,6 @@ namespace RPVoiceChat.Audio
             IsLoopbackEnabled = _config.IsLoopbackEnabled;
             capi = api;
             listener = new PlayerListener(api);
-
-            EffectsExtension = new EffectsExtension();
         }
 
         public void Launch()

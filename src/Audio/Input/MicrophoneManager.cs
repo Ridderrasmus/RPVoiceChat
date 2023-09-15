@@ -23,7 +23,7 @@ namespace RPVoiceChat.Audio
         private double MaxInputThreshold;
         readonly ICoreClientAPI capi;
 
-        private AudioCapture capture;
+        private IAudioCapture capture;
         private IAudioCodec codec;
         private RPVoiceChatConfig config;
         private ConcurrentQueue<AudioData> audioDataQueue = new ConcurrentQueue<AudioData>();
@@ -244,7 +244,7 @@ namespace RPVoiceChat.Audio
             return isRecording;
         }
 
-        private AudioCapture CreateNewCapture(string deviceName, ALFormat? captureFormat = null)
+        private IAudioCapture CreateNewCapture(string deviceName, ALFormat? captureFormat = null)
         {
             ALFormat format = captureFormat ?? GetDefaultInputFormat();
             if (capture?.CurrentDevice == deviceName && capture?.SampleFormat == format)
@@ -252,19 +252,19 @@ namespace RPVoiceChat.Audio
 
             capture?.Stop();
             capture?.Dispose();
-            SetInputFormat(format);
 
-            AudioCapture newCapture = null;
+            IAudioCapture newCapture = null;
             try
             {
-                newCapture = new AudioCapture(deviceName, Frequency, InputFormat, BufferSize);
+                newCapture = new OpenALAudioCapture(deviceName, Frequency, InputFormat, BufferSize);
                 Logger.client.Debug($"Succesfully created an audio capture device with arguments: {deviceName}, {Frequency}, {InputFormat}, {BufferSize}");
             }
             catch(Exception e)
             {
                 Logger.client.Error($"Could not create audio capture device {deviceName} in {InputFormat} format:\n{e}");
             }
-            config.CurrentInputDevice = deviceName;
+            SetInputFormat(newCapture?.SampleFormat ?? format);
+            config.CurrentInputDevice = deviceName ?? "Default";
             ModConfig.Save(capi);
 
             return newCapture;
@@ -339,7 +339,10 @@ namespace RPVoiceChat.Audio
 
         public string[] GetInputDeviceNames()
         {
-            return AudioCapture.AvailableDevices.ToArray();
+            var devices = OpenALAudioCapture.GetAvailableDevices();
+            devices.Insert(0, "Default");
+
+            return devices.ToArray();
         }
 
         public VoiceLevel CycleVoiceLevel()

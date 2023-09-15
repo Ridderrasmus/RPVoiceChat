@@ -1,9 +1,11 @@
 using RPVoiceChat.Audio;
 using RPVoiceChat.Client;
 using RPVoiceChat.Networking;
+using RPVoiceChat.Utils;
 using System;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 
 namespace RPVoiceChat
 {
@@ -30,6 +32,12 @@ namespace RPVoiceChat
         public override void StartClientSide(ICoreClientAPI api)
         {
             capi = api;
+
+            if (RuntimeEnv.OS != OS.Windows)
+            {
+                Logger.client.Error($"{RuntimeEnv.OS} OS is not supported");
+                return;
+            }
 
             // Init audio context, microphone, audio output and harmony patch managers
             OALW.InitContext();

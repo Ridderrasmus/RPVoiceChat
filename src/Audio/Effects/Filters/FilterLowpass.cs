@@ -4,8 +4,6 @@ namespace RPVoiceChat
 {
     public class FilterLowpass
     {
-
-        private EffectsExtension effectsExtension;
         private int source;
         private int nullFilter;
         public int filter;
@@ -13,11 +11,10 @@ namespace RPVoiceChat
         public bool IsEnabled { get; set; } = false;
 
 
-        public FilterLowpass(EffectsExtension effectsExtension, int source)
+        public FilterLowpass(int source)
         {
-            this.effectsExtension = effectsExtension;
             this.source = source;
-            nullFilter = effectsExtension.GenFilter();
+            nullFilter = ALC.EFX.GenFilter();
             GenerateFilter();
         }
 
@@ -28,12 +25,12 @@ namespace RPVoiceChat
         /// <param name="gain">The gain from 0.0 to 1.0.</param>
         public void SetHFGain(float gain)
         {
-            effectsExtension.Filter(filter, EfxFilterf.LowpassGainHF, gain);
+            ALC.EFX.Filter(filter, FilterFloat.LowpassGainHF, gain);
         }
 
         public void SetGain(float gain)
         {
-            effectsExtension.Filter(filter, EfxFilterf.LowpassGain, gain);
+            ALC.EFX.Filter(filter, FilterFloat.LowpassGain, gain);
         }
 
         public void Start()
@@ -41,7 +38,7 @@ namespace RPVoiceChat
             if (IsEnabled)
                 return;
 
-            effectsExtension.BindFilterToSource(source, filter);
+            AL.Source(source, ALSourcei.EfxDirectFilter, filter);
             IsEnabled = true;
         }
 
@@ -50,16 +47,16 @@ namespace RPVoiceChat
             if (!IsEnabled)
                 return;
 
-            effectsExtension.BindFilterToSource(source, nullFilter);
+            AL.Source(source, ALSourcei.EfxDirectFilter, nullFilter);
             IsEnabled = false;
         }
 
         private void GenerateFilter()
         {
-            filter = effectsExtension.GenFilter();
-            effectsExtension.Filter(filter, EfxFilteri.FilterType, (int)EfxFilterType.Lowpass);
-            effectsExtension.Filter(filter, EfxFilterf.LowpassGain, 1.0f);
-            effectsExtension.Filter(filter, EfxFilterf.LowpassGainHF, 0.2f);
+            filter = ALC.EFX.GenFilter();
+            ALC.EFX.Filter(filter, FilterInteger.FilterType, (int)FilterType.Lowpass);
+            ALC.EFX.Filter(filter, FilterFloat.LowpassGain, 1.0f);
+            ALC.EFX.Filter(filter, FilterFloat.LowpassGainHF, 0.2f);
         }
 
     }

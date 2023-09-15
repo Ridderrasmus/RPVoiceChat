@@ -40,7 +40,7 @@ namespace RPVoiceChat.Audio
 
             OALW.ExecuteInContext(() =>
             {
-                AL.BufferData(currentBuffer, format, audio, length, frequency);
+                AL.BufferData(currentBuffer, format, audio, frequency);
                 OALW.CheckError("Error buffer data");
                 AL.SourceQueueBuffer(source, currentBuffer);
                 OALW.CheckError("Error SourceQueueBuffer");

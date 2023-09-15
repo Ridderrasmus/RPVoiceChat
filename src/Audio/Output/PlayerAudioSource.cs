@@ -16,8 +16,6 @@ namespace RPVoiceChat.Audio
 
         private int source;
 
-        public EffectsExtension EffectsExtension;
-
         private CircularAudioBuffer buffer;
         private SortedList orderingQueue = SortedList.Synchronized(new SortedList());
         private int orderingDelay = 100;
@@ -44,7 +42,6 @@ namespace RPVoiceChat.Audio
 
         public PlayerAudioSource(IPlayer player, AudioOutputManager manager, ICoreClientAPI capi)
         {
-            EffectsExtension = manager.EffectsExtension;
             outputManager = manager;
             this.player = player;
             this.capi = capi;
@@ -104,7 +101,7 @@ namespace RPVoiceChat.Audio
                 lowpassFilter?.Stop();
                 if (wallThickness != 0)
                 {
-                    lowpassFilter = lowpassFilter ?? new FilterLowpass(EffectsExtension, source);
+                    lowpassFilter = lowpassFilter ?? new FilterLowpass(source);
                     lowpassFilter.Start();
                     lowpassFilter.SetHFGain(Math.Max(1.0f - (wallThickness / 2), 0.1f));
                 }
