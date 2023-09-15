@@ -1,12 +1,9 @@
 ﻿using RPVoiceChat.Networking;
-using RPVoiceChat.Networking.Packets;
 using RPVoiceChat.Server;
 using RPVoiceChat.Utils;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;
 using Vintagestory.API.Server;
-using Vintagestory.GameContent;
-using Vintagestory.ServerMods;
 
 namespace RPVoiceChat
 {
@@ -28,12 +25,6 @@ namespace RPVoiceChat
             sapi.World.Config.SetInt("rpvoicechat:distance-whisper", sapi.World.Config.GetInt("rpvoicechat:distance-whisper", (int)VoiceLevel.Whispering));
             sapi.World.Config.SetInt("rpvoicechat:distance-talk", sapi.World.Config.GetInt("rpvoicechat:distance-talk", (int)VoiceLevel.Talking));
             sapi.World.Config.SetInt("rpvoicechat:distance-shout", sapi.World.Config.GetInt("rpvoicechat:distance-shout", (int)VoiceLevel.Shouting));
-
-            // Event to sync disabled recipes with clients
-            //sapi.Event.PlayerCreate += (IServerPlayer player) =>
-            //{
-            //    server.SendNativePacketToPlayer(new DisabledRecipesPacket(RecipeHandler.DisabledRecipes), player);
-            //};)
 
             // Register commands
             registerCommands();
