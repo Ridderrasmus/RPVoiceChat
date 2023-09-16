@@ -20,7 +20,6 @@ namespace RPVoiceChat.Audio
         private long lastAudioSequenceNumber = -1;
         private Dictionary<string, IAudioCodec> codecs = new Dictionary<string, IAudioCodec>();
         private FilterLowpass lowpassFilter;
-        private EffectsExtension EffectsExtension;
 
         private ICoreClientAPI capi;
         private IPlayer player;

@@ -35,7 +35,6 @@ namespace RPVoiceChat.Audio
         public bool isReady = false;
         private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
         private PlayerAudioSource localPlayerAudioSource;
-        private ConcurrentDictionary<string, IAudioCodec> codecs = new ConcurrentDictionary<string, IAudioCodec>();
 
         public AudioOutputManager(ICoreClientAPI api)
         {
