@@ -2,6 +2,7 @@
 using RPVoiceChat.Utils;
 using System;
 using System.Net;
+using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -140,7 +141,7 @@ namespace RPVoiceChat.Networking
 
         protected string GetPublicIP()
         {
-            string publicIPString = new WebClient().DownloadString("https://ipinfo.io/ip");
+            string publicIPString = new HttpClient().GetStringAsync("https://ipinfo.io/ip").GetAwaiter().GetResult();
 
             return publicIPString;
         }

@@ -34,7 +34,7 @@ namespace RPVoiceChat.Audio
             { VoiceLevel.Shouting, 6.25f },
         };
         private Vec3f lastSpeakerCoords;
-        private DateTime lastSpeakerUpdate;
+        private DateTime? lastSpeakerUpdate;
 
         public PlayerAudioSource(IPlayer player, AudioOutputManager manager, ICoreClientAPI capi)
         {
@@ -171,7 +171,7 @@ namespace RPVoiceChat.Audio
         {
             var currentTime = DateTime.Now;
             if (lastSpeakerUpdate == null) lastSpeakerUpdate = currentTime;
-            var dt = (currentTime - lastSpeakerUpdate).TotalSeconds;
+            var dt = (currentTime - (DateTime)lastSpeakerUpdate).TotalSeconds;
             dt = GameMath.Clamp(dt, 0.1, 1);
 
             var speakerCoords = speakerPos.XYZFloat;
