@@ -49,21 +49,14 @@ namespace RPVoiceChat.Audio
             lastSpeakerCoords = player.Entity?.SidedPos?.XYZFloat;
             lastSpeakerUpdate = DateTime.Now;
 
-            OALW.ExecuteInContext(() =>
-            {
-                source = AL.GenSource();
-                OALW.CheckError("Error gen source");
-                buffer = new CircularAudioBuffer(source, BufferCount);
+            source = OALW.GenSource();
+            buffer = new CircularAudioBuffer(source, BufferCount);
 
-                AL.Source(source, ALSourceb.Looping, false);
-                OALW.CheckError("Error setting source looping");
-                AL.Source(source, ALSourceb.SourceRelative, true);
-                OALW.CheckError("Error setting source SourceRelative");
-                AL.Source(source, ALSourcef.Gain, 1.0f);
-                OALW.CheckError("Error setting source Gain");
-                AL.Source(source, ALSourcef.Pitch, 1.0f);
-                OALW.CheckError("Error setting source Pitch");
-            });
+            float gain = Math.Min(PlayerListener.gain, 1);
+            OALW.Source(source, ALSourceb.Looping, false);
+            OALW.Source(source, ALSourceb.SourceRelative, true);
+            OALW.Source(source, ALSourcef.Gain, gain);
+            OALW.Source(source, ALSourcef.Pitch, 1.0f);
 
             UpdateVoiceLevel(voiceLevel);
         }
@@ -75,13 +68,8 @@ namespace RPVoiceChat.Audio
             float distanceFactor = GetDistanceFactor();
             float rolloffFactor = referenceDistance * distanceFactor;
 
-            OALW.ExecuteInContext(() =>
-            {
-                AL.Source(source, ALSourcef.ReferenceDistance, referenceDistance);
-                OALW.CheckError("Error setting source ReferenceDistance");
-                AL.Source(source, ALSourcef.RolloffFactor, rolloffFactor);
-                OALW.CheckError("Error setting source RolloffFactor");
-            });
+            OALW.Source(source, ALSourcef.ReferenceDistance, referenceDistance);
+            OALW.Source(source, ALSourcef.RolloffFactor, rolloffFactor);
         }
 
         public void UpdatePlayer()
@@ -96,54 +84,50 @@ namespace RPVoiceChat.Audio
             if (capi.World.Player.Entity.Swimming)
                 wallThickness += 1.0f;
 
-            OALW.ExecuteInContext(() =>
+            lowpassFilter?.Stop();
+            if (wallThickness != 0)
             {
-                lowpassFilter?.Stop();
-                if (wallThickness != 0)
-                {
-                    lowpassFilter = lowpassFilter ?? new FilterLowpass(source);
-                    lowpassFilter.Start();
-                    lowpassFilter.SetHFGain(Math.Max(1.0f - (wallThickness / 2), 0.1f));
-                }
+                lowpassFilter = lowpassFilter ?? new FilterLowpass(source);
+                lowpassFilter.Start();
+                lowpassFilter.SetHFGain(Math.Max(1.0f - (wallThickness / 2), 0.1f));
+            }
 
-                // If the player is in a reverberated area, then the player's voice should be reverberated
-                bool isReverberated = false;
-                if (isReverberated)
-                {
+            // If the player is in a reverberated area, then the player's voice should be reverberated
+            bool isReverberated = false;
+            if (isReverberated)
+            {
 
-                }
+            }
 
-                // If the player has a temporal stability of less than 0.5, then the player's voice should be distorted
-                // Values are temporary currently
-                if (player.Entity.WatchedAttributes.GetDouble("temporalStability") < 0.5)
-                {
+            // If the player has a temporal stability of less than 0.5, then the player's voice should be distorted
+            // Values are temporary currently
+            if (player.Entity.WatchedAttributes.GetDouble("temporalStability") < 0.5)
+            {
 
-                }
+            }
 
-                /* --------- DISABLED FOR NOW ---------
-                // If the player is drunk, then the player's voice should be affected
-                // Values are temporary currently
-                float drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
-                float pitch = drunkness <= 0.2 ? 1 : 1 - (drunkness / 5);
-                AL.Source(source, ALSourcef.Pitch, pitch);
-                OALW.CheckError("Error setting source Pitch");
-                */
+            /* --------- DISABLED FOR NOW ---------
+            // If the player is drunk, then the player's voice should be affected
+            // Values are temporary currently
+            float drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
+            float pitch = drunkness <= 0.2 ? 1 : 1 - (drunkness / 5);
+            AL.Source(source, ALSourcef.Pitch, pitch);
+            OALW.CheckError("Error setting source Pitch");
+            */
 
-                var sourcePosition = new Vec3f();
-                var velocity = new Vec3f();
-                if (IsLocational)
-                {
-                    sourcePosition = GetRelativeSourcePosition(speakerPos, listenerPos);
-                    velocity = GetRelativeVelocity(speakerPos, listenerPos, sourcePosition);
-                }
+            float gain = Math.Min(PlayerListener.gain, 1);
+            var sourcePosition = new Vec3f();
+            var velocity = new Vec3f();
+            if (IsLocational)
+            {
+                sourcePosition = GetRelativeSourcePosition(speakerPos, listenerPos);
+                velocity = GetRelativeVelocity(speakerPos, listenerPos, sourcePosition);
+            }
 
-                AL.Source(source, ALSource3f.Position, sourcePosition.X, sourcePosition.Y, sourcePosition.Z);
-                OALW.CheckError("Error setting source pos");
-                AL.Source(source, ALSource3f.Velocity, velocity.X, velocity.Y, velocity.Z);
-                OALW.CheckError("Error setting source velocity");
-                AL.Source(source, ALSourceb.SourceRelative, true);
-                OALW.CheckError("Error making source relative to client");
-            });
+            OALW.Source(source, ALSourcef.Gain, gain);
+            OALW.Source(source, ALSource3f.Position, sourcePosition.X, sourcePosition.Y, sourcePosition.Z);
+            OALW.Source(source, ALSource3f.Velocity, velocity.X, velocity.Y, velocity.Z);
+            OALW.Source(source, ALSourceb.SourceRelative, true);
         }
 
         private float GetDistanceFactor()

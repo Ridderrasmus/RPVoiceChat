@@ -15,6 +15,7 @@ namespace RPVoiceChat
         public void Patch()
         {
             GuiDialogCreateCharacterPatch.Patch(harmony);
+            LoadedSoundNativePatch.Patch(harmony);
         }
 
         public void Unpatch()

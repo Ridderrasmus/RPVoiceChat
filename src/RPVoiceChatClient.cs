@@ -33,14 +33,7 @@ namespace RPVoiceChat
         {
             capi = api;
 
-            if (RuntimeEnv.OS != OS.Windows)
-            {
-                Logger.client.Error($"{RuntimeEnv.OS} OS is not supported");
-                return;
-            }
-
             // Init audio context, microphone, audio output and harmony patch managers
-            OALW.InitContext();
             micManager = new MicrophoneManager(capi);
             audioOutputManager = new AudioOutputManager(capi);
             patchManager = new PatchManager(modID);
@@ -145,7 +138,7 @@ namespace RPVoiceChat
             patchManager?.Dispose();
             client?.Dispose();
             configGui.Dispose();
-            OALW.Dispose();
+            PlayerListener.Dispose();
             //client = null;
         }
     }

@@ -38,13 +38,9 @@ namespace RPVoiceChat.Audio
 
             var currentBuffer = availableBuffers.PopOne();
 
-            OALW.ExecuteInContext(() =>
-            {
-                AL.BufferData(currentBuffer, format, audio, frequency);
-                OALW.CheckError("Error buffer data");
-                AL.SourceQueueBuffer(source, currentBuffer);
-                OALW.CheckError("Error SourceQueueBuffer");
-            });
+            OALW.BufferData(currentBuffer, format, audio, frequency);
+            OALW.SourceQueueBuffer(source, currentBuffer);
+
             queuedBuffers.Add(currentBuffer);
         }
 
@@ -64,22 +60,16 @@ namespace RPVoiceChat.Audio
         {
             if (queuedBuffers.Count == 0) return;
 
-            OALW.ExecuteInContext(() =>
-            {
-                AL.GetSource(source, ALGetSourcei.BuffersProcessed, out var buffersProcessed);
-                OALW.CheckError("Error get BuffersProcessed", ALError.InvalidValue);
-                if (buffersProcessed == 0) return;
+            OALW.GetSource(source, ALGetSourcei.BuffersProcessed, out var buffersProcessed);
+            if (buffersProcessed == 0) return;
 
-                var buffer = AL.SourceUnqueueBuffer(source);
-                OALW.CheckError("Error SourceUnqueueBuffer", ALError.InvalidValue);
-                while (buffer != 0)
-                {
-                    queuedBuffers.Remove(buffer);
-                    availableBuffers.Add(buffer);
-                    buffer = AL.SourceUnqueueBuffer(source);
-                    OALW.CheckError("Error SourceUnqueueBuffer", ALError.InvalidValue);
-                }
-            });
+            var buffer = OALW.SourceUnqueueBuffer(source);
+            while (buffer != 0)
+            {
+                queuedBuffers.Remove(buffer);
+                availableBuffers.Add(buffer);
+                buffer = OALW.SourceUnqueueBuffer(source);
+            }
         }
 
         public void Dispose()

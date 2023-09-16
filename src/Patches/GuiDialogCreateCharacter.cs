@@ -10,14 +10,14 @@ namespace RPVoiceChat
 
         public static void Patch(Harmony harmony)
         {
-            var OriginalMethod = typeof(GuiDialogCreateCharacter).GetMethod(nameof(GuiDialogCreateCharacter.OnGuiClosed));
-            var PostfixMethod = typeof(GuiDialogCreateCharacterPatch).GetMethod(nameof(GuiDialogCreateCharacterPatch.OnGuiClosed));
+            var OriginalMethod = AccessTools.Method(typeof(GuiDialogCreateCharacter), nameof(GuiDialogCreateCharacter.OnGuiClosed));
+            var PostfixMethod = AccessTools.Method(typeof(GuiDialogCreateCharacterPatch), nameof(OnGuiClosed));
             harmony.Patch(OriginalMethod, postfix: new HarmonyMethod(PostfixMethod));
         }
 
         public static void OnGuiClosed()
         {
-            OnCharacterSelection.Invoke();
+            OnCharacterSelection?.Invoke();
         }
     }
 }

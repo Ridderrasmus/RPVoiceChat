@@ -36,7 +36,6 @@ namespace RPVoiceChat.Audio
         public bool isReady = false;
         private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
         private PlayerAudioSource localPlayerAudioSource;
-        private PlayerListener listener;
         private ConcurrentDictionary<string, IAudioCodec> codecs = new ConcurrentDictionary<string, IAudioCodec>();
 
         public AudioOutputManager(ICoreClientAPI api)
@@ -44,11 +43,11 @@ namespace RPVoiceChat.Audio
             _config = ModConfig.Config;
             IsLoopbackEnabled = _config.IsLoopbackEnabled;
             capi = api;
-            listener = new PlayerListener(api);
         }
 
         public void Launch()
         {
+            PlayerListener.Init(capi);
             isReady = true;
             capi.Event.PlayerEntitySpawn += PlayerSpawned;
             capi.Event.PlayerEntityDespawn += PlayerDespawned;

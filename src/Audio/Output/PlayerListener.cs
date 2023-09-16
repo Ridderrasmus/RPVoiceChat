@@ -1,17 +1,14 @@
-﻿using OpenTK;
-using OpenTK.Audio;
-using OpenTK.Audio.OpenAL;
-using RPVoiceChat.Utils;
+﻿using OpenTK.Audio.OpenAL;
 using Vintagestory.API.Client;
 
 namespace RPVoiceChat.Audio
 {
-    public class PlayerListener
+    public static class PlayerListener
     {
-        private ICoreClientAPI capi;
-        private float gain;
+        public static float gain = 1;
+        private static ICoreClientAPI capi;
 
-        public PlayerListener(ICoreClientAPI api)
+        public static void Init(ICoreClientAPI api)
         {
             capi = api;
             SetGain(ModConfig.Config.OutputGain);
@@ -19,18 +16,31 @@ namespace RPVoiceChat.Audio
             ModConfig.ConfigUpdated += OnConfigUpdate;
         }
 
-        public void SetGain(float newGain)
+        public static void SetGain(float newGain)
         {
             newGain /= 100f;
             if (newGain == gain) return;
 
             gain = newGain;
+            if (gain < 1) return;
+
+            //Force game to update volume of already playing sounds
+            capi.Settings.Int["soundLevel"] = capi.Settings.Int["soundLevel"] + 1;
+            capi.Settings.Int["soundLevel"] = capi.Settings.Int["soundLevel"] - 1;
+
             OALW.Listener(ALListenerf.Gain, gain);
         }
 
-        private void OnConfigUpdate()
+        private static void OnConfigUpdate()
         {
             SetGain(ModConfig.Config.OutputGain);
+        }
+
+        public static void Dispose()
+        {
+            capi = null;
+            gain = 1;
+            ModConfig.ConfigUpdated -= OnConfigUpdate;
         }
     }
 }

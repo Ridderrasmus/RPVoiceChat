@@ -18,6 +18,10 @@
 			<HintPath>$(VINTAGE_STORY)/Lib/cairo-sharp.dll</HintPath>
 			<Private>false</Private>
 		</Reference>
+		<Reference Include="VintagestoryLib">
+			<HintPath>$(VINTAGE_STORY)/VintagestoryLib.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
 		<Reference Include="VintagestoryAPI">
 			<HintPath>$(VINTAGE_STORY)/VintagestoryAPI.dll</HintPath>
 			<Private>false</Private>
