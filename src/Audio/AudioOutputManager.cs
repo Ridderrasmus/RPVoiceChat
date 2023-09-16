@@ -12,7 +12,7 @@ namespace RPVoiceChat.Audio
         ICoreClientAPI capi;
         RPVoiceChatConfig _config;
         private bool isLoopbackEnabled;
-        public bool IsLoopbackEnabled { 
+        public bool IsLoopbackEnabled {
             get => isLoopbackEnabled;
 
             set
