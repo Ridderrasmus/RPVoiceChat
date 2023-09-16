@@ -12,7 +12,7 @@ namespace RPVoiceChat.Audio
         ICoreClientAPI capi;
         RPVoiceChatConfig _config;
         private bool isLoopbackEnabled;
-        public bool IsLoopbackEnabled { 
+        public bool IsLoopbackEnabled {
             get => isLoopbackEnabled;
 
             set
@@ -35,11 +35,7 @@ namespace RPVoiceChat.Audio
         public bool isReady = false;
         private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
         private PlayerAudioSource localPlayerAudioSource;
-<<<<<<< HEAD:src/Audio/Output/AudioOutputManager.cs
         private ConcurrentDictionary<string, IAudioCodec> codecs = new ConcurrentDictionary<string, IAudioCodec>();
-=======
-        private PlayerListener listener;
->>>>>>> 0d6ff44fd58e8bf5ba104c5e9dd8104fec6ebd15:src/Audio/AudioOutputManager.cs
 
         public AudioOutputManager(ICoreClientAPI api)
         {
