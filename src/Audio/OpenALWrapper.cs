@@ -6,40 +6,39 @@ namespace RPVoiceChat.Audio
 {
     public static class OALW
     {
-        private static ALContext context;
-        private static ALContext _activeContext;
+        private static ALContext _applicationContext;
+        private static ALContext? modContext;
         private static object audio_context_lock = new object();
 
         public static void InitContext()
         {
             lock (audio_context_lock)
             {
-                if (context != null) ALC.DestroyContext(context);
+                if (modContext != null) ALC.DestroyContext((ALContext)modContext);
 
-                var device = ALC.OpenDevice(null);
-                var attrs = new int[0];
-                context = ALC.CreateContext(device, attrs);
+                _applicationContext = ALC.GetCurrentContext();
+                var device = ALC.GetContextsDevice(_applicationContext);
+                var attrs = new ALContextAttributes();
+                modContext = ALC.CreateContext(device, attrs);
             }
         }
 
         public static void ExecuteInContext(Action action)
         {
-            if (context == null) throw new Exception("OpenAL audio context has not been initialized.");
-            var ctx = SetCurrentContext();
+            //SetModContext();
 
             action();
 
-            ResetContext(ctx);
+            //ResetContext();
         }
 
         public static T ExecuteInContext<T>(Func<T> function)
         {
-            if (context == null) throw new Exception("OpenAL audio context has not been initialized.");
-            var ctx = SetCurrentContext();
+            //SetModContext();
 
             var result = function();
 
-            ResetContext(ctx);
+            //ResetContext();
             return result;
         }
 
@@ -145,7 +144,8 @@ namespace RPVoiceChat.Audio
             if (error == ALError.NoError) return;
             if (ignoredErrors == error) return;
 
-            if (_activeContext != context)
+            var currentContext = ALC.GetCurrentContext();
+            if (currentContext != modContext)
             {
                 Logger.client.Error("Calling CheckError outside of mod context is incorrect");
                 return;
@@ -154,29 +154,43 @@ namespace RPVoiceChat.Audio
             Logger.client.Debug("{0} {1}", Value, AL.GetErrorString(error));
         }
 
-        private static ALContext? SetCurrentContext()
+        private static void SetModContext()
         {
             lock (audio_context_lock)
             {
-                var oldContext = ALC.GetCurrentContext();
-                if (oldContext == context) return null;
+                if (modContext == null) throw new Exception("OpenAL audio context has not been initialized.");
+                var currentContext = ALC.GetCurrentContext();
+                if (currentContext == modContext) return;
+                Logger.client.Debug($"Setting mod context {modContext?.Handle}, current context is {currentContext.Handle}");
 
-                ALC.MakeContextCurrent(context);
-                _activeContext = context;
+                var success = ALC.MakeContextCurrent((ALContext)modContext);
+                ALC.ProcessContext((ALContext)modContext);
 
-                return oldContext;
+                if (!success) throw new Exception("Failed to set mod context");
             }
         }
 
-        private static void ResetContext(ALContext? ctx)
+        private static void ResetContext()
         {
             lock (audio_context_lock)
             {
-                if (ctx == null) return;
+                var currentContext = ALC.GetCurrentContext();
+                if (currentContext == _applicationContext) return;
+                Logger.client.Debug($"Setting app context {_applicationContext.Handle}, current context is {currentContext.Handle}");
 
-                ALC.MakeContextCurrent((ALContext)ctx);
-                _activeContext = (ALContext)ctx;
+                ALC.SuspendContext((ALContext)modContext);
+                var success = ALC.MakeContextCurrent(_applicationContext);
+
+                if (!success) throw new Exception("Failed to set application context");
             }
+        }
+
+        public static void Dispose()
+        {
+            ResetContext();
+            ALC.DestroyContext((ALContext)modContext);
+            modContext = null;
+            _applicationContext = ALContext.Null;
         }
     }
 }

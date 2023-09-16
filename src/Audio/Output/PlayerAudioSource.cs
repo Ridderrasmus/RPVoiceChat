@@ -237,7 +237,6 @@ namespace RPVoiceChat.Audio
         {
             capi.Event.EnqueueMainThreadTask(() =>
             {
-                buffer.TryDequeueBuffers();
                 OALW.SourcePlay(source);
             }, "PlayerAudioSource StartPlaying");
         }

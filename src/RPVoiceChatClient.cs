@@ -145,6 +145,7 @@ namespace RPVoiceChat
             patchManager?.Dispose();
             client?.Dispose();
             configGui.Dispose();
+            OALW.Dispose();
             //client = null;
         }
     }

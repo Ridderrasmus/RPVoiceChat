@@ -256,14 +256,15 @@ namespace RPVoiceChat.Audio
             IAudioCapture newCapture = null;
             try
             {
-                newCapture = new OpenALAudioCapture(deviceName, Frequency, InputFormat, BufferSize);
-                Logger.client.Debug($"Succesfully created an audio capture device with arguments: {deviceName}, {Frequency}, {InputFormat}, {BufferSize}");
+                newCapture = new OpenALAudioCapture(deviceName, Frequency, format, BufferSize);
+                format = newCapture?.SampleFormat ?? format;
+                Logger.client.Debug($"Succesfully created an audio capture device with arguments: {deviceName}, {Frequency}, {format}, {BufferSize}");
             }
             catch(Exception e)
             {
-                Logger.client.Error($"Could not create audio capture device {deviceName} in {InputFormat} format:\n{e}");
+                Logger.client.Error($"Could not create audio capture device {deviceName} in {format} format:\n{e}");
             }
-            SetInputFormat(newCapture?.SampleFormat ?? format);
+            SetInputFormat(format);
             config.CurrentInputDevice = deviceName ?? "Default";
             ModConfig.Save(capi);
 
