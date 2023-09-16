@@ -172,10 +172,8 @@ namespace RPVoiceChat.Audio
         private void ProcessAudio(object cancellationToken)
         {
             CancellationToken ct = (CancellationToken)cancellationToken;
-            while (audioProcessingThread.IsAlive)
+            while (audioProcessingThread.IsAlive && !ct.IsCancellationRequested)
             {
-                ct.ThrowIfCancellationRequested();
-
                 if (!audioDataQueue.TryDequeue(out var data))
                 {
                     Thread.Sleep(30);

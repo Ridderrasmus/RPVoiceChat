@@ -122,10 +122,8 @@ namespace RPVoiceChat.Networking
 
         protected void Listen(IPEndPoint ipendpoint, CancellationToken ct)
         {
-            while (_listeningThread.IsAlive)
+            while (_listeningThread.IsAlive && !ct.IsCancellationRequested)
             {
-                ct.ThrowIfCancellationRequested();
-
                 byte[] msg = UdpClient.Receive(ref ipendpoint);
 
                 OnMessageReceived?.Invoke(msg);

@@ -47,10 +47,8 @@ namespace RPVoiceChat.Audio
         private void DequeueAudio(object cancellationToken)
         {
             CancellationToken ct = (CancellationToken)cancellationToken;
-            while (dequeueAudioThread.IsAlive)
+            while (dequeueAudioThread.IsAlive && !ct.IsCancellationRequested)
             {
-                ct.ThrowIfCancellationRequested();
-
                 TryDequeueBuffers();
                 Thread.Sleep(30);
             }
