@@ -15,6 +15,7 @@ namespace RPVoiceChat.Audio
         private List<int> queuedBuffers = new List<int>();
         private int[] buffers;
         private int source;
+        private object dequeue_buffers_lock = new object();
 
         public CircularAudioBuffer(int source, int bufferCount)
         {
@@ -38,9 +39,9 @@ namespace RPVoiceChat.Audio
 
             var currentBuffer = availableBuffers.PopOne();
 
+            OALW.ClearError();
             OALW.BufferData(currentBuffer, format, audio, frequency);
             OALW.SourceQueueBuffer(source, currentBuffer);
-
             queuedBuffers.Add(currentBuffer);
         }
 
@@ -58,15 +59,19 @@ namespace RPVoiceChat.Audio
         {
             if (queuedBuffers.Count == 0) return;
 
-            OALW.GetSource(source, ALGetSourcei.BuffersProcessed, out var buffersProcessed);
-            if (buffersProcessed == 0) return;
-
-            var buffer = OALW.SourceUnqueueBuffer(source);
-            while (buffer != 0)
+            lock (dequeue_buffers_lock)
             {
-                queuedBuffers.Remove(buffer);
-                availableBuffers.Add(buffer);
-                buffer = OALW.SourceUnqueueBuffer(source);
+                OALW.ClearError();
+                OALW.GetSource(source, ALGetSourcei.BuffersProcessed, out var buffersProcessed);
+                if (buffersProcessed == 0) return;
+
+                var buffer = OALW.SourceUnqueueBuffer(source);
+                while (buffer != 0)
+                {
+                    queuedBuffers.Remove(buffer);
+                    availableBuffers.Add(buffer);
+                    buffer = OALW.SourceUnqueueBuffer(source);
+                }
             }
         }
 

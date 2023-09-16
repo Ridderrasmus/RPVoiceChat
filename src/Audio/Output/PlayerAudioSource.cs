@@ -12,20 +12,19 @@ namespace RPVoiceChat.Audio
 {
     public class PlayerAudioSource : IDisposable
     {
-        public const int BufferCount = 20;
-
+        private const int BufferCount = 20;
         private int source;
-
         private CircularAudioBuffer buffer;
         private SortedList orderingQueue = SortedList.Synchronized(new SortedList());
         private int orderingDelay = 100;
         private long lastAudioSequenceNumber = -1;
+        private Dictionary<string, IAudioCodec> codecs = new Dictionary<string, IAudioCodec>();
+        private FilterLowpass lowpassFilter;
+        private EffectsExtension EffectsExtension;
 
         private ICoreClientAPI capi;
+        private IPlayer player;
         private AudioOutputManager outputManager;
-
-        private Vec3f lastSpeakerCoords;
-        private DateTime lastSpeakerUpdate;
 
         public bool IsLocational { get; set; } = true;
         public VoiceLevel voiceLevel { get; private set; } = VoiceLevel.Talking;
@@ -35,10 +34,8 @@ namespace RPVoiceChat.Audio
             { VoiceLevel.Talking, 2.25f },
             { VoiceLevel.Shouting, 6.25f },
         };
-
-        private IPlayer player;
-
-        private FilterLowpass lowpassFilter;
+        private Vec3f lastSpeakerCoords;
+        private DateTime lastSpeakerUpdate;
 
         public PlayerAudioSource(IPlayer player, AudioOutputManager manager, ICoreClientAPI capi)
         {
@@ -70,6 +67,20 @@ namespace RPVoiceChat.Audio
 
             OALW.Source(source, ALSourcef.ReferenceDistance, referenceDistance);
             OALW.Source(source, ALSourcef.RolloffFactor, rolloffFactor);
+        }
+
+        public IAudioCodec GetOrCreateAudioCodec(int frequency, int channels)
+        {
+            string codecSettings = $"{frequency}:{channels}";
+            IAudioCodec codec;
+
+            if (!codecs.TryGetValue(codecSettings, out codec))
+            {
+                codec = new OpusCodec(frequency, channels);
+                codecs.Add(codecSettings, codec);
+            }
+
+            return codec;
         }
 
         public void UpdatePlayer()
@@ -111,8 +122,7 @@ namespace RPVoiceChat.Audio
             // Values are temporary currently
             float drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
             float pitch = drunkness <= 0.2 ? 1 : 1 - (drunkness / 5);
-            AL.Source(source, ALSourcef.Pitch, pitch);
-            OALW.CheckError("Error setting source Pitch");
+            OALW.Source(source, ALSourcef.Pitch, pitch);
             */
 
             float gain = Math.Min(PlayerListener.gain, 1);
@@ -124,6 +134,7 @@ namespace RPVoiceChat.Audio
                 velocity = GetRelativeVelocity(speakerPos, listenerPos, sourcePosition);
             }
 
+            OALW.ClearError();
             OALW.Source(source, ALSourcef.Gain, gain);
             OALW.Source(source, ALSource3f.Position, sourcePosition.X, sourcePosition.Y, sourcePosition.Z);
             OALW.Source(source, ALSource3f.Velocity, velocity.X, velocity.Y, velocity.Z);

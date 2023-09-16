@@ -102,6 +102,11 @@ namespace RPVoiceChat.Audio
             CheckError("Error deleting buffers");
         }
 
+        public static void ClearError()
+        {
+            AL.GetError();
+        }
+
         public static void CheckError(string Value, ALError ignoredErrors = ALError.NoError)
         {
             var error = AL.GetError();
