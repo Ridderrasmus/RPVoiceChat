@@ -218,11 +218,14 @@ namespace RPVoiceChat.Audio
                 orderingQueue.RemoveAt(0);
             }
 
+            var state = OALW.GetSourceState(source);
+            if (state == ALSourceState.Stopped)
+                buffer.TryDequeueBuffers(); //Calling this can dequeue unprocessed audio so we want to make sure the source is stopped
+
             byte[] audioBytes = audio.data;
             buffer.QueueAudio(audioBytes, audioBytes.Length, audio.format, audio.frequency);
 
-            var state = OALW.GetSourceState(source);
-            // the source can stop playing if it finishes everything in queue
+            // The source can stop playing if it finishes everything in queue
             if (state != ALSourceState.Playing)
             {
                 StartPlaying();
@@ -231,18 +234,12 @@ namespace RPVoiceChat.Audio
 
         public void StartPlaying()
         {
-            capi.Event.EnqueueMainThreadTask(() =>
-            {
-                OALW.SourcePlay(source);
-            }, "PlayerAudioSource StartPlaying");
+            OALW.SourcePlay(source);
         }
 
         public void StopPlaying()
         {
-            capi.Event.EnqueueMainThreadTask(() =>
-            {
-                OALW.SourceStop(source);
-            }, "PlayerAudioSource StopPlaying");
+            OALW.SourceStop(source);
         }
 
         public void Dispose()
