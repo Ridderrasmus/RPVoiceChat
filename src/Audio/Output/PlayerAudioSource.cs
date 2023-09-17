@@ -20,7 +20,7 @@ namespace RPVoiceChat.Audio
         private long lastAudioSequenceNumber = -1;
         private Dictionary<string, IAudioCodec> codecs = new Dictionary<string, IAudioCodec>();
         private FilterLowpass lowpassFilter;
-        private EffectsExtension EffectsExtension;
+        private EffectsExtension effectsExtension;
 
         private ICoreClientAPI capi;
         private IPlayer player;
@@ -35,11 +35,11 @@ namespace RPVoiceChat.Audio
             { VoiceLevel.Shouting, 6.25f },
         };
         private Vec3f lastSpeakerCoords;
-        private DateTime lastSpeakerUpdate;
+        private DateTime? lastSpeakerUpdate;
 
         public PlayerAudioSource(IPlayer player, AudioOutputManager manager, ICoreClientAPI capi)
         {
-            EffectsExtension = manager.EffectsExtension;
+            effectsExtension = manager.effectsExtension;
             outputManager = manager;
             this.player = player;
             this.capi = capi;
@@ -47,21 +47,14 @@ namespace RPVoiceChat.Audio
             lastSpeakerCoords = player.Entity?.SidedPos?.XYZFloat;
             lastSpeakerUpdate = DateTime.Now;
 
-            OALW.ExecuteInContext(() =>
-            {
-                source = AL.GenSource();
-                OALW.CheckError("Error gen source");
-                buffer = new CircularAudioBuffer(source, BufferCount);
+            source = OALW.GenSource();
+            buffer = new CircularAudioBuffer(source, BufferCount);
 
-                AL.Source(source, ALSourceb.Looping, false);
-                OALW.CheckError("Error setting source looping");
-                AL.Source(source, ALSourceb.SourceRelative, true);
-                OALW.CheckError("Error setting source SourceRelative");
-                AL.Source(source, ALSourcef.Gain, 1.0f);
-                OALW.CheckError("Error setting source Gain");
-                AL.Source(source, ALSourcef.Pitch, 1.0f);
-                OALW.CheckError("Error setting source Pitch");
-            });
+            float gain = Math.Min(PlayerListener.gain, 1);
+            OALW.Source(source, ALSourceb.Looping, false);
+            OALW.Source(source, ALSourceb.SourceRelative, true);
+            OALW.Source(source, ALSourcef.Gain, gain);
+            OALW.Source(source, ALSourcef.Pitch, 1.0f);
 
             UpdateVoiceLevel(voiceLevel);
         }
@@ -73,13 +66,8 @@ namespace RPVoiceChat.Audio
             float distanceFactor = GetDistanceFactor();
             float rolloffFactor = referenceDistance * distanceFactor;
 
-            OALW.ExecuteInContext(() =>
-            {
-                AL.Source(source, ALSourcef.ReferenceDistance, referenceDistance);
-                OALW.CheckError("Error setting source ReferenceDistance");
-                AL.Source(source, ALSourcef.RolloffFactor, rolloffFactor);
-                OALW.CheckError("Error setting source RolloffFactor");
-            });
+            OALW.Source(source, ALSourcef.ReferenceDistance, referenceDistance);
+            OALW.Source(source, ALSourcef.RolloffFactor, rolloffFactor);
         }
 
         public IAudioCodec GetOrCreateAudioCodec(int frequency, int channels)
@@ -111,7 +99,7 @@ namespace RPVoiceChat.Audio
             lowpassFilter?.Stop();
             if (wallThickness != 0)
             {
-                lowpassFilter = lowpassFilter ?? new FilterLowpass(EffectsExtension, source);
+                lowpassFilter = lowpassFilter ?? new FilterLowpass(effectsExtension, source);
                 lowpassFilter.Start();
                 lowpassFilter.SetHFGain(Math.Max(1.0f - (wallThickness / 2), 0.1f));
             }
@@ -135,10 +123,10 @@ namespace RPVoiceChat.Audio
             // Values are temporary currently
             float drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
             float pitch = drunkness <= 0.2 ? 1 : 1 - (drunkness / 5);
-            AL.Source(source, ALSourcef.Pitch, pitch);
-            OALW.CheckError("Error setting source Pitch");
+            OALW.Source(source, ALSourcef.Pitch, pitch);
             */
 
+            float gain = Math.Min(PlayerListener.gain, 1);
             var sourcePosition = new Vec3f();
             var velocity = new Vec3f();
             if (IsLocational)
@@ -147,16 +135,11 @@ namespace RPVoiceChat.Audio
                 velocity = GetRelativeVelocity(speakerPos, listenerPos, sourcePosition);
             }
 
-            OALW.ExecuteInContext(() =>
-            {
-                OALW.ClearError();
-                AL.Source(source, ALSource3f.Position, sourcePosition.X, sourcePosition.Y, sourcePosition.Z);
-                OALW.CheckError("Error setting source pos");
-                AL.Source(source, ALSource3f.Velocity, velocity.X, velocity.Y, velocity.Z);
-                OALW.CheckError("Error setting source velocity");
-                AL.Source(source, ALSourceb.SourceRelative, true);
-                OALW.CheckError("Error making source relative to client");
-            });
+            OALW.ClearError();
+            OALW.Source(source, ALSourcef.Gain, gain);
+            OALW.Source(source, ALSource3f.Position, sourcePosition.X, sourcePosition.Y, sourcePosition.Z);
+            OALW.Source(source, ALSource3f.Velocity, velocity.X, velocity.Y, velocity.Z);
+            OALW.Source(source, ALSourceb.SourceRelative, true);
         }
 
         private float GetDistanceFactor()
@@ -190,7 +173,7 @@ namespace RPVoiceChat.Audio
         {
             var currentTime = DateTime.Now;
             if (lastSpeakerUpdate == null) lastSpeakerUpdate = currentTime;
-            var dt = (currentTime - lastSpeakerUpdate).TotalSeconds;
+            var dt = (currentTime - (DateTime)lastSpeakerUpdate).TotalSeconds;
             dt = GameMath.Clamp(dt, 0.1, 1);
 
             var speakerCoords = speakerPos.XYZFloat;
@@ -250,7 +233,6 @@ namespace RPVoiceChat.Audio
         {
             capi.Event.EnqueueMainThreadTask(() =>
             {
-                buffer.TryDequeueBuffers();
                 OALW.SourcePlay(source);
             }, "PlayerAudioSource StartPlaying");
         }

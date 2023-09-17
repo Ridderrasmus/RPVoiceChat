@@ -4,7 +4,6 @@ namespace RPVoiceChat
 {
     public class FilterLowpass
     {
-
         private EffectsExtension effectsExtension;
         private int source;
         private int nullFilter;
@@ -15,13 +14,10 @@ namespace RPVoiceChat
 
         public FilterLowpass(EffectsExtension effectsExtension, int source)
         {
-            OALW.ExecuteInContext(() =>
-            {
-                this.effectsExtension = effectsExtension;
-                this.source = source;
-                nullFilter = effectsExtension.GenFilter();
-                GenerateFilter();
-            });
+            this.effectsExtension = effectsExtension;
+            this.source = source;
+            nullFilter = effectsExtension.GenFilter();
+            GenerateFilter();
         }
 
         /// <summary>
@@ -44,7 +40,7 @@ namespace RPVoiceChat
             if (IsEnabled)
                 return;
 
-            OALW.ExecuteInContext(() => effectsExtension.BindFilterToSource(source, filter));
+            effectsExtension.BindFilterToSource(source, filter);
             IsEnabled = true;
         }
 
@@ -53,7 +49,7 @@ namespace RPVoiceChat
             if (!IsEnabled)
                 return;
 
-            OALW.ExecuteInContext(() => effectsExtension.BindFilterToSource(source, nullFilter));
+            effectsExtension.BindFilterToSource(source, nullFilter);
             IsEnabled = false;
         }
 

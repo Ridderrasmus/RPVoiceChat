@@ -1,9 +1,11 @@
 using RPVoiceChat.Audio;
 using RPVoiceChat.Client;
 using RPVoiceChat.Networking;
+using RPVoiceChat.Utils;
 using System;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 
 namespace RPVoiceChat
 {
@@ -31,8 +33,7 @@ namespace RPVoiceChat
         {
             capi = api;
 
-            // Init audio context, microphone, audio output and harmony patch managers
-            OALW.InitContext();
+            // Init microphone, audio output and harmony patch managers
             micManager = new MicrophoneManager(capi);
             audioOutputManager = new AudioOutputManager(capi);
             patchManager = new PatchManager(modID);
@@ -137,6 +138,7 @@ namespace RPVoiceChat
             patchManager?.Dispose();
             client?.Dispose();
             configGui.Dispose();
+            PlayerListener.Dispose();
             //client = null;
         }
     }
