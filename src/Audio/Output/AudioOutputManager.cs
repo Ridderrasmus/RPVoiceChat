@@ -12,7 +12,7 @@ namespace RPVoiceChat.Audio
         ICoreClientAPI capi;
         RPVoiceChatConfig _config;
         private bool isLoopbackEnabled;
-        public bool IsLoopbackEnabled { 
+        public bool IsLoopbackEnabled {
             get => isLoopbackEnabled;
 
             set
@@ -33,23 +33,21 @@ namespace RPVoiceChat.Audio
         }
 
         public bool isReady = false;
-        public EffectsExtension EffectsExtension;
+        public EffectsExtension effectsExtension;
         private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
         private PlayerAudioSource localPlayerAudioSource;
-        private PlayerListener listener;
 
         public AudioOutputManager(ICoreClientAPI api)
         {
             _config = ModConfig.Config;
             IsLoopbackEnabled = _config.IsLoopbackEnabled;
             capi = api;
-            listener = new PlayerListener(api);
-
-            EffectsExtension = new EffectsExtension();
+            effectsExtension = new EffectsExtension();
         }
 
         public void Launch()
         {
+            PlayerListener.Init(capi);
             isReady = true;
             capi.Event.PlayerEntitySpawn += PlayerSpawned;
             capi.Event.PlayerEntityDespawn += PlayerDespawned;

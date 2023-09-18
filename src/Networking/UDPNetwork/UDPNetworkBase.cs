@@ -13,6 +13,7 @@ namespace RPVoiceChat.Networking
         public event Action<byte[]> OnMessageReceived;
 
         private Thread _listeningThread;
+        private CancellationTokenSource _listeningCTS;
 
         protected UdpClient UdpClient;
         protected int port;
@@ -114,18 +115,25 @@ namespace RPVoiceChat.Networking
         {
             if (UdpClient == null) throw new Exception("Udp client has not been initialized. Can't start listening.");
 
-            _listeningThread = new Thread(Listen);
-            _listeningThread.Start(ipendpoint);
+            _listeningCTS = new CancellationTokenSource();
+            _listeningThread = new Thread(() => Listen(ipendpoint, _listeningCTS.Token));
+            _listeningThread.Start();
         }
 
-        protected void Listen(object arg)
+        protected void Listen(IPEndPoint ipendpoint, CancellationToken ct)
         {
-            var ipendpoint = arg as IPEndPoint;
-            while (_listeningThread.IsAlive)
+            while (_listeningThread.IsAlive && !ct.IsCancellationRequested)
             {
-                byte[] msg = UdpClient.Receive(ref ipendpoint);
+                try
+                {
+                    byte[] msg = UdpClient.Receive(ref ipendpoint);
 
-                OnMessageReceived?.Invoke(msg);
+                    OnMessageReceived?.Invoke(msg);
+                }
+                catch(SocketException e)
+                {
+                    if (!ct.IsCancellationRequested) throw e;
+                }
             }
         }
 
@@ -146,7 +154,8 @@ namespace RPVoiceChat.Networking
 
         public void Dispose()
         {
-            _listeningThread?.Abort();
+            _listeningCTS?.Cancel();
+            _listeningCTS?.Dispose();
             UdpClient?.Close();
             UdpClient?.Dispose();
         }
