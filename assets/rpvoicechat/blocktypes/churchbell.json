@@ -47,11 +47,11 @@
   },
   "guiTransform": {
     "translation": {
-      "x": 0,
-      "y": -30,
+      "x": -1,
+      "y": 9,
       "z": 0
     },
-    "scale": 4
+    "scale": 0.26
   },
   "fpHandTransform": {
     "translation": {
@@ -59,6 +59,6 @@
       "y": 0,
       "z": 0
     },
-    "scale": 4
+    "scale": 0.5
   }
 }

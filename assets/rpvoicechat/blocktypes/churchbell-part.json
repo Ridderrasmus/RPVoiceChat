@@ -22,7 +22,10 @@
   },
   "blockmaterial": "Metal",
   "variantgroups": [
-    { "code": "layer", "states": [ "bottom", "middle", "top" ] }
+    {
+      "code": "layer",
+      "states": [ "bottom", "middle", "top" ]
+    }
   ],
   "shapeByType": {
     "churchbell-part-bottom": { "base": "block/churchbell/churchbell-part-bottom" },
@@ -64,12 +67,7 @@
     "walk": "game:walk/stone"
   },
   "guiTransform": {
-    "translation": {
-      "x": 0,
-      "y": -30,
-      "z": 0
-    },
-    "scale": 4
+    "scale": 0.76
   },
   "fpHandTransform": {
     "translation": {
@@ -77,6 +75,6 @@
       "y": 0,
       "z": 0
     },
-    "scale": 4
+    "scale": 0.9
   }
 }

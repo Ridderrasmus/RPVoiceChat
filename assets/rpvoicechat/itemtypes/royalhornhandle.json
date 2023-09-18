@@ -8,5 +8,18 @@
   },
   "shape": {
     "base": "item/royalhornhandle"
+  },
+  "guiTransform": {
+    "translation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "origin": {
+      "x": 1,
+      "y": 1,
+      "z": 0
+    },
+    "scale": 1.54
   }
 }

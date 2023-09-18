@@ -19,5 +19,35 @@
       "item/royalhorn/royalhorn"
 
     ]
+  },
+  "guiTransform": {
+    "translation": {
+      "x": 3,
+      "y": 16,
+      "z": 0
+    },
+    "rotation": {
+      "x": 16,
+      "y": -57,
+      "z": 0
+    },
+    "origin": {
+      "x": 0,
+      "y": 1,
+      "z": 0
+    },
+    "scale": 1.56
+  },
+  "fpHandTransform": {
+    "translation": {
+      "x": 0.05,
+      "y": 0.5,
+      "z": 0
+    },
+    "rotation": {
+      "x": -161,
+      "y": -67,
+      "z": 19
+    }
   }
 }
