@@ -16,6 +16,6 @@
   "name": "Bell Top Part",
   "output": {
     "type": "block",
-    "code": "churchbelltoppart"
+    "code": "churchbell-part-top"
   }
 }

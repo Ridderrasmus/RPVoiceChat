@@ -9,6 +9,21 @@
   "shape": {
     "base": "block/churchbell/bigbell"
   },
+  "behaviors": [
+    {
+      "name": "Multiblock",
+      "properties": {
+        "sizex": 3,
+        "sizey": 4,
+        "sizez": 3,
+        "cposition": {
+          "x": 1,
+          "y": 0,
+          "z": 1
+        }
+      }
+    }
+  ],
   "attributes": {
     "soundAudibleDistance": 832,
     "soundVolume": 0.6,
@@ -25,22 +40,6 @@
     "all": false
   },
   "lightAbsorption": 0,
-  "collisionbox": {
-    "x1": -1.25,
-    "y1": 0,
-    "z1": -1.25,
-    "x2": 2.25,
-    "y2": 4.5,
-    "z2": 2.25
-  },
-  "selectionbox": {
-    "x1": -1.25,
-    "y1": 0,
-    "z1": -1.25,
-    "x2": 2.25,
-    "y2": 4.5,
-    "z2": 2.25
-  },
   "resistance": 1,
   "sounds": {
     "place": "game:block/anvil",
