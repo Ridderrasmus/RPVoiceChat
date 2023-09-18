@@ -255,7 +255,7 @@ namespace RPVoiceChat
             SingleComposer.GetSlider("inputGain").SetValues(_config.InputGain, 0, 100, 1, "%");
             SingleComposer.GetSlider("outputGain").SetValues(_config.OutputGain, 0, 200, 1, "%");
             SingleComposer.GetSlider("inputThreshold").SetValues(_config.InputThreshold, 0, 100, 1);
-            SingleComposer.GetDropDown("inputDevice").SetSelectedValue(_config.CurrentInputDevice);
+            SingleComposer.GetDropDown("inputDevice").SetSelectedValue(_config.CurrentInputDevice ?? "Default");
             SingleComposer.GetSwitch("loopback").On = _config.IsLoopbackEnabled;
         }
 

@@ -21,10 +21,10 @@
         public bool IsLoopbackEnabled = false;
         public bool IsHUDShown = true;
         public bool IsMuted = false;
-        public int OutputGain = 200;
+        public int OutputGain = 100;
         public int InputGain = 100;
         public int InputThreshold = 20;
-        public string CurrentInputDevice = OpenTK.Audio.AudioCapture.DefaultDevice;
+        public string CurrentInputDevice;
         // These are client settings but they are not
         // accessible from the in-game settings menu and
         // are only meant to be modified by someone who

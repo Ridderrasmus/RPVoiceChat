@@ -23,11 +23,12 @@ namespace RPVoiceChat.Audio
         private double MaxInputThreshold;
         readonly ICoreClientAPI capi;
 
-        private AudioCapture capture;
+        private IAudioCapture capture;
         private IAudioCodec codec;
         private RPVoiceChatConfig config;
         private ConcurrentQueue<AudioData> audioDataQueue = new ConcurrentQueue<AudioData>();
         private Thread audioProcessingThread;
+        private CancellationTokenSource audioProcessingCTS;
 
         private VoiceLevel voiceLevel = VoiceLevel.Talking;
         public bool canSwitchDevice = true;
@@ -52,6 +53,7 @@ namespace RPVoiceChat.Audio
         public MicrophoneManager(ICoreClientAPI capi)
         {
             audioProcessingThread = new Thread(ProcessAudio);
+            audioProcessingCTS = new CancellationTokenSource();
             this.capi = capi;
             config = ModConfig.Config;
             MaxInputThreshold = config.MaxInputThreshold;
@@ -64,7 +66,7 @@ namespace RPVoiceChat.Audio
 
         public void Launch()
         {
-            audioProcessingThread.Start();
+            audioProcessingThread.Start(audioProcessingCTS.Token);
             gameTickId = capi.Event.RegisterGameTickListener(UpdateCaptureAudioSamples, 100);
             capture?.Start();
         }
@@ -83,7 +85,8 @@ namespace RPVoiceChat.Audio
         {
             capi.Event.UnregisterGameTickListener(gameTickId);
             gameTickId = 0;
-            audioProcessingThread?.Abort();
+            audioProcessingCTS?.Cancel();
+            audioProcessingCTS?.Dispose();
             capture?.Stop();
             capture?.Dispose();
         }
@@ -166,9 +169,10 @@ namespace RPVoiceChat.Audio
             };
         }
 
-        private void ProcessAudio()
+        private void ProcessAudio(object cancellationToken)
         {
-            while (audioProcessingThread.IsAlive)
+            CancellationToken ct = (CancellationToken)cancellationToken;
+            while (audioProcessingThread.IsAlive && !ct.IsCancellationRequested)
             {
                 if (!audioDataQueue.TryDequeue(out var data))
                 {
@@ -238,7 +242,7 @@ namespace RPVoiceChat.Audio
             return isRecording;
         }
 
-        private AudioCapture CreateNewCapture(string deviceName, ALFormat? captureFormat = null)
+        private IAudioCapture CreateNewCapture(string deviceName, ALFormat? captureFormat = null)
         {
             ALFormat format = captureFormat ?? GetDefaultInputFormat();
             if (capture?.CurrentDevice == deviceName && capture?.SampleFormat == format)
@@ -246,19 +250,20 @@ namespace RPVoiceChat.Audio
 
             capture?.Stop();
             capture?.Dispose();
-            SetInputFormat(format);
 
-            AudioCapture newCapture = null;
+            IAudioCapture newCapture = null;
             try
             {
-                newCapture = new AudioCapture(deviceName, Frequency, InputFormat, BufferSize);
-                Logger.client.Debug($"Succesfully created an audio capture device with arguments: {deviceName}, {Frequency}, {InputFormat}, {BufferSize}");
+                newCapture = new OpenALAudioCapture(deviceName, Frequency, format, BufferSize);
+                format = newCapture?.SampleFormat ?? format;
+                Logger.client.Debug($"Succesfully created an audio capture device with arguments: {deviceName}, {Frequency}, {format}, {BufferSize}");
             }
             catch(Exception e)
             {
-                Logger.client.Error($"Could not create audio capture device {deviceName} in {InputFormat} format:\n{e}");
+                Logger.client.Error($"Could not create audio capture device {deviceName} in {format} format:\n{e}");
             }
-            config.CurrentInputDevice = deviceName;
+            SetInputFormat(format);
+            config.CurrentInputDevice = deviceName ?? "Default";
             ModConfig.Save(capi);
 
             return newCapture;
@@ -276,7 +281,7 @@ namespace RPVoiceChat.Audio
         private ALFormat GetDefaultInputFormat()
         {
             var format = ALFormat.Mono16;
-            var supportedFormats = AL.Get(ALGetString.Extensions);
+            var supportedFormats = AL.Get(ALGetString.Extensions) ?? "";
             if (supportedFormats.Contains("AL_EXT_MCFORMATS"))
                 format = ALFormat.MultiQuad16Ext;
             else
@@ -333,7 +338,10 @@ namespace RPVoiceChat.Audio
 
         public string[] GetInputDeviceNames()
         {
-            return AudioCapture.AvailableDevices.ToArray();
+            var devices = OpenALAudioCapture.GetAvailableDevices();
+            devices.Insert(0, "Default");
+
+            return devices.ToArray();
         }
 
         public VoiceLevel CycleVoiceLevel()

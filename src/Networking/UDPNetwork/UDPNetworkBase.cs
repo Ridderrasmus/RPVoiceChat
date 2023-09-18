@@ -2,6 +2,7 @@
 using RPVoiceChat.Utils;
 using System;
 using System.Net;
+using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,6 +14,7 @@ namespace RPVoiceChat.Networking
         public event Action<byte[]> OnMessageReceived;
 
         private Thread _listeningThread;
+        private CancellationTokenSource _listeningCTS;
 
         protected UdpClient UdpClient;
         protected int port;
@@ -114,14 +116,14 @@ namespace RPVoiceChat.Networking
         {
             if (UdpClient == null) throw new Exception("Udp client has not been initialized. Can't start listening.");
 
-            _listeningThread = new Thread(Listen);
-            _listeningThread.Start(ipendpoint);
+            _listeningCTS = new CancellationTokenSource();
+            _listeningThread = new Thread(() => Listen(ipendpoint, _listeningCTS.Token));
+            _listeningThread.Start();
         }
 
-        protected void Listen(object arg)
+        protected void Listen(IPEndPoint ipendpoint, CancellationToken ct)
         {
-            var ipendpoint = arg as IPEndPoint;
-            while (_listeningThread.IsAlive)
+            while (_listeningThread.IsAlive && !ct.IsCancellationRequested)
             {
                 byte[] msg = UdpClient.Receive(ref ipendpoint);
 
@@ -139,14 +141,15 @@ namespace RPVoiceChat.Networking
 
         protected string GetPublicIP()
         {
-            string publicIPString = new WebClient().DownloadString("https://ipinfo.io/ip");
+            string publicIPString = new HttpClient().GetStringAsync("https://ipinfo.io/ip").GetAwaiter().GetResult();
 
             return publicIPString;
         }
 
         public void Dispose()
         {
-            _listeningThread?.Abort();
+            _listeningCTS?.Cancel();
+            _listeningCTS?.Dispose();
             UdpClient?.Close();
             UdpClient?.Dispose();
         }

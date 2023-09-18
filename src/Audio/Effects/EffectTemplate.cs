@@ -4,16 +4,14 @@ namespace RPVoiceChat
 {
     public class EffectTemplate
     {
-        private EffectsExtension effectsExtension;
         private int source;
         public int filter;
     
         public bool IsEnabled { get; set; } = false;
 
-        public EffectTemplate(EffectsExtension effectsExtension, int source)
+        public EffectTemplate(int source)
         {
             this.source = source;
-            this.effectsExtension = effectsExtension;
             GenerateEffect();
         }
 
