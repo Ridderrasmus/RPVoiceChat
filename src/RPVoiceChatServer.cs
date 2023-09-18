@@ -63,23 +63,9 @@ namespace RPVoiceChat
                 .BeginSub("reset")
                     .WithDesc("Resets the audio distances to their default settings")
                     .HandleWith(ResetDistanceHandler)
-                .EndSub()
-                .BeginSub("voiptoggle")
-                    .WithDesc("Toggles voip functionality on the server")
-                    .WithArgs(parsers.Bool("toggle"))
-                    .HandleWith(ToggleVoip)
                 .EndSub();
         }
 
-        private TextCommandResult ToggleVoip(TextCommandCallingArgs args)
-        {
-            bool toggle = (bool)args[0];
-
-            if (server.ServerToggle(toggle))
-                return TextCommandResult.Success("Voip toggled " + (toggle ? "on" : "off"));
-            else
-                return TextCommandResult.Error("Voip is already " + (toggle ? "on" : "off") + "!");
-        }
         private TextCommandResult ResetDistanceHandler(TextCommandCallingArgs args)
         {
             sapi.World.Config.SetInt("rpvoicechat:distance-whisper", (int)VoiceLevel.Whispering);
