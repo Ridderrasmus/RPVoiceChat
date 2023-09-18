@@ -15,6 +15,7 @@ namespace RPVoiceChat.Server
         private INetworkServer reserveServer;
         private IServerNetworkChannel handshakeChannel;
         private Dictionary<string, INetworkServer> serverByTransport;
+        private bool ToggledOff = false;
 
         public GameServer(ICoreServerAPI sapi, INetworkServer server, INetworkServer _reserveServer = null)
         {
@@ -78,6 +79,8 @@ namespace RPVoiceChat.Server
 
         public void SendAudioToAllClientsInRange(AudioPacket packet)
         {
+            if (ToggledOff) return;
+
             var player = api.World.PlayerByUid(packet.PlayerId);
             int distance = WorldConfig.GetVoiceDistance(api, packet.VoiceLevel);
             int squareDistance = distance * distance;
@@ -135,6 +138,17 @@ namespace RPVoiceChat.Server
             {
                 Logger.server.VerboseDebug($"Couldn't use backup server to deliver a packet to {playerId}: {e.Message}");
             }
+        }
+
+        public bool ServerToggle(bool b)
+        {
+            if (b != ToggledOff)
+            {
+                ToggledOff = b;
+                return true;
+            }
+
+            return false;
         }
 
         public void Dispose()
