@@ -4,12 +4,12 @@ using Vintagestory.API.MathTools;
 
 namespace RPVoiceChat.Blocks
 {
-    public class ChurchBellPartBlock : Block
+    public class ChurchBellLayerBlock : Block
     {
 
         public override Cuboidf[] GetCollisionBoxes(IBlockAccessor blockAccessor, BlockPos pos)
         {
-            BlockEntityChurchBellPart bigBellPart = blockAccessor.GetBlockEntity(pos) as BlockEntityChurchBellPart;
+            BlockEntityChurchBellLayer bigBellPart = blockAccessor.GetBlockEntity(pos) as BlockEntityChurchBellLayer;
             if (bigBellPart?.Inventory != null && bigBellPart.Inventory[2].Empty) return new Cuboidf[] { CollisionBoxes[0] };
 
             return base.GetCollisionBoxes(blockAccessor, pos);
@@ -17,7 +17,7 @@ namespace RPVoiceChat.Blocks
 
         public override Cuboidf[] GetSelectionBoxes(IBlockAccessor blockAccessor, BlockPos pos)
         {
-            BlockEntityChurchBellPart bigBellPart = blockAccessor.GetBlockEntity(pos) as BlockEntityChurchBellPart;
+            BlockEntityChurchBellLayer bigBellPart = blockAccessor.GetBlockEntity(pos) as BlockEntityChurchBellLayer;
             if (bigBellPart?.Inventory != null && bigBellPart.Inventory[2].Empty) return new Cuboidf[] { SelectionBoxes[0] };
 
             return base.GetSelectionBoxes(blockAccessor, pos);
@@ -25,7 +25,7 @@ namespace RPVoiceChat.Blocks
 
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
-            BlockEntityChurchBellPart bigBellPart = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityChurchBellPart;
+            BlockEntityChurchBellLayer bigBellPart = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityChurchBellLayer;
             bigBellPart?.OnInteract(byPlayer);
 
             return true;
@@ -33,11 +33,10 @@ namespace RPVoiceChat.Blocks
 
         public override float OnGettingBroken(IPlayer player, BlockSelection blockSel, ItemSlot itemslot, float remainingResistance, float dt, int counter)
         {
-            if (itemslot.Itemstack.Collectible.FirstCodePart() == "hammer" && api.Side == EnumAppSide.Client)
+            if (itemslot.Itemstack.Collectible.FirstCodePart() == "hammer")
             {
-                api.Logger.Debug("OnGettingBroken being executed");
-                BlockEntityChurchBellPart bigBellPart = player.Entity.World.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityChurchBellPart;
-                bigBellPart?.OnHammerHitOver(player, player.CurrentBlockSelection.HitPosition);
+                BlockEntityChurchBellLayer bigBellPart = player.Entity.World.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityChurchBellLayer;
+                bigBellPart?.OnInteract(player);
 
                 return 800f;
             }

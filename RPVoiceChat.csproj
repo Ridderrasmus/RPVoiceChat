@@ -56,9 +56,8 @@
     <Content Include="assets\**">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Remove="assets\rpvoicechat\blocktypes\churchbellmidpart.json" />
-    <None Remove="assets\rpvoicechat\blocktypes\churchbelltopmost.json" />
-    <None Remove="assets\rpvoicechat\blocktypes\churchbelltoppart.json" />
+    <None Remove="assets\rpvoicechat\blocktypes\churchbell-layer.json" />
+    <None Remove="assets\rpvoicechat\blocktypes\churchbell-part.json" />
     <None Remove="assets\rpvoicechat\config\recipedictionary.json" />
     <None Remove="assets\rpvoicechat\recipes\smithing\bellparts\churchbellmidpart.json" />
     <None Remove="assets\rpvoicechat\recipes\smithing\bellparts\churchbelltopmost.json" />

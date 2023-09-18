@@ -10,7 +10,7 @@ using Vintagestory.GameContent;
 
 namespace RPVoiceChat.BlockEntities
 {
-    public class BlockEntityChurchBellPart : BlockEntityContainer
+    public class BlockEntityChurchBellLayer : BlockEntityContainer
     {
         public MeshRef[] BellPartMeshRef = new MeshRef[4];
         public MeshRef[] FluxMeshRef = new MeshRef[4];
@@ -32,18 +32,15 @@ namespace RPVoiceChat.BlockEntities
         public int hammerHits;
 
 
-        ChurchBellPartRenderer renderer;
+        ChurchBellLayerRenderer renderer;
 
         MeshData defMesh;
-        Shape FluxShape;
-
-        public SimpleParticleProperties particleProperties;
 
         public override InventoryBase Inventory => inv;
 
-        public override string InventoryClassName => "churchbellpart";
+        public override string InventoryClassName => "churchbelllayer";
 
-        public BlockEntityChurchBellPart()
+        public BlockEntityChurchBellLayer()
         {
             inv = new InventoryGeneric(5, null, null);
 
@@ -56,14 +53,9 @@ namespace RPVoiceChat.BlockEntities
 
             if (api is ICoreClientAPI capi)
             {
-                renderer = new ChurchBellPartRenderer(capi, this);
-
-                particleProperties = BlockEntityAnvil.bigMetalSparks;
+                renderer = new ChurchBellLayerRenderer(capi, this);
 
                 defMesh = capi.TesselatorManager.GetDefaultBlockMesh(Block).Clone();
-                var assetLoc = new AssetLocation("rpvoicechat", "shapes/" + Block.Shape.Base.Path + "-flux.json");
-                FluxShape = Shape.TryGet(api, assetLoc);
-
 
                 updateMeshRefs();
             }
@@ -82,8 +74,12 @@ namespace RPVoiceChat.BlockEntities
             {
                 if (BellPartSlots[i].Empty) break;
 
+                var fluxPart = Shape.TryGet(Api, new AssetLocation("rpvoicechat", "shapes/block/churchbell/botpartflux.json"));
+                if (fluxPart == null)
+                    throw new Exception("Flux shape is null");
+
                 MeshData meshdata;
-                capi.Tesselator.TesselateShape(Block, FluxShape, out meshdata);
+                capi.Tesselator.TesselateShape(Block, fluxPart, out meshdata);
                 meshdata = meshdata.Rotate(new Vec3f(0.5f, 0f, 0.5f), 0, 1.57079633f * (i + 1), 0f);
                 FluxMeshRef[i] = capi.Render.UploadMesh(meshdata);
             }
@@ -126,18 +122,18 @@ namespace RPVoiceChat.BlockEntities
 
             if (temp > 800)
             {
-                particleProperties.MinPos = Pos.ToVec3d().Add(hitPosition.X, hitPosition.Y, hitPosition.Z);
-                particleProperties.VertexFlags = (byte)GameMath.Clamp((int)(temp - 700) / 2, 32, 128);
-                Api.World.SpawnParticles(particleProperties, null);
+                BlockEntityAnvil.bigMetalSparks.MinPos = Pos.ToVec3d().Add(hitPosition.X, hitPosition.Y, hitPosition.Z);
+                BlockEntityAnvil.bigMetalSparks.VertexFlags = (byte)GameMath.Clamp((int)(temp - 700) / 2, 32, 128);
+                Api.World.SpawnParticles(BlockEntityAnvil.bigMetalSparks, byPlayer);
 
                 BlockEntityAnvil.smallMetalSparks.MinPos = Pos.ToVec3d().Add(hitPosition.X, hitPosition.Y, hitPosition.Z);
                 BlockEntityAnvil.smallMetalSparks.VertexFlags = (byte)GameMath.Clamp((int)(temp - 770) / 3, 32, 128);
-                Api.World.SpawnParticles(BlockEntityAnvil.smallMetalSparks, null);
+                Api.World.SpawnParticles(BlockEntityAnvil.smallMetalSparks, byPlayer);
             }
 
             if (hammerHits > 11)
             {
-                Api.World.BlockAccessor.SetBlock(Api.World.GetBlock(new AssetLocation("rpvoicechat", Block.Code.ToString().Replace("part", "layer"))).Id, Pos);
+                Api.World.BlockAccessor.SetBlock(Api.World.GetBlock(new AssetLocation("churchbell")).Id, Pos);
             }
         }
 
@@ -165,11 +161,11 @@ namespace RPVoiceChat.BlockEntities
                 }
             }
 
-            if (FluxSlot.Empty || FluxSlot.Itemstack.StackSize < 4)
+            if (FluxSlot.Empty)
             {
                 if (triggerMessage && Api is ICoreClientAPI capi)
                 {
-                    capi.TriggerIngameError(capi.World.Player, "missingflux", "You need to add enough powdered borax to the weld as flux");
+                    capi.TriggerIngameError(capi.World.Player, "missingflux", "You need to add powdered borax to the weld as flux");
                 }
                 return false;
             }
@@ -186,19 +182,18 @@ namespace RPVoiceChat.BlockEntities
 
             if (hotbarslot.Itemstack.Collectible.Code.Path == "powderedborax")
             {
-                if (FluxSlot.Empty || FluxSlot.Itemstack.StackSize < 4)
+                if (FluxSlot.Empty)
                 {
-                    
-
-                    ItemStack itemStack = hotbarslot.TakeOut(1);
-                    if (FluxSlot.Empty)
-                        FluxSlot.Itemstack = itemStack;
-                    else
-                        FluxSlot.Itemstack.StackSize++;
+                    FluxSlot.Itemstack = hotbarslot.TakeOut(1);
                     updateMeshRefs();
                     return true;
-                } 
-                else
+                } else if (FluxSlot.Itemstack.StackSize < 4)
+                {
+                    FluxSlot.Itemstack.StackSize++;
+                    hotbarslot.TakeOut(1);
+                    updateMeshRefs();
+                    return true;
+                } else
                 {
                     capi?.TriggerIngameError(capi.World.Player, "toomuchborax", "This doesn't need more borax");
                     return false;
@@ -265,26 +260,7 @@ namespace RPVoiceChat.BlockEntities
 
         public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
         {
-            foreach (ItemSlot slot in BellPartSlots)
-            {
-                if (slot.Empty) continue;
-                string temp = slot.Itemstack.Collectible.GetTemperature(Api.World, slot.Itemstack).ToString();
 
-                dsc.AppendLine(slot.Itemstack.GetName() + " - " + temp + "°C");
-            }
-
-            if (!FluxSlot.Empty)
-            {
-                dsc.AppendLine(FluxSlot.Itemstack.StackSize + " " + FluxSlot.Itemstack.GetName());
-            }
-
-            if (TestReadyToMerge(false))
-            {
-                dsc.AppendLine("Ready to weld");
-            } else
-            {
-                dsc.AppendLine("Not ready to weld");
-            }
         }
 
     }

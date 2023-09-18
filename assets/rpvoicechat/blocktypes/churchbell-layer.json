@@ -1,7 +1,7 @@
 {
-  "code": "churchbellbotpart",
+  "code": "churchbell-layer",
   "enabled": true,
-  "class": "churchbellpart",
+  "class": "churchbelllayer",
   "behaviors": [
     { "name": "UnstableFalling" }
   ],
@@ -15,15 +15,20 @@
       }
     }
   },
-  "entityClass": "ChurchBellPart",
+  "variantgroups": [
+    {"code": "layer", "states": ["bottom", "middle", "top", "topmost"]}
+  ],
+  "entityClass": "ChurchBellLayer",
   "drops": [],
   "creativeinventory": {
     "general": [ "*" ]
   },
   "blockmaterial": "Metal",
-  "drawtype": "json",
-  "shape": {
-    "base": "block/churchbell/churchbellbotpart"
+  "shapeByType": {
+    "churchbell-layer-bottom": { "base": "block/churchbell/churchbell-layer-bottom" },
+    "churchbell-layer-middle": { "base": "block/churchbell/churchbell-layer-middle" },
+    "churchbell-layer-top": { "base": "block/churchbell/churchbell-layer-top" },
+    "churchbell-layer-topmost": { "base": "block/churchbell/churchbell-layer-topmost" }
   },
   "rainPermeable": true,
   "sidesolid": {

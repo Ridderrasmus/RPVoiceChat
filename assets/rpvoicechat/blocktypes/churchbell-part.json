@@ -1,13 +1,33 @@
 {
-  "code": "churchbellmidpart",
+  "code": "churchbell-part",
   "enabled": true,
+  "class": "churchbellpart",
+  "behaviors": [
+    { "name": "UnstableFalling" }
+  ],
+  "attributes": {
+    "forgable": true,
+    "inForgeTransform": {
+      "scale": 0.65,
+      "translation": {
+        "x": 0.06,
+        "y": -0.1875
+      }
+    }
+  },
+  "entityClass": "ChurchBellPart",
+  "drops": [],
   "creativeinventory": {
     "general": [ "*" ]
   },
   "blockmaterial": "Metal",
-  "drawtype": "json",
-  "shape": {
-    "base": "block/churchbell/churchbellmidpart"
+  "variantgroups": [
+    { "code": "layer", "states": [ "bottom", "middle", "top" ] }
+  ],
+  "shapeByType": {
+    "churchbell-part-bottom": { "base": "block/churchbell/churchbell-part-bottom" },
+    "churchbell-part-middle": { "base": "block/churchbell/churchbell-part-middle" },
+    "churchbell-part-top": { "base": "block/churchbell/churchbell-part-top" }
   },
   "rainPermeable": true,
   "sidesolid": {

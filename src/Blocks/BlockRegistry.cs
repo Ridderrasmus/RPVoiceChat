@@ -8,6 +8,7 @@ namespace RPVoiceChat.Blocks
         {
             api.RegisterBlockClass("soundemittingblock", typeof(SoundEmittingBlock));
             api.RegisterBlockClass("churchbellpart", typeof(ChurchBellPartBlock));
+            api.RegisterBlockClass("churchbelllayer", typeof(ChurchBellLayerBlock));
         }
     }
 }
