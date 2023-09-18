@@ -16,7 +16,10 @@
     }
   },
   "variantgroups": [
-    {"code": "layer", "states": ["bottom", "middle", "top", "topmost"]}
+    {
+      "code": "layer",
+      "states": [ "bottom", "middle", "top", "topmost" ]
+    }
   ],
   "entityClass": "ChurchBellLayer",
   "drops": [],
@@ -29,6 +32,11 @@
     "churchbell-layer-middle": { "base": "block/churchbell/churchbell-layer-middle" },
     "churchbell-layer-top": { "base": "block/churchbell/churchbell-layer-top" },
     "churchbell-layer-topmost": { "base": "block/churchbell/churchbell-layer-topmost" }
+  },
+  "textures": {
+    "chalk2": { "base": "game:block/stone/rock/chalk2" },
+    "steel": { "base": "game:block/metal/ingot/steel" },
+    "tin": { "base": "game:block/metal/ingot/tin" }
   },
   "rainPermeable": true,
   "sidesolid": {

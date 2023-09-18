@@ -29,6 +29,11 @@
     "churchbell-part-middle": { "base": "block/churchbell/churchbell-part-middle" },
     "churchbell-part-top": { "base": "block/churchbell/churchbell-part-top" }
   },
+  "textures": {
+    "chalk2": { "base": "game:block/stone/rock/chalk2" },
+    "steel": { "base": "game:block/metal/ingot/steel" },
+    "tin": { "base": "game:block/metal/ingot/tin" }
+  },
   "rainPermeable": true,
   "sidesolid": {
     "all": false
