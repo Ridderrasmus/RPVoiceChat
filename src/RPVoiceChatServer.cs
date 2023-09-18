@@ -1,5 +1,6 @@
 ﻿using RPVoiceChat.Networking;
 using RPVoiceChat.Server;
+using RPVoiceChat.Utils;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;
 using Vintagestory.API.Server;
@@ -29,9 +30,18 @@ namespace RPVoiceChat
             registerCommands();
         }
 
+        public override double ExecuteOrder() => 1.02;
+
         public override bool ShouldLoad(EnumAppSide forSide)
         {
             return forSide == EnumAppSide.Server;
+        }
+
+        // Handle any configured recipes that need to be disabled
+        public override void AssetsLoaded(ICoreAPI api)
+        {
+            RecipeHandler recipeHandler = new RecipeHandler(api);
+            recipeHandler.DisableRecipes();
         }
 
         private void registerCommands()
