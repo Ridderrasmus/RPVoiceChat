@@ -15,8 +15,8 @@ namespace RPVoiceChat
         {
             sapi = api;
 
-            var mainServer = new UDPNetworkServer(ModConfig.Config.ServerPort, ModConfig.Config.ServerIP);
-            if (ModConfig.Config.ManualPortForwarding) mainServer.TogglePortForwarding(false);
+            var mainServer = new UDPNetworkServer(config.ServerPort, config.ServerIP);
+            if (config.ManualPortForwarding) mainServer.TogglePortForwarding(false);
             var backupServer = new NativeNetworkServer(api);
             server = new GameServer(sapi, mainServer, backupServer);
             server.Launch();
@@ -28,6 +28,12 @@ namespace RPVoiceChat
 
             // Register commands
             registerCommands();
+        }
+
+        public override void StartPre(ICoreAPI api)
+        {
+            base.StartPre(api);
+            api.World.Config.SetBool("rpvoicechat:extra-content", config.AdditionalContent);
         }
 
         public override double ExecuteOrder() => 1.02;
