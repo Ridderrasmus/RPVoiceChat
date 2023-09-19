@@ -125,9 +125,16 @@ namespace RPVoiceChat.Networking
         {
             while (_listeningThread.IsAlive && !ct.IsCancellationRequested)
             {
-                byte[] msg = UdpClient.Receive(ref ipendpoint);
+                try
+                {
+                    byte[] msg = UdpClient.Receive(ref ipendpoint);
 
-                OnMessageReceived?.Invoke(msg);
+                    OnMessageReceived?.Invoke(msg);
+                }
+                catch (SocketException e)
+                {
+                    if (!ct.IsCancellationRequested) throw e;
+                }
             }
         }
 

@@ -1,11 +1,9 @@
 using RPVoiceChat.Audio;
 using RPVoiceChat.Client;
 using RPVoiceChat.Networking;
-using RPVoiceChat.Utils;
 using System;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
 
 namespace RPVoiceChat
 {
@@ -41,7 +39,7 @@ namespace RPVoiceChat
 
             // Init voice chat client
             var mainClient = new UDPNetworkClient();
-            if (ModConfig.Config.ManualPortForwarding) mainClient.TogglePortForwarding(false);
+            if (config.ManualPortForwarding) mainClient.TogglePortForwarding(false);
             var backupClient = new NativeNetworkClient(capi);
             client = new PlayerNetworkClient(capi, mainClient, backupClient);
 
