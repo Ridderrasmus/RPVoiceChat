@@ -1,6 +1,5 @@
 ﻿using Vintagestory.API.Client;
 using System.Collections.Concurrent;
-using System.Threading.Tasks;
 using OpenTK.Audio.OpenAL;
 using Vintagestory.API.Common;
 using RPVoiceChat.Networking;
@@ -13,7 +12,7 @@ namespace RPVoiceChat.Audio
         ICoreClientAPI capi;
         RPVoiceChatConfig _config;
         private bool isLoopbackEnabled;
-        public bool IsLoopbackEnabled { 
+        public bool IsLoopbackEnabled {
             get => isLoopbackEnabled;
 
             set
@@ -34,24 +33,21 @@ namespace RPVoiceChat.Audio
         }
 
         public bool isReady = false;
-        public EffectsExtension EffectsExtension;
+        public EffectsExtension effectsExtension;
         private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
         private PlayerAudioSource localPlayerAudioSource;
-        private PlayerListener listener;
-        private ConcurrentDictionary<string, IAudioCodec> codecs = new ConcurrentDictionary<string, IAudioCodec>();
 
         public AudioOutputManager(ICoreClientAPI api)
         {
             _config = ModConfig.Config;
             IsLoopbackEnabled = _config.IsLoopbackEnabled;
             capi = api;
-            listener = new PlayerListener(api);
-
-            EffectsExtension = new EffectsExtension();
+            effectsExtension = new EffectsExtension();
         }
 
         public void Launch()
         {
+            PlayerListener.Init(capi);
             isReady = true;
             capi.Event.PlayerEntitySpawn += PlayerSpawned;
             capi.Event.PlayerEntityDespawn += PlayerDespawned;
@@ -59,53 +55,43 @@ namespace RPVoiceChat.Audio
         }
 
         // Called when the client receives an audio packet supplying the audio packet
-        public async void HandleAudioPacket(AudioPacket packet)
+        public void HandleAudioPacket(AudioPacket packet)
         {
             if (!isReady) return;
-
-            await Task.Run(() =>
+            if (packet.AudioData.Length != packet.Length)
             {
-                PlayerAudioSource source;
-                string playerId = packet.PlayerId;
+                Logger.client.Debug("Audio packet payload had invalid length, dropping packet");
+                return;
+            }
 
-                if (packet.AudioData.Length != packet.Length)
+            PlayerAudioSource source;
+            string playerId = packet.PlayerId;
+
+            if (!playerSources.TryGetValue(playerId, out source))
+            {
+                var player = capi.World.PlayerByUid(playerId);
+                if (player == null)
                 {
-                    Logger.client.Debug("Audio packet payload had invalid length, dropping packet");
+                    Logger.client.Error($"Could not find player for playerId {playerId}");
                     return;
                 }
 
-                if (!playerSources.TryGetValue(playerId, out source))
+                source = new PlayerAudioSource(player, this, capi);
+                if (!playerSources.TryAdd(playerId, source))
                 {
-                    var player = capi.World.PlayerByUid(playerId);
-                    if (player == null)
-                    {
-                        Logger.client.Error($"Could not find player for playerId {playerId}");
-                        return;
-                    }
-
-                    source = new PlayerAudioSource(player, this, capi);
-                    if (!playerSources.TryAdd(playerId, source))
-                    {
-                        Logger.client.Debug("Could not add new player to sources");
-                    }
+                    Logger.client.Debug("Could not add new player to sources");
                 }
+            }
 
-                HandleAudioPacket(packet, source);
-            });
+            HandleAudioPacket(packet, source);
         }
 
         public void HandleAudioPacket(AudioPacket packet, PlayerAudioSource source)
         {
             int frequency = packet.Frequency;
             int channels = AudioUtils.ChannelsPerFormat(packet.Format);
-            string codecSettings = $"{frequency}:{channels}";
 
-            IAudioCodec codec;
-            if (!codecs.TryGetValue(codecSettings, out codec))
-            {
-                codec = new OpusCodec(frequency, channels);
-                codecs.TryAdd(codecSettings, codec);
-            }
+            IAudioCodec codec = source.GetOrCreateAudioCodec(frequency, channels);
             AudioData audioData = AudioData.FromPacket(packet, codec);
 
             // Update the voice level if it has changed

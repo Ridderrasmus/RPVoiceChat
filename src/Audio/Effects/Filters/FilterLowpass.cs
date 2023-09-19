@@ -4,7 +4,6 @@ namespace RPVoiceChat
 {
     public class FilterLowpass
     {
-
         private EffectsExtension effectsExtension;
         private int source;
         private int nullFilter;
