@@ -13,7 +13,7 @@
         // are used to configure the server
         public int ServerPort = 52525;
         public string ServerIP = null;
-        public string[] DisabledRecipes = new string[] { "item-code" };
+        public bool AdditionalContent = true;
 
         // --- Client Settings ---
         // These are meant to be set by the client, but are
@@ -43,7 +43,7 @@
 
             ServerPort = previousConfig.ServerPort;
             ServerIP = previousConfig.ServerIP;
-            DisabledRecipes = previousConfig.DisabledRecipes;
+            AdditionalContent = previousConfig.AdditionalContent;
 
             PushToTalkEnabled = previousConfig.PushToTalkEnabled;
             IsHUDShown = previousConfig.IsHUDShown;

@@ -37,10 +37,11 @@ namespace RPVoiceChat
             return forSide == EnumAppSide.Server;
         }
 
-        // Handle any configured recipes that need to be disabled
         public override void AssetsLoaded(ICoreAPI api)
         {
-            RecipeHandler recipeHandler = new RecipeHandler(api);
+            if (config.AdditionalContent) return;
+
+            RecipeHandler recipeHandler = new RecipeHandler(api, modID);
             recipeHandler.DisableRecipes();
         }
 

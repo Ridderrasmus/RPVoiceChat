@@ -1,7 +1,0 @@
-{
-  "item-callbell": [ "callbell" ],
-  "item-handbell": [ "callbell", "handbell" ],
-  "item-royalhorn": [ "royalhorn", "royalhornhead", "royalhornhandle" ],
-  "item-royalhornhead": [ "royalhornhead" ],
-  "item-royalhornhandle": [ "royalhornhandle" ]
-}
