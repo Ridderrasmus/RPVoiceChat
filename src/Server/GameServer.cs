@@ -111,8 +111,19 @@ namespace RPVoiceChat.Server
             if (!serverByTransport.ContainsKey(playerTransport)) return;
 
             var extendedServer = serverByTransport[playerTransport] as IExtendedNetworkServer;
-            playerConnection.Address = IPAddress.Parse(player.IpAddress).MapToIPv4().ToString();
-            extendedServer?.PlayerConnected(player.PlayerUID, playerConnection);
+            if (extendedServer == null) return;
+            try
+            {
+                playerConnection.Address = IPAddress.Parse(player.IpAddress).MapToIPv4().ToString();
+                extendedServer?.PlayerConnected(player.PlayerUID, playerConnection);
+            }
+            catch (Exception e)
+            {
+                Logger.server.Warning($"Server failed to establish connection with {player.PlayerUID}({player.PlayerName}) over " +
+                    $"requested transport: {playerTransport}.\nServer will attempt to use other available transports to deliver " +
+                    "packets to this client. Mismatch between server and client transports can result in unstable behavior!\n" +
+                    $"Player address: {player.IpAddress}, Reason: {e}");
+            }
         }
 
         private void SendPacket(INetworkPacket packet, string playerId)
