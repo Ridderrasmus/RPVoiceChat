@@ -1,13 +1,13 @@
 ﻿using Vintagestory.API.Client;
 using System.Collections.Concurrent;
-using OpenTK.Audio.OpenAL;
 using Vintagestory.API.Common;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
+using System;
 
 namespace RPVoiceChat.Audio
 {
-    public class AudioOutputManager
+    public class AudioOutputManager : IDisposable
     {
         ICoreClientAPI capi;
         RPVoiceChatConfig _config;
@@ -154,6 +154,13 @@ namespace RPVoiceChat.Audio
                     Logger.client.Warning($"Failed to remove player {player.PlayerName}");
                 }
             }
+        }
+
+        public void Dispose()
+        {
+            localPlayerAudioSource?.Dispose();
+            foreach (var source in playerSources.Values)
+                source?.Dispose();
         }
     }
 }
