@@ -133,7 +133,12 @@ namespace RPVoiceChat.Networking
                 }
                 catch (SocketException e)
                 {
-                    if (!ct.IsCancellationRequested) throw e;
+                    // Windows will notify us here when destination of *sent* message is unreachable. We don't care.
+                    if (e.SocketErrorCode == SocketError.ConnectionReset) continue;
+                    if (e.SocketErrorCode == SocketError.Interrupted ||
+                        ct.IsCancellationRequested) return;
+
+                    throw e;
                 }
             }
         }
