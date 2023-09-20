@@ -21,6 +21,7 @@ namespace RPVoiceChat.Audio
         private Dictionary<string, IAudioCodec> codecs = new Dictionary<string, IAudioCodec>();
         private FilterLowpass lowpassFilter;
         private EffectsExtension effectsExtension;
+        private bool IsDisposed = false;
 
         private ICoreClientAPI capi;
         private IPlayer player;
@@ -244,10 +245,12 @@ namespace RPVoiceChat.Audio
 
         public void Dispose()
         {
+            if (IsDisposed) return;
             OALW.SourceStop(source);
 
             buffer?.Dispose();
             OALW.DeleteSource(source);
+            IsDisposed = true;
         }
     }
 }
