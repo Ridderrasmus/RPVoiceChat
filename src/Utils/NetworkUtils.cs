@@ -10,11 +10,11 @@ namespace RPVoiceChat.Utils
         public static IPAddress ParseIP(string ipString)
         {
             if (ipString == null) throw new ArgumentNullException("IP string can not be null");
-            string[] addressParts = ipString.Split(":");
+            string[] addressParts = ipString.Split(':');
 
             // [IPv4], [IPv6], [IPv6.IPv4], [IPv4]:Port, [IPv6]:Port or [IPv6.IPv4]
             int endOfAddressIndex = ipString.IndexOf(']');
-            if (ipString.StartsWith('[') && endOfAddressIndex != -1)
+            if (ipString.StartsWith("[") && endOfAddressIndex != -1)
                 return IPAddress.Parse(ipString.Substring(1, endOfAddressIndex - 1));
 
             // IPv4 or IPv4:Port
