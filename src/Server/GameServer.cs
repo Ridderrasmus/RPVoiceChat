@@ -114,7 +114,7 @@ namespace RPVoiceChat.Server
             if (extendedServer == null) return;
             try
             {
-                playerConnection.Address = IPAddress.Parse(player.IpAddress).MapToIPv4().ToString();
+                playerConnection.Address = NetworkUtils.ParseIP(player.IpAddress).MapToIPv4().ToString();
                 extendedServer?.PlayerConnected(player.PlayerUID, playerConnection);
             }
             catch (Exception e)
