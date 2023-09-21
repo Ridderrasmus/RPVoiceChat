@@ -1,4 +1,5 @@
-﻿using RPVoiceChat.Networking;
+﻿using Open.Nat;
+using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
 using System;
 using System.Collections.Generic;
@@ -50,6 +51,11 @@ namespace RPVoiceChat.Server
                 serverByTransport.Add(reserveServer.GetTransportID(), reserveServer);
                 Logger.server.Notification($"{reserveServer.GetTransportID()} server started");
                 return;
+            }
+            catch (NatDeviceNotFoundException)
+            {
+                Logger.server.Error($"Failed to launch {networkServer.GetTransportID()} server: Unable to port forward with UPnP. " +
+                    $"Make sure your IP is public and UPnP is enabled if you want to use {networkServer.GetTransportID()} server.");
             }
             catch (Exception e)
             {
@@ -114,7 +120,7 @@ namespace RPVoiceChat.Server
             if (extendedServer == null) return;
             try
             {
-                playerConnection.Address = IPAddress.Parse(player.IpAddress).MapToIPv4().ToString();
+                playerConnection.Address = NetworkUtils.ParseIP(player.IpAddress).MapToIPv4().ToString();
                 extendedServer?.PlayerConnected(player.PlayerUID, playerConnection);
             }
             catch (Exception e)

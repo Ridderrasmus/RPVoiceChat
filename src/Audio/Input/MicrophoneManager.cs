@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
 using Vintagestory.API.Client;
-using OpenTK.Audio;
 using OpenTK.Audio.OpenAL;
 using System.Collections.Generic;
 using RPVoiceChat.Utils;
