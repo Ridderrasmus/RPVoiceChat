@@ -41,7 +41,7 @@ namespace RPVoiceChat
 
             // Init voice chat client
             var mainClient = new UDPNetworkClient();
-            if (ModConfig.Config.ManualPortForwarding) mainClient.TogglePortForwarding(false);
+            if (config.ManualPortForwarding) mainClient.TogglePortForwarding(false);
             var backupClient = new NativeNetworkClient(capi);
             client = new PlayerNetworkClient(capi, mainClient, backupClient);
 
@@ -135,6 +135,7 @@ namespace RPVoiceChat
         public override void Dispose()
         {
             micManager?.Dispose();
+            audioOutputManager?.Dispose();
             patchManager?.Dispose();
             client?.Dispose();
             configGui.Dispose();

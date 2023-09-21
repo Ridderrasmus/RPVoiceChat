@@ -1,5 +1,6 @@
 ﻿using RPVoiceChat.Networking;
 using RPVoiceChat.Server;
+using RPVoiceChat.Utils;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;
 using Vintagestory.API.Server;
@@ -14,8 +15,8 @@ namespace RPVoiceChat
         {
             sapi = api;
 
-            var mainServer = new UDPNetworkServer(ModConfig.Config.ServerPort, ModConfig.Config.ServerIP);
-            if (ModConfig.Config.ManualPortForwarding) mainServer.TogglePortForwarding(false);
+            var mainServer = new UDPNetworkServer(config.ServerPort, config.ServerIP);
+            if (config.ManualPortForwarding) mainServer.TogglePortForwarding(false);
             var backupServer = new NativeNetworkServer(api);
             server = new GameServer(sapi, mainServer, backupServer);
             server.Launch();
@@ -29,9 +30,25 @@ namespace RPVoiceChat
             registerCommands();
         }
 
+        public override void StartPre(ICoreAPI api)
+        {
+            base.StartPre(api);
+            api.World.Config.SetBool("rpvoicechat:extra-content", config.AdditionalContent);
+        }
+
+        public override double ExecuteOrder() => 1.02;
+
         public override bool ShouldLoad(EnumAppSide forSide)
         {
             return forSide == EnumAppSide.Server;
+        }
+
+        public override void AssetsLoaded(ICoreAPI api)
+        {
+            if (config.AdditionalContent) return;
+
+            RecipeHandler recipeHandler = new RecipeHandler(api, modID);
+            recipeHandler.DisableRecipes();
         }
 
         private void registerCommands()

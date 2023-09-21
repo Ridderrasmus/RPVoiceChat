@@ -50,6 +50,7 @@ The settings relevant to server owners are:
 - `ManualPortForwarding` - Determines whether the mod should skip port forwarding with UPnP and assume that ports are open. **Setting this to true means that you take full responsibility for opening ports and if they are not open mod will work incorrectly.** The default value is `false`.
 - `ServerPort` - The port to use for the voice networking if ports are being forwarded manually. The default value is `52525`.
 - `ServerIP` - The ip to send to clients to connect to if manually port forwarding. The default value is `null`.
+- `AdditionalContent` - Whether additional modded content(bells, horns, etc) should be enabled. The default value is `true`.
 
 ## Maintainers
 Currently the mod is maintained by the following people:
