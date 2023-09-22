@@ -24,6 +24,7 @@ namespace RPVoiceChat.Audio
 
         private IAudioCapture capture;
         private IAudioCodec codec;
+        private IDenoiser denoiser;
         private RPVoiceChatConfig config;
         private ConcurrentQueue<AudioData> audioDataQueue = new ConcurrentQueue<AudioData>();
         private Thread audioProcessingThread;
@@ -61,6 +62,7 @@ namespace RPVoiceChat.Audio
 
             capture = CreateNewCapture(config.CurrentInputDevice);
             codec = CreateNewCodec(ALFormat.Mono16);
+            denoiser = new RNNoiseDenoiser();
         }
 
         public void Launch()
@@ -88,6 +90,7 @@ namespace RPVoiceChat.Audio
             audioProcessingCTS?.Dispose();
             capture?.Stop();
             capture?.Dispose();
+            denoiser?.Dispose();
         }
 
         public void SetThreshold(int threshold)
@@ -123,15 +126,13 @@ namespace RPVoiceChat.Audio
         }
 
         /// <summary>
-        /// Converts audio to Mono16, applies gain and calculates amplitude
+        /// Converts audio to Mono16, applies gain, applies denoising, calculates amplitude and applies encoding
         /// </summary>
         private AudioData PreprocessRawAudio(byte[] rawSamples)
         {
             var rawSampleSize = SampleToByte * InputChannelCount;
             var pcmCount = rawSamples.Length / rawSampleSize;
             short[] pcms = new short[pcmCount];
-
-            double sampleSquareSum = 0;
 
             for (var rawSampleIndex = 0; rawSampleIndex < rawSamples.Length; rawSampleIndex += rawSampleSize)
             {
@@ -150,9 +151,14 @@ namespace RPVoiceChat.Audio
 
                 var pcmIndex = rawSampleIndex / rawSampleSize;
                 pcms[pcmIndex] = (short)pcm;
-
-                sampleSquareSum += Math.Pow(pcm / short.MaxValue, 2);
             }
+
+            if (config.IsDenoisingEnabled && denoiser.SupportsFrequency(Frequency))
+                denoiser.Denoise(ref pcms);
+
+            double sampleSquareSum = 0;
+            for (var i = 0; i < pcms.Length; i++)
+                sampleSquareSum += Math.Pow(pcms[i] / short.MaxValue, 2);
 
             var amplitude = Math.Sqrt(sampleSquareSum / pcmCount);
 

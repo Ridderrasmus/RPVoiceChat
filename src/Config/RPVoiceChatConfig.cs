@@ -20,11 +20,14 @@
         // stored here for persistence across sessions
         public bool PushToTalkEnabled = false;
         public bool IsLoopbackEnabled = false;
+        public bool IsDenoisingEnabled = false;
         public bool IsHUDShown = true;
         public bool IsMuted = false;
         public int OutputGain = 100;
         public int InputGain = 100;
         public int InputThreshold = 20;
+        public int BackgroungNoiseThreshold = 30;
+        public int VoiceDenoisingStrength = 60;
         public string CurrentInputDevice;
         // These are client settings but they are not
         // accessible from the in-game settings menu and
@@ -46,13 +49,17 @@
             AdditionalContent = previousConfig.AdditionalContent;
 
             PushToTalkEnabled = previousConfig.PushToTalkEnabled;
+            IsLoopbackEnabled = previousConfig.IsLoopbackEnabled;
+            IsDenoisingEnabled = previousConfig.IsDenoisingEnabled;
             IsHUDShown = previousConfig.IsHUDShown;
             IsMuted = previousConfig.IsMuted;
             OutputGain = previousConfig.OutputGain;
             InputGain = previousConfig.InputGain;
             InputThreshold = previousConfig.InputThreshold;
             CurrentInputDevice = previousConfig.CurrentInputDevice;
-            IsLoopbackEnabled = previousConfig.IsLoopbackEnabled;
+            BackgroungNoiseThreshold = previousConfig.BackgroungNoiseThreshold;
+            VoiceDenoisingStrength = previousConfig.VoiceDenoisingStrength;
+            MaxInputThreshold = previousConfig.MaxInputThreshold;
         }
 
     }
