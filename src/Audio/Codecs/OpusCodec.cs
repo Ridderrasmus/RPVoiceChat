@@ -1,11 +1,10 @@
 ﻿using Concentus.Enums;
 using Concentus.Structs;
-using RPVoiceChat.Audio;
 using RPVoiceChat.Utils;
 using System;
 using System.IO;
 
-namespace RPVoiceChat
+namespace RPVoiceChat.Audio
 {
     public class OpusCodec: IAudioCodec
     {
@@ -94,12 +93,10 @@ namespace RPVoiceChat
 
         private byte[] ToBytes(short[] audio, int offset, int length)
         {
-            byte[] byteBuffer = new byte[length * 2];
-            for (int i = offset; i < length; i++)
-            {
-                byteBuffer[i * 2] = (byte)(audio[i] & 0xFF);
-                byteBuffer[i * 2 + 1] = (byte)((audio[i] >> 8) & 0xFF);
-            }
+            int typeSize = sizeof(short);
+            byte[] byteBuffer = new byte[length * typeSize];
+            int bytesToCopy = (length - offset) * typeSize;
+            Buffer.BlockCopy(audio, offset, byteBuffer, offset * typeSize, bytesToCopy);
 
             return byteBuffer;
         }
