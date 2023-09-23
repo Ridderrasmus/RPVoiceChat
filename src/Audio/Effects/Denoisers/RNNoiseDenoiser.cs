@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using Vintagestory.API.MathTools;
 
-namespace RPVoiceChat.Audio
+namespace RPVoiceChat.Audio.Effects
 {
     public class RNNoiseDenoiser : IDenoiser
     {

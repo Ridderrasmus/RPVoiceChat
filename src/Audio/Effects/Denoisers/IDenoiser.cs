@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace RPVoiceChat.Audio
+namespace RPVoiceChat.Audio.Effects
 {
     public interface IDenoiser : IDisposable
     {

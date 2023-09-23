@@ -7,6 +7,7 @@ using Vintagestory.API.Common.Entities;
 using RPVoiceChat.Utils;
 using System.Collections;
 using System.Collections.Generic;
+using RPVoiceChat.Audio.Effects;
 
 namespace RPVoiceChat.Audio
 {

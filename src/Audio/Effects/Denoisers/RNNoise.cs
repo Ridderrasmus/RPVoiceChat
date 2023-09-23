@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace RPVoiceChat.Audio
+namespace RPVoiceChat.Audio.Effects
 {
     internal static class RNNoise
     {

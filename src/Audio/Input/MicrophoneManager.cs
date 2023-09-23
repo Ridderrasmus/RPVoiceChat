@@ -6,6 +6,7 @@ using Vintagestory.API.Client;
 using OpenTK.Audio.OpenAL;
 using System.Collections.Generic;
 using RPVoiceChat.Utils;
+using RPVoiceChat.Audio.Effects;
 
 namespace RPVoiceChat.Audio
 {

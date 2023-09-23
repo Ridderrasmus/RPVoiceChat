@@ -1,6 +1,6 @@
 ﻿using OpenTK.Audio.OpenAL;
 
-namespace RPVoiceChat
+namespace RPVoiceChat.Audio.Effects
 {
     public class EffectTemplate
     {
