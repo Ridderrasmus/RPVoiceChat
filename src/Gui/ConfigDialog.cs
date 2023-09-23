@@ -249,19 +249,30 @@ namespace RPVoiceChat
             if (!IsOpened())
                 return;
 
+            SingleComposer.GetDropDown("inputDevice").SetSelectedValue(_config.CurrentInputDevice ?? "Default");
             SingleComposer.GetSwitch("togglePushToTalk").On = _config.PushToTalkEnabled;
             SingleComposer.GetSwitch("muteMicrophone").On = _config.IsMuted;
-            SingleComposer.GetSwitch("toggleHUD").On = _config.IsHUDShown;
-            SingleComposer.GetSlider("inputGain").SetValues(_config.InputGain, 0, 100, 1, "%");
-            SingleComposer.GetSlider("outputGain").SetValues(_config.OutputGain, 0, 200, 1, "%");
-            SingleComposer.GetSlider("inputThreshold").SetValues(_config.InputThreshold, 0, 100, 1);
-            SingleComposer.GetDropDown("inputDevice").SetSelectedValue(_config.CurrentInputDevice ?? "Default");
             SingleComposer.GetSwitch("loopback").On = _config.IsLoopbackEnabled;
+            SingleComposer.GetSlider("outputGain").SetValues(_config.OutputGain, 0, 200, 1, "%");
+            SingleComposer.GetSlider("inputGain").SetValues(_config.InputGain, 0, 100, 1, "%");
+            SingleComposer.GetSlider("inputThreshold").SetValues(_config.InputThreshold, 0, 100, 1);
+            SingleComposer.GetSwitch("toggleHUD").On = _config.IsHUDShown;
         }
 
-        private void OnToggleHUD(bool enabled)
+        private void OnChangeInputDevice(string value, bool selected)
         {
-            _config.IsHUDShown = enabled;
+            _audioInputManager.SetInputDevice(value);
+        }
+
+        private void OnTogglePushToTalk(bool enabled)
+        {
+            _config.PushToTalkEnabled = enabled;
+            ModConfig.Save(capi);
+        }
+
+        private void OnToggleMuted(bool enabled)
+        {
+            _config.IsMuted = enabled;
             ModConfig.Save(capi);
         }
 
@@ -270,11 +281,6 @@ namespace RPVoiceChat
             _config.IsLoopbackEnabled = enabled;
             ModConfig.Save(capi);
             _audioOutputManager.IsLoopbackEnabled = enabled;
-        }
-
-        private void OnChangeInputDevice(string value, bool selected)
-        {
-            _audioInputManager.SetInputDevice(value);
         }
 
         private bool SlideOutputGain(int gain)
@@ -303,15 +309,9 @@ namespace RPVoiceChat
             return true;
         }
 
-        private void OnToggleMuted(bool enabled)
+        private void OnToggleHUD(bool enabled)
         {
-            _config.IsMuted = enabled;
-            ModConfig.Save(capi);
-        }
-
-        private void OnTogglePushToTalk(bool enabled)
-        {
-            _config.PushToTalkEnabled = enabled;
+            _config.IsHUDShown = enabled;
             ModConfig.Save(capi);
         }
     }
