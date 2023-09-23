@@ -158,7 +158,7 @@ namespace RPVoiceChat.Audio
 
             double sampleSquareSum = 0;
             for (var i = 0; i < pcms.Length; i++)
-                sampleSquareSum += Math.Pow(pcms[i] / short.MaxValue, 2);
+                sampleSquareSum += Math.Pow((float)pcms[i] / short.MaxValue, 2);
 
             var amplitude = Math.Sqrt(sampleSquareSum / pcmCount);
 
