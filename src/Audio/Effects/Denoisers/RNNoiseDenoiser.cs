@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using Vintagestory.API.MathTools;
 
 namespace RPVoiceChat.Audio
 {
@@ -73,12 +74,12 @@ namespace RPVoiceChat.Audio
 
         public void SetBackgroundNoiseThreshold(float value)
         {
-            sensitivity = value;
+            sensitivity = GameMath.Clamp(value, 0, 1);
         }
 
         public void SetVoiceDenoisingStrength(float value)
         {
-            strength = value;
+            strength = GameMath.Clamp(value, 0, 1);
         }
 
         public bool SupportsFormat(int frequency, int channels, int bits)
