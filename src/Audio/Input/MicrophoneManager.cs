@@ -63,7 +63,7 @@ namespace RPVoiceChat.Audio
 
             capture = CreateNewCapture(config.CurrentInputDevice);
             codec = CreateNewCodec(ALFormat.Mono16);
-            denoiser = new RNNoiseDenoiser();
+            denoiser = new RNNoiseDenoiser(config.BackgroungNoiseThreshold, config.VoiceDenoisingStrength);
         }
 
         public void Launch()

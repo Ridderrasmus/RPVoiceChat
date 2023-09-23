@@ -26,8 +26,8 @@
         public int OutputGain = 100;
         public int InputGain = 100;
         public int InputThreshold = 20;
-        public int BackgroungNoiseThreshold = 30;
-        public int VoiceDenoisingStrength = 60;
+        public int BackgroungNoiseThreshold = 50;
+        public int VoiceDenoisingStrength = 80;
         public string CurrentInputDevice;
         // These are client settings but they are not
         // accessible from the in-game settings menu and

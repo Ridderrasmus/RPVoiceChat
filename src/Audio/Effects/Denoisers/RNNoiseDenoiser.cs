@@ -30,7 +30,7 @@ namespace RPVoiceChat.Audio.Effects
         private float sensitivity;
         private float strength;
 
-        public RNNoiseDenoiser(float backgroundNoiseThreshold = 0.3f, float voiceDenoisingStrength = 0.6f)
+        public RNNoiseDenoiser(float backgroundNoiseThreshold, float voiceDenoisingStrength)
         {
             handle = RNNoise.Create(IntPtr.Zero);
             SetBackgroundNoiseThreshold(backgroundNoiseThreshold);
@@ -69,7 +69,7 @@ namespace RPVoiceChat.Audio.Effects
                 }
             }
 
-            _pcms = Array.ConvertAll(rawAudio, e => (short)e);
+            _pcms = Array.ConvertAll(rawAudio, e => (short)GameMath.Clamp(e, short.MinValue, short.MaxValue));
         }
 
         public void SetBackgroundNoiseThreshold(float value)
