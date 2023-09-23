@@ -111,7 +111,7 @@ namespace RPVoiceChat.Audio
         public void Dispose(bool manual)
         {
             if (IsDisposed) return;
-            
+
             if (_captureDevice != IntPtr.Zero)
             {
                 if (IsRunning) Stop();

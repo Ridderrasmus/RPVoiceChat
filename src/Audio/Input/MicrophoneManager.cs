@@ -1,12 +1,12 @@
-﻿using System;
+﻿using OpenTK.Audio.OpenAL;
+using RPVoiceChat.Audio.Effects;
+using RPVoiceChat.Utils;
+using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Vintagestory.API.Client;
-using OpenTK.Audio.OpenAL;
-using System.Collections.Generic;
-using RPVoiceChat.Utils;
-using RPVoiceChat.Audio.Effects;
 
 namespace RPVoiceChat.Audio
 {
@@ -153,7 +153,7 @@ namespace RPVoiceChat.Audio
                 pcms[pcmIndex] = (short)pcm;
             }
 
-            if (config.IsDenoisingEnabled && denoiser.SupportsFormat(Frequency, OutputChannelCount, SampleToByte*8))
+            if (config.IsDenoisingEnabled && denoiser.SupportsFormat(Frequency, OutputChannelCount, SampleToByte * 8))
                 denoiser.Denoise(ref pcms);
 
             double sampleSquareSum = 0;
@@ -263,7 +263,7 @@ namespace RPVoiceChat.Audio
                 format = newCapture?.SampleFormat ?? format;
                 Logger.client.Debug($"Succesfully created an audio capture device with arguments: {deviceName}, {Frequency}, {format}, {BufferSize}");
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Logger.client.Error($"Could not create audio capture device {deviceName} in {format} format:\n{e}");
             }
@@ -322,7 +322,7 @@ namespace RPVoiceChat.Audio
             var rawSampleSize = SampleToByte * InputChannelCount;
             int monoSampleSize = SampleToByte;
 
-            for (var rawSampleIndex = 0; rawSampleIndex < rawSampleSize*depth; rawSampleIndex += rawSampleSize)
+            for (var rawSampleIndex = 0; rawSampleIndex < rawSampleSize * depth; rawSampleIndex += rawSampleSize)
             {
                 for (var channelIndex = 0; channelIndex < InputChannelCount; channelIndex++)
                 {

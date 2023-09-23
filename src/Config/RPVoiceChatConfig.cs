@@ -35,8 +35,8 @@
         // knows what they are doing
         public double MaxInputThreshold = 0.24;
 
-        public RPVoiceChatConfig() 
-        { 
+        public RPVoiceChatConfig()
+        {
 
         }
 

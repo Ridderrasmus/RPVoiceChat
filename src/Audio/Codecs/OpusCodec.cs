@@ -6,7 +6,7 @@ using System.IO;
 
 namespace RPVoiceChat.Audio
 {
-    public class OpusCodec: IAudioCodec
+    public class OpusCodec : IAudioCodec
     {
         private OpusEncoder encoder;
         private OpusDecoder decoder;
@@ -49,7 +49,7 @@ namespace RPVoiceChat.Audio
                     encoded.Write(encodedData, 0, encodedLength);
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Logger.client.Error($"Couldn't encode audio:\n{e}");
             }
@@ -61,7 +61,7 @@ namespace RPVoiceChat.Audio
         {
             var decoded = new MemoryStream();
             var stream = new MemoryStream(encodedData);
-            using(var reader = new BinaryReader(stream))
+            using (var reader = new BinaryReader(stream))
             {
                 try
                 {

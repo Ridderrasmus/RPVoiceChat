@@ -44,7 +44,8 @@ namespace RPVoiceChat.Client
         private void OnHandshakeRequest(ConnectionInfo serverConnection)
         {
             var clientTransportID = networkClient.GetTransportID();
-            try {
+            try
+            {
                 if (!serverConnection.SupportedTransports.Contains(clientTransportID))
                     throw new Exception("Server doesn't support client's transport");
 

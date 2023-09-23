@@ -6,8 +6,8 @@
         Talking = 15,
         Shouting = 25,
 
-        SquareWhispering = Whispering* Whispering,
-        SquareTalking = Talking* Talking,
-        SquareShouting = Shouting* Shouting
+        SquareWhispering = Whispering * Whispering,
+        SquareTalking = Talking * Talking,
+        SquareShouting = Shouting * Shouting
     }
 }

@@ -100,7 +100,7 @@ namespace RPVoiceChat.Utils
                 {
                     collisionBoxes = block?.GetCollisionBoxes(capi.World.BlockAccessor, blockPos) ?? collisionBoxes;
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     Logger.client.Warning($"Couldn't retrieve collision boxes for {block.Class} at {blockPos}:\n{e}");
                 }
@@ -121,10 +121,12 @@ namespace RPVoiceChat.Utils
         {
             var visitedBlocks = new List<BlockEntry>();
             var visitedEntities = new List<Entity>();
-            EntityFilter entityFilter = entity => {
+            EntityFilter entityFilter = entity =>
+            {
                 return !(visitedEntities.Contains(entity) || entity.Class == "EntityPlayer");
             };
-            BlockFilter blockFilter = (pos, block) => {
+            BlockFilter blockFilter = (pos, block) =>
+            {
                 var blockEntry = new BlockEntry(pos.Copy(), block);
                 return !visitedBlocks.Contains(blockEntry);
             };

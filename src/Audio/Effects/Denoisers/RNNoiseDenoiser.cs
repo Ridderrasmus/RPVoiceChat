@@ -48,7 +48,7 @@ namespace RPVoiceChat.Audio.Effects
                     var denoisedAudio = new float[FRAME_SIZE];
                     using (var denoisedBuffer = new PointerSource(denoisedAudio))
                     {
-                        var inPtr = pcmBuffer.ptr + offset*sizeof(float);
+                        var inPtr = pcmBuffer.ptr + offset * sizeof(float);
                         var outPtr = denoisedBuffer.ptr;
 
                         // If last frame is too small right pad it with zeros

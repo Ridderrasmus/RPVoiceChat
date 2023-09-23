@@ -15,7 +15,8 @@ namespace RPVoiceChat
             { VoiceLevel.Talking, "talk" },
             { VoiceLevel.Shouting, "shout" },
         };
-        ElementBounds dialogBounds = new ElementBounds() {
+        ElementBounds dialogBounds = new ElementBounds()
+        {
             Alignment = EnumDialogArea.RightBottom,
             BothSizing = ElementSizing.Fixed,
             fixedWidth = size,
