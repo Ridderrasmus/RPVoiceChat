@@ -152,7 +152,7 @@ namespace RPVoiceChat.Audio
                 pcms[pcmIndex] = (short)pcm;
             }
 
-            if (config.IsDenoisingEnabled && denoiser.SupportsFrequency(Frequency))
+            if (config.IsDenoisingEnabled && denoiser.SupportsFormat(Frequency, OutputChannelCount, SampleToByte*8))
                 denoiser.Denoise(ref pcms);
 
             double sampleSquareSum = 0;

@@ -7,6 +7,6 @@ namespace RPVoiceChat.Audio
         public void Denoise(ref short[] pcms);
         public void SetBackgroundNoiseThreshold(float value);
         public void SetVoiceDenoisingStrength(float value);
-        public bool SupportsFrequency(int frequency);
+        public bool SupportsFormat(int frequency, int channels, int bits);
     }
 }

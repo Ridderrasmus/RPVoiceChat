@@ -81,9 +81,9 @@ namespace RPVoiceChat.Audio
             strength = value;
         }
 
-        public bool SupportsFrequency(int frequency)
+        public bool SupportsFormat(int frequency, int channels, int bits)
         {
-            return frequency == 48000;
+            return frequency == 48000 && channels == 1 && bits == 16;
         }
 
         public void Dispose()
