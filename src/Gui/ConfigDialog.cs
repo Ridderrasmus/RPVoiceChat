@@ -253,7 +253,7 @@ namespace RPVoiceChat
 
             RegisterOption(new ConfigOption
             {
-                Text = "Background noise removal",
+                Text = "Background noise detection",
                 SliderKey = "denoisingSensitivity",
                 Tooltip = "Sets sensitivity for background noise. Audio detected as noise will be denoised with max strength.",
                 SlideAction = SlideDenoisingSensitivity
@@ -263,7 +263,7 @@ namespace RPVoiceChat
             {
                 Text = "Denoising strength",
                 SliderKey = "denoisingStrength",
-                Tooltip = "Sets intensity of denosing for audio detected as voice.",
+                Tooltip = "Sets intensity of denosing for audio detected as voice. Lower it if your voice is too distorted.",
                 SlideAction = SlideDenoisingStrength
             });
         }
