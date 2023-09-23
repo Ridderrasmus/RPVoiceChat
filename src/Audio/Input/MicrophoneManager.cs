@@ -82,17 +82,6 @@ namespace RPVoiceChat.Audio
             return inputThreshold;
         }
 
-        public void Dispose()
-        {
-            capi.Event.UnregisterGameTickListener(gameTickId);
-            gameTickId = 0;
-            audioProcessingCTS?.Cancel();
-            audioProcessingCTS?.Dispose();
-            capture?.Stop();
-            capture?.Dispose();
-            denoiser?.Dispose();
-        }
-
         public void SetThreshold(int threshold)
         {
             inputThreshold = (threshold / 100.0) * MaxInputThreshold;
@@ -101,6 +90,16 @@ namespace RPVoiceChat.Audio
         public void SetGain(int newGain)
         {
             gain = newGain / 100f;
+        }
+
+        public void SetDenoisingSensitivity(int sensitivity)
+        {
+            denoiser.SetBackgroundNoiseThreshold(sensitivity / 100f);
+        }
+
+        public void SetDenoisingStrength(int strength)
+        {
+            denoiser.SetVoiceDenoisingStrength(strength / 100f);
         }
 
         public void UpdateCaptureAudioSamples(float deltaTime)
@@ -377,6 +376,17 @@ namespace RPVoiceChat.Audio
         {
             capture = CreateNewCapture(deviceId);
             capture?.Start();
+        }
+
+        public void Dispose()
+        {
+            capi.Event.UnregisterGameTickListener(gameTickId);
+            gameTickId = 0;
+            audioProcessingCTS?.Cancel();
+            audioProcessingCTS?.Dispose();
+            capture?.Stop();
+            capture?.Dispose();
+            denoiser?.Dispose();
         }
     }
 }

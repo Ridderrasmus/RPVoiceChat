@@ -242,6 +242,30 @@ namespace RPVoiceChat
                 Tooltip = "Toggle visibility of HUD elements",
                 ToggleAction = OnToggleHUD
             });
+
+            RegisterOption(new ConfigOption
+            {
+                Text = "Denoising",
+                SwitchKey = "toggleDenoising",
+                Tooltip = "Enable audio denoising",
+                ToggleAction = OnToggleDenoising
+            });
+
+            RegisterOption(new ConfigOption
+            {
+                Text = "Background noise removal",
+                SliderKey = "denoisingSensitivity",
+                Tooltip = "Sets sensitivity for background noise. Audio detected as noise will be denoised with max strength.",
+                SlideAction = SlideDenoisingSensitivity
+            });
+
+            RegisterOption(new ConfigOption
+            {
+                Text = "Denoising strength",
+                SliderKey = "denoisingStrength",
+                Tooltip = "Sets intensity of denosing for audio detected as voice.",
+                SlideAction = SlideDenoisingStrength
+            });
         }
 
         protected override void RefreshValues()
@@ -257,6 +281,9 @@ namespace RPVoiceChat
             SingleComposer.GetSlider("inputGain").SetValues(_config.InputGain, 0, 100, 1, "%");
             SingleComposer.GetSlider("inputThreshold").SetValues(_config.InputThreshold, 0, 100, 1);
             SingleComposer.GetSwitch("toggleHUD").On = _config.IsHUDShown;
+            SingleComposer.GetSwitch("toggleDenoising").On = _config.IsDenoisingEnabled;
+            SingleComposer.GetSlider("denoisingSensitivity").SetValues(_config.BackgroungNoiseThreshold, 0, 100, 1, "%");
+            SingleComposer.GetSlider("denoisingStrength").SetValues(_config.VoiceDenoisingStrength, 0, 100, 1, "%");
         }
 
         private void OnChangeInputDevice(string value, bool selected)
@@ -313,6 +340,30 @@ namespace RPVoiceChat
         {
             _config.IsHUDShown = enabled;
             ModConfig.Save(capi);
+        }
+
+        private void OnToggleDenoising(bool enabled)
+        {
+            _config.IsDenoisingEnabled = enabled;
+            ModConfig.Save(capi);
+        }
+
+        private bool SlideDenoisingSensitivity(int sensitivity)
+        {
+            _config.BackgroungNoiseThreshold = sensitivity;
+            _audioInputManager.SetDenoisingSensitivity(sensitivity);
+            ModConfig.Save(capi);
+
+            return true;
+        }
+
+        private bool SlideDenoisingStrength(int strength)
+        {
+            _config.VoiceDenoisingStrength = strength;
+            _audioInputManager.SetDenoisingStrength(strength);
+            ModConfig.Save(capi);
+
+            return true;
         }
     }
 }
