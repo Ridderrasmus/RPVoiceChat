@@ -10,7 +10,7 @@ namespace RPVoiceChat
         private double coefficient;
         private double threshold;
 
-        public GuiElementAudioMeter(ICoreClientAPI capi, ElementBounds elementBounds) : base(capi, elementBounds, new double[3] {0.1,0.4,0.1}, false, true)
+        public GuiElementAudioMeter(ICoreClientAPI capi, ElementBounds elementBounds) : base(capi, elementBounds, new double[3] { 0.1, 0.4, 0.1 }, false, true)
         {
             this.capi = capi;
         }

@@ -20,7 +20,7 @@ namespace RPVoiceChat
             var backupServer = new NativeNetworkServer(api);
             server = new GameServer(sapi, mainServer, backupServer);
             server.Launch();
-            
+
             // Register/load world config
             sapi.World.Config.SetInt("rpvoicechat:distance-whisper", sapi.World.Config.GetInt("rpvoicechat:distance-whisper", (int)VoiceLevel.Whispering));
             sapi.World.Config.SetInt("rpvoicechat:distance-talk", sapi.World.Config.GetInt("rpvoicechat:distance-talk", (int)VoiceLevel.Talking));
@@ -91,7 +91,7 @@ namespace RPVoiceChat
 
             return TextCommandResult.Success("Audio distances reset to default");
         }
-        
+
         private TextCommandResult DisplayInfoHandler(TextCommandCallingArgs args)
         {
             int whisper = sapi.World.Config.GetInt("rpvoicechat:distance-whisper", (int)VoiceLevel.Whispering);

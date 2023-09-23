@@ -10,7 +10,8 @@ namespace RPVoiceChat
         RPVoiceChatConfig _config;
         const float size = 64;
         const int silenceTimeout = 160;
-        ElementBounds dialogBounds = new ElementBounds() {
+        ElementBounds dialogBounds = new ElementBounds()
+        {
             Alignment = EnumDialogArea.RightBottom,
             BothSizing = ElementSizing.Fixed,
             fixedWidth = size,

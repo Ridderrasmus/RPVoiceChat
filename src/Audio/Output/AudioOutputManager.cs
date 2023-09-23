@@ -1,9 +1,9 @@
-﻿using Vintagestory.API.Client;
-using System.Collections.Concurrent;
-using Vintagestory.API.Common;
-using RPVoiceChat.Networking;
+﻿using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
 using System;
+using System.Collections.Concurrent;
+using Vintagestory.API.Client;
+using Vintagestory.API.Common;
 
 namespace RPVoiceChat.Audio
 {
@@ -12,7 +12,8 @@ namespace RPVoiceChat.Audio
         ICoreClientAPI capi;
         RPVoiceChatConfig _config;
         private bool isLoopbackEnabled;
-        public bool IsLoopbackEnabled {
+        public bool IsLoopbackEnabled
+        {
             get => isLoopbackEnabled;
 
             set

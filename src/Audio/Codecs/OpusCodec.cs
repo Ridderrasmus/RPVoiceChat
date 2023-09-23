@@ -1,13 +1,12 @@
 ﻿using Concentus.Enums;
 using Concentus.Structs;
-using RPVoiceChat.Audio;
 using RPVoiceChat.Utils;
 using System;
 using System.IO;
 
-namespace RPVoiceChat
+namespace RPVoiceChat.Audio
 {
-    public class OpusCodec: IAudioCodec
+    public class OpusCodec : IAudioCodec
     {
         private OpusEncoder encoder;
         private OpusDecoder decoder;
@@ -50,7 +49,7 @@ namespace RPVoiceChat
                     encoded.Write(encodedData, 0, encodedLength);
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Logger.client.Error($"Couldn't encode audio:\n{e}");
             }
@@ -62,7 +61,7 @@ namespace RPVoiceChat
         {
             var decoded = new MemoryStream();
             var stream = new MemoryStream(encodedData);
-            using(var reader = new BinaryReader(stream))
+            using (var reader = new BinaryReader(stream))
             {
                 try
                 {
@@ -94,12 +93,10 @@ namespace RPVoiceChat
 
         private byte[] ToBytes(short[] audio, int offset, int length)
         {
-            byte[] byteBuffer = new byte[length * 2];
-            for (int i = offset; i < length; i++)
-            {
-                byteBuffer[i * 2] = (byte)(audio[i] & 0xFF);
-                byteBuffer[i * 2 + 1] = (byte)((audio[i] >> 8) & 0xFF);
-            }
+            int typeSize = sizeof(short);
+            byte[] byteBuffer = new byte[length * typeSize];
+            int bytesToCopy = (length - offset) * typeSize;
+            Buffer.BlockCopy(audio, offset, byteBuffer, offset * typeSize, bytesToCopy);
 
             return byteBuffer;
         }

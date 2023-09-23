@@ -1,12 +1,10 @@
-﻿using OpenTK.Audio.OpenAL;
-
-namespace RPVoiceChat
+﻿namespace RPVoiceChat.Audio.Effects
 {
     public class EffectTemplate
     {
         private int source;
         public int filter;
-    
+
         public bool IsEnabled { get; set; } = false;
 
         public EffectTemplate(int source)

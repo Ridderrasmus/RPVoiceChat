@@ -25,7 +25,8 @@ namespace RPVoiceChat.Utils
             try
             {
                 return IPAddress.Parse(ipString);
-            } catch (FormatException) { }
+            }
+            catch (FormatException) { }
 
             // IPv6:Port
             try
@@ -34,7 +35,8 @@ namespace RPVoiceChat.Utils
                 listAddressParts.Remove(listAddressParts.Last());
                 string newIpString = string.Join(":", listAddressParts);
                 return IPAddress.Parse(newIpString);
-            } catch (FormatException) { }
+            }
+            catch (FormatException) { }
 
             throw new ArgumentException($"IP string \"{ipString}\" is not a valid IP address");
         }
