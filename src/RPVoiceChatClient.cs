@@ -30,6 +30,7 @@ namespace RPVoiceChat
         public override void StartClientSide(ICoreClientAPI api)
         {
             capi = api;
+            ClientSettings.Init(capi);
 
             // Init audio context, microphone, audio output and harmony patch managers
             micManager = new MicrophoneManager(capi);
@@ -137,6 +138,7 @@ namespace RPVoiceChat
             patchManager?.Dispose();
             client?.Dispose();
             configGui.Dispose();
+            ClientSettings.Dispose();
         }
     }
 }
