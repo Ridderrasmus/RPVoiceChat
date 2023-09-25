@@ -40,6 +40,11 @@ namespace RPVoiceChat
 
         }
 
+        protected void RegisterTab(GuiTab tab)
+        {
+            ConfigTabs.Add(tab);
+        }
+
         protected void RegisterOption(ConfigOption option)
         {
             ConfigOptions.Add(option);
@@ -56,8 +61,9 @@ namespace RPVoiceChat
             const double sliderWidth = 200.0;
             var font = CairoFont.WhiteSmallText();
 
-            var switchBounds = ElementBounds.Fixed(250, GuiStyle.TitleBarHeight, 300, switchSize);
-            var textBounds = ElementBounds.Fixed(0, GuiStyle.TitleBarHeight, 210, switchSize);
+            var tabBounds = ElementBounds.Fixed(0, GuiStyle.TitleBarHeight + 5, 105, 300).WithAlignment(EnumDialogArea.LeftTop);
+            var textBounds = ElementBounds.Fixed(tabBounds.fixedWidth + 20, GuiStyle.TitleBarHeight, 210, switchSize);
+            var switchBounds = ElementBounds.Fixed(textBounds.fixedWidth + textBounds.fixedX + 40, GuiStyle.TitleBarHeight, 300, switchSize);
 
             var bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
             bgBounds.BothSizing = ElementSizing.FitToChildren;
@@ -65,10 +71,15 @@ namespace RPVoiceChat
             var composer = capi.Gui.CreateCompo("rpvcconfigmenu", dialogBounds)
                 .AddShadedDialogBG(bgBounds)
                 .AddDialogTitleBar("RP VC Config Menu", OnTitleBarCloseClicked)
-                .BeginChildElements(bgBounds);
+                .BeginChildElements(bgBounds)
+                .AddVerticalTabs(ConfigTabs.ToArray(), tabBounds, OnTabClicked, "configTabs");
 
+            var activeTabIndex = capi.Settings.Int["RPVoiceChat_activeConfigTab"];
+            var activeTab = ConfigTabs[activeTabIndex];
             foreach (ConfigOption option in ConfigOptions)
             {
+                if (option.Tab != activeTab) continue;
+
                 composer.AddStaticText(option.Text, font, textBounds);
                 if (option.Tooltip != null)
                 {
@@ -121,6 +132,13 @@ namespace RPVoiceChat
             TryClose();
         }
 
+        private void OnTabClicked(int dataInt, GuiTab _)
+        {
+            capi.Settings.Int["RPVoiceChat_activeConfigTab"] = dataInt;
+            SetupDialog();
+            RefreshValues();
+        }
+
         public override void OnGuiClosed()
         {
             base.OnGuiClosed();
@@ -157,11 +175,19 @@ namespace RPVoiceChat
             _audioInputManager = audioInputManager;
             _audioOutputManager = audioOutputManager;
 
+            var audioInputTab = new GuiTab() { Name = "Audio Input" };
+            var audioOutputTab = new GuiTab() { Name = "Audio Output" };
+            var interfaceTab = new GuiTab() { Name = "Interface" };
+            RegisterTab(audioInputTab);
+            RegisterTab(audioOutputTab);
+            RegisterTab(interfaceTab);
+
             RegisterOption(new ConfigOption
             {
                 Text = "Input Device",
                 DropdownKey = "inputDevice",
                 Tooltip = "Input device",
+                Tab = audioInputTab,
                 DropdownNames = _audioInputManager.GetInputDeviceNames(),
                 DropdownValues = _audioInputManager.GetInputDeviceNames(),
                 DropdownSelect = OnChangeInputDevice
@@ -172,6 +198,7 @@ namespace RPVoiceChat
                 Text = "Push To Talk",
                 SwitchKey = "togglePushToTalk",
                 Tooltip = "Use push to talk instead of voice activation",
+                Tab = audioInputTab,
                 ToggleAction = OnTogglePushToTalk
             });
 
@@ -180,6 +207,7 @@ namespace RPVoiceChat
                 Text = "Mute",
                 SwitchKey = "muteMicrophone",
                 Tooltip = "Mute your microphone",
+                Tab = audioInputTab,
                 ToggleAction = OnToggleMuted
             });
 
@@ -188,6 +216,7 @@ namespace RPVoiceChat
                 Text = "Loopback",
                 SwitchKey = "loopback",
                 Tooltip = "Play recorded audio through output audio",
+                Tab = audioOutputTab,
                 ToggleAction = OnToggleLoopback
             });
 
@@ -196,6 +225,7 @@ namespace RPVoiceChat
                 Text = "Players Volume Level",
                 SliderKey = "outputGain",
                 Tooltip = "How much to increase volume of other players",
+                Tab = audioOutputTab,
                 SlideAction = SlideOutputGain
             });
 
@@ -204,6 +234,7 @@ namespace RPVoiceChat
                 Text = "Recording Volume",
                 SliderKey = "inputGain",
                 Tooltip = "Changes your own volume",
+                Tab = audioInputTab,
                 SlideAction = SlideInputGain
             });
 
@@ -212,6 +243,7 @@ namespace RPVoiceChat
                 Text = "Audio Input Threshold",
                 SliderKey = "inputThreshold",
                 Tooltip = "At which threshold your audio starts transmitting",
+                Tab = audioInputTab,
                 SlideAction = SlideInputThreshold
             });
 
@@ -219,7 +251,8 @@ namespace RPVoiceChat
             {
                 Text = "Audio Meter",
                 SpecialSliderKey = "audioMeter",
-                Tooltip = "Shows your audio amplitude"
+                Tooltip = "Shows your audio amplitude",
+                Tab = audioInputTab
             });
 
             RegisterOption(new ConfigOption
@@ -227,6 +260,7 @@ namespace RPVoiceChat
                 Text = "Toggle HUD",
                 SwitchKey = "toggleHUD",
                 Tooltip = "Toggle visibility of HUD elements",
+                Tab = interfaceTab,
                 ToggleAction = OnToggleHUD
             });
 
@@ -235,6 +269,7 @@ namespace RPVoiceChat
                 Text = "Denoising",
                 SwitchKey = "toggleDenoising",
                 Tooltip = "Enable audio denoising",
+                Tab = audioInputTab,
                 ToggleAction = OnToggleDenoising
             });
 
@@ -243,6 +278,7 @@ namespace RPVoiceChat
                 Text = "Background noise detection",
                 SliderKey = "denoisingSensitivity",
                 Tooltip = "Sets sensitivity for background noise. Audio detected as noise will be denoised with max strength.",
+                Tab = audioInputTab,
                 SlideAction = SlideDenoisingSensitivity
             });
 
@@ -251,6 +287,7 @@ namespace RPVoiceChat
                 Text = "Denoising strength",
                 SliderKey = "denoisingStrength",
                 Tooltip = "Sets intensity of denosing for audio detected as voice. Lower it if your voice is too distorted.",
+                Tab = audioInputTab,
                 SlideAction = SlideDenoisingStrength
             });
         }
@@ -260,17 +297,29 @@ namespace RPVoiceChat
             if (!IsOpened())
                 return;
 
-            SingleComposer.GetDropDown("inputDevice").SetSelectedValue(_config.CurrentInputDevice ?? "Default");
-            SingleComposer.GetSwitch("togglePushToTalk").On = _config.PushToTalkEnabled;
-            SingleComposer.GetSwitch("muteMicrophone").On = _config.IsMuted;
-            SingleComposer.GetSwitch("loopback").On = _config.IsLoopbackEnabled;
-            SingleComposer.GetSlider("outputGain").SetValues(_config.OutputGain, 0, 200, 1, "%");
-            SingleComposer.GetSlider("inputGain").SetValues(_config.InputGain, 0, 100, 1, "%");
-            SingleComposer.GetSlider("inputThreshold").SetValues(_config.InputThreshold, 0, 100, 1);
-            SingleComposer.GetSwitch("toggleHUD").On = _config.IsHUDShown;
-            SingleComposer.GetSwitch("toggleDenoising").On = _config.IsDenoisingEnabled;
-            SingleComposer.GetSlider("denoisingSensitivity").SetValues(_config.BackgroungNoiseThreshold, 0, 100, 1, "%");
-            SingleComposer.GetSlider("denoisingStrength").SetValues(_config.VoiceDenoisingStrength, 0, 100, 1, "%");
+            SetValue("configTabs", capi.Settings.Int["RPVoiceChat_activeConfigTab"]);
+            SetValue("inputDevice", _config.CurrentInputDevice ?? "Default");
+            SetValue("togglePushToTalk", _config.PushToTalkEnabled);
+            SetValue("muteMicrophone", _config.IsMuted);
+            SetValue("loopback", _config.IsLoopbackEnabled);
+            SetValue("outputGain", new dynamic[] { _config.OutputGain, 0, 200, 1, "%" });
+            SetValue("inputGain", new dynamic[] { _config.InputGain, 0, 100, 1, "%" });
+            SetValue("inputThreshold", new dynamic[] { _config.InputThreshold, 0, 100, 1, "" });
+            SetValue("toggleHUD", _config.IsHUDShown);
+            SetValue("toggleDenoising", _config.IsDenoisingEnabled);
+            SetValue("denoisingSensitivity", new dynamic[] { _config.BackgroungNoiseThreshold, 0, 100, 1, "%" });
+            SetValue("denoisingStrength", new dynamic[] { _config.VoiceDenoisingStrength, 0, 100, 1, "%" });
+        }
+
+        protected void SetValue(string key, dynamic value)
+        {
+            GuiElement element = SingleComposer.GetElement(key);
+            if (element is null) return;
+            else if (element is GuiElementDropDown) ((GuiElementDropDown)element).SetSelectedValue(value);
+            else if (element is GuiElementSwitch) ((GuiElementSwitch)element).On = value;
+            else if (element is GuiElementSlider) ((GuiElementSlider)element).SetValues(value[0], value[1], value[2], value[3], value[4]);
+            else if (element is GuiElementVerticalTabs) ((GuiElementVerticalTabs)element).activeElement = value;
+            else throw new Exception("Unknown element type");
         }
 
         private void OnChangeInputDevice(string value, bool selected)
