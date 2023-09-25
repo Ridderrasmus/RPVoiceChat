@@ -137,8 +137,6 @@ namespace RPVoiceChat
             patchManager?.Dispose();
             client?.Dispose();
             configGui.Dispose();
-            PlayerListener.Dispose();
-            //client = null;
         }
     }
 }
