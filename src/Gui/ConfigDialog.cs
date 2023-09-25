@@ -268,6 +268,15 @@ namespace RPVoiceChat
 
             RegisterOption(new ConfigOption
             {
+                Text = "Muffling",
+                SwitchKey = "toggleMuffling",
+                Tooltip = "Muffle audio when other players are behind solid obstacles",
+                Tab = effectsTab,
+                ToggleAction = OnToggleMuffling
+            });
+
+            RegisterOption(new ConfigOption
+            {
                 Text = "Denoising",
                 SwitchKey = "toggleDenoising",
                 Tooltip = "Enable denoising of your audio",
@@ -308,6 +317,7 @@ namespace RPVoiceChat
             SetValue("inputGain", new dynamic[] { _config.InputGain, 0, 100, 1, "%" });
             SetValue("inputThreshold", new dynamic[] { _config.InputThreshold, 0, 100, 1, "" });
             SetValue("toggleHUD", _config.IsHUDShown);
+            SetValue("toggleMuffling", ClientSettings.GetBool("muffling") ?? true);
             SetValue("toggleDenoising", _config.IsDenoisingEnabled);
             SetValue("denoisingSensitivity", new dynamic[] { _config.BackgroungNoiseThreshold, 0, 100, 1, "%" });
             SetValue("denoisingStrength", new dynamic[] { _config.VoiceDenoisingStrength, 0, 100, 1, "%" });
@@ -378,6 +388,11 @@ namespace RPVoiceChat
         {
             _config.IsHUDShown = enabled;
             ModConfig.Save(capi);
+        }
+
+        private void OnToggleMuffling(bool enabled)
+        {
+            ClientSettings.Set("muffling", enabled);
         }
 
         private void OnToggleDenoising(bool enabled)
