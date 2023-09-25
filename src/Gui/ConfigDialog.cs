@@ -177,9 +177,11 @@ namespace RPVoiceChat
 
             var audioInputTab = new GuiTab() { Name = "Audio Input" };
             var audioOutputTab = new GuiTab() { Name = "Audio Output" };
+            var effectsTab = new GuiTab() { Name = "Effects" };
             var interfaceTab = new GuiTab() { Name = "Interface" };
             RegisterTab(audioInputTab);
             RegisterTab(audioOutputTab);
+            RegisterTab(effectsTab);
             RegisterTab(interfaceTab);
 
             RegisterOption(new ConfigOption
@@ -268,8 +270,8 @@ namespace RPVoiceChat
             {
                 Text = "Denoising",
                 SwitchKey = "toggleDenoising",
-                Tooltip = "Enable audio denoising",
-                Tab = audioInputTab,
+                Tooltip = "Enable denoising of your audio",
+                Tab = effectsTab,
                 ToggleAction = OnToggleDenoising
             });
 
@@ -278,7 +280,7 @@ namespace RPVoiceChat
                 Text = "Background noise detection",
                 SliderKey = "denoisingSensitivity",
                 Tooltip = "Sets sensitivity for background noise. Audio detected as noise will be denoised with max strength.",
-                Tab = audioInputTab,
+                Tab = effectsTab,
                 SlideAction = SlideDenoisingSensitivity
             });
 
@@ -287,7 +289,7 @@ namespace RPVoiceChat
                 Text = "Denoising strength",
                 SliderKey = "denoisingStrength",
                 Tooltip = "Sets intensity of denosing for audio detected as voice. Lower it if your voice is too distorted.",
-                Tab = audioInputTab,
+                Tab = effectsTab,
                 SlideAction = SlideDenoisingStrength
             });
         }
