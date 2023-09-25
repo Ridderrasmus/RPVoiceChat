@@ -74,7 +74,7 @@ namespace RPVoiceChat
                 .BeginChildElements(bgBounds)
                 .AddVerticalTabs(ConfigTabs.ToArray(), tabBounds, OnTabClicked, "configTabs");
 
-            var activeTabIndex = capi.Settings.Int["RPVoiceChat_activeConfigTab"];
+            var activeTabIndex = ClientSettings.GetInt("activeConfigTab");
             var activeTab = ConfigTabs[activeTabIndex];
             foreach (ConfigOption option in ConfigOptions)
             {
@@ -134,7 +134,7 @@ namespace RPVoiceChat
 
         private void OnTabClicked(int dataInt, GuiTab _)
         {
-            capi.Settings.Int["RPVoiceChat_activeConfigTab"] = dataInt;
+            ClientSettings.Set("activeConfigTab", dataInt);
             SetupDialog();
             RefreshValues();
         }
@@ -297,7 +297,7 @@ namespace RPVoiceChat
             if (!IsOpened())
                 return;
 
-            SetValue("configTabs", capi.Settings.Int["RPVoiceChat_activeConfigTab"]);
+            SetValue("configTabs", ClientSettings.GetInt("activeConfigTab"));
             SetValue("inputDevice", _config.CurrentInputDevice ?? "Default");
             SetValue("togglePushToTalk", _config.PushToTalkEnabled);
             SetValue("muteMicrophone", _config.IsMuted);
