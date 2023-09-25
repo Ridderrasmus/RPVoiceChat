@@ -74,7 +74,7 @@ namespace RPVoiceChat
                 .BeginChildElements(bgBounds)
                 .AddVerticalTabs(ConfigTabs.ToArray(), tabBounds, OnTabClicked, "configTabs");
 
-            var activeTabIndex = ClientSettings.GetInt("activeConfigTab");
+            var activeTabIndex = ClientSettings.GetInt("activeConfigTab") ?? 0;
             var activeTab = ConfigTabs[activeTabIndex];
             foreach (ConfigOption option in ConfigOptions)
             {

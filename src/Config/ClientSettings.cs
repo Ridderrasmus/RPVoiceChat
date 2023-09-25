@@ -32,23 +32,27 @@ namespace RPVoiceChat
             capi.Settings.String[Key(key)] = value;
         }
 
-        public static int GetInt(string key)
+        public static int? GetInt(string key)
         {
+            if (!capi.Settings.Int.Exists(Key(key))) return null;
             return capi.Settings.Int[Key(key)];
         }
 
-        public static bool GetBool(string key)
+        public static bool? GetBool(string key)
         {
+            if (!capi.Settings.Bool.Exists(Key(key))) return null;
             return capi.Settings.Bool[Key(key)];
         }
 
-        public static float GetFloat(string key)
+        public static float? GetFloat(string key)
         {
+            if (!capi.Settings.Float.Exists(Key(key))) return null;
             return capi.Settings.Float[Key(key)];
         }
 
         public static string GetStr(string key)
         {
+            if (!capi.Settings.String.Exists(Key(key))) return null;
             return capi.Settings.String[Key(key)];
         }
 
