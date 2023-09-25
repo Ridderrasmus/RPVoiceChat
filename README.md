@@ -16,8 +16,8 @@ Not only does the mod allow players to talk to each other in-game, but it also a
 ## Installation
 1. Download the latest version of the mod from the [mod page](https://mods.vintagestory.at/rpvoicechat).
 2. Place the downloaded file in the `Mods` folder of your Vintage Story installation.
-3. Start the game and enjoy!<br>
-(4.) Optional: Double check your keybinds in the settings menu. All keybinds start with `RPVC` and are located in the hud and interface category.
+3. Start the game and enjoy!
+4. (Optional): Double check your keybinds in the settings menu. All keybinds start with `RPVC` and are located in the hud and interface category.
  
 ## Usage
 ### Talking
