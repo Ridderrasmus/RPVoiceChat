@@ -8,38 +8,30 @@ namespace RPVoiceChat
 {
     public abstract class ConfigDialog : GuiDialog
     {
-
+        protected MicrophoneManager _audioInputManager;
+        protected AudioOutputManager _audioOutputManager;
         private bool _isSetup;
-
-        protected List<ConfigOption> ConfigOptions = new List<ConfigOption>();
-
-
-        public MicrophoneManager _audioInputManager;
-        public AudioOutputManager _audioOutputManager;
-
+        private List<ConfigOption> ConfigOptions = new List<ConfigOption>();
+        private List<GuiTab> ConfigTabs = new List<GuiTab>();
         private GuiElementAudioMeter AudioMeter;
         private long audioMeterId;
 
-        public class ConfigOption
+        protected class ConfigOption
         {
             public ActionConsumable AdvancedAction;
             public string SwitchKey;
             public string SliderKey;
             public string SpecialSliderKey;
             public string DropdownKey;
-
             public string Text;
-
+            public string Tooltip;
+            public bool InstantSlider;
+            public string[] DropdownValues { get; internal set; }
+            public string[] DropdownNames { get; internal set; }
+            public GuiTab Tab;
             public Action<bool> ToggleAction;
             public ActionConsumable<int> SlideAction;
             public SelectionChangedDelegate DropdownSelect { get; internal set; }
-
-
-            public string Tooltip;
-            public bool InstantSlider;
-
-            public string[] DropdownValues { get; internal set; }
-            public string[] DropdownNames { get; internal set; }
         }
 
 
@@ -109,11 +101,6 @@ namespace RPVoiceChat
             }
 
             SingleComposer = composer.EndChildElements().Compose();
-
-            //foreach (var option in ConfigOptions.Where(option => option.SliderKey != null && !option.InstantSlider))
-            //{
-            //    SingleComposer.GetSlider(option.SliderKey);
-            //}
         }
 
         public override bool TryOpen()
