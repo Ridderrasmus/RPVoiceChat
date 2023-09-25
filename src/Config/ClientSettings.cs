@@ -32,10 +32,20 @@ namespace RPVoiceChat
             capi.Settings.String[Key(key)] = value;
         }
 
+        public static int GetInt(string key, int defaultValue)
+        {
+            return GetInt(key) ?? defaultValue;
+        }
+
         public static int? GetInt(string key)
         {
             if (!capi.Settings.Int.Exists(Key(key))) return null;
             return capi.Settings.Int[Key(key)];
+        }
+
+        public static bool GetBool(string key, bool defaultValue)
+        {
+            return GetBool(key) ?? defaultValue;
         }
 
         public static bool? GetBool(string key)
@@ -44,10 +54,20 @@ namespace RPVoiceChat
             return capi.Settings.Bool[Key(key)];
         }
 
+        public static float GetFloat(string key, float defaultValue)
+        {
+            return GetFloat(key) ?? defaultValue;
+        }
+
         public static float? GetFloat(string key)
         {
             if (!capi.Settings.Float.Exists(Key(key))) return null;
             return capi.Settings.Float[Key(key)];
+        }
+
+        public static string GetStr(string key, string defaultValue)
+        {
+            return GetStr(key) ?? defaultValue;
         }
 
         public static string GetStr(string key)

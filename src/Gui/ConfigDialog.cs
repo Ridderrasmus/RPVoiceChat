@@ -74,7 +74,7 @@ namespace RPVoiceChat
                 .BeginChildElements(bgBounds)
                 .AddVerticalTabs(ConfigTabs.ToArray(), tabBounds, OnTabClicked, "configTabs");
 
-            var activeTabIndex = ClientSettings.GetInt("activeConfigTab") ?? 0;
+            var activeTabIndex = ClientSettings.GetInt("activeConfigTab", 0);
             var activeTab = ConfigTabs[activeTabIndex];
             foreach (ConfigOption option in ConfigOptions)
             {
@@ -308,7 +308,7 @@ namespace RPVoiceChat
             if (!IsOpened())
                 return;
 
-            SetValue("configTabs", ClientSettings.GetInt("activeConfigTab"));
+            SetValue("configTabs", ClientSettings.GetInt("activeConfigTab", 0));
             SetValue("inputDevice", _config.CurrentInputDevice ?? "Default");
             SetValue("togglePushToTalk", _config.PushToTalkEnabled);
             SetValue("muteMicrophone", _config.IsMuted);
@@ -317,7 +317,7 @@ namespace RPVoiceChat
             SetValue("inputGain", new dynamic[] { _config.InputGain, 0, 100, 1, "%" });
             SetValue("inputThreshold", new dynamic[] { _config.InputThreshold, 0, 100, 1, "" });
             SetValue("toggleHUD", _config.IsHUDShown);
-            SetValue("toggleMuffling", ClientSettings.GetBool("muffling") ?? true);
+            SetValue("toggleMuffling", ClientSettings.GetBool("muffling", true));
             SetValue("toggleDenoising", _config.IsDenoisingEnabled);
             SetValue("denoisingSensitivity", new dynamic[] { _config.BackgroungNoiseThreshold, 0, 100, 1, "%" });
             SetValue("denoisingStrength", new dynamic[] { _config.VoiceDenoisingStrength, 0, 100, 1, "%" });
