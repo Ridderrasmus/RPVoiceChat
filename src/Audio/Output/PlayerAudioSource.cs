@@ -13,6 +13,7 @@ namespace RPVoiceChat.Audio
 {
     public class PlayerAudioSource : IDisposable
     {
+        public bool IsPlaying { get => _IsPlaying(); }
         private const int BufferCount = 20;
         private int source;
         private CircularAudioBuffer buffer;
@@ -49,6 +50,7 @@ namespace RPVoiceChat.Audio
 
             source = OALW.GenSource();
             buffer = new CircularAudioBuffer(source, BufferCount);
+            buffer.OnEmptyingQueue += OnSourceStop;
 
             float gain = Math.Min(PlayerListener.gain, 1);
             OALW.Source(source, ALSourceb.Looping, false);
@@ -142,6 +144,11 @@ namespace RPVoiceChat.Audio
             OALW.Source(source, ALSourceb.SourceRelative, true);
         }
 
+        private bool _IsPlaying()
+        {
+            return OALW.GetSourceState(source) == ALSourceState.Playing;
+        }
+
         private float GetDistanceFactor()
         {
             // Distance in blocks at which audio source normally considered quiet.
@@ -218,14 +225,10 @@ namespace RPVoiceChat.Audio
                 orderingQueue.RemoveAt(0);
             }
 
-            var state = OALW.GetSourceState(source);
-            if (state == ALSourceState.Stopped)
-                buffer.TryDequeueBuffers(); //Calling this can dequeue unprocessed audio so we want to make sure the source is stopped
-
-            byte[] audioBytes = audio.data;
-            buffer.QueueAudio(audioBytes, audioBytes.Length, audio.format, audio.frequency);
+            buffer.QueueAudio(audio.data, audio.format, audio.frequency);
 
             // The source can stop playing if it finishes everything in queue
+            var state = OALW.GetSourceState(source);
             if (state != ALSourceState.Playing)
             {
                 StartPlaying();
@@ -235,11 +238,18 @@ namespace RPVoiceChat.Audio
         public void StartPlaying()
         {
             OALW.SourcePlay(source);
+            PlayerNameTagRenderer.UpdatePlayerNameTag(player, true);
         }
 
         public void StopPlaying()
         {
             OALW.SourceStop(source);
+            OnSourceStop();
+        }
+
+        private void OnSourceStop()
+        {
+            PlayerNameTagRenderer.UpdatePlayerNameTag(player, false);
         }
 
         public void Dispose()

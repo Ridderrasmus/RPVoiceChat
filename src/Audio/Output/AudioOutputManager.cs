@@ -157,6 +157,18 @@ namespace RPVoiceChat.Audio
             }
         }
 
+        public bool IsPlayerTalking(string playerId)
+        {
+            if (playerSources.TryGetValue(playerId, out var source))
+                return source.IsPlaying;
+
+            if (capi.World.Player.PlayerUID == playerId)
+                return localPlayerAudioSource.IsPlaying;
+
+            Logger.client.Warning($"Could not find player audio source for {playerId}, assuming player isn't talking");
+            return false;
+        }
+
         public void Dispose()
         {
             localPlayerAudioSource?.Dispose();
