@@ -31,6 +31,7 @@ namespace RPVoiceChat
         public override void StartClientSide(ICoreClientAPI api)
         {
             capi = api;
+            ClientSettings.Init(capi);
 
             // Sneak in native dlls
             EmbeddedDllClass.ExtractEmbeddedDlls();
@@ -142,8 +143,7 @@ namespace RPVoiceChat
             patchManager?.Dispose();
             client?.Dispose();
             configGui.Dispose();
-            PlayerListener.Dispose();
-            //client = null;
+            ClientSettings.Dispose();
         }
     }
 }

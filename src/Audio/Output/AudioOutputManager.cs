@@ -159,6 +159,7 @@ namespace RPVoiceChat.Audio
 
         public void Dispose()
         {
+            PlayerListener.Dispose();
             localPlayerAudioSource?.Dispose();
             foreach (var source in playerSources.Values)
                 source?.Dispose();
