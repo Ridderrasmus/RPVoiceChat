@@ -1,6 +1,7 @@
 using RPVoiceChat.Audio;
 using RPVoiceChat.Client;
 using RPVoiceChat.Networking;
+using RPVoiceChat.Utils;
 using System;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -31,6 +32,10 @@ namespace RPVoiceChat
         {
             capi = api;
             ClientSettings.Init(capi);
+
+            // Sneak in native dlls
+            EmbeddedDllClass.ExtractEmbeddedDlls();
+            EmbeddedDllClass.LoadDll("RNNoise.dll");
 
             // Init audio context, microphone, audio output and harmony patch managers
             micManager = new MicrophoneManager(capi);
