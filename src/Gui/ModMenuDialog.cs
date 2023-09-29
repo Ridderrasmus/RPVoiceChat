@@ -1,8 +1,10 @@
 ﻿using RPVoiceChat.Audio;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace RPVoiceChat.Gui
 {
@@ -12,7 +14,19 @@ namespace RPVoiceChat.Gui
         protected AudioOutputManager _audioOutputManager;
         private bool _isSetup;
         private List<ConfigOption> ConfigOptions = new List<ConfigOption>();
-        private List<GuiTab> ConfigTabs = new List<GuiTab>();
+        private List<ConfigTab> ConfigTabs = new List<ConfigTab>();
+
+        protected class ConfigTab : GuiTab
+        {
+            public CairoFont Font = CairoFont.WhiteDetailText().WithFontSize(17f);
+            public double TextWidth { get => _TextWidth(); }
+
+            private double _TextWidth()
+            {
+                if (Name == null || Name == "") return 0;
+                return Font.GetTextExtents(Name).Width;
+            }
+        }
 
         protected class ConfigOption
         {
@@ -31,12 +45,20 @@ namespace RPVoiceChat.Gui
             public Action<bool> ToggleAction;
             public ActionConsumable<int> SlideAction;
             public SelectionChangedDelegate DropdownSelect { get; internal set; }
+            public CairoFont Font = CairoFont.WhiteSmallText();
+            public double TextWidth { get => _TextWidth(); }
+
+            private double _TextWidth()
+            {
+                if (Text == null || Text == "") return 0;
+                return Font.GetTextExtents(Text).Width;
+            }
         }
 
 
         public ConfigDialog(ICoreClientAPI capi) : base(capi) { }
 
-        protected void RegisterTab(GuiTab tab)
+        protected void RegisterTab(ConfigTab tab)
         {
             ConfigTabs.Add(tab);
         }
@@ -48,19 +70,22 @@ namespace RPVoiceChat.Gui
 
         protected void SetupDialog()
         {
-            _isSetup = true;
-
-            var dialogBounds = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.CenterMiddle);
-
             const int switchSize = 20;
             const int switchPadding = 10;
             const double sliderWidth = 200.0;
-            var font = CairoFont.WhiteSmallText();
+            _isSetup = true;
 
-            var tabBounds = ElementBounds.Fixed(0, GuiStyle.TitleBarHeight + 5, 105, 300).WithAlignment(EnumDialogArea.LeftTop);
-            var textBounds = ElementBounds.Fixed(tabBounds.fixedWidth + 20, GuiStyle.TitleBarHeight, 210, switchSize);
+            var activeTabIndex = ClientSettings.GetInt("activeConfigTab", 0);
+            var activeTab = ConfigTabs[activeTabIndex];
+            var displayedOptions = ConfigOptions.FindAll(e => e.Tab == activeTab);
+            double maxTextWidth = displayedOptions.DefaultIfEmpty().Max(e => e?.TextWidth ?? 0) + 2;
+            double maxTabWidth = ConfigTabs.DefaultIfEmpty().Max(e => e?.TextWidth ?? 0) + 4*2;
+
+            var tabBounds = ElementBounds.Fixed(0, GuiStyle.TitleBarHeight + 5, maxTabWidth, 300).WithAlignment(EnumDialogArea.LeftTop);
+            var textBounds = ElementBounds.Fixed(tabBounds.fixedWidth + 20, GuiStyle.TitleBarHeight, maxTextWidth, switchSize);
             var switchBounds = ElementBounds.Fixed(textBounds.fixedWidth + textBounds.fixedX + 40, GuiStyle.TitleBarHeight, 300, switchSize);
 
+            var dialogBounds = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.CenterMiddle);
             var bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
             bgBounds.BothSizing = ElementSizing.FitToChildren;
 
@@ -70,19 +95,15 @@ namespace RPVoiceChat.Gui
                 .BeginChildElements(bgBounds)
                 .AddVerticalTabs(ConfigTabs.ToArray(), tabBounds, OnTabClicked, "configTabs");
 
-            var activeTabIndex = ClientSettings.GetInt("activeConfigTab", 0);
-            var activeTab = ConfigTabs[activeTabIndex];
-            foreach (ConfigOption option in ConfigOptions)
+            foreach (ConfigOption option in displayedOptions)
             {
-                if (option.Tab != activeTab) continue;
-
                 if (option.Text != null)
                 {
-                    composer.AddStaticText(option.Text, font, textBounds);
+                    composer.AddStaticText(option.Text, option.Font, textBounds);
                 }
                 if (option.Tooltip != null)
                 {
-                    composer.AddHoverText(option.Tooltip, font, 260, textBounds);
+                    composer.AddHoverText(option.Tooltip, option.Font, 260, textBounds);
                 }
 
                 if (option.SliderKey != null)
@@ -153,11 +174,11 @@ namespace RPVoiceChat.Gui
             _audioInputManager = audioInputManager;
             _audioOutputManager = audioOutputManager;
 
-            var audioInputTab = new GuiTab() { Name = "Audio Input" };
-            var audioOutputTab = new GuiTab() { Name = "Audio Output" };
-            var effectsTab = new GuiTab() { Name = "Effects" };
-            var interfaceTab = new GuiTab() { Name = "Interface" };
-            var playerListTab = new GuiTab() { Name = "Player List" };
+            var audioInputTab = new ConfigTab() { Name = "Audio Input" };
+            var audioOutputTab = new ConfigTab() { Name = "Audio Output" };
+            var effectsTab = new ConfigTab() { Name = "Effects" };
+            var interfaceTab = new ConfigTab() { Name = "Interface" };
+            var playerListTab = new ConfigTab() { Name = "Player List" };
             RegisterTab(audioInputTab);
             RegisterTab(audioOutputTab);
             RegisterTab(effectsTab);
