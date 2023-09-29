@@ -34,7 +34,7 @@ namespace RPVoiceChat
 
             // Sneak in native dlls
             EmbeddedDllClass.ExtractEmbeddedDlls();
-            EmbeddedDllClass.LoadDll("RPVoiceChat.Lib.RNNoise.dll");
+            EmbeddedDllClass.LoadDll("RNNoise.dll");
 
             // Init audio context, microphone, audio output and harmony patch managers
             micManager = new MicrophoneManager(capi);

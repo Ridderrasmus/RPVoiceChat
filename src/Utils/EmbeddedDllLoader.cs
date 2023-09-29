@@ -22,14 +22,14 @@ namespace RPVoiceChat.Utils
             }
         }
 
-        public static void ExtractEmbeddedDll(string dllName)
+        public static void ExtractEmbeddedDll(string resourceName)
         {
             Assembly assembly = Assembly.GetExecutingAssembly();
             AssemblyName assemblyName = assembly.GetName();
             tempFolder ??= $"{assemblyName.Name}.{assemblyName.Version}";
 
             byte[] resourceBytes;
-            using (var stream = assembly.GetManifestResourceStream(dllName))
+            using (var stream = assembly.GetManifestResourceStream(resourceName))
             {
                 var memoryStream = new MemoryStream();
                 stream.CopyTo(memoryStream);
@@ -39,6 +39,8 @@ namespace RPVoiceChat.Utils
             string dirName = Path.Combine(Path.GetTempPath(), tempFolder);
             if (!Directory.Exists(dirName)) Directory.CreateDirectory(dirName);
 
+            string[] resourceNameParts = resourceName.Split(".");
+            string dllName = $"{resourceNameParts[resourceNameParts.Length - 2]}.{resourceNameParts[resourceNameParts.Length - 1]}";
             string dllPath = Path.Combine(dirName, dllName);
             bool alreadyExtracted = false;
             if (File.Exists(dllPath))
