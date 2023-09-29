@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace RPVoiceChat.Gui
 {
@@ -70,21 +69,26 @@ namespace RPVoiceChat.Gui
 
         protected void SetupDialog()
         {
+            const int tabsTopPadding = 5;
+            const int textLeftPadding = 20;
+            const int settingsLeftPadding = 40;
+            const int settingDeltaY = 10;
+            const int settingHeight = 20;
             const int switchSize = 20;
-            const int switchPadding = 10;
             const double sliderWidth = 200.0;
+            const int tooltipWidth = 260;
+            const int _tabTextPadding = 4;
             _isSetup = true;
 
             var activeTabIndex = ClientSettings.GetInt("activeConfigTab", 0);
             var activeTab = ConfigTabs[activeTabIndex];
             var displayedOptions = ConfigOptions.FindAll(e => e.Tab == activeTab);
             double maxTextWidth = displayedOptions.DefaultIfEmpty().Max(e => e?.TextWidth ?? 0) + 2;
-            double maxTabWidth = ConfigTabs.DefaultIfEmpty().Max(e => e?.TextWidth ?? 0) + 4*2;
+            double maxTabWidth = ConfigTabs.DefaultIfEmpty().Max(e => e?.TextWidth ?? 0) + _tabTextPadding * 2;
 
-            var tabBounds = ElementBounds.Fixed(0, GuiStyle.TitleBarHeight + 5, maxTabWidth, 300).WithAlignment(EnumDialogArea.LeftTop);
-            var textBounds = ElementBounds.Fixed(tabBounds.fixedWidth + 20, GuiStyle.TitleBarHeight, maxTextWidth, switchSize);
-            var switchBounds = ElementBounds.Fixed(textBounds.fixedWidth + textBounds.fixedX + 40, GuiStyle.TitleBarHeight, 300, switchSize);
-
+            var tabsBounds = ElementBounds.Fixed(0, GuiStyle.TitleBarHeight + tabsTopPadding, maxTabWidth, 300).WithAlignment(EnumDialogArea.LeftTop);
+            var textBounds = ElementBounds.Fixed(tabsBounds.fixedWidth + textLeftPadding, GuiStyle.TitleBarHeight, maxTextWidth, settingHeight);
+            var settingBounds = ElementBounds.Fixed(textBounds.fixedWidth + textBounds.fixedX + settingsLeftPadding, GuiStyle.TitleBarHeight, 300, settingHeight);
             var dialogBounds = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.CenterMiddle);
             var bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
             bgBounds.BothSizing = ElementSizing.FitToChildren;
@@ -93,42 +97,48 @@ namespace RPVoiceChat.Gui
                 .AddShadedDialogBG(bgBounds)
                 .AddDialogTitleBar("RP VC Config Menu", OnTitleBarCloseClicked)
                 .BeginChildElements(bgBounds)
-                .AddVerticalTabs(ConfigTabs.ToArray(), tabBounds, OnTabClicked, "configTabs");
+                .AddVerticalTabs(ConfigTabs.ToArray(), tabsBounds, OnTabClicked, "configTabs");
 
             foreach (ConfigOption option in displayedOptions)
             {
+                var wideSettingBounds = settingBounds.FlatCopy().WithFixedWidth(sliderWidth);
                 if (option.Text != null)
                 {
                     composer.AddStaticText(option.Text, option.Font, textBounds);
                 }
                 if (option.Tooltip != null)
                 {
-                    composer.AddHoverText(option.Tooltip, option.Font, 260, textBounds);
+                    composer.AddHoverText(option.Tooltip, option.Font, tooltipWidth, textBounds);
                 }
 
                 if (option.SliderKey != null)
                 {
-                    composer.AddSlider(option.SlideAction, switchBounds.FlatCopy().WithFixedWidth(sliderWidth),
-                        option.SliderKey);
+                    composer.AddSlider(option.SlideAction, wideSettingBounds, option.SliderKey);
                 }
                 else if (option.SwitchKey != null)
                 {
-                    composer.AddSwitch(option.ToggleAction, switchBounds, option.SwitchKey, switchSize);
+                    composer.AddSwitch(option.ToggleAction, settingBounds, option.SwitchKey, switchSize);
                 }
                 else if (option.DropdownKey != null)
                 {
-                    switchBounds.fixedWidth = 200;
-                    composer.AddDropDown(option.DropdownValues, option.DropdownNames, 0, option.DropdownSelect, switchBounds, option.DropdownKey);
+                    composer.AddDropDown(
+                        option.DropdownValues,
+                        option.DropdownNames,
+                        0,
+                        option.DropdownSelect,
+                        wideSettingBounds,
+                        option.DropdownKey
+                    );
                 }
                 else if (option.InteractiveElementKey != null)
                 {
                     IExtendedGuiElement element = option.InteractiveElement;
-                    element.SetBounds(switchBounds.FlatCopy().WithFixedWidth(sliderWidth));
+                    element.SetBounds(option.Text == null ? textBounds : settingBounds);
                     composer.AddInteractiveElement((GuiElement)element, option.InteractiveElementKey);
                 }
 
-                textBounds = textBounds.BelowCopy(fixedDeltaY: switchPadding);
-                switchBounds = switchBounds.BelowCopy(fixedDeltaY: switchPadding);
+                textBounds = textBounds.BelowCopy(fixedDeltaY: settingDeltaY);
+                settingBounds = settingBounds.BelowCopy(fixedDeltaY: settingDeltaY);
             }
 
             SingleComposer = composer.EndChildElements().Compose();

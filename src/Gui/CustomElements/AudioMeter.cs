@@ -6,6 +6,7 @@ namespace RPVoiceChat.Gui
 {
     public class AudioMeter : GuiElementStatbar, IExtendedGuiElement
     {
+        private const double audioMeterWidth = 200.0;
         private ICoreClientAPI capi;
         private MicrophoneManager _audioInputManager;
         private GuiDialog parrentDialog;
@@ -26,7 +27,7 @@ namespace RPVoiceChat.Gui
 
         public void SetBounds(ElementBounds bounds)
         {
-            Bounds = bounds;
+            Bounds = bounds.FlatCopy().WithFixedWidth(audioMeterWidth);
         }
 
         private void OnElementShown()
