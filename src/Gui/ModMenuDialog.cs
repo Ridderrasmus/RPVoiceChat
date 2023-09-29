@@ -13,15 +13,13 @@ namespace RPVoiceChat.Gui
         private bool _isSetup;
         private List<ConfigOption> ConfigOptions = new List<ConfigOption>();
         private List<GuiTab> ConfigTabs = new List<GuiTab>();
-        private AudioMeter audioMeter;
-        private long audioMeterId;
 
         protected class ConfigOption
         {
             public ActionConsumable AdvancedAction;
             public string SwitchKey;
             public string SliderKey;
-            public string SpecialSliderKey;
+            public string InteractiveElementKey;
             public string DropdownKey;
             public string Text;
             public string Tooltip;
@@ -29,16 +27,14 @@ namespace RPVoiceChat.Gui
             public string[] DropdownValues { get; internal set; }
             public string[] DropdownNames { get; internal set; }
             public GuiTab Tab;
+            public IExtendedGuiElement InteractiveElement;
             public Action<bool> ToggleAction;
             public ActionConsumable<int> SlideAction;
             public SelectionChangedDelegate DropdownSelect { get; internal set; }
         }
 
 
-        public ConfigDialog(ICoreClientAPI capi) : base(capi)
-        {
-
-        }
+        public ConfigDialog(ICoreClientAPI capi) : base(capi) { }
 
         protected void RegisterTab(GuiTab tab)
         {
@@ -103,11 +99,11 @@ namespace RPVoiceChat.Gui
                     switchBounds.fixedWidth = 200;
                     composer.AddDropDown(option.DropdownValues, option.DropdownNames, 0, option.DropdownSelect, switchBounds, option.DropdownKey);
                 }
-                else if (option.SpecialSliderKey != null)
+                else if (option.InteractiveElementKey != null)
                 {
-                    audioMeter = new AudioMeter(capi, switchBounds.FlatCopy().WithFixedWidth(sliderWidth));
-                    audioMeter.SetCoefficient((100 / _audioInputManager.GetMaxInputThreshold()));
-                    composer.AddInteractiveElement(audioMeter, option.SpecialSliderKey);
+                    IExtendedGuiElement element = option.InteractiveElement;
+                    element.SetBounds(switchBounds.FlatCopy().WithFixedWidth(sliderWidth));
+                    composer.AddInteractiveElement((GuiElement)element, option.InteractiveElementKey);
                 }
 
                 textBounds = textBounds.BelowCopy(fixedDeltaY: switchPadding);
@@ -140,27 +136,6 @@ namespace RPVoiceChat.Gui
             ClientSettings.Set("activeConfigTab", dataInt);
             SetupDialog();
             RefreshValues();
-        }
-
-        public override void OnGuiClosed()
-        {
-            base.OnGuiClosed();
-            capi.Event.UnregisterGameTickListener(audioMeterId);
-        }
-
-        public override void OnGuiOpened()
-        {
-            base.OnGuiOpened();
-            audioMeterId = capi.Event.RegisterGameTickListener(TickUpdate, 20);
-
-        }
-
-        private void TickUpdate(float obj)
-        {
-            audioMeter?.SetThreshold(_audioInputManager.GetInputThreshold());
-            var amplitude = Math.Max(_audioInputManager.Amplitude, _audioInputManager.AmplitudeAverage);
-            if (ModConfig.Config.IsMuted) amplitude = 0;
-            audioMeter?.UpdateVisuals(amplitude);
         }
 
         protected abstract void RefreshValues();
@@ -257,9 +232,10 @@ namespace RPVoiceChat.Gui
             RegisterOption(new ConfigOption
             {
                 Text = "Audio Meter",
-                SpecialSliderKey = "audioMeter",
+                InteractiveElementKey = "audioMeter",
                 Tooltip = "Shows your audio amplitude",
-                Tab = audioInputTab
+                Tab = audioInputTab,
+                InteractiveElement = new AudioMeter(capi, _audioInputManager, this)
             });
 
             RegisterOption(new ConfigOption
@@ -307,12 +283,12 @@ namespace RPVoiceChat.Gui
                 SlideAction = SlideDenoisingStrength
             });
 
-            RegisterOption(new ConfigOption
+            /*RegisterOption(new ConfigOption
             {
-                SpecialSliderKey = "playerList",
+                InteractiveElementKey = "playerList",
                 Tab = playerListTab,
-                SlideAction = SlideDenoisingStrength
-            });
+                InteractiveElement = null
+            });*/
         }
 
         protected override void RefreshValues()
