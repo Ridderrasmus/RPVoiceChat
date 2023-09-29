@@ -63,8 +63,9 @@ namespace RPVoiceChat.Utils
             IntPtr handle = LoadLibrary(dllPath);
             if (handle == IntPtr.Zero)
             {
-                Exception e = new Win32Exception();
-                throw new DllNotFoundException("Unable to load library: " + dllName + " from " + tempFolder, e);
+                Exception innerException = new Win32Exception();
+                Exception e = new DllNotFoundException("Unable to load library: " + dllName + " from " + tempFolder, innerException);
+                Logger.client.Error($"Failed to load embedded DLL:\n{e}");
             }
         }
 

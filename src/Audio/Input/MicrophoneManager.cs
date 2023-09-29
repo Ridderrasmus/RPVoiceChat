@@ -35,6 +35,7 @@ namespace RPVoiceChat.Audio
         public bool canSwitchDevice = true;
         public bool Transmitting = false;
         public bool TransmittingOnPreviousStep = false;
+        public bool IsDenoisingAvailable = false;
 
         private long gameTickId = 0;
 
@@ -63,7 +64,7 @@ namespace RPVoiceChat.Audio
 
             capture = CreateNewCapture(config.CurrentInputDevice);
             codec = CreateNewCodec(ALFormat.Mono16);
-            denoiser = new RNNoiseDenoiser(config.BackgroungNoiseThreshold, config.VoiceDenoisingStrength);
+            denoiser = TryLoadDenoiser();
         }
 
         public void Launch()
@@ -95,12 +96,12 @@ namespace RPVoiceChat.Audio
 
         public void SetDenoisingSensitivity(int sensitivity)
         {
-            denoiser.SetBackgroundNoiseThreshold(sensitivity / 100f);
+            denoiser?.SetBackgroundNoiseThreshold(sensitivity / 100f);
         }
 
         public void SetDenoisingStrength(int strength)
         {
-            denoiser.SetVoiceDenoisingStrength(strength / 100f);
+            denoiser?.SetVoiceDenoisingStrength(strength / 100f);
         }
 
         public void UpdateCaptureAudioSamples(float deltaTime)
@@ -153,7 +154,7 @@ namespace RPVoiceChat.Audio
                 pcms[pcmIndex] = (short)pcm;
             }
 
-            if (config.IsDenoisingEnabled && denoiser.SupportsFormat(Frequency, OutputChannelCount, SampleToByte * 8))
+            if (config.IsDenoisingEnabled && denoiser != null && denoiser.SupportsFormat(Frequency, OutputChannelCount, SampleToByte * 8))
                 denoiser.Denoise(ref pcms);
 
             double sampleSquareSum = 0;
@@ -281,6 +282,21 @@ namespace RPVoiceChat.Audio
             var codec = new OpusCodec(Frequency, OutputChannelCount);
 
             return codec;
+        }
+
+        private IDenoiser TryLoadDenoiser()
+        {
+            IDenoiser denoiser = null;
+            try
+            {
+                denoiser = new RNNoiseDenoiser(config.BackgroungNoiseThreshold, config.VoiceDenoisingStrength);
+                IsDenoisingAvailable = true;
+            }
+            catch (DllNotFoundException)
+            {
+                Logger.client.Error("Can't find denoising library, denoising won't be available");
+            }
+            return denoiser;
         }
 
         private ALFormat GetDefaultInputFormat()
