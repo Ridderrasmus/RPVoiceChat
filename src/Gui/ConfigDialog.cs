@@ -37,6 +37,7 @@ namespace RPVoiceChat
 
             public string Tooltip;
             public bool InstantSlider;
+            public bool Enabled = true;
 
             public string[] DropdownValues { get; internal set; }
             public string[] DropdownNames { get; internal set; }
@@ -77,6 +78,8 @@ namespace RPVoiceChat
 
             foreach (ConfigOption option in ConfigOptions)
             {
+                if (option.Enabled == false) continue;
+
                 composer.AddStaticText(option.Text, font, textBounds);
                 if (option.Tooltip != null)
                 {
@@ -245,6 +248,7 @@ namespace RPVoiceChat
 
             RegisterOption(new ConfigOption
             {
+                Enabled = audioInputManager.IsDenoisingAvailable,
                 Text = "Denoising",
                 SwitchKey = "toggleDenoising",
                 Tooltip = "Enable audio denoising",
@@ -253,6 +257,7 @@ namespace RPVoiceChat
 
             RegisterOption(new ConfigOption
             {
+                Enabled = audioInputManager.IsDenoisingAvailable,
                 Text = "Background noise detection",
                 SliderKey = "denoisingSensitivity",
                 Tooltip = "Sets sensitivity for background noise. Audio detected as noise will be denoised with max strength.",
@@ -261,6 +266,7 @@ namespace RPVoiceChat
 
             RegisterOption(new ConfigOption
             {
+                Enabled = audioInputManager.IsDenoisingAvailable,
                 Text = "Denoising strength",
                 SliderKey = "denoisingStrength",
                 Tooltip = "Sets intensity of denosing for audio detected as voice. Lower it if your voice is too distorted.",
@@ -281,6 +287,7 @@ namespace RPVoiceChat
             SingleComposer.GetSlider("inputGain").SetValues(_config.InputGain, 0, 100, 1, "%");
             SingleComposer.GetSlider("inputThreshold").SetValues(_config.InputThreshold, 0, 100, 1);
             SingleComposer.GetSwitch("toggleHUD").On = _config.IsHUDShown;
+            if (!_audioInputManager.IsDenoisingAvailable) return;
             SingleComposer.GetSwitch("toggleDenoising").On = _config.IsDenoisingEnabled;
             SingleComposer.GetSlider("denoisingSensitivity").SetValues(_config.BackgroungNoiseThreshold, 0, 100, 1, "%");
             SingleComposer.GetSlider("denoisingStrength").SetValues(_config.VoiceDenoisingStrength, 0, 100, 1, "%");
