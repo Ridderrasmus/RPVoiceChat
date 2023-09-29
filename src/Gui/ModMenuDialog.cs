@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
-namespace RPVoiceChat
+namespace RPVoiceChat.Gui
 {
     public abstract class ConfigDialog : GuiDialog
     {
@@ -13,7 +13,7 @@ namespace RPVoiceChat
         private bool _isSetup;
         private List<ConfigOption> ConfigOptions = new List<ConfigOption>();
         private List<GuiTab> ConfigTabs = new List<GuiTab>();
-        private GuiElementAudioMeter AudioMeter;
+        private AudioMeter audioMeter;
         private long audioMeterId;
 
         protected class ConfigOption
@@ -80,7 +80,10 @@ namespace RPVoiceChat
             {
                 if (option.Tab != activeTab) continue;
 
-                composer.AddStaticText(option.Text, font, textBounds);
+                if (option.Text != null)
+                {
+                    composer.AddStaticText(option.Text, font, textBounds);
+                }
                 if (option.Tooltip != null)
                 {
                     composer.AddHoverText(option.Tooltip, font, 260, textBounds);
@@ -102,9 +105,9 @@ namespace RPVoiceChat
                 }
                 else if (option.SpecialSliderKey != null)
                 {
-                    AudioMeter = new GuiElementAudioMeter(capi, switchBounds.FlatCopy().WithFixedWidth(sliderWidth));
-                    AudioMeter.SetCoefficient((100 / _audioInputManager.GetMaxInputThreshold()));
-                    composer.AddInteractiveElement(AudioMeter, option.SpecialSliderKey);
+                    audioMeter = new AudioMeter(capi, switchBounds.FlatCopy().WithFixedWidth(sliderWidth));
+                    audioMeter.SetCoefficient((100 / _audioInputManager.GetMaxInputThreshold()));
+                    composer.AddInteractiveElement(audioMeter, option.SpecialSliderKey);
                 }
 
                 textBounds = textBounds.BelowCopy(fixedDeltaY: switchPadding);
@@ -154,10 +157,10 @@ namespace RPVoiceChat
 
         private void TickUpdate(float obj)
         {
-            AudioMeter?.SetThreshold(_audioInputManager.GetInputThreshold());
+            audioMeter?.SetThreshold(_audioInputManager.GetInputThreshold());
             var amplitude = Math.Max(_audioInputManager.Amplitude, _audioInputManager.AmplitudeAverage);
             if (ModConfig.Config.IsMuted) amplitude = 0;
-            AudioMeter?.UpdateVisuals(amplitude);
+            audioMeter?.UpdateVisuals(amplitude);
         }
 
         protected abstract void RefreshValues();
@@ -165,11 +168,11 @@ namespace RPVoiceChat
         public override string ToggleKeyCombinationCode => null;
     }
 
-    public class MainConfig : ConfigDialog
+    public class ModMenuDialog : ConfigDialog
     {
         RPVoiceChatConfig _config;
 
-        public MainConfig(ICoreClientAPI capi, MicrophoneManager audioInputManager, AudioOutputManager audioOutputManager) : base(capi)
+        public ModMenuDialog(ICoreClientAPI capi, MicrophoneManager audioInputManager, AudioOutputManager audioOutputManager) : base(capi)
         {
             _config = ModConfig.Config;
             _audioInputManager = audioInputManager;
@@ -179,10 +182,12 @@ namespace RPVoiceChat
             var audioOutputTab = new GuiTab() { Name = "Audio Output" };
             var effectsTab = new GuiTab() { Name = "Effects" };
             var interfaceTab = new GuiTab() { Name = "Interface" };
+            var playerListTab = new GuiTab() { Name = "Player List" };
             RegisterTab(audioInputTab);
             RegisterTab(audioOutputTab);
             RegisterTab(effectsTab);
             RegisterTab(interfaceTab);
+            RegisterTab(playerListTab);
 
             RegisterOption(new ConfigOption
             {
@@ -299,6 +304,13 @@ namespace RPVoiceChat
                 SliderKey = "denoisingStrength",
                 Tooltip = "Sets intensity of denosing for audio detected as voice. Lower it if your voice is too distorted.",
                 Tab = effectsTab,
+                SlideAction = SlideDenoisingStrength
+            });
+
+            RegisterOption(new ConfigOption
+            {
+                SpecialSliderKey = "playerList",
+                Tab = playerListTab,
                 SlideAction = SlideDenoisingStrength
             });
         }

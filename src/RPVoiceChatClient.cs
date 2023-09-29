@@ -1,5 +1,6 @@
 using RPVoiceChat.Audio;
 using RPVoiceChat.Client;
+using RPVoiceChat.Gui;
 using RPVoiceChat.Networking;
 using System;
 using Vintagestory.API.Client;
@@ -16,7 +17,7 @@ namespace RPVoiceChat
 
         protected ICoreClientAPI capi;
 
-        private MainConfig configGui;
+        private ModMenuDialog configGui;
 
         private bool mutePressed = false;
         private bool voiceMenuPressed = false;
@@ -45,7 +46,7 @@ namespace RPVoiceChat
             client = new PlayerNetworkClient(capi, mainClient, backupClient);
 
             // Initialize gui
-            configGui = new MainConfig(capi, micManager, audioOutputManager);
+            configGui = new ModMenuDialog(capi, micManager, audioOutputManager);
             capi.Gui.RegisterDialog(new SpeechIndicator(capi, micManager));
             capi.Gui.RegisterDialog(new VoiceLevelIcon(capi, micManager));
 
