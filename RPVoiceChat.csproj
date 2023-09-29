@@ -63,6 +63,10 @@
 		<Content Include="modinfo.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
+		<Content Include="Lib\RNNoise.so">
+			<Link>RNNoise.so</Link>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -73,5 +77,4 @@
 		<PackageReference Include="Concentus" Version="1.1.7" />
 		<PackageReference Include="NETStandard.Library" Version="2.0.3" />
 	</ItemGroup>
-
 </Project>

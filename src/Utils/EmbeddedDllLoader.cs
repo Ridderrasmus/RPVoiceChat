@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Vintagestory.API.Config;
 
 namespace RPVoiceChat.Utils
 {
@@ -13,6 +14,7 @@ namespace RPVoiceChat.Utils
 
         public static void ExtractEmbeddedDlls()
         {
+            if (RuntimeEnv.OS != OS.Windows) return;
             Assembly assembly = Assembly.GetExecutingAssembly();
             string[] resourceNames = assembly.GetManifestResourceNames();
 
@@ -24,6 +26,7 @@ namespace RPVoiceChat.Utils
 
         public static void ExtractEmbeddedDll(string resourceName)
         {
+            if (RuntimeEnv.OS != OS.Windows) return;
             Assembly assembly = Assembly.GetExecutingAssembly();
             AssemblyName assemblyName = assembly.GetName();
             tempFolder ??= $"{assemblyName.Name}.{assemblyName.Version}";
@@ -53,14 +56,16 @@ namespace RPVoiceChat.Utils
         }
 
         [DllImport("kernel32", SetLastError = true, CharSet = CharSet.Unicode)]
-        static extern IntPtr LoadLibrary(string lpFileName);
+        static extern IntPtr LoadLibrary(string fileName);
 
         static public void LoadDll(string dllName)
         {
+            if (RuntimeEnv.OS != OS.Windows) return;
             if (tempFolder == null) throw new Exception("Cannot load embedded dlls before extracting them");
 
             string dllPath = Path.Combine(Path.GetTempPath(), tempFolder, dllName);
             IntPtr handle = LoadLibrary(dllPath);
+
             if (handle == IntPtr.Zero)
             {
                 Exception innerException = new Win32Exception();
@@ -68,6 +73,5 @@ namespace RPVoiceChat.Utils
                 Logger.client.Error($"Failed to load embedded DLL:\n{e}");
             }
         }
-
     }
 }
