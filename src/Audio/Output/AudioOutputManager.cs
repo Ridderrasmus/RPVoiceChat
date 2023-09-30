@@ -35,7 +35,6 @@ namespace RPVoiceChat.Audio
             }
         }
 
-        public bool isReady = false;
         private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
         private PlayerAudioSource localPlayerAudioSource;
         private ClientSettingsRepository clientSettings;
@@ -51,7 +50,6 @@ namespace RPVoiceChat.Audio
         public void Launch()
         {
             PlayerListener.Init(capi);
-            isReady = true;
             capi.Event.PlayerEntitySpawn += PlayerSpawned;
             capi.Event.PlayerEntityDespawn += PlayerDespawned;
             ClientLoaded();
@@ -60,7 +58,6 @@ namespace RPVoiceChat.Audio
         // Called when the client receives an audio packet supplying the audio packet
         public void HandleAudioPacket(AudioPacket packet)
         {
-            if (!isReady) return;
             if (packet.AudioData.Length != packet.Length)
             {
                 Logger.client.Debug("Audio packet payload had invalid length, dropping packet");
@@ -109,7 +106,7 @@ namespace RPVoiceChat.Audio
 
         private void ClientLoaded()
         {
-            localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, this, capi, clientSettings)
+            localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, capi, clientSettings)
             {
                 IsLocational = false,
             };
@@ -120,7 +117,7 @@ namespace RPVoiceChat.Audio
 
         private PlayerAudioSource CreatePlayerSource(IPlayer player)
         {
-            var source = new PlayerAudioSource(player, this, capi, clientSettings);
+            var source = new PlayerAudioSource(player, capi, clientSettings);
             playerSources.AddOrUpdate(player.PlayerUID, source, (_, __) => source);
             source.StartPlaying();
 

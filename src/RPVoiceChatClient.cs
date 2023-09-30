@@ -97,14 +97,13 @@ namespace RPVoiceChat
                 return true;
             });
 
-
-            client.OnAudioReceived += OnAudioReceived;
-            micManager.OnBufferRecorded += OnBufferRecorded;
             capi.Event.LevelFinalize += OnLoad;
         }
 
         private void OnLoad()
         {
+            client.OnAudioReceived += OnAudioReceived;
+            micManager.OnBufferRecorded += OnBufferRecorded;
             micManager.Launch();
             audioOutputManager.Launch();
         }

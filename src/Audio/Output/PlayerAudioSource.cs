@@ -27,7 +27,6 @@ namespace RPVoiceChat.Audio
 
         private ICoreClientAPI capi;
         private IPlayer player;
-        private AudioOutputManager outputManager;
         private ClientSettingsRepository clientSettings;
 
         public bool IsLocational { get; set; } = true;
@@ -41,9 +40,8 @@ namespace RPVoiceChat.Audio
         private Vec3f lastSpeakerCoords;
         private DateTime? lastSpeakerUpdate;
 
-        public PlayerAudioSource(IPlayer player, AudioOutputManager manager, ICoreClientAPI capi, ClientSettingsRepository clientSettings)
+        public PlayerAudioSource(IPlayer player, ICoreClientAPI capi, ClientSettingsRepository clientSettings)
         {
-            outputManager = manager;
             this.player = player;
             this.capi = capi;
             this.clientSettings = clientSettings;
@@ -92,7 +90,7 @@ namespace RPVoiceChat.Audio
         {
             EntityPos speakerPos = player.Entity?.SidedPos;
             EntityPos listenerPos = capi.World.Player.Entity?.SidedPos;
-            if (speakerPos == null || listenerPos == null || !outputManager.isReady)
+            if (speakerPos == null || listenerPos == null)
                 return;
 
             // If the player is on the other side of something to the listener, then the player's voice should be muffled
