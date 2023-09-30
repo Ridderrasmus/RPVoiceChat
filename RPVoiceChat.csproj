@@ -60,7 +60,6 @@
 		</Reference>
 	</ItemGroup>
 
-
 	<ItemGroup>
 		<Content Include="assets\**">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -68,14 +67,18 @@
 		<Content Include="modinfo.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
-		<Content Include="Lib\RNNoise.dll">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		<Content Include="Lib\RNNoise.so">
+			<Link>RNNoise.so</Link>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Include="Lib\RNNoise.dll" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Concentus" Version="1.1.7" />
 		<PackageReference Include="NETStandard.Library" Version="2.0.3" />
 	</ItemGroup>
-
 </Project>

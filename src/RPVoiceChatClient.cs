@@ -3,6 +3,7 @@ using RPVoiceChat.Client;
 using RPVoiceChat.DB;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Networking;
+using RPVoiceChat.Utils;
 using System;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -35,6 +36,10 @@ namespace RPVoiceChat
             capi = api;
             ClientSettings.Init(capi);
 
+            // Sneak in native dlls
+            EmbeddedDllClass.ExtractEmbeddedDlls();
+            EmbeddedDllClass.LoadDll("RNNoise.dll");
+
             // Init data repositories
             clientSettingsRepository = new ClientSettingsRepository(capi.Logger);
 
@@ -54,6 +59,7 @@ namespace RPVoiceChat
             configGui = new ModMenuDialog(capi, micManager, audioOutputManager, clientSettingsRepository);
             capi.Gui.RegisterDialog(new SpeechIndicator(capi, micManager));
             capi.Gui.RegisterDialog(new VoiceLevelIcon(capi, micManager));
+            new PlayerNameTagRenderer(capi, audioOutputManager);
 
             // Set up keybinds
             capi.Input.RegisterHotKey("voicechatMenu", "RPVoice: Config menu", GlKeys.P, HotkeyType.GUIOrOtherControls);

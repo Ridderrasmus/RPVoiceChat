@@ -5,7 +5,7 @@ namespace RPVoiceChat.Audio.Effects
 {
     internal static class RNNoise
     {
-        private const string Lib = "Lib/RNNoise.dll";
+        private const string Lib = "RNNoise";
         public const int FRAME_SIZE = 480;
 
         [DllImport(Lib, EntryPoint = "rnnoise_create", ExactSpelling = true)]

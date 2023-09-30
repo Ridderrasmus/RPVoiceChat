@@ -36,6 +36,7 @@ namespace RPVoiceChat.Gui
             public string Text;
             public string Tooltip;
             public bool InstantSlider;
+            public bool Enabled = true;
             public string[] DropdownValues { get; internal set; }
             public string[] DropdownNames { get; internal set; }
             public GuiTab Tab;
@@ -81,7 +82,7 @@ namespace RPVoiceChat.Gui
 
             var activeTabIndex = ClientSettings.GetInt("activeConfigTab", 0);
             var activeTab = ConfigTabs[activeTabIndex];
-            var displayedOptions = ConfigOptions.FindAll(e => e.Tab == activeTab);
+            var displayedOptions = ConfigOptions.FindAll(e => e.Tab == activeTab && e.Enabled);
             double maxTextWidth = displayedOptions.DefaultIfEmpty().Max(e => e?.TextWidth ?? 0) + 2;
             double maxTabWidth = ConfigTabs.DefaultIfEmpty().Max(e => e?.TextWidth ?? 0) + _tabTextPadding * 2;
 
@@ -291,6 +292,7 @@ namespace RPVoiceChat.Gui
 
             RegisterOption(new ConfigOption
             {
+                Enabled = audioInputManager.IsDenoisingAvailable,
                 Text = "Denoising",
                 SwitchKey = "toggleDenoising",
                 Tooltip = "Enable denoising of your audio",
@@ -300,6 +302,7 @@ namespace RPVoiceChat.Gui
 
             RegisterOption(new ConfigOption
             {
+                Enabled = audioInputManager.IsDenoisingAvailable,
                 Text = "Background noise detection",
                 SliderKey = "denoisingSensitivity",
                 Tooltip = "Sets sensitivity for background noise. Audio detected as noise will be denoised with max strength.",
@@ -309,6 +312,7 @@ namespace RPVoiceChat.Gui
 
             RegisterOption(new ConfigOption
             {
+                Enabled = audioInputManager.IsDenoisingAvailable,
                 Text = "Denoising strength",
                 SliderKey = "denoisingStrength",
                 Tooltip = "Sets intensity of denosing for audio detected as voice. Lower it if your voice is too distorted.",
