@@ -132,6 +132,7 @@ namespace RPVoiceChat.Gui
                 else if (option.InteractiveElementKey != null)
                 {
                     IExtendedGuiElement element = option.InteractiveElement;
+                    element.SetKey(option.InteractiveElementKey);
                     element.SetBounds(option.Text == null ? textBounds : settingBounds);
                     composer.AddInteractiveElement((GuiElement)element, option.InteractiveElementKey);
                 }

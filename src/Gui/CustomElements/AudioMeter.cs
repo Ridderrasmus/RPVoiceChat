@@ -10,6 +10,7 @@ namespace RPVoiceChat.Gui
         private ICoreClientAPI capi;
         private MicrophoneManager _audioInputManager;
         private GuiDialog parrentDialog;
+        private string key;
         private long gameTickListenerId;
         private double coefficient;
         private double threshold;
@@ -21,8 +22,13 @@ namespace RPVoiceChat.Gui
             parrentDialog = parrent;
             coefficient = 100 / _audioInputManager.GetMaxInputThreshold();
 
-            parrentDialog.OnOpened += OnElementShown;
-            parrentDialog.OnClosed += OnElementHidden;
+            parrentDialog.OnOpened += OnDialogOpen;
+            parrentDialog.OnClosed += OnDialogClosed;
+        }
+
+        public void SetKey(string elementKey)
+        {
+            key = elementKey;
         }
 
         public void SetBounds(ElementBounds bounds)
@@ -30,18 +36,22 @@ namespace RPVoiceChat.Gui
             Bounds = bounds.FlatCopy().WithFixedWidth(audioMeterWidth);
         }
 
-        private void OnElementShown()
+        private void OnDialogOpen()
         {
             gameTickListenerId = capi.Event.RegisterGameTickListener(TickUpdate, 20);
         }
 
-        private void OnElementHidden()
+        private void OnDialogClosed()
         {
             capi.Event.UnregisterGameTickListener(gameTickListenerId);
         }
 
         private void TickUpdate(float obj)
         {
+            if (parrentDialog.IsOpened() == false || key == null) return;
+            var element = parrentDialog.SingleComposer.GetElement(key);
+            if (element == null) return;
+
             SetThreshold(_audioInputManager.GetInputThreshold());
             var amplitude = Math.Max(_audioInputManager.Amplitude, _audioInputManager.AmplitudeAverage);
             if (ModConfig.Config.IsMuted) amplitude = 0;
