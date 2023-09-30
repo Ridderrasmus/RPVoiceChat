@@ -29,7 +29,7 @@ namespace RPVoiceChat.DB
         public void SetPlayerGain(string playerId, int value)
         {
             float gain = (float)value / 100;
-            cache.Add(playerId, gain);
+            cache[playerId] = gain;
         }
 
         public void Save()
