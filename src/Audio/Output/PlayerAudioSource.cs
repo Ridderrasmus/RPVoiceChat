@@ -4,6 +4,7 @@ using RPVoiceChat.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -13,6 +14,7 @@ namespace RPVoiceChat.Audio
 {
     public class PlayerAudioSource : IDisposable
     {
+        public bool IsDisposed = false;
         private const int BufferCount = 20;
         private int source;
         private CircularAudioBuffer buffer;
@@ -21,7 +23,6 @@ namespace RPVoiceChat.Audio
         private long lastAudioSequenceNumber = -1;
         private Dictionary<string, IAudioCodec> codecs = new Dictionary<string, IAudioCodec>();
         private FilterLowpass lowpassFilter;
-        private bool IsDisposed = false;
 
         private ICoreClientAPI capi;
         private IPlayer player;
@@ -202,15 +203,14 @@ namespace RPVoiceChat.Audio
             }
 
             orderingQueue.Add(sequenceNumber, audio);
-            capi.Event.EnqueueMainThreadTask(() =>
-            {
-                capi.Event.RegisterCallback(DequeueAudio, orderingDelay);
-            }, "PlayerAudioSource EnqueueAudio");
+            DequeueAudio();
         }
 
-        public void DequeueAudio(float _)
+        public async void DequeueAudio()
         {
             AudioData audio;
+
+            await Task.Delay(orderingDelay);
 
             lock (orderingQueue.SyncRoot)
             {
@@ -246,10 +246,11 @@ namespace RPVoiceChat.Audio
         public void Dispose()
         {
             if (IsDisposed) return;
-            OALW.SourceStop(source);
 
-            buffer?.Dispose();
+            OALW.SourceStop(source);
             OALW.DeleteSource(source);
+            buffer?.Dispose();
+
             IsDisposed = true;
         }
     }

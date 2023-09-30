@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Util;
 
 namespace RPVoiceChat.Audio
 {
@@ -69,7 +70,7 @@ namespace RPVoiceChat.Audio
             PlayerAudioSource source;
             string playerId = packet.PlayerId;
 
-            if (!playerSources.TryGetValue(playerId, out source))
+            if (!playerSources.TryGetValue(playerId, out source) || source.IsDisposed)
             {
                 var player = capi.World.PlayerByUid(playerId);
                 if (player == null)
@@ -78,11 +79,7 @@ namespace RPVoiceChat.Audio
                     return;
                 }
 
-                source = new PlayerAudioSource(player, this, capi);
-                if (!playerSources.TryAdd(playerId, source))
-                {
-                    Logger.client.Debug("Could not add new player to sources");
-                }
+                source = CreatePlayerSource(player);
             }
 
             HandleAudioPacket(packet, source);
@@ -121,23 +118,20 @@ namespace RPVoiceChat.Audio
             localPlayerAudioSource.StartPlaying();
         }
 
+        private PlayerAudioSource CreatePlayerSource(IPlayer player)
+        {
+            var source = new PlayerAudioSource(player, this, capi);
+            playerSources.AddOrUpdate(player.PlayerUID, source, (_, __) => source);
+            source.StartPlaying();
+
+            return source;
+        }
+
         private void PlayerSpawned(IPlayer player)
         {
             if (player.ClientId == capi.World.Player.ClientId) return;
 
-            var playerSource = new PlayerAudioSource(player, this, capi)
-            {
-                IsLocational = true,
-            };
-
-            if (playerSources.TryAdd(player.PlayerUID, playerSource) == false)
-            {
-                Logger.client.Warning($"Failed to add player {player.PlayerName} as source !");
-            }
-            else
-            {
-                playerSource.StartPlaying();
-            }
+            CreatePlayerSource(player);
         }
 
         private void PlayerDespawned(IPlayer player)
@@ -146,18 +140,12 @@ namespace RPVoiceChat.Audio
             {
                 localPlayerAudioSource.Dispose();
                 localPlayerAudioSource = null;
+                return;
             }
-            else
-            {
-                if (playerSources.TryRemove(player.PlayerUID, out var playerAudioSource))
-                {
-                    playerAudioSource.Dispose();
-                }
-                else
-                {
-                    Logger.client.Warning($"Failed to remove player {player.PlayerName}");
-                }
-            }
+
+            playerSources.TryGetValue(player.PlayerUID, out var source);
+            source?.Dispose();
+            playerSources.Remove(player.PlayerUID);
         }
 
         public void Dispose()
