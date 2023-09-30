@@ -7,7 +7,6 @@ namespace RPVoiceChat.Gui
     public class AudioMeter : GuiElementStatbar, IExtendedGuiElement
     {
         private const double audioMeterWidth = 200.0;
-        private ICoreClientAPI capi;
         private MicrophoneManager _audioInputManager;
         private GuiDialog parrentDialog;
         private string key;
@@ -17,7 +16,6 @@ namespace RPVoiceChat.Gui
 
         public AudioMeter(ICoreClientAPI capi, MicrophoneManager audioInputManager, GuiDialog parrent) : base(capi, null, new double[3] { 0.1, 0.4, 0.1 }, false, true)
         {
-            this.capi = capi;
             _audioInputManager = audioInputManager;
             parrentDialog = parrent;
             coefficient = 100 / _audioInputManager.GetMaxInputThreshold();
@@ -38,12 +36,12 @@ namespace RPVoiceChat.Gui
 
         private void OnDialogOpen()
         {
-            gameTickListenerId = capi.Event.RegisterGameTickListener(TickUpdate, 20);
+            gameTickListenerId = api.Event.RegisterGameTickListener(TickUpdate, 20);
         }
 
         private void OnDialogClosed()
         {
-            capi.Event.UnregisterGameTickListener(gameTickListenerId);
+            api.Event.UnregisterGameTickListener(gameTickListenerId);
         }
 
         private void TickUpdate(float obj)

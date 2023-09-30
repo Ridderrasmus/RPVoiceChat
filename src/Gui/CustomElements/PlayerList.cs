@@ -13,7 +13,6 @@ namespace RPVoiceChat.Gui
         private const double playerNameWidth = 200;
         private const double playerVolumeLeftPadding = 40;
         private const double playerVolumeWidth = 200;
-        private ICoreClientAPI capi;
         private ClientSettingsRepository _settingsRepository;
         private GuiDialog parrentDialog;
         private CairoFont font = CairoFont.WhiteSmallText();
@@ -22,7 +21,6 @@ namespace RPVoiceChat.Gui
 
         public PlayerList(ICoreClientAPI capi, ClientSettingsRepository settingsRepository, GuiDialog parrent) : base(capi, new ElementBounds())
         {
-            this.capi = capi;
             _settingsRepository = settingsRepository;
             parrentDialog = parrent;
 
@@ -44,7 +42,7 @@ namespace RPVoiceChat.Gui
         public void SetupElement()
         {
             ResetElement();
-            foreach (var player in capi.World.AllOnlinePlayers)
+            foreach (var player in api.World.AllOnlinePlayers)
                 AddPlayer(player);
             RedrawElement();
         }
@@ -58,12 +56,12 @@ namespace RPVoiceChat.Gui
 
         private void OnDialogOpened()
         {
-            capi.Event.PlayerJoin += OnPlayerJoin;
+            api.Event.PlayerJoin += OnPlayerJoin;
         }
 
         private void OnDialogClosed()
         {
-            capi.Event.PlayerJoin -= OnPlayerJoin;
+            api.Event.PlayerJoin -= OnPlayerJoin;
             _settingsRepository.Save();
         }
 
@@ -92,8 +90,8 @@ namespace RPVoiceChat.Gui
 
             var nameBounds = playerEntryBounds.FlatCopy().WithFixedWidth(playerNameWidth);
             var volumeBounds = nameBounds.RightCopy(fixedDeltaX: playerVolumeLeftPadding).WithFixedWidth(playerVolumeWidth);
-            var nameLabel = new GuiElementStaticText(capi, playerName, font.Orientation, nameBounds, font);
-            var volumeSlider = NamedSlider.Create(capi, sliderKey, SlidePlayerVolume, volumeBounds);
+            var nameLabel = new GuiElementStaticText(api, playerName, font.Orientation, nameBounds, font);
+            var volumeSlider = NamedSlider.Create(api, sliderKey, SlidePlayerVolume, volumeBounds);
 
             float gain = _settingsRepository.GetPlayerGain(playerId);
             volumeSlider.SetValues((int)(gain * 100), 0, 100, 1, "%");
