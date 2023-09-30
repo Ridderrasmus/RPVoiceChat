@@ -54,6 +54,10 @@
 			<HintPath>$(VINTAGE_STORY)/Lib/protobuf-net.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
+		<Reference Include="SQLite">
+			<HintPath>$(VINTAGE_STORY)/Lib/System.Data.SQLite.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
 	</ItemGroup>
 
 
