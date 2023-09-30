@@ -1,5 +1,6 @@
 ﻿using OpenTK.Audio.OpenAL;
 using RPVoiceChat.Audio.Effects;
+using RPVoiceChat.DB;
 using RPVoiceChat.Utils;
 using System;
 using System.Collections;
@@ -27,6 +28,7 @@ namespace RPVoiceChat.Audio
         private ICoreClientAPI capi;
         private IPlayer player;
         private AudioOutputManager outputManager;
+        private ClientSettingsRepository clientSettings;
 
         public bool IsLocational { get; set; } = true;
         public VoiceLevel voiceLevel { get; private set; } = VoiceLevel.Talking;
@@ -39,11 +41,12 @@ namespace RPVoiceChat.Audio
         private Vec3f lastSpeakerCoords;
         private DateTime? lastSpeakerUpdate;
 
-        public PlayerAudioSource(IPlayer player, AudioOutputManager manager, ICoreClientAPI capi)
+        public PlayerAudioSource(IPlayer player, AudioOutputManager manager, ICoreClientAPI capi, ClientSettingsRepository clientSettings)
         {
             outputManager = manager;
             this.player = player;
             this.capi = capi;
+            this.clientSettings = clientSettings;
 
             lastSpeakerCoords = player.Entity?.SidedPos?.XYZFloat;
             lastSpeakerUpdate = DateTime.Now;
@@ -51,7 +54,7 @@ namespace RPVoiceChat.Audio
             source = OALW.GenSource();
             buffer = new CircularAudioBuffer(source, BufferCount);
 
-            float gain = Math.Min(PlayerListener.gain, 1);
+            float gain = GetFinalGain();
             OALW.Source(source, ALSourceb.Looping, false);
             OALW.Source(source, ALSourceb.SourceRelative, true);
             OALW.Source(source, ALSourcef.Gain, gain);
@@ -128,7 +131,7 @@ namespace RPVoiceChat.Audio
             OALW.Source(source, ALSourcef.Pitch, pitch);
             */
 
-            float gain = Math.Min(PlayerListener.gain, 1);
+            float gain = GetFinalGain();
             var sourcePosition = new Vec3f();
             var velocity = new Vec3f();
             if (IsLocational)
@@ -142,6 +145,15 @@ namespace RPVoiceChat.Audio
             OALW.Source(source, ALSource3f.Position, sourcePosition.X, sourcePosition.Y, sourcePosition.Z);
             OALW.Source(source, ALSource3f.Velocity, velocity.X, velocity.Y, velocity.Z);
             OALW.Source(source, ALSourceb.SourceRelative, true);
+        }
+
+        private float GetFinalGain()
+        {
+            var globalGain = Math.Min(PlayerListener.gain, 1);
+            var sourceGain = clientSettings.GetPlayerGain(player.PlayerUID);
+            var finalGain = GameMath.Clamp(globalGain * sourceGain, 0, 1);
+
+            return finalGain;
         }
 
         private float GetDistanceFactor()

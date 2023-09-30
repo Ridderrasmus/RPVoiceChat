@@ -109,7 +109,7 @@ namespace RPVoiceChat.Audio
 
         private void ClientLoaded()
         {
-            localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, this, capi)
+            localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, this, capi, clientSettings)
             {
                 IsLocational = false,
             };
@@ -120,7 +120,7 @@ namespace RPVoiceChat.Audio
 
         private PlayerAudioSource CreatePlayerSource(IPlayer player)
         {
-            var source = new PlayerAudioSource(player, this, capi);
+            var source = new PlayerAudioSource(player, this, capi, clientSettings);
             playerSources.AddOrUpdate(player.PlayerUID, source, (_, __) => source);
             source.StartPlaying();
 
