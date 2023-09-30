@@ -1,5 +1,6 @@
 using RPVoiceChat.Audio;
 using RPVoiceChat.Client;
+using RPVoiceChat.DB;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Networking;
 using System;
@@ -10,6 +11,7 @@ namespace RPVoiceChat
 {
     public class RPVoiceChatClient : RPVoiceChatMod
     {
+        private ClientSettingsRepository clientSettingsRepository;
         private MicrophoneManager micManager;
         private AudioOutputManager audioOutputManager;
         private PatchManager patchManager;
@@ -33,9 +35,12 @@ namespace RPVoiceChat
             capi = api;
             ClientSettings.Init(capi);
 
-            // Init audio context, microphone, audio output and harmony patch managers
+            // Init data repositories
+            clientSettingsRepository = new ClientSettingsRepository(capi.Logger);
+
+            // Init microphone, audio output and harmony patch managers
             micManager = new MicrophoneManager(capi);
-            audioOutputManager = new AudioOutputManager(capi);
+            audioOutputManager = new AudioOutputManager(capi, clientSettingsRepository);
             patchManager = new PatchManager(modID);
             patchManager.Patch();
 
@@ -46,7 +51,7 @@ namespace RPVoiceChat
             client = new PlayerNetworkClient(capi, mainClient, backupClient);
 
             // Initialize gui
-            configGui = new ModMenuDialog(capi, micManager, audioOutputManager);
+            configGui = new ModMenuDialog(capi, micManager, audioOutputManager, clientSettingsRepository);
             capi.Gui.RegisterDialog(new SpeechIndicator(capi, micManager));
             capi.Gui.RegisterDialog(new VoiceLevelIcon(capi, micManager));
 
@@ -138,8 +143,9 @@ namespace RPVoiceChat
             audioOutputManager?.Dispose();
             patchManager?.Dispose();
             client?.Dispose();
-            configGui.Dispose();
+            configGui?.Dispose();
             ClientSettings.Dispose();
+            clientSettingsRepository?.Dispose();
         }
     }
 }

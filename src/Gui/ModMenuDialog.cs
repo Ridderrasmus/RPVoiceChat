@@ -1,4 +1,5 @@
 ﻿using RPVoiceChat.Audio;
+using RPVoiceChat.DB;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,8 +10,6 @@ namespace RPVoiceChat.Gui
 {
     public abstract class ConfigDialog : GuiDialog
     {
-        protected MicrophoneManager _audioInputManager;
-        protected AudioOutputManager _audioOutputManager;
         private bool _isSetup;
         private List<ConfigOption> ConfigOptions = new List<ConfigOption>();
         private List<ConfigTab> ConfigTabs = new List<ConfigTab>();
@@ -176,9 +175,11 @@ namespace RPVoiceChat.Gui
 
     public class ModMenuDialog : ConfigDialog
     {
-        RPVoiceChatConfig _config;
+        private RPVoiceChatConfig _config;
+        private MicrophoneManager _audioInputManager;
+        private AudioOutputManager _audioOutputManager;
 
-        public ModMenuDialog(ICoreClientAPI capi, MicrophoneManager audioInputManager, AudioOutputManager audioOutputManager) : base(capi)
+        public ModMenuDialog(ICoreClientAPI capi, MicrophoneManager audioInputManager, AudioOutputManager audioOutputManager, ClientSettingsRepository settingsRepository) : base(capi)
         {
             _config = ModConfig.Config;
             _audioInputManager = audioInputManager;

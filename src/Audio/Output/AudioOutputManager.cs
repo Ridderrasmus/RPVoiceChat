@@ -1,4 +1,5 @@
-﻿using RPVoiceChat.Networking;
+﻿using RPVoiceChat.DB;
+using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
 using System;
 using System.Collections.Concurrent;
@@ -36,12 +37,14 @@ namespace RPVoiceChat.Audio
         public bool isReady = false;
         private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
         private PlayerAudioSource localPlayerAudioSource;
+        private ClientSettingsRepository clientSettings;
 
-        public AudioOutputManager(ICoreClientAPI api)
+        public AudioOutputManager(ICoreClientAPI api, ClientSettingsRepository settingsRepository)
         {
             _config = ModConfig.Config;
             IsLoopbackEnabled = _config.IsLoopbackEnabled;
             capi = api;
+            clientSettings = settingsRepository;
         }
 
         public void Launch()
@@ -107,7 +110,7 @@ namespace RPVoiceChat.Audio
             HandleAudioPacket(packet, localPlayerAudioSource);
         }
 
-        public void ClientLoaded()
+        private void ClientLoaded()
         {
             localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, this, capi)
             {
@@ -118,7 +121,7 @@ namespace RPVoiceChat.Audio
             localPlayerAudioSource.StartPlaying();
         }
 
-        public void PlayerSpawned(IPlayer player)
+        private void PlayerSpawned(IPlayer player)
         {
             if (player.ClientId == capi.World.Player.ClientId) return;
 
@@ -137,7 +140,7 @@ namespace RPVoiceChat.Audio
             }
         }
 
-        public void PlayerDespawned(IPlayer player)
+        private void PlayerDespawned(IPlayer player)
         {
             if (player.ClientId == capi.World.Player.ClientId)
             {
