@@ -316,12 +316,12 @@ namespace RPVoiceChat.Gui
                 SlideAction = SlideDenoisingStrength
             });
 
-            /*RegisterOption(new ConfigOption
+            RegisterOption(new ConfigOption
             {
                 InteractiveElementKey = "playerList",
                 Tab = playerListTab,
-                InteractiveElement = null
-            });*/
+                InteractiveElement = new PlayerList(capi, settingsRepository, this)
+            });
         }
 
         protected override void RefreshValues()
@@ -342,16 +342,18 @@ namespace RPVoiceChat.Gui
             SetValue("toggleDenoising", _config.IsDenoisingEnabled);
             SetValue("denoisingSensitivity", new dynamic[] { _config.BackgroungNoiseThreshold, 0, 100, 1, "%" });
             SetValue("denoisingStrength", new dynamic[] { _config.VoiceDenoisingStrength, 0, 100, 1, "%" });
+            SetValue("playerList", null);
         }
 
         protected void SetValue(string key, dynamic value)
         {
             GuiElement element = SingleComposer.GetElement(key);
             if (element is null) return;
-            else if (element is GuiElementDropDown) ((GuiElementDropDown)element).SetSelectedValue(value);
-            else if (element is GuiElementSwitch) ((GuiElementSwitch)element).On = value;
-            else if (element is GuiElementSlider) ((GuiElementSlider)element).SetValues(value[0], value[1], value[2], value[3], value[4]);
-            else if (element is GuiElementVerticalTabs) ((GuiElementVerticalTabs)element).activeElement = value;
+            else if (element is GuiElementDropDown dropDown) dropDown.SetSelectedValue(value);
+            else if (element is GuiElementSwitch switchBox) switchBox.On = value;
+            else if (element is GuiElementSlider slider) slider.SetValues(value[0], value[1], value[2], value[3], value[4]);
+            else if (element is GuiElementVerticalTabs verticalTabs) verticalTabs.activeElement = value;
+            else if (element is PlayerList playerList) playerList.SetupElement();
             else throw new Exception("Unknown element type");
         }
 
