@@ -2,9 +2,15 @@
   "enabled": true,
   "ingredient": {
     "type": "item",
-    "code": "game:ingot-tin"
+    "code": "game:ingot-brass"
   },
   "pattern": [
+    [
+      "____######____",
+      "_############_",
+      "_############_",
+      "_############_"
+    ],
     [
       "____######____",
       "_############_",

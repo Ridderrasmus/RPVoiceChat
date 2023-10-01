@@ -67,7 +67,12 @@
     "walk": "game:walk/stone"
   },
   "guiTransform": {
-    "scale": 0.76
+    "origin": {
+      "x": 0.1,
+      "y": 0.75,
+      "z": 1.5
+    },
+    "scale": 0.66
   },
   "fpHandTransform": {
     "translation": {
