@@ -24,13 +24,9 @@ namespace RPVoiceChat.Gui
             parrentDialog.OnClosed += OnDialogClosed;
         }
 
-        public void SetKey(string elementKey)
+        public void Init(string elementKey, ElementBounds bounds, GuiComposer composer)
         {
             key = elementKey;
-        }
-
-        public void SetBounds(ElementBounds bounds)
-        {
             Bounds = bounds.FlatCopy().WithFixedWidth(audioMeterWidth);
         }
 

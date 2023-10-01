@@ -88,7 +88,7 @@ namespace RPVoiceChat.Gui
 
             var tabsBounds = ElementBounds.Fixed(0, GuiStyle.TitleBarHeight + tabsTopPadding, maxTabWidth, 300).WithAlignment(EnumDialogArea.LeftTop);
             var textBounds = ElementBounds.Fixed(tabsBounds.fixedWidth + textLeftPadding, GuiStyle.TitleBarHeight, maxTextWidth, settingHeight);
-            var settingBounds = ElementBounds.Fixed(textBounds.fixedWidth + textBounds.fixedX + settingsLeftPadding, GuiStyle.TitleBarHeight, 300, settingHeight);
+            var settingBounds = ElementBounds.Fixed(textBounds.fixedWidth + textBounds.fixedX + settingsLeftPadding, GuiStyle.TitleBarHeight, 0, settingHeight);
             var dialogBounds = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.CenterMiddle);
             var bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
             bgBounds.BothSizing = ElementSizing.FitToChildren;
@@ -133,9 +133,12 @@ namespace RPVoiceChat.Gui
                 else if (option.InteractiveElementKey != null)
                 {
                     IExtendedGuiElement element = option.InteractiveElement;
-                    element.SetKey(option.InteractiveElementKey);
-                    element.SetBounds(option.Text == null ? textBounds : settingBounds);
-                    composer.AddInteractiveElement((GuiElement)element, option.InteractiveElementKey);
+                    var elementKey = option.InteractiveElementKey;
+                    var bounds = option.Text == null ? textBounds : settingBounds;
+
+                    element.Init(elementKey, bounds, composer);
+                    composer.AddInteractiveElement((GuiElement)element, elementKey);
+                    element.OnAdd(composer);
                 }
 
                 textBounds = textBounds.BelowCopy(fixedDeltaY: settingDeltaY);
