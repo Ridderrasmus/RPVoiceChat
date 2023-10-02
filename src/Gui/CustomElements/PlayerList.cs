@@ -80,34 +80,6 @@ namespace RPVoiceChat.Gui
             playerEntryBounds = ElementBounds.Fixed(0, 0, 0, playerEntryHeight);
         }
 
-        private void OnDialogOpened()
-        {
-            api.Event.PlayerJoin += OnPlayerJoin;
-        }
-
-        private void OnDialogClosed()
-        {
-            api.Event.PlayerJoin -= OnPlayerJoin;
-            settingsRepository.Save();
-        }
-
-        private void OnPlayerJoin(IPlayer player)
-        {
-            if (IsDisplayed() == false) return;
-            AddPlayer(player);
-            UpdateScrollbarHeights();
-            RedrawElement();
-        }
-
-        private bool IsDisplayed()
-        {
-            if (parrentDialog.IsOpened() == false || key == null) return false;
-            var element = parrentDialog.SingleComposer.GetElement(key);
-            if (element == null) return false;
-
-            return true;
-        }
-
         private void RedrawElement()
         {
             HideScrollbar();
@@ -139,6 +111,14 @@ namespace RPVoiceChat.Gui
             playerEntryBounds = playerEntryBounds.BelowCopy(fixedDeltaY: playerEntryDeltaY);
         }
 
+        private bool SlidePlayerVolume(int gain, string sliderKey)
+        {
+            string playerId = sliderKey.Split("_")[0];
+            settingsRepository.SetPlayerGain(playerId, gain);
+
+            return true;
+        }
+
         private GuiElementScrollbar CreateScrollbar()
         {
             var scrollbarBounds = InsideClipBounds
@@ -148,6 +128,22 @@ namespace RPVoiceChat.Gui
                 .WithFixedPadding(0, scrollbarYPadding);
 
             return new GuiElementScrollbar(api, OnNewScrollbarValue, scrollbarBounds);
+        }
+
+        private void OnNewScrollbarValue(float value)
+        {
+            Bounds.fixedY = 0 - value;
+            Bounds.CalcWorldBounds();
+        }
+
+        private void UpdateScrollbarHeights()
+        {
+            if (scrollbar == null) return;
+            scrollbar.Bounds.CalcWorldBounds();
+            var playerEntryCount = Elements.Count(e => e is NamedSlider);
+            var visibleHeight = (int)playerListVisibleHeight;
+            var totalHeight = (int)(playerEntryHeightWithOffset * playerEntryCount + _playerEntriesYPadding);
+            scrollbar.SetHeights(visibleHeight, totalHeight);
         }
 
         private void HideScrollbar()
@@ -168,31 +164,35 @@ namespace RPVoiceChat.Gui
             scrollbar.Bounds.fixedY = _clipBounds.fixedY;
 
             InsideClipBounds.WithFixedPadding(0, _fixHSBSliderHandleClip / 2);
-            Bounds.fixedOffsetY = - _fixHSBSliderHandleClip / 2;
+            Bounds.fixedOffsetY = -_fixHSBSliderHandleClip / 2;
         }
 
-        private void UpdateScrollbarHeights()
+        private void OnDialogOpened()
         {
-            if (scrollbar == null) return;
-            scrollbar.Bounds.CalcWorldBounds();
-            var playerEntryCount = Elements.Count(e => e is NamedSlider);
-            var visibleHeight = (int)playerListVisibleHeight;
-            var totalHeight = (int)(playerEntryHeightWithOffset * playerEntryCount + _playerEntriesYPadding);
-            scrollbar.SetHeights(visibleHeight, totalHeight);
+            api.Event.PlayerJoin += OnPlayerJoin;
         }
 
-        private bool SlidePlayerVolume(int gain, string sliderKey)
+        private void OnDialogClosed()
         {
-            string playerId = sliderKey.Split("_")[0];
-            settingsRepository.SetPlayerGain(playerId, gain);
+            api.Event.PlayerJoin -= OnPlayerJoin;
+            settingsRepository.Save();
+        }
+
+        private void OnPlayerJoin(IPlayer player)
+        {
+            if (IsDisplayed() == false) return;
+            AddPlayer(player);
+            UpdateScrollbarHeights();
+            RedrawElement();
+        }
+
+        private bool IsDisplayed()
+        {
+            if (parrentDialog.IsOpened() == false || key == null) return false;
+            var element = parrentDialog.SingleComposer.GetElement(key);
+            if (element == null) return false;
 
             return true;
-        }
-
-        private void OnNewScrollbarValue(float value)
-        {
-            Bounds.fixedY = 0 - value;
-            Bounds.CalcWorldBounds();
         }
 
         public static string TrimText(string text, double width, CairoFont font)
