@@ -120,7 +120,7 @@ namespace RPVoiceChat.Gui
 
         private void AddPlayer(IPlayer player)
         {
-            string playerName = player.PlayerName;
+            string playerName = TrimText(player.PlayerName, playerNameWidth, font);
             string playerId = player.PlayerUID;
             string sliderKey = $"{playerId}_volume";
             bool isAlreadyAdded = Elements.Exists(e => e is NamedSlider slider && slider.name == sliderKey);
@@ -193,6 +193,21 @@ namespace RPVoiceChat.Gui
         {
             Bounds.fixedY = 0 - value;
             Bounds.CalcWorldBounds();
+        }
+
+        public static string TrimText(string text, double width, CairoFont font)
+        {
+            var suffix = "...";
+            var suffixWidth = font.GetTextExtents(suffix).Width;
+            var targetWidth = width - suffixWidth;
+
+            var textWidth = font.GetTextExtents(text).Width;
+            if (textWidth <= width) return text;
+            var cutLocation = (int)(Math.Min(targetWidth / textWidth, 1) * text.Length);
+
+            var result = $"{text.Substring(0, cutLocation)}{suffix}";
+
+            return result;
         }
     }
 }
