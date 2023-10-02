@@ -29,7 +29,9 @@ namespace RPVoiceChat.Gui
         private ClientSettingsRepository _settingsRepository;
         private GuiDialog parrentDialog;
         private ElementBounds playerEntryBounds;
+        private GuiElementScrollbar scrollbar;
         private string key;
+        private ElementBounds _clipBounds;
 
         public PlayerList(ICoreClientAPI capi, ClientSettingsRepository settingsRepository, GuiDialog parrent) : base(capi, new ElementBounds())
         {
@@ -66,6 +68,7 @@ namespace RPVoiceChat.Gui
             ResetElement();
             foreach (var player in api.World.AllOnlinePlayers)
                 AddPlayer(player);
+            UpdateScrollbarHeights();
             RedrawElement();
         }
 
@@ -90,11 +93,17 @@ namespace RPVoiceChat.Gui
         private void OnPlayerJoin(IPlayer player)
         {
             AddPlayer(player);
+            UpdateScrollbarHeights();
             RedrawElement();
         }
 
         private void RedrawElement()
         {
+            HideScrollbar();
+            var playerEntryCount = Elements.Count(e => e is NamedSlider);
+            if (playerEntryCount > maxPlayerEntriesOnScreen)
+                ShowScrollbar();
+
             parrentDialog.SingleComposer.ReCompose();
         }
 
@@ -120,8 +129,49 @@ namespace RPVoiceChat.Gui
 
             Add(nameLabel);
             Add(volumeSlider);
-
             playerEntryBounds = playerEntryBounds.BelowCopy(fixedDeltaY: playerEntryDeltaY);
+        }
+
+        private GuiElementScrollbar CreateScrollbar()
+        {
+            var scrollbarBounds = InsideClipBounds
+                .RightCopy()
+                .WithParent(null)
+                .WithFixedSize(scrollbarWidth, scrollbarHeight)
+                .WithFixedPadding(0, scrollbarYPadding);
+
+            return new GuiElementScrollbar(api, OnNewScrollbarValue, scrollbarBounds);
+        }
+
+        private void HideScrollbar()
+        {
+            InsideClipBounds.WithFixedSize(
+                _clipBounds.fixedWidth + scrollbar.Bounds.OuterWidth,
+                _clipBounds.fixedHeight + _fixHSBSliderHandleClip
+            );
+            scrollbar.Bounds.fixedY = -100000;
+
+            InsideClipBounds.WithFixedPadding(0, 0);
+            Bounds.fixedOffsetY = 0;
+        }
+
+        private void ShowScrollbar()
+        {
+            InsideClipBounds.WithFixedSize(_clipBounds.fixedWidth, _clipBounds.fixedHeight);
+            scrollbar.Bounds.fixedY = _clipBounds.fixedY;
+
+            InsideClipBounds.WithFixedPadding(0, _fixHSBSliderHandleClip / 2);
+            Bounds.fixedOffsetY = - _fixHSBSliderHandleClip / 2;
+        }
+
+        private void UpdateScrollbarHeights()
+        {
+            if (scrollbar == null) return;
+            scrollbar.Bounds.CalcWorldBounds();
+            var playerEntryCount = Elements.Count(e => e is NamedSlider);
+            var visibleHeight = (int)playerListVisibleHeight;
+            var totalHeight = (int)(playerEntryHeightWithOffset * playerEntryCount + _playerEntriesYPadding);
+            scrollbar.SetHeights(visibleHeight, totalHeight);
         }
 
         private bool SlidePlayerVolume(int gain, string sliderKey)
@@ -130,6 +180,12 @@ namespace RPVoiceChat.Gui
             _settingsRepository.SetPlayerGain(playerId, gain);
 
             return true;
+        }
+
+        private void OnNewScrollbarValue(float value)
+        {
+            Bounds.fixedY = 0 - value;
+            Bounds.CalcWorldBounds();
         }
     }
 }
