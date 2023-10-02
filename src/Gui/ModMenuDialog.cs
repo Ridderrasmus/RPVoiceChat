@@ -166,9 +166,9 @@ namespace RPVoiceChat.Gui
             TryClose();
         }
 
-        private void OnTabClicked(int dataInt, GuiTab _)
+        private void OnTabClicked(int dataIntOrIndex, GuiTab _)
         {
-            ClientSettings.Set("activeConfigTab", dataInt);
+            ClientSettings.Set("activeConfigTab", dataIntOrIndex);
             SetupDialog();
             RefreshValues();
         }
