@@ -50,6 +50,7 @@ namespace RPVoiceChat
         {
             capi.Event.EnqueueMainThreadTask(() =>
             {
+                if (player?.Entity == null) return;
                 var playerAttributes = player.Entity.WatchedAttributes;
                 var nametagAttribute = playerAttributes.GetTreeAttribute("nametag");
                 if (defaultShowTagOnlyWhenTargeted == null) defaultShowTagOnlyWhenTargeted = nametagAttribute.GetBool("showtagonlywhentargeted");
