@@ -1,4 +1,6 @@
 ﻿using RPVoiceChat.DB;
+using System;
+using System.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
@@ -6,16 +8,26 @@ namespace RPVoiceChat.Gui
 {
     public class PlayerList : GuiElementContainer, IExtendedGuiElement
     {
-        private const double playerListWidth = 440;
-        private const double playerListHeight = 300;
+        private const double playerListWidth = playerNameWidth + playerVolumeLeftPadding + playerVolumeWidth;
+        private const double playerListVisibleHeight = playerEntryHeightWithOffset * maxPlayerEntriesOnScreen + _fixOOSSliderHandleClip;
         private const double playerEntryHeight = 20;
         private const double playerEntryDeltaY = 10;
+        private const double playerEntryHeightWithOffset = playerEntryHeight + playerEntryDeltaY;
+        private const double _playerEntriesYPadding = 7.5; // Compensates for slider handles pocking out ouf slider bounds
+        private const double _playerEntriesYOffset = 2; // Compensates for slider handles pocking out ouf slider bounds (top part is longer)
+        private const double maxPlayerEntriesOnScreen = 15;
         private const double playerNameWidth = 200;
-        private const double playerVolumeLeftPadding = 40;
+        private const double playerVolumeLeftPadding = 20;
         private const double playerVolumeWidth = 200;
+        private const double scrollbarYPadding = 2;
+        private const double scrollbarLeftPadding = 10;
+        private const double scrollbarWidth = 5;
+        private const double scrollbarHeight = playerListVisibleHeight - scrollbarYPadding * 2;
+        private const double _fixOOSSliderHandleClip = 2.5; // Adjusts visible height to clip right before a handle of out-of-screen slider starts
+        private const double _fixHSBSliderHandleClip = 6; // Adjusts visible height to not clip handle of last slider when scroll bar is hidden
+        private CairoFont font = CairoFont.WhiteSmallText();
         private ClientSettingsRepository _settingsRepository;
         private GuiDialog parrentDialog;
-        private CairoFont font = CairoFont.WhiteSmallText();
         private ElementBounds playerEntryBounds;
         private string key;
 
@@ -23,6 +35,10 @@ namespace RPVoiceChat.Gui
         {
             _settingsRepository = settingsRepository;
             parrentDialog = parrent;
+            playerEntryBounds = ElementBounds.Fixed(0, 0, 0, playerEntryHeight);
+            UnscaledCellHorPadding = 0;
+            unscaledCellSpacing = 0;
+            UnscaledCellVerPadding = 0;
 
             parrentDialog.OnOpened += OnDialogOpened;
             parrentDialog.OnClosed += OnDialogClosed;
