@@ -129,7 +129,7 @@ namespace RPVoiceChat.Gui
             var nameBounds = playerEntryBounds.FlatCopy().WithFixedWidth(playerNameWidth).WithFixedOffset(0, _playerEntriesYOffset);
             var volumeBounds = nameBounds.RightCopy(fixedDeltaX: playerVolumeLeftPadding).WithFixedWidth(playerVolumeWidth);
             var nameLabel = new GuiElementStaticText(api, playerName, font.Orientation, nameBounds, font);
-            var volumeSlider = NamedSlider.Create(api, sliderKey, SlidePlayerVolume, volumeBounds);
+            var volumeSlider = new NamedSlider(api, sliderKey, SlidePlayerVolume, volumeBounds);
 
             float gain = settingsRepository.GetPlayerGain(playerId);
             volumeSlider.SetValues((int)(gain * 100), 0, 100, 1, "%");
