@@ -1,10 +1,9 @@
-﻿using Vintagestory.API.Client;
-using Vintagestory.API.Common.Entities;
+﻿using RPVoiceChat.Audio;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
-using RPVoiceChat.Audio;
 
-namespace RPVoiceChat
+namespace RPVoiceChat.Gui
 {
     public class PlayerNameTagRenderer
     {

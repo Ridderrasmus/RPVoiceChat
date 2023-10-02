@@ -58,7 +58,7 @@ namespace RPVoiceChat.Utils
         [DllImport("kernel32", SetLastError = true, CharSet = CharSet.Unicode)]
         static extern IntPtr LoadLibrary(string fileName);
 
-        static public void LoadDll(string dllName)
+        public static void LoadDll(string dllName)
         {
             if (RuntimeEnv.OS != OS.Windows) return;
             if (tempFolder == null) throw new Exception("Cannot load embedded dlls before extracting them");

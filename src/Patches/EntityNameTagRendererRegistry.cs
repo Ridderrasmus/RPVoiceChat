@@ -1,10 +1,9 @@
 ﻿using HarmonyLib;
-using System.Collections.Generic;
+using RPVoiceChat.Gui;
 using System.Reflection;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
-using Vintagestory.API.Config;
 using Vintagestory.GameContent;
 using static Vintagestory.GameContent.EntityNameTagRendererRegistry;
 
@@ -26,17 +25,17 @@ namespace RPVoiceChat
 
         public static bool DefaultEntitlementTagRenderer_renderTag(ref LoadedTexture __result, double[] ___color, TextBackground ___background, Entity entity)
         {
-            if (entity is not EntityPlayer) return true;
+            if (entity is not EntityPlayer playerEntity) return true;
 
-            __result = PlayerNameTagRenderer.GetRenderer((EntityPlayer)entity, ___color, ___background);
+            __result = PlayerNameTagRenderer.GetRenderer(playerEntity, ___color, ___background);
             return false;
         }
 
         public static bool DefaultNameTagRenderer(ref LoadedTexture __result, Entity entity)
         {
-            if (entity is not EntityPlayer) return true;
+            if (entity is not EntityPlayer playerEntity) return true;
 
-            __result = PlayerNameTagRenderer.GetRenderer((EntityPlayer)entity);
+            __result = PlayerNameTagRenderer.GetRenderer(playerEntity);
             return false;
         }
     }
