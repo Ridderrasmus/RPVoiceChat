@@ -26,16 +26,16 @@ namespace RPVoiceChat.Gui
         private const double _fixOOSSliderHandleClip = 2.5; // Adjusts visible height to clip right before a handle of out-of-screen slider starts
         private const double _fixHSBSliderHandleClip = 6; // Adjusts visible height to not clip handle of last slider when scroll bar is hidden
         private CairoFont font = CairoFont.WhiteSmallText();
-        private ClientSettingsRepository _settingsRepository;
+        private ClientSettingsRepository settingsRepository;
         private GuiDialog parrentDialog;
         private ElementBounds playerEntryBounds;
         private GuiElementScrollbar scrollbar;
         private string key;
         private ElementBounds _clipBounds;
 
-        public PlayerList(ICoreClientAPI capi, ClientSettingsRepository settingsRepository, GuiDialog parrent) : base(capi, new ElementBounds())
+        public PlayerList(ICoreClientAPI capi, ClientSettingsRepository clientSettingsRepository, GuiDialog parrent) : base(capi, new ElementBounds())
         {
-            _settingsRepository = settingsRepository;
+            settingsRepository = clientSettingsRepository;
             parrentDialog = parrent;
             playerEntryBounds = ElementBounds.Fixed(0, 0, 0, playerEntryHeight);
             UnscaledCellHorPadding = 0;
@@ -88,7 +88,7 @@ namespace RPVoiceChat.Gui
         private void OnDialogClosed()
         {
             api.Event.PlayerJoin -= OnPlayerJoin;
-            _settingsRepository.Save();
+            settingsRepository.Save();
         }
 
         private void OnPlayerJoin(IPlayer player)
@@ -131,7 +131,7 @@ namespace RPVoiceChat.Gui
             var nameLabel = new GuiElementStaticText(api, playerName, font.Orientation, nameBounds, font);
             var volumeSlider = NamedSlider.Create(api, sliderKey, SlidePlayerVolume, volumeBounds);
 
-            float gain = _settingsRepository.GetPlayerGain(playerId);
+            float gain = settingsRepository.GetPlayerGain(playerId);
             volumeSlider.SetValues((int)(gain * 100), 0, 100, 1, "%");
 
             Add(nameLabel);
@@ -184,7 +184,7 @@ namespace RPVoiceChat.Gui
         private bool SlidePlayerVolume(int gain, string sliderKey)
         {
             string playerId = sliderKey.Split("_")[0];
-            _settingsRepository.SetPlayerGain(playerId, gain);
+            settingsRepository.SetPlayerGain(playerId, gain);
 
             return true;
         }
