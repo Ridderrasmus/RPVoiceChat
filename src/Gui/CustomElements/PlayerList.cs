@@ -65,6 +65,7 @@ namespace RPVoiceChat.Gui
 
         public void SetupElement()
         {
+            if (IsDisplayed() == false) return;
             ResetElement();
             foreach (var player in api.World.AllOnlinePlayers)
                 AddPlayer(player);
@@ -92,9 +93,19 @@ namespace RPVoiceChat.Gui
 
         private void OnPlayerJoin(IPlayer player)
         {
+            if (IsDisplayed() == false) return;
             AddPlayer(player);
             UpdateScrollbarHeights();
             RedrawElement();
+        }
+
+        private bool IsDisplayed()
+        {
+            if (parrentDialog.IsOpened() == false || key == null) return false;
+            var element = parrentDialog.SingleComposer.GetElement(key);
+            if (element == null) return false;
+
+            return true;
         }
 
         private void RedrawElement()
@@ -109,10 +120,6 @@ namespace RPVoiceChat.Gui
 
         private void AddPlayer(IPlayer player)
         {
-            if (parrentDialog.IsOpened() == false || key == null) return;
-            var element = parrentDialog.SingleComposer.GetElement(key);
-            if (element == null) return;
-
             string playerName = player.PlayerName;
             string playerId = player.PlayerUID;
             string sliderKey = $"{playerId}_volume";
