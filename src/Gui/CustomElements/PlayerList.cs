@@ -44,15 +44,21 @@ namespace RPVoiceChat.Gui
             parrentDialog.OnClosed += OnDialogClosed;
         }
 
-        public void SetKey(string elementKey)
+        public void Init(string elementKey, ElementBounds bounds, GuiComposer composer)
         {
             key = elementKey;
+            Bounds = ElementBounds.Fixed(0, 0, playerListWidth, 0).WithFixedPadding(0, _playerEntriesYPadding);
+            Bounds.IsDrawingSurface = true;
+
+            _clipBounds = bounds.FlatCopy().WithFixedSize(playerListWidth, playerListVisibleHeight).FixedGrow(scrollbarLeftPadding, 0);
+            composer.BeginClip(_clipBounds.FlatCopy());
         }
 
-        public void SetBounds(ElementBounds bounds)
+        public void OnAdd(GuiComposer composer)
         {
-            Bounds = bounds.FlatCopy().WithFixedSize(playerListWidth, playerListHeight);
-            Bounds.IsDrawingSurface = true;
+            composer.EndClip();
+            scrollbar = CreateScrollbar();
+            composer.AddInteractiveElement(scrollbar);
         }
 
         public void SetupElement()
@@ -104,7 +110,7 @@ namespace RPVoiceChat.Gui
             bool isAlreadyAdded = Elements.Exists(e => e is NamedSlider slider && slider.name == sliderKey);
             if (isAlreadyAdded) return;
 
-            var nameBounds = playerEntryBounds.FlatCopy().WithFixedWidth(playerNameWidth);
+            var nameBounds = playerEntryBounds.FlatCopy().WithFixedWidth(playerNameWidth).WithFixedOffset(0, _playerEntriesYOffset);
             var volumeBounds = nameBounds.RightCopy(fixedDeltaX: playerVolumeLeftPadding).WithFixedWidth(playerVolumeWidth);
             var nameLabel = new GuiElementStaticText(api, playerName, font.Orientation, nameBounds, font);
             var volumeSlider = NamedSlider.Create(api, sliderKey, SlidePlayerVolume, volumeBounds);
