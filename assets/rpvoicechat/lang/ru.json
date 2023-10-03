@@ -26,7 +26,7 @@
     "Hotkey.ModMenu": "RPVoice: Меню мода",
     "Hotkey.VoiceLevel": "RPVoice: Изменить расстояние голоса",
     "Hotkey.PTT": "RPVoice: Push to talk",
-    "Горячая клавиша.Mute": "RPVoice: Включение/выключение звука",
+    "Hotkey.Mute": "RPVoice: Включение/выключение звука",
     "Gui.ModMenu.TitleBar": "Меню настроек RP VoiceChat",
     "Gui.ModMenu.Tab.AudioInput": "Аудиовход",
     "Gui.ModMenu.Tab.AudioOutput": "Аудиовыход",
