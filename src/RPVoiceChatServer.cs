@@ -59,26 +59,26 @@ namespace RPVoiceChat
                 .GetOrCreate("rpvc")
                 .RequiresPrivilege(Privilege.controlserver)
                 .BeginSub("shout")
-                    .WithDesc("Sets the shout distance in blocks")
+                    .WithDesc(UIUtils.I18n("Command.Shout.Desc"))
                     .WithArgs(parsers.Int("distance"))
                     .HandleWith(SetShoutHandler)
                 .EndSub()
                 .BeginSub("talk")
-                    .WithDesc("Sets the talk distance in blocks")
+                    .WithDesc(UIUtils.I18n("Command.Talk.Desc"))
                     .WithArgs(parsers.Int("distance"))
                     .HandleWith(SetTalkHandler)
                 .EndSub()
                 .BeginSub("whisper")
-                    .WithDesc("Sets the whisper distance in blocks")
+                    .WithDesc(UIUtils.I18n("Command.Whisper.Desc"))
                     .WithArgs(parsers.Int("distance"))
                     .HandleWith(SetWhisperHandler)
                 .EndSub()
                 .BeginSub("info")
-                    .WithDesc("Displays the current audio distances")
+                    .WithDesc(UIUtils.I18n($"Command.Info.Desc"))
                     .HandleWith(DisplayInfoHandler)
                 .EndSub()
                 .BeginSub("reset")
-                    .WithDesc("Resets the audio distances to their default settings")
+                    .WithDesc(UIUtils.I18n("Command.Reset.Desc"))
                     .HandleWith(ResetDistanceHandler)
                 .EndSub();
         }
@@ -89,7 +89,7 @@ namespace RPVoiceChat
             sapi.World.Config.SetInt("rpvoicechat:distance-talk", (int)VoiceLevel.Talking);
             sapi.World.Config.SetInt("rpvoicechat:distance-shout", (int)VoiceLevel.Shouting);
 
-            return TextCommandResult.Success("Audio distances reset to default");
+            return TextCommandResult.Success(UIUtils.I18n("Command.Reset.Success"));
         }
 
         private TextCommandResult DisplayInfoHandler(TextCommandCallingArgs args)
@@ -98,12 +98,7 @@ namespace RPVoiceChat
             int talk = sapi.World.Config.GetInt("rpvoicechat:distance-talk", (int)VoiceLevel.Talking);
             int shout = sapi.World.Config.GetInt("rpvoicechat:distance-shout", (int)VoiceLevel.Shouting);
 
-            return TextCommandResult.Success
-                (
-                    "Whisper distance: " + whisper + " blocks\n" +
-                    "Talk distance: " + talk + " blocks\n" +
-                    "Shout distance: " + shout + " blocks"
-                );
+            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout));
         }
 
         private TextCommandResult SetWhisperHandler(TextCommandCallingArgs args)
@@ -112,7 +107,7 @@ namespace RPVoiceChat
 
             sapi.World.Config.SetInt("rpvoicechat:distance-whisper", distance);
 
-            return TextCommandResult.Success("Whisper distance set to " + distance);
+            return TextCommandResult.Success(UIUtils.I18n("Command.Whisper.Success", distance));
         }
 
         private TextCommandResult SetTalkHandler(TextCommandCallingArgs args)
@@ -121,7 +116,7 @@ namespace RPVoiceChat
 
             sapi.World.Config.SetInt("rpvoicechat:distance-talk", distance);
 
-            return TextCommandResult.Success("Talking distance set to " + distance);
+            return TextCommandResult.Success(UIUtils.I18n("Command.Talk.Success", distance));
         }
 
         private TextCommandResult SetShoutHandler(TextCommandCallingArgs args)
@@ -130,7 +125,7 @@ namespace RPVoiceChat
 
             sapi.World.Config.SetInt("rpvoicechat:distance-shout", distance);
 
-            return TextCommandResult.Success("Shout distance set to " + distance);
+            return TextCommandResult.Success(UIUtils.I18n($"Command.Shout.Success", distance));
         }
 
         public override void Dispose()
