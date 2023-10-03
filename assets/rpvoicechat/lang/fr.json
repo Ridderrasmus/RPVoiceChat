@@ -24,7 +24,7 @@
     "Command.Reset.Desc": "Réinitialise les distances audio",
     "Command.Reset.Success": "Distances audio réinitialisées",
     "Hotkey.ModMenu": "RPVoice: Menu du mod",
-    "Hotkey.VoiceLevel": "RPVoice: Changer la distance de la voix voice distance",
+    "Hotkey.VoiceLevel": "RPVoice: Changer la distance de la voix",
     "Hotkey.PTT": "RPVoice: Appuyer pour parler",
     "Hotkey.Mute": "RPVoice: Sourdine",
     "Gui.ModMenu.TitleBar": "RP VC Menu de Configuration",
