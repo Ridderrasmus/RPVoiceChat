@@ -39,7 +39,7 @@ namespace RPVoiceChat.Gui
             private double _TextWidth()
             {
                 if (Name == null || Name == "") return 0;
-                return Font.GetTextExtents(Name).Width;
+                return Font.GetTextExtents(Name).Width + _tabTextPadding * 2;
             }
         }
 
@@ -65,7 +65,7 @@ namespace RPVoiceChat.Gui
             private double _TextWidth()
             {
                 if (!Label || Text == null || Text == "") return 0;
-                return Font.GetTextExtents(Text).Width;
+                return Font.GetTextExtents(Text).Width + 2;
             }
         }
 
@@ -97,8 +97,8 @@ namespace RPVoiceChat.Gui
             var activeTabIndex = ClientSettings.GetInt("activeConfigTab", 0);
             var activeTab = ConfigTabs[activeTabIndex];
             var displayedOptions = ConfigOptions.FindAll(e => e.Tab == activeTab && e.Enabled);
-            double maxTextWidth = displayedOptions.DefaultIfEmpty().Max(e => e?.TextWidth ?? 0) + 2;
-            double maxTabWidth = ConfigTabs.DefaultIfEmpty().Max(e => e?.TextWidth ?? 0) + _tabTextPadding * 2;
+            double maxTextWidth = displayedOptions.DefaultIfEmpty().Max(e => e?.TextWidth ?? 0);
+            double maxTabWidth = ConfigTabs.DefaultIfEmpty().Max(e => e?.TextWidth ?? 0);
 
             var tabsBounds = ElementBounds.Fixed(0, GuiStyle.TitleBarHeight + tabsTopPadding, maxTabWidth, tabsHeight).WithAlignment(EnumDialogArea.LeftTop);
             var textBounds = ElementBounds.Fixed(tabsBounds.fixedWidth + textLeftPadding, GuiStyle.TitleBarHeight, maxTextWidth, settingHeight);
