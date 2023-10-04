@@ -1,5 +1,5 @@
 ﻿using RPVoiceChat.DB;
-using System;
+using RPVoiceChat.Utils;
 using System.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -92,7 +92,7 @@ namespace RPVoiceChat.Gui
 
         private void AddPlayer(IPlayer player)
         {
-            string playerName = TrimText(player.PlayerName, playerNameWidth, font);
+            string playerName = UIUtils.TrimText(player.PlayerName, playerNameWidth, font);
             string playerId = player.PlayerUID;
             string sliderKey = $"{playerId}_volume";
             bool isAlreadyAdded = Elements.Exists(e => e is NamedSlider slider && slider.name == sliderKey);
@@ -193,21 +193,6 @@ namespace RPVoiceChat.Gui
             if (element == null) return false;
 
             return true;
-        }
-
-        public static string TrimText(string text, double width, CairoFont font)
-        {
-            var suffix = "...";
-            var suffixWidth = font.GetTextExtents(suffix).Width;
-            var targetWidth = width - suffixWidth;
-
-            var textWidth = font.GetTextExtents(text).Width;
-            if (textWidth <= width) return text;
-            var cutLocation = (int)(Math.Min(targetWidth / textWidth, 1) * text.Length);
-
-            var result = $"{text.Substring(0, cutLocation)}{suffix}";
-
-            return result;
         }
     }
 }

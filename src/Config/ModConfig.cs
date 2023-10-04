@@ -5,14 +5,12 @@ namespace RPVoiceChat
 {
     static class ModConfig
     {
-
         private const string ConfigFileName = "rpvoicechat.json";
         public static RPVoiceChatConfig Config { get; private set; }
         public static event Action ConfigUpdated;
 
         public static void ReadConfig(ICoreAPI api)
         {
-
             try
             {
                 Config = LoadConfig(api);
@@ -43,6 +41,5 @@ namespace RPVoiceChat
         private static RPVoiceChatConfig LoadConfig(ICoreAPI api) => api.LoadModConfig<RPVoiceChatConfig>(ConfigFileName);
         private static void GenerateConfig(ICoreAPI api) => api.StoreModConfig(new RPVoiceChatConfig(), ConfigFileName);
         private static void GenerateConfig(ICoreAPI api, RPVoiceChatConfig previousConfig) => api.StoreModConfig(new RPVoiceChatConfig(previousConfig), ConfigFileName);
-
     }
 }
