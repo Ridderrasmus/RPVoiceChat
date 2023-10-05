@@ -1,5 +1,4 @@
-﻿using OpenTK.Audio.OpenAL;
-using Vintagestory.API.Client;
+﻿using Vintagestory.API.Client;
 
 namespace RPVoiceChat.Audio
 {

@@ -14,7 +14,7 @@ namespace RPVoiceChat.Utils
 
         public static void ExtractEmbeddedDlls()
         {
-            if (RuntimeEnv.OS != OS.Windows) return;
+            if (tempFolder != null) return;
             Assembly assembly = Assembly.GetExecutingAssembly();
             string[] resourceNames = assembly.GetManifestResourceNames();
 
@@ -26,7 +26,6 @@ namespace RPVoiceChat.Utils
 
         public static void ExtractEmbeddedDll(string resourceName)
         {
-            if (RuntimeEnv.OS != OS.Windows) return;
             Assembly assembly = Assembly.GetExecutingAssembly();
             AssemblyName assemblyName = assembly.GetName();
             tempFolder ??= $"{assemblyName.Name}.{assemblyName.Version}";
@@ -42,8 +41,8 @@ namespace RPVoiceChat.Utils
             string dirName = Path.Combine(Path.GetTempPath(), tempFolder);
             if (!Directory.Exists(dirName)) Directory.CreateDirectory(dirName);
 
-            string[] resourceNameParts = resourceName.Split(".");
-            string dllName = $"{resourceNameParts[resourceNameParts.Length - 2]}.{resourceNameParts[resourceNameParts.Length - 1]}";
+            string[] dllNameParts = resourceName.Split(".").Skip(2).ToArray();
+            string dllName = string.Join(".", dllNameParts);
             string dllPath = Path.Combine(dirName, dllName);
             bool alreadyExtracted = false;
             if (File.Exists(dllPath))
@@ -58,7 +57,7 @@ namespace RPVoiceChat.Utils
         [DllImport("kernel32", SetLastError = true, CharSet = CharSet.Unicode)]
         static extern IntPtr LoadLibrary(string fileName);
 
-        public static void LoadDll(string dllName)
+        public static void LoadNativeDll(string dllName)
         {
             if (RuntimeEnv.OS != OS.Windows) return;
             if (tempFolder == null) throw new Exception("Cannot load embedded dlls before extracting them");
@@ -71,6 +70,24 @@ namespace RPVoiceChat.Utils
                 Exception innerException = new Win32Exception();
                 Exception e = new DllNotFoundException("Unable to load library: " + dllName + " from " + tempFolder, innerException);
                 Logger.client.Error($"Failed to load embedded DLL:\n{e}");
+            }
+        }
+
+        public static void LoadDll(string dllName)
+        {
+            var loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies().ToList();
+            bool isAlreadyLoaded = loadedAssemblies.Any(e => $"{e.GetName().Name}.dll" == dllName);
+            if (isAlreadyLoaded) return;
+
+            try
+            {
+                string dllPath = Path.Combine(Path.GetTempPath(), tempFolder, dllName);
+                Assembly.LoadFrom(dllPath);
+            }
+            catch (Exception e)
+            {
+                Logger.client.Error($"Failed to load {dllName}:\n{e}");
+                throw;
             }
         }
     }

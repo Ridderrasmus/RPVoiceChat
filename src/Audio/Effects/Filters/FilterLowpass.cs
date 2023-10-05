@@ -1,6 +1,4 @@
-﻿using OpenTK.Audio.OpenAL;
-
-namespace RPVoiceChat.Audio.Effects
+﻿namespace RPVoiceChat.Audio.Effects
 {
     public class FilterLowpass
     {
@@ -14,7 +12,7 @@ namespace RPVoiceChat.Audio.Effects
         public FilterLowpass(int source)
         {
             this.source = source;
-            nullFilter = ALC.EFX.GenFilter();
+            nullFilter = OALCW.EFX.GenFilter();
             GenerateFilter();
         }
 
@@ -25,12 +23,12 @@ namespace RPVoiceChat.Audio.Effects
         /// <param name="gain">The gain from 0.0 to 1.0.</param>
         public void SetHFGain(float gain)
         {
-            ALC.EFX.Filter(filter, FilterFloat.LowpassGainHF, gain);
+            OALCW.EFX.Filter(filter, FilterFloat.LowpassGainHF, gain);
         }
 
         public void SetGain(float gain)
         {
-            ALC.EFX.Filter(filter, FilterFloat.LowpassGain, gain);
+            OALCW.EFX.Filter(filter, FilterFloat.LowpassGain, gain);
         }
 
         public void Start()
@@ -38,7 +36,7 @@ namespace RPVoiceChat.Audio.Effects
             if (IsEnabled)
                 return;
 
-            AL.Source(source, ALSourcei.EfxDirectFilter, filter);
+            OALW.Source(source, ALSourcei.EfxDirectFilter, filter);
             IsEnabled = true;
         }
 
@@ -47,16 +45,16 @@ namespace RPVoiceChat.Audio.Effects
             if (!IsEnabled)
                 return;
 
-            AL.Source(source, ALSourcei.EfxDirectFilter, nullFilter);
+            OALW.Source(source, ALSourcei.EfxDirectFilter, nullFilter);
             IsEnabled = false;
         }
 
         private void GenerateFilter()
         {
-            filter = ALC.EFX.GenFilter();
-            ALC.EFX.Filter(filter, FilterInteger.FilterType, (int)FilterType.Lowpass);
-            ALC.EFX.Filter(filter, FilterFloat.LowpassGain, 1.0f);
-            ALC.EFX.Filter(filter, FilterFloat.LowpassGainHF, 0.2f);
+            filter = OALCW.EFX.GenFilter();
+            OALCW.EFX.Filter(filter, FilterInteger.FilterType, (int)FilterType.Lowpass);
+            OALCW.EFX.Filter(filter, FilterFloat.LowpassGain, 1.0f);
+            OALCW.EFX.Filter(filter, FilterFloat.LowpassGainHF, 0.2f);
         }
 
     }
