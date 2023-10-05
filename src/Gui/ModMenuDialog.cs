@@ -1,5 +1,6 @@
 ﻿using RPVoiceChat.Audio;
 using RPVoiceChat.DB;
+using RPVoiceChat.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,17 @@ namespace RPVoiceChat.Gui
 {
     public abstract class ConfigDialog : GuiDialog
     {
+        protected const string i18nPrefix = "Gui.ModMenu";
+        private const int tabsHeight = 300;
+        private const int tabsTopPadding = 5;
+        private const int textLeftPadding = 20;
+        private const int settingsLeftPadding = 40;
+        private const int settingDeltaY = 10;
+        private const int settingHeight = 20;
+        private const int switchSize = 20;
+        private const double sliderWidth = 200.0;
+        private const int tooltipWidth = 260;
+        private const int _tabTextPadding = 4;
         private bool _isSetup;
         private List<ConfigOption> ConfigOptions = new List<ConfigOption>();
         private List<ConfigTab> ConfigTabs = new List<ConfigTab>();
@@ -19,39 +31,50 @@ namespace RPVoiceChat.Gui
             public CairoFont Font = CairoFont.WhiteDetailText().WithFontSize(17f);
             public double TextWidth { get => _TextWidth(); }
 
+            public ConfigTab(string i18nTabKey) : base()
+            {
+                Name = UIUtils.I18n($"{i18nPrefix}.Tab.{i18nTabKey}");
+            }
+
             private double _TextWidth()
             {
                 if (Name == null || Name == "") return 0;
-                return Font.GetTextExtents(Name).Width;
+                return Font.GetTextExtents(Name).Width + _tabTextPadding * 2;
             }
         }
 
         protected class ConfigOption
         {
-            public ActionConsumable AdvancedAction;
-            public string SwitchKey;
-            public string SliderKey;
-            public string InteractiveElementKey;
-            public string DropdownKey;
-            public string Text;
-            public string Tooltip;
-            public bool InstantSlider;
             public bool Enabled = true;
-            public string[] DropdownValues { get; internal set; }
-            public string[] DropdownNames { get; internal set; }
+            public string Key;
+            public ElementType Type;
+            public bool Label;
+            public bool Tooltip;
             public GuiTab Tab;
-            public IExtendedGuiElement InteractiveElement;
+            public IExtendedGuiElement CustomElement;
             public Action<bool> ToggleAction;
             public ActionConsumable<int> SlideAction;
+            public string[] DropdownValues { get; internal set; }
+            public string[] DropdownNames { get; internal set; }
             public SelectionChangedDelegate DropdownSelect { get; internal set; }
             public CairoFont Font = CairoFont.WhiteSmallText();
+            public string Text { get => UIUtils.I18n($"{i18nPrefix}.{Key}.Label"); }
+            public string TooltipText { get => UIUtils.I18n($"{i18nPrefix}.{Key}.Tooltip"); }
             public double TextWidth { get => _TextWidth(); }
 
             private double _TextWidth()
             {
-                if (Text == null || Text == "") return 0;
-                return Font.GetTextExtents(Text).Width;
+                if (!Label || Text == null || Text == "") return 0;
+                return Font.GetTextExtents(Text).Width + 2;
             }
+        }
+
+        protected enum ElementType
+        {
+            Slider,
+            Switch,
+            Dropdown,
+            Custom
         }
 
 
@@ -69,24 +92,15 @@ namespace RPVoiceChat.Gui
 
         protected void SetupDialog()
         {
-            const int tabsTopPadding = 5;
-            const int textLeftPadding = 20;
-            const int settingsLeftPadding = 40;
-            const int settingDeltaY = 10;
-            const int settingHeight = 20;
-            const int switchSize = 20;
-            const double sliderWidth = 200.0;
-            const int tooltipWidth = 260;
-            const int _tabTextPadding = 4;
             _isSetup = true;
 
             var activeTabIndex = ClientSettings.GetInt("activeConfigTab", 0);
             var activeTab = ConfigTabs[activeTabIndex];
             var displayedOptions = ConfigOptions.FindAll(e => e.Tab == activeTab && e.Enabled);
-            double maxTextWidth = displayedOptions.DefaultIfEmpty().Max(e => e?.TextWidth ?? 0) + 2;
-            double maxTabWidth = ConfigTabs.DefaultIfEmpty().Max(e => e?.TextWidth ?? 0) + _tabTextPadding * 2;
+            double maxTextWidth = displayedOptions.DefaultIfEmpty().Max(e => e?.TextWidth ?? 0);
+            double maxTabWidth = ConfigTabs.DefaultIfEmpty().Max(e => e?.TextWidth ?? 0);
 
-            var tabsBounds = ElementBounds.Fixed(0, GuiStyle.TitleBarHeight + tabsTopPadding, maxTabWidth, 300).WithAlignment(EnumDialogArea.LeftTop);
+            var tabsBounds = ElementBounds.Fixed(0, GuiStyle.TitleBarHeight + tabsTopPadding, maxTabWidth, tabsHeight).WithAlignment(EnumDialogArea.LeftTop);
             var textBounds = ElementBounds.Fixed(tabsBounds.fixedWidth + textLeftPadding, GuiStyle.TitleBarHeight, maxTextWidth, settingHeight);
             var settingBounds = ElementBounds.Fixed(textBounds.fixedWidth + textBounds.fixedX + settingsLeftPadding, GuiStyle.TitleBarHeight, 0, settingHeight);
             var dialogBounds = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.CenterMiddle);
@@ -95,50 +109,48 @@ namespace RPVoiceChat.Gui
 
             var composer = capi.Gui.CreateCompo("rpvcconfigmenu", dialogBounds)
                 .AddShadedDialogBG(bgBounds)
-                .AddDialogTitleBar("RP VC Config Menu", OnTitleBarCloseClicked)
+                .AddDialogTitleBar(UIUtils.I18n($"{i18nPrefix}.TitleBar"), OnTitleBarCloseClicked)
                 .BeginChildElements(bgBounds)
                 .AddVerticalTabs(ConfigTabs.ToArray(), tabsBounds, OnTabClicked, "configTabs");
 
             foreach (ConfigOption option in displayedOptions)
             {
                 var wideSettingBounds = settingBounds.FlatCopy().WithFixedWidth(sliderWidth);
-                if (option.Text != null)
-                {
-                    composer.AddStaticText(option.Text, option.Font, textBounds);
-                }
-                if (option.Tooltip != null)
-                {
-                    composer.AddHoverText(option.Tooltip, option.Font, tooltipWidth, textBounds);
-                }
 
-                if (option.SliderKey != null)
-                {
-                    composer.AddSlider(option.SlideAction, wideSettingBounds, option.SliderKey);
-                }
-                else if (option.SwitchKey != null)
-                {
-                    composer.AddSwitch(option.ToggleAction, settingBounds, option.SwitchKey, switchSize);
-                }
-                else if (option.DropdownKey != null)
-                {
-                    composer.AddDropDown(
-                        option.DropdownValues,
-                        option.DropdownNames,
-                        0,
-                        option.DropdownSelect,
-                        wideSettingBounds,
-                        option.DropdownKey
-                    );
-                }
-                else if (option.InteractiveElementKey != null)
-                {
-                    IExtendedGuiElement element = option.InteractiveElement;
-                    var elementKey = option.InteractiveElementKey;
-                    var bounds = option.Text == null ? textBounds : settingBounds;
+                if (option.Label) composer.AddStaticText(option.Text, option.Font, textBounds);
+                if (option.Tooltip) composer.AddHoverText(option.TooltipText, option.Font, tooltipWidth, textBounds);
 
-                    element.Init(elementKey, bounds, composer);
-                    composer.AddInteractiveElement((GuiElement)element, elementKey);
-                    element.OnAdd(composer);
+                switch (option.Type)
+                {
+                    case ElementType.Slider:
+                        composer.AddSlider(option.SlideAction, wideSettingBounds, option.Key);
+                        break;
+
+                    case ElementType.Switch:
+                        composer.AddSwitch(option.ToggleAction, settingBounds, option.Key, switchSize);
+                        break;
+
+                    case ElementType.Dropdown:
+                        composer.AddDropDown(
+                            option.DropdownValues,
+                            option.DropdownNames,
+                            0,
+                            option.DropdownSelect,
+                            wideSettingBounds,
+                            option.Key
+                        );
+                        break;
+
+                    case ElementType.Custom:
+                        IExtendedGuiElement element = option.CustomElement;
+                        var bounds = option.Label ? settingBounds : textBounds;
+                        element.Init(option.Key, bounds, composer);
+                        composer.AddInteractiveElement((GuiElement)element, option.Key);
+                        element.OnAdd(composer);
+                        break;
+
+                    default:
+                        throw new Exception($"Unknown or missing element type: {option.Type}");
                 }
 
                 textBounds = textBounds.BelowCopy(fixedDeltaY: settingDeltaY);
@@ -190,11 +202,11 @@ namespace RPVoiceChat.Gui
             _audioInputManager = audioInputManager;
             _audioOutputManager = audioOutputManager;
 
-            var audioInputTab = new ConfigTab() { Name = "Audio Input" };
-            var audioOutputTab = new ConfigTab() { Name = "Audio Output" };
-            var effectsTab = new ConfigTab() { Name = "Effects" };
-            var interfaceTab = new ConfigTab() { Name = "Interface" };
-            var playerListTab = new ConfigTab() { Name = "Player List" };
+            var audioInputTab = new ConfigTab("AudioInput");
+            var audioOutputTab = new ConfigTab("AudioOutput");
+            var effectsTab = new ConfigTab("Effects");
+            var interfaceTab = new ConfigTab("Interface");
+            var playerListTab = new ConfigTab("PlayerList");
             RegisterTab(audioInputTab);
             RegisterTab(audioOutputTab);
             RegisterTab(effectsTab);
@@ -203,9 +215,10 @@ namespace RPVoiceChat.Gui
 
             RegisterOption(new ConfigOption
             {
-                Text = "Input Device",
-                DropdownKey = "inputDevice",
-                Tooltip = "Input device",
+                Key = "inputDevice",
+                Type = ElementType.Dropdown,
+                Label = true,
+                Tooltip = true,
                 Tab = audioInputTab,
                 DropdownNames = _audioInputManager.GetInputDeviceNames(),
                 DropdownValues = _audioInputManager.GetInputDeviceNames(),
@@ -214,81 +227,90 @@ namespace RPVoiceChat.Gui
 
             RegisterOption(new ConfigOption
             {
-                Text = "Push To Talk",
-                SwitchKey = "togglePushToTalk",
-                Tooltip = "Use push to talk instead of voice activation",
+                Key = "togglePushToTalk",
+                Type = ElementType.Switch,
+                Label = true,
+                Tooltip = true,
                 Tab = audioInputTab,
                 ToggleAction = OnTogglePushToTalk
             });
 
             RegisterOption(new ConfigOption
             {
-                Text = "Mute",
-                SwitchKey = "muteMicrophone",
-                Tooltip = "Mute your microphone",
+                Key = "muteMicrophone",
+                Type = ElementType.Switch,
+                Label = true,
+                Tooltip = true,
                 Tab = audioInputTab,
                 ToggleAction = OnToggleMuted
             });
 
             RegisterOption(new ConfigOption
             {
-                Text = "Loopback",
-                SwitchKey = "loopback",
-                Tooltip = "Play recorded audio through output audio",
+                Key = "loopback",
+                Type = ElementType.Switch,
+                Label = true,
+                Tooltip = true,
                 Tab = audioOutputTab,
                 ToggleAction = OnToggleLoopback
             });
 
             RegisterOption(new ConfigOption
             {
-                Text = "Players Volume Level",
-                SliderKey = "outputGain",
-                Tooltip = "How much to increase volume of other players",
+                Key = "outputGain",
+                Type = ElementType.Slider,
+                Label = true,
+                Tooltip = true,
                 Tab = audioOutputTab,
                 SlideAction = SlideOutputGain
             });
 
             RegisterOption(new ConfigOption
             {
-                Text = "Recording Volume",
-                SliderKey = "inputGain",
-                Tooltip = "Changes your own volume",
+                Key = "inputGain",
+                Type = ElementType.Slider,
+                Label = true,
+                Tooltip = true,
                 Tab = audioInputTab,
                 SlideAction = SlideInputGain
             });
 
             RegisterOption(new ConfigOption
             {
-                Text = "Audio Input Threshold",
-                SliderKey = "inputThreshold",
-                Tooltip = "At which threshold your audio starts transmitting",
+                Key = "inputThreshold",
+                Type = ElementType.Slider,
+                Label = true,
+                Tooltip = true,
                 Tab = audioInputTab,
                 SlideAction = SlideInputThreshold
             });
 
             RegisterOption(new ConfigOption
             {
-                Text = "Audio Meter",
-                InteractiveElementKey = "audioMeter",
-                Tooltip = "Shows your audio amplitude",
+                Key = "audioMeter",
+                Type = ElementType.Custom,
+                Label = true,
+                Tooltip = true,
                 Tab = audioInputTab,
-                InteractiveElement = new AudioMeter(capi, _audioInputManager, this)
+                CustomElement = new AudioMeter(capi, _audioInputManager, this)
             });
 
             RegisterOption(new ConfigOption
             {
-                Text = "Toggle HUD",
-                SwitchKey = "toggleHUD",
-                Tooltip = "Toggle visibility of HUD elements",
+                Key = "toggleHUD",
+                Type = ElementType.Switch,
+                Label = true,
+                Tooltip = true,
                 Tab = interfaceTab,
                 ToggleAction = OnToggleHUD
             });
 
             RegisterOption(new ConfigOption
             {
-                Text = "Muffling",
-                SwitchKey = "toggleMuffling",
-                Tooltip = "Muffle audio when other players are behind solid obstacles",
+                Key = "toggleMuffling",
+                Type = ElementType.Switch,
+                Label = true,
+                Tooltip = true,
                 Tab = effectsTab,
                 ToggleAction = OnToggleMuffling
             });
@@ -296,9 +318,10 @@ namespace RPVoiceChat.Gui
             RegisterOption(new ConfigOption
             {
                 Enabled = audioInputManager.IsDenoisingAvailable,
-                Text = "Denoising",
-                SwitchKey = "toggleDenoising",
-                Tooltip = "Enable denoising of your audio",
+                Key = "toggleDenoising",
+                Type = ElementType.Switch,
+                Label = true,
+                Tooltip = true,
                 Tab = effectsTab,
                 ToggleAction = OnToggleDenoising
             });
@@ -306,9 +329,10 @@ namespace RPVoiceChat.Gui
             RegisterOption(new ConfigOption
             {
                 Enabled = audioInputManager.IsDenoisingAvailable,
-                Text = "Background noise detection",
-                SliderKey = "denoisingSensitivity",
-                Tooltip = "Sets sensitivity for background noise. Audio detected as noise will be denoised with max strength.",
+                Key = "denoisingSensitivity",
+                Type = ElementType.Slider,
+                Label = true,
+                Tooltip = true,
                 Tab = effectsTab,
                 SlideAction = SlideDenoisingSensitivity
             });
@@ -316,18 +340,20 @@ namespace RPVoiceChat.Gui
             RegisterOption(new ConfigOption
             {
                 Enabled = audioInputManager.IsDenoisingAvailable,
-                Text = "Denoising strength",
-                SliderKey = "denoisingStrength",
-                Tooltip = "Sets intensity of denosing for audio detected as voice. Lower it if your voice is too distorted.",
+                Key = "denoisingStrength",
+                Type = ElementType.Slider,
+                Label = true,
+                Tooltip = true,
                 Tab = effectsTab,
                 SlideAction = SlideDenoisingStrength
             });
 
             RegisterOption(new ConfigOption
             {
-                InteractiveElementKey = "playerList",
+                Key = "playerList",
+                Type = ElementType.Custom,
                 Tab = playerListTab,
-                InteractiveElement = new PlayerList(capi, settingsRepository, this)
+                CustomElement = new PlayerList(capi, settingsRepository, this)
             });
         }
 
