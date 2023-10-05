@@ -1,5 +1,4 @@
-﻿using OpenTK.Audio.OpenAL;
-using RPVoiceChat.Networking;
+﻿using RPVoiceChat.Networking;
 
 namespace RPVoiceChat.Audio
 {
