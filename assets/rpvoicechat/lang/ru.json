@@ -56,7 +56,7 @@
     "Gui.ModMenu.toggleDenoising.Label": "Шумоподавление",
     "Gui.ModMenu.toggleDenoising.Tooltip": "Включить шумоподавление вашего аудио",
     "Gui.ModMenu.denoisingSensitivity.Label": "Распознавание фонового шума",
-    "Gui.ModMenu.denoisingSensitivity.Tooltip": "Задаёт чувствительность к фоновому шуму. Аудио, принятое за шум, будет подавляться сильнее",
+    "Gui.ModMenu.denoisingSensitivity.Tooltip": "Задаёт чувствительность к фоновому шуму. Аудио, принятое за шум, будет подавляться с максимальной интенсивностью",
     "Gui.ModMenu.denoisingStrength.Label": "Уровень шумоподавления",
     "Gui.ModMenu.denoisingStrength.Tooltip": "Задаёт интенсивность шумоподавления для звука, распознанного как голос. Уменьшите значение, если ваш голос слишком искажается"
 }
