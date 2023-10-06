@@ -1,9 +1,9 @@
-﻿using RPVoiceChat.Networking;
+﻿using Open.Nat;
+using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using Vintagestory.API.Server;
 
 namespace RPVoiceChat.Server
@@ -52,6 +52,11 @@ namespace RPVoiceChat.Server
                 Logger.server.Notification($"{reserveServer.GetTransportID()} server started");
                 return;
             }
+            catch (NatDeviceNotFoundException)
+            {
+                Logger.server.Error($"Failed to launch {networkServer.GetTransportID()} server: Unable to port forward with UPnP. " +
+                    $"Make sure your IP is public and UPnP is enabled if you want to use {networkServer.GetTransportID()} server.");
+            }
             catch (Exception e)
             {
                 Logger.server.Error($"Failed to launch {networkServer.GetTransportID()} server:\n{e}");
@@ -82,7 +87,7 @@ namespace RPVoiceChat.Server
             if (ToggledOff) return;
 
             var player = api.World.PlayerByUid(packet.PlayerId);
-            int distance = WorldConfig.GetVoiceDistance(api, packet.VoiceLevel);
+            int distance = WorldConfig.GetInt(packet.VoiceLevel);
             int squareDistance = distance * distance;
 
             foreach (var closePlayer in api.World.AllOnlinePlayers)
@@ -114,8 +119,19 @@ namespace RPVoiceChat.Server
             if (!serverByTransport.ContainsKey(playerTransport)) return;
 
             var extendedServer = serverByTransport[playerTransport] as IExtendedNetworkServer;
-            playerConnection.Address = IPAddress.Parse(player.IpAddress).MapToIPv4().ToString();
-            extendedServer?.PlayerConnected(player.PlayerUID, playerConnection);
+            if (extendedServer == null) return;
+            try
+            {
+                playerConnection.Address = NetworkUtils.ParseIP(player.IpAddress).MapToIPv4().ToString();
+                extendedServer?.PlayerConnected(player.PlayerUID, playerConnection);
+            }
+            catch (Exception e)
+            {
+                Logger.server.Warning($"Server failed to establish connection with {player.PlayerUID}({player.PlayerName}) over " +
+                    $"requested transport: {playerTransport}.\nServer will attempt to use other available transports to deliver " +
+                    "packets to this client. Mismatch between server and client transports can result in unstable behavior!\n" +
+                    $"Player address: {player.IpAddress}, Reason: {e}");
+            }
         }
 
         private void SendPacket(INetworkPacket packet, string playerId)

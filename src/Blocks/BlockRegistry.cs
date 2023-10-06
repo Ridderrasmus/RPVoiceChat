@@ -1,4 +1,3 @@
-﻿
 using Vintagestory.API.Common;
 
 namespace RPVoiceChat
@@ -7,6 +6,7 @@ namespace RPVoiceChat
     {
         public static void RegisterBlocks(ICoreAPI api)
         {
+            if (WorldConfig.GetBool("extra-content") == false) return;
             api.RegisterBlockClass("soundemittingblock", typeof(SoundEmittingBlock));
         }
     }

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
-namespace RPVoiceChat
+namespace RPVoiceChat.Gui
 {
     public class VoiceLevelIcon : HudElement
     {
@@ -15,7 +15,8 @@ namespace RPVoiceChat
             { VoiceLevel.Talking, "talk" },
             { VoiceLevel.Shouting, "shout" },
         };
-        ElementBounds dialogBounds = new ElementBounds() {
+        ElementBounds dialogBounds = new ElementBounds()
+        {
             Alignment = EnumDialogArea.RightBottom,
             BothSizing = ElementSizing.Fixed,
             fixedWidth = size,

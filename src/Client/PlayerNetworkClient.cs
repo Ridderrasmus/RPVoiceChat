@@ -1,4 +1,5 @@
-﻿using RPVoiceChat.Networking;
+﻿using Open.Nat;
+using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
 using System;
 using System.Linq;
@@ -43,7 +44,8 @@ namespace RPVoiceChat.Client
         private void OnHandshakeRequest(ConnectionInfo serverConnection)
         {
             var clientTransportID = networkClient.GetTransportID();
-            try {
+            try
+            {
                 if (!serverConnection.SupportedTransports.Contains(clientTransportID))
                     throw new Exception("Server doesn't support client's transport");
 
@@ -54,6 +56,11 @@ namespace RPVoiceChat.Client
                 isConnected = true;
                 Logger.client.Notification($"Successfully connected with the {clientTransportID} client");
                 return;
+            }
+            catch (NatDeviceNotFoundException)
+            {
+                Logger.client.Warning($"Failed to connect with the {clientTransportID} client: Unable to port forward with UPnP. " +
+                    $"Make sure your IP is public and UPnP is enabled if you want to connect with {clientTransportID} client.");
             }
             catch (Exception e)
             {
