@@ -13,6 +13,9 @@ namespace RPVoiceChat
             ModConfig.ReadConfig(api);
             config = ModConfig.Config;
             new Logger(api);
+            EmbeddedDllClass.ExtractEmbeddedDlls();
+            EmbeddedDllClass.LoadDll("OpenTK.Mathematics.dll");
+            EmbeddedDllClass.LoadDll("OpenTK.Audio.OpenAL.dll");
         }
 
         public override void Start(ICoreAPI api)

@@ -1,5 +1,4 @@
-﻿using OpenTK.Audio.OpenAL;
-using ProtoBuf;
+﻿using ProtoBuf;
 using RPVoiceChat.Audio;
 using System.IO;
 

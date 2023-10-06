@@ -1,8 +1,7 @@
-﻿using OpenTK.Audio.OpenAL;
-
-namespace RPVoiceChat.Audio.Effects
+﻿namespace RPVoiceChat.Audio.Effects
 {
-    public class ReverbEffect
+    // Uncomment when OALCW has implementation for all these functions, or when binding redirects are fixed, or when LinuxServer gets OpenAl.dll - Dmitry221060 05.10.2023
+    /*public class ReverbEffect
     {
         private int effect;
         private int slot;
@@ -25,5 +24,5 @@ namespace RPVoiceChat.Audio.Effects
             ALC.EFX.AuxiliaryEffectSlot(slot, EffectSlotInteger.Effect, effect);
             ALC.EFX.Source(source, EFXSourceInteger3.AuxiliarySendFilter, slot, 0, 0);
         }
-    }
+    }*/
 }
