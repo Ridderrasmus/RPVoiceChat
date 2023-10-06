@@ -12,6 +12,7 @@ namespace RPVoiceChat
         {
             ModConfig.ReadConfig(api);
             config = ModConfig.Config;
+            WorldConfig.Init(api);
             new Logger(api);
             EmbeddedDllClass.ExtractEmbeddedDlls();
             EmbeddedDllClass.LoadDll("OpenTK.Mathematics.dll");
@@ -22,6 +23,11 @@ namespace RPVoiceChat
         {
             ItemRegistry.RegisterItems(api);
             BlockRegistry.RegisterBlocks(api);
+        }
+
+        public override void Dispose()
+        {
+            WorldConfig.Dispose();
         }
     }
 }

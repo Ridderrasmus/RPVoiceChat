@@ -150,6 +150,7 @@ namespace RPVoiceChat
             configGui?.Dispose();
             ClientSettings.Dispose();
             clientSettingsRepository?.Dispose();
+            base.Dispose();
         }
     }
 }

@@ -84,7 +84,7 @@ namespace RPVoiceChat.Server
         public void SendAudioToAllClientsInRange(AudioPacket packet)
         {
             var player = api.World.PlayerByUid(packet.PlayerId);
-            int distance = WorldConfig.GetVoiceDistance(api, packet.VoiceLevel);
+            int distance = WorldConfig.GetInt(packet.VoiceLevel);
             int squareDistance = distance * distance;
 
             foreach (var closePlayer in api.World.AllOnlinePlayers)
