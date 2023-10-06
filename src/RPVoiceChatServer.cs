@@ -58,6 +58,7 @@ namespace RPVoiceChat
 
             sapi.ChatCommands
                 .GetOrCreate("rpvc")
+                .WithAlias("rpvoice", "rpvoicechat")
                 .RequiresPrivilege(Privilege.controlserver)
                 .BeginSub("shout")
                     .WithDesc(UIUtils.I18n("Command.Shout.Desc"))
