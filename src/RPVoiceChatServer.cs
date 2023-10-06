@@ -22,9 +22,10 @@ namespace RPVoiceChat
             server.Launch();
 
             // Register/load world config
-            sapi.World.Config.SetInt("rpvoicechat:distance-whisper", sapi.World.Config.GetInt("rpvoicechat:distance-whisper", (int)VoiceLevel.Whispering));
-            sapi.World.Config.SetInt("rpvoicechat:distance-talk", sapi.World.Config.GetInt("rpvoicechat:distance-talk", (int)VoiceLevel.Talking));
-            sapi.World.Config.SetInt("rpvoicechat:distance-shout", sapi.World.Config.GetInt("rpvoicechat:distance-shout", (int)VoiceLevel.Shouting));
+            WorldConfig.Set(VoiceLevel.Whispering, WorldConfig.GetInt(VoiceLevel.Whispering));
+            WorldConfig.Set(VoiceLevel.Talking, WorldConfig.GetInt(VoiceLevel.Talking));
+            WorldConfig.Set(VoiceLevel.Shouting, WorldConfig.GetInt(VoiceLevel.Shouting));
+            WorldConfig.Set("force-render-name-tags", WorldConfig.GetBool("force-render-name-tags", true));
 
             // Register commands
             registerCommands();
@@ -33,7 +34,7 @@ namespace RPVoiceChat
         public override void StartPre(ICoreAPI api)
         {
             base.StartPre(api);
-            api.World.Config.SetBool("rpvoicechat:extra-content", config.AdditionalContent);
+            WorldConfig.Set("extra-content", config.AdditionalContent);
         }
 
         public override double ExecuteOrder() => 1.02;
@@ -57,6 +58,7 @@ namespace RPVoiceChat
 
             sapi.ChatCommands
                 .GetOrCreate("rpvc")
+                .WithAlias("rpvoice", "rpvoicechat")
                 .RequiresPrivilege(Privilege.controlserver)
                 .BeginSub("shout")
                     .WithDesc(UIUtils.I18n("Command.Shout.Desc"))
@@ -74,29 +76,46 @@ namespace RPVoiceChat
                     .HandleWith(SetWhisperHandler)
                 .EndSub()
                 .BeginSub("info")
-                    .WithDesc(UIUtils.I18n($"Command.Info.Desc"))
+                    .WithDesc(UIUtils.I18n("Command.Info.Desc"))
                     .HandleWith(DisplayInfoHandler)
                 .EndSub()
                 .BeginSub("reset")
                     .WithDesc(UIUtils.I18n("Command.Reset.Desc"))
                     .HandleWith(ResetDistanceHandler)
+                .EndSub()
+                .BeginSub("forcenametags")
+                    .WithDesc(UIUtils.I18n("Command.ForceNameTags.Desc"))
+                    .WithAdditionalInformation(UIUtils.I18n("Command.ForceNameTags.Help"))
+                    .WithArgs(parsers.Bool("state"))
+                    .HandleWith(ToggleForceNameTags)
                 .EndSub();
+        }
+
+        private TextCommandResult ToggleForceNameTags(TextCommandCallingArgs args)
+        {
+            const string i18nPrefix = "Command.ForceNameTags.Success";
+            bool state = (bool)args[0];
+
+            WorldConfig.Set("force-render-name-tags", state);
+
+            string stateAsText = state ? "Enabled" : "Disabled";
+            return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
         }
 
         private TextCommandResult ResetDistanceHandler(TextCommandCallingArgs args)
         {
-            sapi.World.Config.SetInt("rpvoicechat:distance-whisper", (int)VoiceLevel.Whispering);
-            sapi.World.Config.SetInt("rpvoicechat:distance-talk", (int)VoiceLevel.Talking);
-            sapi.World.Config.SetInt("rpvoicechat:distance-shout", (int)VoiceLevel.Shouting);
+            WorldConfig.Set(VoiceLevel.Whispering, (int)VoiceLevel.Whispering);
+            WorldConfig.Set(VoiceLevel.Talking, (int)VoiceLevel.Talking);
+            WorldConfig.Set(VoiceLevel.Shouting, (int)VoiceLevel.Shouting);
 
             return TextCommandResult.Success(UIUtils.I18n("Command.Reset.Success"));
         }
 
         private TextCommandResult DisplayInfoHandler(TextCommandCallingArgs args)
         {
-            int whisper = sapi.World.Config.GetInt("rpvoicechat:distance-whisper", (int)VoiceLevel.Whispering);
-            int talk = sapi.World.Config.GetInt("rpvoicechat:distance-talk", (int)VoiceLevel.Talking);
-            int shout = sapi.World.Config.GetInt("rpvoicechat:distance-shout", (int)VoiceLevel.Shouting);
+            int whisper = WorldConfig.GetInt(VoiceLevel.Whispering);
+            int talk = WorldConfig.GetInt(VoiceLevel.Talking);
+            int shout = WorldConfig.GetInt(VoiceLevel.Shouting);
 
             return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout));
         }
@@ -105,7 +124,7 @@ namespace RPVoiceChat
         {
             int distance = (int)args[0];
 
-            sapi.World.Config.SetInt("rpvoicechat:distance-whisper", distance);
+            WorldConfig.Set(VoiceLevel.Whispering, distance);
 
             return TextCommandResult.Success(UIUtils.I18n("Command.Whisper.Success", distance));
         }
@@ -114,7 +133,7 @@ namespace RPVoiceChat
         {
             int distance = (int)args[0];
 
-            sapi.World.Config.SetInt("rpvoicechat:distance-talk", distance);
+            WorldConfig.Set(VoiceLevel.Talking, distance);
 
             return TextCommandResult.Success(UIUtils.I18n("Command.Talk.Success", distance));
         }
@@ -123,7 +142,7 @@ namespace RPVoiceChat
         {
             int distance = (int)args[0];
 
-            sapi.World.Config.SetInt("rpvoicechat:distance-shout", distance);
+            WorldConfig.Set(VoiceLevel.Shouting, distance);
 
             return TextCommandResult.Success(UIUtils.I18n($"Command.Shout.Success", distance));
         }
@@ -131,6 +150,7 @@ namespace RPVoiceChat
         public override void Dispose()
         {
             server?.Dispose();
+            base.Dispose();
         }
     }
 }
