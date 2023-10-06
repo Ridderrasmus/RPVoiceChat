@@ -74,7 +74,7 @@ namespace RPVoiceChat
                     .HandleWith(SetWhisperHandler)
                 .EndSub()
                 .BeginSub("info")
-                    .WithDesc(UIUtils.I18n($"Command.Info.Desc"))
+                    .WithDesc(UIUtils.I18n("Command.Info.Desc"))
                     .HandleWith(DisplayInfoHandler)
                 .EndSub()
                 .BeginSub("reset")
