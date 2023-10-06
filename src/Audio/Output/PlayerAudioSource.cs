@@ -1,5 +1,4 @@
-﻿using OpenTK.Audio.OpenAL;
-using RPVoiceChat.Audio.Effects;
+﻿using RPVoiceChat.Audio.Effects;
 using RPVoiceChat.DB;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Utils;
@@ -166,7 +165,7 @@ namespace RPVoiceChat.Audio
         {
             // Distance in blocks at which audio source normally considered quiet.
             const float quietDistance = 10;
-            float maxHearingDistance = WorldConfig.GetVoiceDistance(capi, voiceLevel);
+            float maxHearingDistance = WorldConfig.GetInt(voiceLevel);
             var exponent = quietDistance < maxHearingDistance ? 2 : -0.33;
             var distanceFactor = Math.Pow(quietDistance / maxHearingDistance, exponent);
 

@@ -12,13 +12,23 @@ namespace RPVoiceChat
         {
             ModConfig.ReadConfig(api);
             config = ModConfig.Config;
+            WorldConfig.Init(api);
             new Logger(api);
+            EmbeddedDllClass.ExtractEmbeddedDlls();
+            EmbeddedDllClass.LoadDll("OpenTK.Mathematics.dll");
+            EmbeddedDllClass.LoadDll("OpenTK.Audio.OpenAL.dll");
         }
 
         public override void Start(ICoreAPI api)
         {
             ItemRegistry.RegisterItems(api);
             BlockRegistry.RegisterBlocks(api);
+        }
+
+        public override void Dispose()
+        {
+            WorldConfig.Dispose();
+            ModConfig.Dispose();
         }
     }
 }

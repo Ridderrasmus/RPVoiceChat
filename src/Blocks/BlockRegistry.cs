@@ -6,7 +6,7 @@ namespace RPVoiceChat
     {
         public static void RegisterBlocks(ICoreAPI api)
         {
-            if (!api.World.Config.GetBool("rpvoicechat:extra-content")) return;
+            if (WorldConfig.GetBool("extra-content") == false) return;
             api.RegisterBlockClass("soundemittingblock", typeof(SoundEmittingBlock));
         }
     }
