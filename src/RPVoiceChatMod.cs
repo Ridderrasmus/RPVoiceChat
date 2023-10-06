@@ -6,7 +6,7 @@ namespace RPVoiceChat
     public abstract class RPVoiceChatMod : ModSystem
     {
         protected RPVoiceChatConfig config;
-        protected const string modID = "rpvoicechat";
+        public static readonly string modID = "rpvoicechat";
 
         public override void StartPre(ICoreAPI api)
         {

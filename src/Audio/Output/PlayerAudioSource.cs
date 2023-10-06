@@ -1,17 +1,23 @@
-﻿using System;
-using OpenTK.Audio.OpenAL;
-using Vintagestory.API.Client;
-using Vintagestory.API.Common;
-using Vintagestory.API.MathTools;
-using Vintagestory.API.Common.Entities;
+﻿using OpenTK.Audio.OpenAL;
+using RPVoiceChat.Audio.Effects;
+using RPVoiceChat.DB;
+using RPVoiceChat.Gui;
 using RPVoiceChat.Utils;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Vintagestory.API.Client;
+using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
+using Vintagestory.API.MathTools;
 
 namespace RPVoiceChat.Audio
 {
     public class PlayerAudioSource : IDisposable
     {
+        public bool IsDisposed = false;
+        public bool IsPlaying { get => _IsPlaying(); }
         private const int BufferCount = 20;
         private int source;
         private CircularAudioBuffer buffer;
@@ -21,11 +27,10 @@ namespace RPVoiceChat.Audio
         private Dictionary<string, IAudioCodec> codecs = new Dictionary<string, IAudioCodec>();
         private FilterLowpass lowpassFilter;
         private EffectsExtension effectsExtension;
-        private bool IsDisposed = false;
 
         private ICoreClientAPI capi;
         private IPlayer player;
-        private AudioOutputManager outputManager;
+        private ClientSettingsRepository clientSettings;
 
         public bool IsLocational { get; set; } = true;
         public VoiceLevel voiceLevel { get; private set; } = VoiceLevel.Talking;
@@ -38,20 +43,21 @@ namespace RPVoiceChat.Audio
         private Vec3f lastSpeakerCoords;
         private DateTime? lastSpeakerUpdate;
 
-        public PlayerAudioSource(IPlayer player, AudioOutputManager manager, ICoreClientAPI capi)
+        public PlayerAudioSource(IPlayer player, ICoreClientAPI capi, ClientSettingsRepository clientSettings, EffectsExtension effectsExtension)
         {
-            effectsExtension = manager.effectsExtension;
-            outputManager = manager;
+            this.effectsExtension = effectsExtension;
             this.player = player;
             this.capi = capi;
+            this.clientSettings = clientSettings;
 
             lastSpeakerCoords = player.Entity?.SidedPos?.XYZFloat;
             lastSpeakerUpdate = DateTime.Now;
 
             source = OALW.GenSource();
             buffer = new CircularAudioBuffer(source, BufferCount);
+            buffer.OnEmptyingQueue += OnSourceStop;
 
-            float gain = Math.Min(PlayerListener.gain, 1);
+            float gain = GetFinalGain();
             OALW.Source(source, ALSourceb.Looping, false);
             OALW.Source(source, ALSourceb.SourceRelative, true);
             OALW.Source(source, ALSourcef.Gain, gain);
@@ -89,16 +95,17 @@ namespace RPVoiceChat.Audio
         {
             EntityPos speakerPos = player.Entity?.SidedPos;
             EntityPos listenerPos = capi.World.Player.Entity?.SidedPos;
-            if (speakerPos == null || listenerPos == null || !outputManager.isReady)
+            if (speakerPos == null || listenerPos == null)
                 return;
 
             // If the player is on the other side of something to the listener, then the player's voice should be muffled
+            bool mufflingEnabled = ClientSettings.GetBool("muffling", true);
             float wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
             if (capi.World.Player.Entity.Swimming)
                 wallThickness += 1.0f;
 
             lowpassFilter?.Stop();
-            if (wallThickness != 0)
+            if (mufflingEnabled && wallThickness != 0)
             {
                 lowpassFilter = lowpassFilter ?? new FilterLowpass(effectsExtension, source);
                 lowpassFilter.Start();
@@ -127,7 +134,7 @@ namespace RPVoiceChat.Audio
             OALW.Source(source, ALSourcef.Pitch, pitch);
             */
 
-            float gain = Math.Min(PlayerListener.gain, 1);
+            float gain = GetFinalGain();
             var sourcePosition = new Vec3f();
             var velocity = new Vec3f();
             if (IsLocational)
@@ -141,6 +148,20 @@ namespace RPVoiceChat.Audio
             OALW.Source(source, ALSource3f.Position, sourcePosition.X, sourcePosition.Y, sourcePosition.Z);
             OALW.Source(source, ALSource3f.Velocity, velocity.X, velocity.Y, velocity.Z);
             OALW.Source(source, ALSourceb.SourceRelative, true);
+        }
+
+        private bool _IsPlaying()
+        {
+            return OALW.GetSourceState(source) == ALSourceState.Playing;
+        }
+
+        private float GetFinalGain()
+        {
+            var globalGain = Math.Min(PlayerListener.gain, 1);
+            var sourceGain = clientSettings.GetPlayerGain(player.PlayerUID);
+            var finalGain = GameMath.Clamp(globalGain * sourceGain, 0, 1);
+
+            return finalGain;
         }
 
         private float GetDistanceFactor()
@@ -202,15 +223,14 @@ namespace RPVoiceChat.Audio
             }
 
             orderingQueue.Add(sequenceNumber, audio);
-            capi.Event.EnqueueMainThreadTask(() =>
-            {
-                capi.Event.RegisterCallback(DequeueAudio, orderingDelay);
-            }, "PlayerAudioSource EnqueueAudio");
+            DequeueAudio();
         }
 
-        public void DequeueAudio(float _)
+        public async void DequeueAudio()
         {
             AudioData audio;
+
+            await Task.Delay(orderingDelay);
 
             lock (orderingQueue.SyncRoot)
             {
@@ -219,14 +239,10 @@ namespace RPVoiceChat.Audio
                 orderingQueue.RemoveAt(0);
             }
 
-            var state = OALW.GetSourceState(source);
-            if (state == ALSourceState.Stopped)
-                buffer.TryDequeueBuffers(); //Calling this can dequeue unprocessed audio so we want to make sure the source is stopped
-
-            byte[] audioBytes = audio.data;
-            buffer.QueueAudio(audioBytes, audioBytes.Length, audio.format, audio.frequency);
+            buffer.QueueAudio(audio.data, audio.format, audio.frequency);
 
             // The source can stop playing if it finishes everything in queue
+            var state = OALW.GetSourceState(source);
             if (state != ALSourceState.Playing)
             {
                 StartPlaying();
@@ -236,20 +252,28 @@ namespace RPVoiceChat.Audio
         public void StartPlaying()
         {
             OALW.SourcePlay(source);
+            PlayerNameTagRenderer.UpdatePlayerNameTag(player, true);
         }
 
         public void StopPlaying()
         {
             OALW.SourceStop(source);
+            OnSourceStop();
+        }
+
+        private void OnSourceStop()
+        {
+            PlayerNameTagRenderer.UpdatePlayerNameTag(player, false);
         }
 
         public void Dispose()
         {
             if (IsDisposed) return;
-            OALW.SourceStop(source);
 
-            buffer?.Dispose();
+            OALW.SourceStop(source);
             OALW.DeleteSource(source);
+            buffer?.Dispose();
+
             IsDisposed = true;
         }
     }

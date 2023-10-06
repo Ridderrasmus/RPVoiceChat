@@ -1,10 +1,12 @@
-﻿using Vintagestory.API.Client;
-using System.Collections.Concurrent;
-using Vintagestory.API.Common;
+﻿using OpenTK.Audio.OpenAL;
+using RPVoiceChat.DB;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
 using System;
-using OpenTK.Audio.OpenAL;
+using System.Collections.Concurrent;
+using Vintagestory.API.Client;
+using Vintagestory.API.Common;
+using Vintagestory.API.Util;
 
 namespace RPVoiceChat.Audio
 {
@@ -13,7 +15,8 @@ namespace RPVoiceChat.Audio
         ICoreClientAPI capi;
         RPVoiceChatConfig _config;
         private bool isLoopbackEnabled;
-        public bool IsLoopbackEnabled {
+        public bool IsLoopbackEnabled
+        {
             get => isLoopbackEnabled;
 
             set
@@ -33,23 +36,23 @@ namespace RPVoiceChat.Audio
             }
         }
 
-        public bool isReady = false;
-        public EffectsExtension effectsExtension;
+        private EffectsExtension effectsExtension;
         private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
         private PlayerAudioSource localPlayerAudioSource;
+        private ClientSettingsRepository clientSettings;
 
-        public AudioOutputManager(ICoreClientAPI api)
+        public AudioOutputManager(ICoreClientAPI api, ClientSettingsRepository settingsRepository)
         {
             _config = ModConfig.Config;
             IsLoopbackEnabled = _config.IsLoopbackEnabled;
             capi = api;
             effectsExtension = new EffectsExtension();
+            clientSettings = settingsRepository;
         }
 
         public void Launch()
         {
             PlayerListener.Init(capi);
-            isReady = true;
             capi.Event.PlayerEntitySpawn += PlayerSpawned;
             capi.Event.PlayerEntityDespawn += PlayerDespawned;
             ClientLoaded();
@@ -58,7 +61,6 @@ namespace RPVoiceChat.Audio
         // Called when the client receives an audio packet supplying the audio packet
         public void HandleAudioPacket(AudioPacket packet)
         {
-            if (!isReady) return;
             if (packet.AudioData.Length != packet.Length)
             {
                 Logger.client.Debug("Audio packet payload had invalid length, dropping packet");
@@ -68,7 +70,7 @@ namespace RPVoiceChat.Audio
             PlayerAudioSource source;
             string playerId = packet.PlayerId;
 
-            if (!playerSources.TryGetValue(playerId, out source))
+            if (!playerSources.TryGetValue(playerId, out source) || source.IsDisposed)
             {
                 var player = capi.World.PlayerByUid(playerId);
                 if (player == null)
@@ -77,11 +79,7 @@ namespace RPVoiceChat.Audio
                     return;
                 }
 
-                source = new PlayerAudioSource(player, this, capi);
-                if (!playerSources.TryAdd(playerId, source))
-                {
-                    Logger.client.Debug("Could not add new player to sources");
-                }
+                source = CreatePlayerSource(player);
             }
 
             HandleAudioPacket(packet, source);
@@ -109,9 +107,9 @@ namespace RPVoiceChat.Audio
             HandleAudioPacket(packet, localPlayerAudioSource);
         }
 
-        public void ClientLoaded()
+        private void ClientLoaded()
         {
-            localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, this, capi)
+            localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, capi, clientSettings, effectsExtension)
             {
                 IsLocational = false,
             };
@@ -120,47 +118,51 @@ namespace RPVoiceChat.Audio
             localPlayerAudioSource.StartPlaying();
         }
 
-        public void PlayerSpawned(IPlayer player)
+        private PlayerAudioSource CreatePlayerSource(IPlayer player)
+        {
+            var source = new PlayerAudioSource(player, capi, clientSettings, effectsExtension);
+            playerSources.AddOrUpdate(player.PlayerUID, source, (_, __) => source);
+            source.StartPlaying();
+
+            return source;
+        }
+
+        private void PlayerSpawned(IPlayer player)
         {
             if (player.ClientId == capi.World.Player.ClientId) return;
 
-            var playerSource = new PlayerAudioSource(player, this, capi)
-            {
-                IsLocational = true,
-            };
-
-            if (playerSources.TryAdd(player.PlayerUID, playerSource) == false)
-            {
-                Logger.client.Warning($"Failed to add player {player.PlayerName} as source !");
-            }
-            else
-            {
-                playerSource.StartPlaying();
-            }
+            CreatePlayerSource(player);
         }
 
-        public void PlayerDespawned(IPlayer player)
+        private void PlayerDespawned(IPlayer player)
         {
             if (player.ClientId == capi.World.Player.ClientId)
             {
                 localPlayerAudioSource.Dispose();
                 localPlayerAudioSource = null;
+                return;
             }
-            else
-            {
-                if (playerSources.TryRemove(player.PlayerUID, out var playerAudioSource))
-                {
-                    playerAudioSource.Dispose();
-                }
-                else
-                {
-                    Logger.client.Warning($"Failed to remove player {player.PlayerName}");
-                }
-            }
+
+            playerSources.TryGetValue(player.PlayerUID, out var source);
+            source?.Dispose();
+            playerSources.Remove(player.PlayerUID);
+        }
+
+        public bool IsPlayerTalking(string playerId)
+        {
+            if (playerSources.TryGetValue(playerId, out var source))
+                return source.IsPlaying;
+
+            if (capi.World.Player.PlayerUID == playerId)
+                return localPlayerAudioSource.IsPlaying;
+
+            Logger.client.Warning($"Could not find player audio source for {playerId}, assuming player isn't talking");
+            return false;
         }
 
         public void Dispose()
         {
+            PlayerListener.Dispose();
             localPlayerAudioSource?.Dispose();
             foreach (var source in playerSources.Values)
                 source?.Dispose();

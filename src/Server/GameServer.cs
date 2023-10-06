@@ -4,7 +4,6 @@ using RPVoiceChat.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using Vintagestory.API.Server;
 
 namespace RPVoiceChat.Server

@@ -1,10 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
 
 namespace RPVoiceChat
 {
-    public class SoundEmittingBlock : Block
+    public class SoundEmittingItem : Item
     {
         private Random Random = new Random();
 
@@ -19,60 +19,61 @@ namespace RPVoiceChat
 
         public override void OnLoaded(ICoreAPI api)
         {
+            this.api = api;
             base.OnLoaded(api);
-            
+
             AudibleDistance = (int)(Attributes?["soundAudibleDistance"].AsInt(AudibleDistance));
             Volume = (float)(Attributes?["soundVolume"].AsFloat(Volume));
             CooldownTime = (int)(Attributes?["cooldownTime"].AsInt(CooldownTime));
         }
 
-        public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
-        {
-            return true;
-        }
 
-        public override bool OnBlockInteractStep(float secondsUsed, IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
+        // When an entity is attacked with this item
+        // Called twice it seems. Both clientside and serverside?
+        public override void OnAttackingWith(IWorldAccessor world, Entity byEntity, Entity attackedEntity, ItemSlot slot)
         {
-            return true;
-        }
-
-        public override bool OnBlockInteractCancel(float secondsUsed, IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel, EnumItemUseCancelReason cancelReason)
-        {
-            return true;
-        }
-
-        public override void OnBlockInteractStop(float secondsUsed, IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
-        {
+            base.OnAttackingWith(world, byEntity, attackedEntity, slot);
             if (!world.Side.IsServer()) return;
 
 
-            PlaySoundAt("blockInteractSounds", blockSel.Position.X, blockSel.Position.Y, blockSel.Position.Z);
-
-            base.OnBlockInteractStop(secondsUsed, world, byPlayer, blockSel);
+            if (byEntity is EntityPlayer)
+                PlaySound("rightClickSounds", byEntity.World.PlayerByUid((byEntity as EntityPlayer).PlayerUID));
         }
 
-        private void PlaySoundAt(string soundSource, double x, double y, double z)
+        // When a block is broken with this item
+        // Called twice it seems. Both clientside and serverside?
+        public override bool OnBlockBrokenWith(IWorldAccessor world, Entity byEntity, ItemSlot slot, BlockSelection blockSel, float dropQuantityMultiplier = 1)
         {
-            PlaySoundAt(soundSource, x, y, z, null);
+            if (!world.Side.IsServer()) return base.OnBlockBrokenWith(world, byEntity, slot, blockSel, dropQuantityMultiplier);
+
+            if (byEntity is EntityPlayer)
+                PlaySound("breakBlockSounds", byEntity.World.PlayerByUid((byEntity as EntityPlayer).PlayerUID));
+
+            return base.OnBlockBrokenWith(world, byEntity, slot, blockSel, dropQuantityMultiplier);
         }
 
-        private void PlaySoundAt(string soundSource, double x, double y, double z, IPlayer player)
+        public override void OnHeldInteractStop(float secondsUsed, ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel)
         {
-            if (!isUsable) return;
-            isUsable = false;
+            IWorldAccessor world = byEntity.World;
+            if (!world.Side.IsServer()) return;
 
-            string[] soundList = Attributes?[soundSource].AsArray<string>(new string[0]);
+            if (byEntity is EntityPlayer)
+                PlaySound("rightClickSounds", byEntity.World.PlayerByUid((byEntity as EntityPlayer).PlayerUID));
+        }
 
-            if (soundList == null || soundList.Length == 0) return;
+        public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handling)
+        {
+            handling = EnumHandHandling.Handled;
+        }
 
-            string sound = soundList[Random.Next(soundList.Length)];
+        public override bool OnHeldInteractCancel(float secondsUsed, ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, EnumItemUseCancelReason cancelReason)
+        {
+            return true;
+        }
 
-            if(player == null)
-                api.World.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/" + sound + ".ogg"), x, y, z, null, false, AudibleDistance, Volume);
-            else
-                api.World.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/" + sound + ".ogg"), x, y, z, player, false, AudibleDistance, Volume);
-
-            StartCountdown();
+        public override bool OnHeldInteractStep(float secondsUsed, ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel)
+        {
+            return true;
         }
 
         private void PlaySound(string soundSource, IPlayer player)
@@ -120,6 +121,5 @@ namespace RPVoiceChat
                 isUsable = true;
             }
         }
-
     }
 }

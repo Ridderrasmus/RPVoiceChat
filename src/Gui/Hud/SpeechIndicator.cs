@@ -3,14 +3,15 @@ using System;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
-namespace RPVoiceChat
+namespace RPVoiceChat.Gui
 {
     public class SpeechIndicator : HudElement
     {
         RPVoiceChatConfig _config;
         const float size = 64;
         const int silenceTimeout = 160;
-        ElementBounds dialogBounds = new ElementBounds() {
+        ElementBounds dialogBounds = new ElementBounds()
+        {
             Alignment = EnumDialogArea.RightBottom,
             BothSizing = ElementSizing.Fixed,
             fixedWidth = size,

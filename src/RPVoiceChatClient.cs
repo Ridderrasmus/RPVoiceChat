@@ -1,16 +1,18 @@
 using RPVoiceChat.Audio;
 using RPVoiceChat.Client;
+using RPVoiceChat.DB;
+using RPVoiceChat.Gui;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
 using System;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
 
 namespace RPVoiceChat
 {
     public class RPVoiceChatClient : RPVoiceChatMod
     {
+        private ClientSettingsRepository clientSettingsRepository;
         private MicrophoneManager micManager;
         private AudioOutputManager audioOutputManager;
         private PatchManager patchManager;
@@ -18,7 +20,7 @@ namespace RPVoiceChat
 
         protected ICoreClientAPI capi;
 
-        private MainConfig configGui;
+        private ModMenuDialog configGui;
 
         private bool mutePressed = false;
         private bool voiceMenuPressed = false;
@@ -32,10 +34,18 @@ namespace RPVoiceChat
         public override void StartClientSide(ICoreClientAPI api)
         {
             capi = api;
+            ClientSettings.Init(capi);
+
+            // Sneak in native dlls
+            EmbeddedDllClass.ExtractEmbeddedDlls();
+            EmbeddedDllClass.LoadDll("RNNoise.dll");
+
+            // Init data repositories
+            clientSettingsRepository = new ClientSettingsRepository(capi.Logger);
 
             // Init microphone, audio output and harmony patch managers
             micManager = new MicrophoneManager(capi);
-            audioOutputManager = new AudioOutputManager(capi);
+            audioOutputManager = new AudioOutputManager(capi, clientSettingsRepository);
             patchManager = new PatchManager(modID);
             patchManager.Patch();
 
@@ -46,15 +56,16 @@ namespace RPVoiceChat
             client = new PlayerNetworkClient(capi, mainClient, backupClient);
 
             // Initialize gui
-            configGui = new MainConfig(capi, micManager, audioOutputManager);
+            configGui = new ModMenuDialog(capi, micManager, audioOutputManager, clientSettingsRepository);
             capi.Gui.RegisterDialog(new SpeechIndicator(capi, micManager));
             capi.Gui.RegisterDialog(new VoiceLevelIcon(capi, micManager));
+            new PlayerNameTagRenderer(capi, audioOutputManager);
 
             // Set up keybinds
-            capi.Input.RegisterHotKey("voicechatMenu", "RPVoice: Config menu", GlKeys.P, HotkeyType.GUIOrOtherControls);
-            capi.Input.RegisterHotKey("voicechatVoiceLevel", "RPVoice: Change speech volume", GlKeys.Tab, HotkeyType.GUIOrOtherControls, false, false, true);
-            capi.Input.RegisterHotKey("voicechatPTT", "RPVoice: Push to talk", GlKeys.CapsLock, HotkeyType.GUIOrOtherControls);
-            capi.Input.RegisterHotKey("voicechatMute", "RPVoice: Toggle mute", GlKeys.N, HotkeyType.GUIOrOtherControls);
+            capi.Input.RegisterHotKey("voicechatMenu", UIUtils.I18n("Hotkey.ModMenu"), GlKeys.P, HotkeyType.GUIOrOtherControls);
+            capi.Input.RegisterHotKey("voicechatVoiceLevel", UIUtils.I18n("Hotkey.VoiceLevel"), GlKeys.Tab, HotkeyType.GUIOrOtherControls, false, false, true);
+            capi.Input.RegisterHotKey("voicechatPTT", UIUtils.I18n("Hotkey.PTT"), GlKeys.CapsLock, HotkeyType.GUIOrOtherControls);
+            capi.Input.RegisterHotKey("voicechatMute", UIUtils.I18n("Hotkey.Mute"), GlKeys.N, HotkeyType.GUIOrOtherControls);
             capi.Event.KeyUp += Event_KeyUp;
 
             // Set up keybind event handlers
@@ -92,14 +103,13 @@ namespace RPVoiceChat
                 return true;
             });
 
-
-            client.OnAudioReceived += OnAudioReceived;
-            micManager.OnBufferRecorded += OnBufferRecorded;
             capi.Event.LevelFinalize += OnLoad;
         }
 
         private void OnLoad()
         {
+            client.OnAudioReceived += OnAudioReceived;
+            micManager.OnBufferRecorded += OnBufferRecorded;
             micManager.Launch();
             audioOutputManager.Launch();
         }
@@ -138,9 +148,9 @@ namespace RPVoiceChat
             audioOutputManager?.Dispose();
             patchManager?.Dispose();
             client?.Dispose();
-            configGui.Dispose();
-            PlayerListener.Dispose();
-            //client = null;
+            configGui?.Dispose();
+            ClientSettings.Dispose();
+            clientSettingsRepository?.Dispose();
         }
     }
 }

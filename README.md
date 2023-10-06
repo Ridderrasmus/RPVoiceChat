@@ -17,7 +17,7 @@ Not only does the mod allow players to talk to each other in-game, but it also a
 1. Download the latest version of the mod from the [mod page](https://mods.vintagestory.at/rpvoicechat).
 2. Place the downloaded file in the `Mods` folder of your Vintage Story installation.
 3. Start the game and enjoy!
-(4.) Optional: Double check your keybinds in the settings menu. All keybinds start with `RPVC` and are located in the hud and interface category.
+4. (Optional): Double check your keybinds in the settings menu. All keybinds start with `RPVC` and are located in the hud and interface category.
  
 ## Usage
 ### Talking
@@ -37,12 +37,15 @@ The settings relevant to users are:
 - `ManualPortForwarding` - Determines whether the mod should skip port forwarding with UPnP and assume that ports are open. **Setting this to true means that you take full responsibility for opening ports and if they are not open mod will work incorrectly.** The default value is `false`.
 - `PushToTalkEnabled` - Whether push to talk is enabled. The default value is `false`.
 - `IsLoopbackEnabled` - The setting that defines whether you should be able to hear what you're transmitting. The default value is `false`.
+- `IsDenoisingEnabled` - Whether or not your audio should be denoised. The default value is `false`.
 - `IsHUDShown` - Whether or not the HUD should be shown. The default value is `true`.
 - `IsMuted` - Whether or not you are muted. The default value is `false`.
 - `OutputGain` - The volume level of other players in percent (0-200). The default value is `100`.
 - `InputGain` - The volume level of your microphone in percent (0-100). The default value is `100`.
 - `InputThreshold` - The current setting of your audio input threshold in percent (0-100). The default value is `20`.
 - `MaxInputThreshold` - This configures how finely tuned the input threshold should be. The smaller number the more sensitive the input will be. The default value is `0.24`.
+- `BackgroungNoiseThreshold` - Sensitivity of the denoiser in percent (0-100). 0 means all audio is voice, 100 means all audio is noise. If audio is detected as noise it will be denoised at max strength. The default value is `50`.
+- `VoiceDenoisingStrength` - Intensity of voice denoising in percent (0-100). Low value won't remove noise when you are speaking, high value may decrease audio quality. The default value is `80`.
  
 ## <a name="configuration-server"></a>Configuration (For server owners)
 The mod is highly configurable and can be configured more deeply in the modconfig file. You'll find this file in the `ModConfig` folder in the same directory as your `Mods` folder. The file is called `rpvoicechat.json`.
