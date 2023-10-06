@@ -45,7 +45,7 @@
     "Gui.ModMenu.outputGain.Tooltip": "На сколько увеличить громкость других игроков",
     "Gui.ModMenu.inputGain.Label": "Громкость записи",
     "Gui.ModMenu.inputGain.Tooltip": "Изменение собственной громкости",
-    "Gui.ModMenu.inputThreshold.Label": "Порог улавливания входного аудио",
+    "Gui.ModMenu.inputThreshold.Label": "Порог улавливания аудио",
     "Gui.ModMenu.inputThreshold.Tooltip": "Порог, при котором ваше аудио начинает улавливаться",
     "Gui.ModMenu.audioMeter.Label": "Аудиометр",
     "Gui.ModMenu.audioMeter.Tooltip": "Отображает амплитуду звука",
