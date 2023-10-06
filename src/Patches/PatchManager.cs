@@ -14,7 +14,9 @@ namespace RPVoiceChat
 
         public void Patch()
         {
+            EntityNameTagRendererRegistryPatch.Patch(harmony);
             GuiDialogCreateCharacterPatch.Patch(harmony);
+            GuiElementSliderPatch.Patch(harmony);
             LoadedSoundNativePatch.Patch(harmony);
         }
 

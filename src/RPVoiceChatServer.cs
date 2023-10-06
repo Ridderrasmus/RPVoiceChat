@@ -20,11 +20,12 @@ namespace RPVoiceChat
             var backupServer = new NativeNetworkServer(api);
             server = new GameServer(sapi, mainServer, backupServer);
             server.Launch();
-            
+
             // Register/load world config
-            sapi.World.Config.SetInt("rpvoicechat:distance-whisper", sapi.World.Config.GetInt("rpvoicechat:distance-whisper", (int)VoiceLevel.Whispering));
-            sapi.World.Config.SetInt("rpvoicechat:distance-talk", sapi.World.Config.GetInt("rpvoicechat:distance-talk", (int)VoiceLevel.Talking));
-            sapi.World.Config.SetInt("rpvoicechat:distance-shout", sapi.World.Config.GetInt("rpvoicechat:distance-shout", (int)VoiceLevel.Shouting));
+            WorldConfig.Set(VoiceLevel.Whispering, WorldConfig.GetInt(VoiceLevel.Whispering));
+            WorldConfig.Set(VoiceLevel.Talking, WorldConfig.GetInt(VoiceLevel.Talking));
+            WorldConfig.Set(VoiceLevel.Shouting, WorldConfig.GetInt(VoiceLevel.Shouting));
+            WorldConfig.Set("force-render-name-tags", WorldConfig.GetBool("force-render-name-tags", true));
 
             // Register commands
             registerCommands();
@@ -33,7 +34,7 @@ namespace RPVoiceChat
         public override void StartPre(ICoreAPI api)
         {
             base.StartPre(api);
-            api.World.Config.SetBool("rpvoicechat:extra-content", config.AdditionalContent);
+            WorldConfig.Set("extra-content", config.AdditionalContent);
         }
 
         public override double ExecuteOrder() => 1.02;
@@ -57,35 +58,53 @@ namespace RPVoiceChat
 
             sapi.ChatCommands
                 .GetOrCreate("rpvc")
+                .WithAlias("rpvoice", "rpvoicechat")
                 .RequiresPrivilege(Privilege.controlserver)
                 .BeginSub("shout")
-                    .WithDesc("Sets the shout distance in blocks")
+                    .WithDesc(UIUtils.I18n("Command.Shout.Desc"))
                     .WithArgs(parsers.Int("distance"))
                     .HandleWith(SetShoutHandler)
                 .EndSub()
                 .BeginSub("talk")
-                    .WithDesc("Sets the talk distance in blocks")
+                    .WithDesc(UIUtils.I18n("Command.Talk.Desc"))
                     .WithArgs(parsers.Int("distance"))
                     .HandleWith(SetTalkHandler)
                 .EndSub()
                 .BeginSub("whisper")
-                    .WithDesc("Sets the whisper distance in blocks")
+                    .WithDesc(UIUtils.I18n("Command.Whisper.Desc"))
                     .WithArgs(parsers.Int("distance"))
                     .HandleWith(SetWhisperHandler)
                 .EndSub()
                 .BeginSub("info")
-                    .WithDesc("Displays the current audio distances")
+                    .WithDesc(UIUtils.I18n("Command.Info.Desc"))
                     .HandleWith(DisplayInfoHandler)
                 .EndSub()
                 .BeginSub("reset")
-                    .WithDesc("Resets the audio distances to their default settings")
+                    .WithDesc(UIUtils.I18n("Command.Reset.Desc"))
                     .HandleWith(ResetDistanceHandler)
                 .EndSub()
                 .BeginSub("voiptoggle")
                     .WithDesc("Toggles voip functionality on the server")
                     .WithArgs(parsers.Bool("toggle"))
                     .HandleWith(ToggleVoip)
+                .EndSub()
+                .BeginSub("forcenametags")
+                    .WithDesc(UIUtils.I18n("Command.ForceNameTags.Desc"))
+                    .WithAdditionalInformation(UIUtils.I18n("Command.ForceNameTags.Help"))
+                    .WithArgs(parsers.Bool("state"))
+                    .HandleWith(ToggleForceNameTags)
                 .EndSub();
+        }
+
+        private TextCommandResult ToggleForceNameTags(TextCommandCallingArgs args)
+        {
+            const string i18nPrefix = "Command.ForceNameTags.Success";
+            bool state = (bool)args[0];
+
+            WorldConfig.Set("force-render-name-tags", state);
+
+            string stateAsText = state ? "Enabled" : "Disabled";
+            return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
         }
 
         private TextCommandResult ToggleVoip(TextCommandCallingArgs args)
@@ -97,59 +116,56 @@ namespace RPVoiceChat
             else
                 return TextCommandResult.Error("Voip is already " + (toggle ? "on" : "off") + "!");
         }
+
         private TextCommandResult ResetDistanceHandler(TextCommandCallingArgs args)
         {
-            sapi.World.Config.SetInt("rpvoicechat:distance-whisper", (int)VoiceLevel.Whispering);
-            sapi.World.Config.SetInt("rpvoicechat:distance-talk", (int)VoiceLevel.Talking);
-            sapi.World.Config.SetInt("rpvoicechat:distance-shout", (int)VoiceLevel.Shouting);
+            WorldConfig.Set(VoiceLevel.Whispering, (int)VoiceLevel.Whispering);
+            WorldConfig.Set(VoiceLevel.Talking, (int)VoiceLevel.Talking);
+            WorldConfig.Set(VoiceLevel.Shouting, (int)VoiceLevel.Shouting);
 
-            return TextCommandResult.Success("Audio distances reset to default");
+            return TextCommandResult.Success(UIUtils.I18n("Command.Reset.Success"));
         }
-        
+
         private TextCommandResult DisplayInfoHandler(TextCommandCallingArgs args)
         {
-            int whisper = sapi.World.Config.GetInt("rpvoicechat:distance-whisper", (int)VoiceLevel.Whispering);
-            int talk = sapi.World.Config.GetInt("rpvoicechat:distance-talk", (int)VoiceLevel.Talking);
-            int shout = sapi.World.Config.GetInt("rpvoicechat:distance-shout", (int)VoiceLevel.Shouting);
+            int whisper = WorldConfig.GetInt(VoiceLevel.Whispering);
+            int talk = WorldConfig.GetInt(VoiceLevel.Talking);
+            int shout = WorldConfig.GetInt(VoiceLevel.Shouting);
 
-            return TextCommandResult.Success
-                (
-                    "Whisper distance: " + whisper + " blocks\n" +
-                    "Talk distance: " + talk + " blocks\n" +
-                    "Shout distance: " + shout + " blocks"
-                );
+            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout));
         }
 
         private TextCommandResult SetWhisperHandler(TextCommandCallingArgs args)
         {
             int distance = (int)args[0];
 
-            sapi.World.Config.SetInt("rpvoicechat:distance-whisper", distance);
+            WorldConfig.Set(VoiceLevel.Whispering, distance);
 
-            return TextCommandResult.Success("Whisper distance set to " + distance);
+            return TextCommandResult.Success(UIUtils.I18n("Command.Whisper.Success", distance));
         }
 
         private TextCommandResult SetTalkHandler(TextCommandCallingArgs args)
         {
             int distance = (int)args[0];
 
-            sapi.World.Config.SetInt("rpvoicechat:distance-talk", distance);
+            WorldConfig.Set(VoiceLevel.Talking, distance);
 
-            return TextCommandResult.Success("Talking distance set to " + distance);
+            return TextCommandResult.Success(UIUtils.I18n("Command.Talk.Success", distance));
         }
 
         private TextCommandResult SetShoutHandler(TextCommandCallingArgs args)
         {
             int distance = (int)args[0];
 
-            sapi.World.Config.SetInt("rpvoicechat:distance-shout", distance);
+            WorldConfig.Set(VoiceLevel.Shouting, distance);
 
-            return TextCommandResult.Success("Shout distance set to " + distance);
+            return TextCommandResult.Success(UIUtils.I18n($"Command.Shout.Success", distance));
         }
 
         public override void Dispose()
         {
             server?.Dispose();
+            base.Dispose();
         }
     }
 }

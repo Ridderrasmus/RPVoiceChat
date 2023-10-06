@@ -4,7 +4,6 @@ using RPVoiceChat.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using Vintagestory.API.Server;
 
 namespace RPVoiceChat.Server
@@ -88,7 +87,7 @@ namespace RPVoiceChat.Server
             if (ToggledOff) return;
 
             var player = api.World.PlayerByUid(packet.PlayerId);
-            int distance = WorldConfig.GetVoiceDistance(api, packet.VoiceLevel);
+            int distance = WorldConfig.GetInt(packet.VoiceLevel);
             int squareDistance = distance * distance;
 
             foreach (var closePlayer in api.World.AllOnlinePlayers)

@@ -1,11 +1,12 @@
-﻿using System;
+﻿using OpenTK.Audio.OpenAL;
+using RPVoiceChat.Audio.Effects;
+using RPVoiceChat.Utils;
+using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Vintagestory.API.Client;
-using OpenTK.Audio.OpenAL;
-using System.Collections.Generic;
-using RPVoiceChat.Utils;
 
 namespace RPVoiceChat.Audio
 {
@@ -24,6 +25,7 @@ namespace RPVoiceChat.Audio
 
         private IAudioCapture capture;
         private IAudioCodec codec;
+        private IDenoiser denoiser;
         private RPVoiceChatConfig config;
         private ConcurrentQueue<AudioData> audioDataQueue = new ConcurrentQueue<AudioData>();
         private Thread audioProcessingThread;
@@ -33,6 +35,7 @@ namespace RPVoiceChat.Audio
         public bool canSwitchDevice = true;
         public bool Transmitting = false;
         public bool TransmittingOnPreviousStep = false;
+        public bool IsDenoisingAvailable = false;
 
         private long gameTickId = 0;
 
@@ -61,6 +64,7 @@ namespace RPVoiceChat.Audio
 
             capture = CreateNewCapture(config.CurrentInputDevice);
             codec = CreateNewCodec(ALFormat.Mono16);
+            denoiser = TryLoadDenoiser();
         }
 
         public void Launch()
@@ -80,16 +84,6 @@ namespace RPVoiceChat.Audio
             return inputThreshold;
         }
 
-        public void Dispose()
-        {
-            capi.Event.UnregisterGameTickListener(gameTickId);
-            gameTickId = 0;
-            audioProcessingCTS?.Cancel();
-            audioProcessingCTS?.Dispose();
-            capture?.Stop();
-            capture?.Dispose();
-        }
-
         public void SetThreshold(int threshold)
         {
             inputThreshold = (threshold / 100.0) * MaxInputThreshold;
@@ -98,6 +92,16 @@ namespace RPVoiceChat.Audio
         public void SetGain(int newGain)
         {
             gain = newGain / 100f;
+        }
+
+        public void SetDenoisingSensitivity(int sensitivity)
+        {
+            denoiser?.SetBackgroundNoiseThreshold(sensitivity / 100f);
+        }
+
+        public void SetDenoisingStrength(int strength)
+        {
+            denoiser?.SetVoiceDenoisingStrength(strength / 100f);
         }
 
         public void UpdateCaptureAudioSamples(float deltaTime)
@@ -123,15 +127,13 @@ namespace RPVoiceChat.Audio
         }
 
         /// <summary>
-        /// Converts audio to Mono16, applies gain and calculates amplitude
+        /// Converts audio to Mono16, applies gain, applies denoising, calculates amplitude and applies encoding
         /// </summary>
         private AudioData PreprocessRawAudio(byte[] rawSamples)
         {
             var rawSampleSize = SampleToByte * InputChannelCount;
             var pcmCount = rawSamples.Length / rawSampleSize;
             short[] pcms = new short[pcmCount];
-
-            double sampleSquareSum = 0;
 
             for (var rawSampleIndex = 0; rawSampleIndex < rawSamples.Length; rawSampleIndex += rawSampleSize)
             {
@@ -145,14 +147,19 @@ namespace RPVoiceChat.Audio
                     var sample = BitConverter.ToInt16(rawSamples, sampleIndex);
                     pcm += sample;
                 }
-                pcm = pcm / usedChannels.Length;
+                pcm = pcm / Math.Min(usedChannels.Length, 1);
                 pcm = pcm * gain;
 
                 var pcmIndex = rawSampleIndex / rawSampleSize;
                 pcms[pcmIndex] = (short)pcm;
-
-                sampleSquareSum += Math.Pow(pcm / short.MaxValue, 2);
             }
+
+            if (config.IsDenoisingEnabled && denoiser != null && denoiser.SupportsFormat(Frequency, OutputChannelCount, SampleToByte * 8))
+                denoiser.Denoise(ref pcms);
+
+            double sampleSquareSum = 0;
+            for (var i = 0; i < pcms.Length; i++)
+                sampleSquareSum += Math.Pow((float)pcms[i] / short.MaxValue, 2);
 
             var amplitude = Math.Sqrt(sampleSquareSum / pcmCount);
 
@@ -257,7 +264,7 @@ namespace RPVoiceChat.Audio
                 format = newCapture?.SampleFormat ?? format;
                 Logger.client.Debug($"Succesfully created an audio capture device with arguments: {deviceName}, {Frequency}, {format}, {BufferSize}");
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Logger.client.Error($"Could not create audio capture device {deviceName} in {format} format:\n{e}");
             }
@@ -275,6 +282,21 @@ namespace RPVoiceChat.Audio
             var codec = new OpusCodec(Frequency, OutputChannelCount);
 
             return codec;
+        }
+
+        private IDenoiser TryLoadDenoiser()
+        {
+            IDenoiser denoiser = null;
+            try
+            {
+                denoiser = new RNNoiseDenoiser(config.BackgroungNoiseThreshold, config.VoiceDenoisingStrength);
+                IsDenoisingAvailable = true;
+            }
+            catch (DllNotFoundException)
+            {
+                Logger.client.Error("Can't find denoising library, denoising won't be available");
+            }
+            return denoiser;
         }
 
         private ALFormat GetDefaultInputFormat()
@@ -316,7 +338,7 @@ namespace RPVoiceChat.Audio
             var rawSampleSize = SampleToByte * InputChannelCount;
             int monoSampleSize = SampleToByte;
 
-            for (var rawSampleIndex = 0; rawSampleIndex < rawSampleSize*depth; rawSampleIndex += rawSampleSize)
+            for (var rawSampleIndex = 0; rawSampleIndex < rawSampleSize * depth; rawSampleIndex += rawSampleSize)
             {
                 for (var channelIndex = 0; channelIndex < InputChannelCount; channelIndex++)
                 {
@@ -371,6 +393,17 @@ namespace RPVoiceChat.Audio
         {
             capture = CreateNewCapture(deviceId);
             capture?.Start();
+        }
+
+        public void Dispose()
+        {
+            capi.Event.UnregisterGameTickListener(gameTickId);
+            gameTickId = 0;
+            audioProcessingCTS?.Cancel();
+            audioProcessingCTS?.Dispose();
+            capture?.Stop();
+            capture?.Dispose();
+            denoiser?.Dispose();
         }
     }
 }

@@ -6,7 +6,7 @@ using System.IO;
 namespace RPVoiceChat.Networking
 {
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
-    public class AudioPacket: INetworkPacket
+    public class AudioPacket : INetworkPacket
     {
         public string PlayerId { get; set; }
         public byte[] AudioData { get; set; }

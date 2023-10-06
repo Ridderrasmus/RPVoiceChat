@@ -9,13 +9,15 @@ namespace RPVoiceChat.Audio
 {
     public class CircularAudioBuffer : IDisposable
     {
+        public event Action OnEmptyingQueue;
         private Thread dequeueAudioThread;
         private CancellationTokenSource dequeueAudioCTS;
         private List<int> availableBuffers = new List<int>();
         private List<int> queuedBuffers = new List<int>();
         private int[] buffers;
         private int source;
-        private object dequeue_buffers_lock = new object();
+        private ALSourceState previousSourceState = ALSourceState.Initial;
+        private object buffer_queue_lock = new object();
 
         public CircularAudioBuffer(int source, int bufferCount)
         {
@@ -28,8 +30,10 @@ namespace RPVoiceChat.Audio
             dequeueAudioThread.Start(dequeueAudioCTS.Token);
         }
 
-        public void QueueAudio(byte[] audio, int length, ALFormat format, int frequency)
+        public void QueueAudio(byte[] audio, ALFormat format, int frequency)
         {
+            FreeProcessedBuffers();
+
             // we arent playing back audio fast enough, better to skip the audio
             if (availableBuffers.Count == 0)
             {
@@ -50,28 +54,42 @@ namespace RPVoiceChat.Audio
             CancellationToken ct = (CancellationToken)cancellationToken;
             while (dequeueAudioThread.IsAlive && !ct.IsCancellationRequested)
             {
-                TryDequeueBuffers();
+                FreeProcessedBuffers();
                 Thread.Sleep(30);
             }
         }
 
-        public void TryDequeueBuffers()
+        private void FreeProcessedBuffers()
+        {
+            bool sourceHasStopped;
+            lock (buffer_queue_lock)
+            {
+                var sourceState = OALW.GetSourceState(source);
+                sourceHasStopped = sourceState == ALSourceState.Stopped;
+                if (sourceHasStopped && sourceState == previousSourceState) return;
+                // Source is Playing or just entered Stopped state
+                previousSourceState = sourceState;
+
+                TryDequeueBuffers();
+            }
+
+            if (sourceHasStopped) OnEmptyingQueue?.Invoke();
+        }
+
+        private void TryDequeueBuffers()
         {
             if (queuedBuffers.Count == 0) return;
 
-            lock (dequeue_buffers_lock)
-            {
-                OALW.ClearError();
-                OALW.GetSource(source, ALGetSourcei.BuffersProcessed, out var buffersProcessed);
-                if (buffersProcessed == 0) return;
+            OALW.ClearError();
+            OALW.GetSource(source, ALGetSourcei.BuffersProcessed, out var buffersProcessed);
+            if (buffersProcessed == 0) return;
 
-                var buffer = OALW.SourceUnqueueBuffer(source);
-                while (buffer != 0)
-                {
-                    queuedBuffers.Remove(buffer);
-                    availableBuffers.Add(buffer);
-                    buffer = OALW.SourceUnqueueBuffer(source);
-                }
+            var buffer = OALW.SourceUnqueueBuffer(source);
+            while (buffer != 0)
+            {
+                queuedBuffers.Remove(buffer);
+                availableBuffers.Add(buffer);
+                buffer = OALW.SourceUnqueueBuffer(source);
             }
         }
 
