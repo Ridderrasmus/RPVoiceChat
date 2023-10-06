@@ -45,7 +45,7 @@ namespace RPVoiceChat.Gui
             return capi.Gui.TextTexture.GenUnscaledTextTexture(playerName, textColor, textBg);
         }
 
-        public static void UpdatePlayerNameTag(IPlayer player, bool forceDisplay)
+        public static void UpdatePlayerNameTag(IPlayer player, bool isTalking)
         {
             capi.Event.EnqueueMainThreadTask(() =>
             {
@@ -54,8 +54,11 @@ namespace RPVoiceChat.Gui
                 var nametagAttribute = playerAttributes.GetTreeAttribute("nametag");
                 if (defaultShowTagOnlyWhenTargeted == null) defaultShowTagOnlyWhenTargeted = nametagAttribute.GetBool("showtagonlywhentargeted");
 
-                var showTagOnlyWhenTargeted = forceDisplay ? false : defaultShowTagOnlyWhenTargeted;
-                nametagAttribute.SetBool("showtagonlywhentargeted", (bool)showTagOnlyWhenTargeted);
+                bool forceRender = WorldConfig.GetBool("force-render-name-tags");
+                bool nameTagsEnabled = !(bool)defaultShowTagOnlyWhenTargeted;
+                bool shouldRender = nameTagsEnabled || (isTalking && forceRender);
+                nametagAttribute.SetBool("showtagonlywhentargeted", !shouldRender);
+
                 playerAttributes.MarkPathDirty("nametag");
             }, "rpvoicechat:UpdateNameTag");
         }
