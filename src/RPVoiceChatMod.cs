@@ -28,6 +28,7 @@ namespace RPVoiceChat
         public override void Dispose()
         {
             WorldConfig.Dispose();
+            ModConfig.Dispose();
         }
     }
 }
