@@ -25,6 +25,7 @@ namespace RPVoiceChat
             WorldConfig.Set(VoiceLevel.Whispering, WorldConfig.GetInt(VoiceLevel.Whispering));
             WorldConfig.Set(VoiceLevel.Talking, WorldConfig.GetInt(VoiceLevel.Talking));
             WorldConfig.Set(VoiceLevel.Shouting, WorldConfig.GetInt(VoiceLevel.Shouting));
+            WorldConfig.Set("force-render-name-tags", WorldConfig.GetBool("force-render-name-tags", true));
 
             // Register commands
             registerCommands();
@@ -80,7 +81,24 @@ namespace RPVoiceChat
                 .BeginSub("reset")
                     .WithDesc(UIUtils.I18n("Command.Reset.Desc"))
                     .HandleWith(ResetDistanceHandler)
+                .EndSub()
+                .BeginSub("forcenametags")
+                    .WithDesc(UIUtils.I18n("Command.ForceNameTags.Desc"))
+                    .WithAdditionalInformation(UIUtils.I18n("Command.ForceNameTags.Help"))
+                    .WithArgs(parsers.Bool("state"))
+                    .HandleWith(ToggleForceNameTags)
                 .EndSub();
+        }
+
+        private TextCommandResult ToggleForceNameTags(TextCommandCallingArgs args)
+        {
+            const string i18nPrefix = "Command.ForceNameTags.Success";
+            bool state = (bool)args[0];
+
+            WorldConfig.Set("force-render-name-tags", state);
+
+            string stateAsText = state ? "Enabled" : "Disabled";
+            return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
         }
 
         private TextCommandResult ResetDistanceHandler(TextCommandCallingArgs args)
