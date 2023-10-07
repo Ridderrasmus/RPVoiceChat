@@ -40,7 +40,7 @@
     "Gui.ModMenu.muteMicrophone.Label": "Выключить микрофон",
     "Gui.ModMenu.muteMicrophone.Tooltip": "Выключить микрофон",
     "Gui.ModMenu.loopback.Label": "Loopback",
-    "Gui.ModMenu.loopback.Tooltip": "Проигрывать записываемый звук в аудиовыход",
+    "Gui.ModMenu.loopback.Tooltip": "Проигрывать записываемый звук в выходное аудиоустойство",
     "Gui.ModMenu.outputGain.Label": "Уровень громкости игроков",
     "Gui.ModMenu.outputGain.Tooltip": "На сколько увеличить громкость других игроков",
     "Gui.ModMenu.inputGain.Label": "Громкость записи",
