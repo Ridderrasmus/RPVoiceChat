@@ -34,13 +34,13 @@
 			<HintPath>$(VINTAGE_STORY)/Mods/VSEssentials.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
-		<Reference Include="OpenTK">
+		<Reference Include="OpenAL">
 			<HintPath>Lib/OpenTK.Audio.OpenAL.dll</HintPath>
-			<Private>False</Private>
+			<Private>True</Private>
 		</Reference>
 		<Reference Include="OpenTK.Mathematics">
 			<HintPath>Lib/OpenTK.Mathematics.dll</HintPath>
-			<Private>False</Private>
+			<Private>True</Private>
 		</Reference>
 		<Reference Include="Newtonsoft.Json">
 			<HintPath>$(VINTAGE_STORY)/Lib/Newtonsoft.Json.dll</HintPath>
