@@ -367,6 +367,26 @@ namespace RPVoiceChat.Gui
                 Tab = advancedTab,
                 ToggleAction = OnToggleChannelGuessing
             });
+
+            RegisterOption(new ConfigOption
+            {
+                Key = "inputSensitivity",
+                Type = ElementType.Slider,
+                Label = true,
+                Tooltip = true,
+                Tab = advancedTab,
+                SlideAction = SlideInputSensitivity
+            });
+
+            RegisterOption(new ConfigOption
+            {
+                Key = "unscaledAudioMeter",
+                Type = ElementType.Custom,
+                Label = true,
+                Tooltip = true,
+                Tab = advancedTab,
+                CustomElement = new AudioMeter(capi, _audioInputManager, this, true)
+            });
         }
 
         protected override void RefreshValues()
@@ -389,6 +409,7 @@ namespace RPVoiceChat.Gui
             SetValue("denoisingStrength", new dynamic[] { _config.VoiceDenoisingStrength, 0, 100, 1, "%" });
             SetValue("playerList", null);
             SetValue("toggleChannelGuessing", ClientSettings.GetBool("channelGuessing", true));
+            SetValue("inputSensitivity", new dynamic[] { (int)(_config.MaxInputThreshold * 100), 1, 100, 1, "%" });
         }
 
         private void SetValue(string key, dynamic value)
@@ -496,6 +517,15 @@ namespace RPVoiceChat.Gui
         private void OnToggleChannelGuessing(bool enabled)
         {
             ClientSettings.Set("channelGuessing", enabled);
+        }
+
+        private bool SlideInputSensitivity(int sensitivity)
+        {
+            _audioInputManager.SetMaxInputThreshold(sensitivity);
+            _config.MaxInputThreshold = _audioInputManager.GetMaxInputThreshold();
+            ModConfig.Save(capi);
+
+            return true;
         }
     }
 }

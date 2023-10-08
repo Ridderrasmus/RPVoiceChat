@@ -79,6 +79,13 @@ namespace RPVoiceChat.Audio
             return MaxInputThreshold;
         }
 
+        public void SetMaxInputThreshold(double maxInputThreshold)
+        {
+            int inputThreshold = (int)(GetInputThreshold() / MaxInputThreshold * 100);
+            MaxInputThreshold = maxInputThreshold / 100;
+            SetThreshold(inputThreshold);
+        }
+
         public double GetInputThreshold()
         {
             return inputThreshold;

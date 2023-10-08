@@ -65,5 +65,9 @@
     "Gui.ModMenu.denoisingStrength.Label": "Denoising strength",
     "Gui.ModMenu.denoisingStrength.Tooltip": "Sets intensity of denosing for audio detected as voice. Lower it if your voice is too distorted.",
     "Gui.ModMenu.toggleChannelGuessing.Label": "Detect audio channels",
-    "Gui.ModMenu.toggleChannelGuessing.Tooltip": "If multichannel audio capture is supported we will use it and then filter out empty channels to account for cases when input device writes in non-default channels(for example, stereo audio on channels 3 and 4 instead of 1 and 2). Disabling this will make mod use all captured channels which will likely decrease your volume by x2/x4."
+    "Gui.ModMenu.toggleChannelGuessing.Tooltip": "If multichannel audio capture is supported we will use it and then filter out empty channels to account for cases when input device writes in non-default channels(for example, stereo audio on channels 3 and 4 instead of 1 and 2). Disabling this will make mod use all captured channels which will likely decrease your volume by x2/x4.",
+    "Gui.ModMenu.inputSensitivity.Label": "Max input threshold",
+    "Gui.ModMenu.inputSensitivity.Tooltip": "Used to scope input threshold to a shorter interval, which allows for finer control of voice activation. Decrease it if you have to set input threshold very low. Increase if Audio Meter on the audio input tab easily gets filled. <strong>Has no effect on the actual volume</strong>",
+    "Gui.ModMenu.unscaledAudioMeter.Label": "Unscaled Audio Meter",
+    "Gui.ModMenu.unscaledAudioMeter.Tooltip": "Shows your audio amplitude on the actual full scale, before applying max input threshold. Use it as a reference for setting max input threshold(segment to the left from the slider handle will be displayed in audio input tab)"
 }
