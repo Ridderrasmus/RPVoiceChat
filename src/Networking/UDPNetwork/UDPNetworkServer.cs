@@ -56,11 +56,13 @@ namespace RPVoiceChat.Networking
         public void PlayerConnected(string playerId, ConnectionInfo connectionInfo)
         {
             connectionsByPlayer.Add(playerId, connectionInfo);
+            logger.VerboseDebug($"{playerId} connected over UDP");
         }
 
         public void PlayerDisconnected(string playerId)
         {
             connectionsByPlayer.Remove(playerId);
+            logger.VerboseDebug($"{playerId} disconnected from UDP server");
         }
 
         private void MessageReceived(byte[] msg)
