@@ -367,7 +367,7 @@ namespace RPVoiceChat.Gui
             SetValue("togglePushToTalk", _config.PushToTalkEnabled);
             SetValue("muteMicrophone", _config.IsMuted);
             SetValue("loopback", _config.IsLoopbackEnabled);
-            SetValue("outputGain", new dynamic[] { _config.OutputGain, 0, 200, 1, "%" });
+            SetValue("outputGain", new dynamic[] { _config.OutputGain, 0, 300, 1, "%" });
             SetValue("inputGain", new dynamic[] { _config.InputGain, 0, 200, 1, "%", 100 });
             SetValue("inputThreshold", new dynamic[] { _config.InputThreshold, 0, 100, 1, "" });
             SetValue("toggleHUD", _config.IsHUDShown);
