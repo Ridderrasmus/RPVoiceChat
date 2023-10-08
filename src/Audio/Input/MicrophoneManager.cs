@@ -154,7 +154,7 @@ namespace RPVoiceChat.Audio
                     var sample = BitConverter.ToInt16(rawSamples, sampleIndex);
                     pcm += sample;
                 }
-                pcm = pcm / Math.Min(usedChannels.Length, 1);
+                pcm = pcm / Math.Max(usedChannels.Length, 1);
                 pcm = pcm * gain;
 
                 var pcmIndex = rawSampleIndex / rawSampleSize;
