@@ -33,7 +33,7 @@ namespace RPVoiceChat.Gui
             Bounds = bounds.FlatCopy().WithFixedWidth(audioMeterWidth);
         }
 
-        protected virtual void SetCoefficient()
+        private virtual void SetCoefficient()
         {
             coefficient = 100;
             if (shouldScale == false) return;
