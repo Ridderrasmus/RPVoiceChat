@@ -207,11 +207,13 @@ namespace RPVoiceChat.Gui
             var effectsTab = new ConfigTab("Effects");
             var interfaceTab = new ConfigTab("Interface");
             var playerListTab = new ConfigTab("PlayerList");
+            var advancedTab = new ConfigTab("Advanced");
             RegisterTab(audioInputTab);
             RegisterTab(audioOutputTab);
             RegisterTab(effectsTab);
             RegisterTab(interfaceTab);
             RegisterTab(playerListTab);
+            RegisterTab(advancedTab);
 
             RegisterOption(new ConfigOption
             {
@@ -355,6 +357,16 @@ namespace RPVoiceChat.Gui
                 Tab = playerListTab,
                 CustomElement = new PlayerList(capi, settingsRepository, this)
             });
+
+            RegisterOption(new ConfigOption
+            {
+                Key = "toggleChannelGuessing",
+                Type = ElementType.Switch,
+                Label = true,
+                Tooltip = true,
+                Tab = advancedTab,
+                ToggleAction = OnToggleChannelGuessing
+            });
         }
 
         protected override void RefreshValues()
@@ -376,6 +388,7 @@ namespace RPVoiceChat.Gui
             SetValue("denoisingSensitivity", new dynamic[] { _config.BackgroungNoiseThreshold, 0, 100, 1, "%" });
             SetValue("denoisingStrength", new dynamic[] { _config.VoiceDenoisingStrength, 0, 100, 1, "%" });
             SetValue("playerList", null);
+            SetValue("toggleChannelGuessing", ClientSettings.GetBool("channelGuessing", true));
         }
 
         private void SetValue(string key, dynamic value)
@@ -478,6 +491,11 @@ namespace RPVoiceChat.Gui
             ModConfig.Save(capi);
 
             return true;
+        }
+
+        private void OnToggleChannelGuessing(bool enabled)
+        {
+            ClientSettings.Set("channelGuessing", enabled);
         }
     }
 }

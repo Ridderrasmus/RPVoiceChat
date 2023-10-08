@@ -134,12 +134,12 @@ namespace RPVoiceChat.Audio
             var rawSampleSize = SampleToByte * InputChannelCount;
             var pcmCount = rawSamples.Length / rawSampleSize;
             short[] pcms = new short[pcmCount];
+            int[] usedChannels = DetectAudioChannels(rawSamples);
 
             for (var rawSampleIndex = 0; rawSampleIndex < rawSamples.Length; rawSampleIndex += rawSampleSize)
             {
                 double pcm = 0;
 
-                int[] usedChannels = DetectAudioChannels(rawSamples);
                 for (var channelIndex = 0; channelIndex < InputChannelCount; channelIndex++)
                 {
                     if (!usedChannels.Contains(channelIndex)) continue;
@@ -348,10 +348,11 @@ namespace RPVoiceChat.Audio
                 }
             }
 
+            bool guessUsedChannels = ClientSettings.GetBool("channelGuessing", true);
             for (var channelIndex = 0; channelIndex < InputChannelCount; channelIndex++)
             {
                 var averageSampleValue = sampleSums[channelIndex] / depth;
-                if (averageSampleValue > 5) usedChannels.Add(channelIndex);
+                if (averageSampleValue > 5 || !guessUsedChannels) usedChannels.Add(channelIndex);
             }
 
             return usedChannels.ToArray();
