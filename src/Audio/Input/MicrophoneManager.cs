@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Vintagestory.API.Client;
+using Vintagestory.API.MathTools;
 
 namespace RPVoiceChat.Audio
 {
@@ -150,7 +151,7 @@ namespace RPVoiceChat.Audio
                 pcm = pcm * gain;
 
                 var pcmIndex = rawSampleIndex / rawSampleSize;
-                pcms[pcmIndex] = (short)pcm;
+                pcms[pcmIndex] = (short)GameMath.Clamp(pcm, short.MinValue, short.MaxValue);
             }
 
             if (config.IsDenoisingEnabled && denoiser != null && denoiser.SupportsFormat(Frequency, OutputChannelCount, SampleToByte * 8))

@@ -368,7 +368,7 @@ namespace RPVoiceChat.Gui
             SetValue("muteMicrophone", _config.IsMuted);
             SetValue("loopback", _config.IsLoopbackEnabled);
             SetValue("outputGain", new dynamic[] { _config.OutputGain, 0, 200, 1, "%" });
-            SetValue("inputGain", new dynamic[] { _config.InputGain, 0, 100, 1, "%" });
+            SetValue("inputGain", new dynamic[] { _config.InputGain, 0, 200, 1, "%", 100 });
             SetValue("inputThreshold", new dynamic[] { _config.InputThreshold, 0, 100, 1, "" });
             SetValue("toggleHUD", _config.IsHUDShown);
             SetValue("toggleMuffling", ClientSettings.GetBool("muffling", true));
@@ -378,13 +378,18 @@ namespace RPVoiceChat.Gui
             SetValue("playerList", null);
         }
 
-        protected void SetValue(string key, dynamic value)
+        private void SetValue(string key, dynamic value)
         {
             GuiElement element = SingleComposer.GetElement(key);
             if (element is null) return;
             else if (element is GuiElementDropDown dropDown) dropDown.SetSelectedValue(value);
             else if (element is GuiElementSwitch switchBox) switchBox.On = value;
-            else if (element is GuiElementSlider slider) slider.SetValues(value[0], value[1], value[2], value[3], value[4]);
+            else if (element is GuiElementSlider slider)
+            {
+                slider.SetValues(value[0], value[1], value[2], value[3], value[4]);
+                if (value.Length < 6) return;
+                slider.SetAlarmValue(value[5]);
+            }
             else if (element is GuiElementVerticalTabs verticalTabs) verticalTabs.activeElement = value;
             else if (element is PlayerList playerList) playerList.SetupElement();
             else throw new Exception("Unknown element type");
