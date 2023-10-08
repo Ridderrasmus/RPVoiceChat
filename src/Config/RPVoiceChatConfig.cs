@@ -29,10 +29,6 @@
         public int BackgroungNoiseThreshold = 50;
         public int VoiceDenoisingStrength = 80;
         public string CurrentInputDevice;
-        // These are client settings but they are not
-        // accessible from the in-game settings menu and
-        // are only meant to be modified by someone who
-        // knows what they are doing
         public double MaxInputThreshold = 0.24;
 
         public RPVoiceChatConfig()
