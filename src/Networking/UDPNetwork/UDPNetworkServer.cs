@@ -67,8 +67,16 @@ namespace RPVoiceChat.Networking
 
         private void MessageReceived(byte[] msg)
         {
-            var packet = AudioPacket.FromBytes(msg);
-            OnReceivedPacket?.Invoke(packet);
+            PacketType code = (PacketType)BitConverter.ToInt32(msg, 0);
+            switch (code)
+            {
+                case PacketType.Audio:
+                    var packet = NetworkPacket.FromBytes<AudioPacket>(msg);
+                    AudioPacketReceived?.Invoke(packet);
+                    break;
+                default:
+                    throw new Exception($"Unsupported packet type: {code}");
+            }
         }
     }
 }
