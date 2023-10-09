@@ -59,7 +59,8 @@ namespace RPVoiceChat.Networking
             if (ipParts[0] == 10 ||
                (ipParts[0] == 192 && ipParts[1] == 168) ||
                (ipParts[0] == 172 && (ipParts[1] >= 16 && ipParts[1] <= 31)) ||
-               (ipParts[0] == 25 || ipParts[0] == 26))
+               (ipParts[0] == 25 || ipParts[0] == 26) ||
+               (ipParts[0] == 127 && ipParts[1] == 0 && ipParts[2] == 0 && ipParts[3] == 1))
                 return true;
 
             return false;

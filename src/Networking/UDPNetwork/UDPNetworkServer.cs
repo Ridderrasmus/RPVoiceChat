@@ -75,8 +75,7 @@ namespace RPVoiceChat.Networking
             switch (code)
             {
                 case PacketType.SelfPing:
-                    bool isAuthentic = ownEndPoint.Address == sender.Address && ownEndPoint.Port == sender.Port;
-                    if (!isAuthentic) return;
+                    if (!IsSelf(sender)) return;
                     isReady = true;
                     break;
                 case PacketType.Audio:
@@ -97,6 +96,13 @@ namespace RPVoiceChat.Networking
 
             if (isReady) return;
             throw new Exception("Server failed readiness probe. Aborting to prevent silent malfunction");
+        }
+
+        private bool IsSelf(IPEndPoint endPoint)
+        {
+            bool isSameAddress = ownEndPoint.Address.MapToIPv4().ToString() == endPoint.Address.MapToIPv4().ToString();
+            bool isSamePort = ownEndPoint.Port == endPoint.Port;
+            return isSameAddress && isSamePort;
         }
     }
 }
