@@ -23,7 +23,7 @@ namespace RPVoiceChat.Networking
 
             if (!IsInternalNetwork(serverConnection.Address))
                 SetupUpnp(port);
-            StartListening(serverEndpoint);
+            StartListening();
 
             var clientConnection = GetConnection();
             return clientConnection;

@@ -107,28 +107,23 @@ namespace RPVoiceChat.Networking
             return port;
         }
 
-        protected void StartListening(int port)
-        {
-            var endpoint = new IPEndPoint(IPAddress.Any, port);
-            StartListening(endpoint);
-        }
-
-        protected void StartListening(IPEndPoint ipendpoint)
+        protected void StartListening()
         {
             if (UdpClient == null) throw new Exception("Udp client has not been initialized. Can't start listening.");
 
             _listeningCTS = new CancellationTokenSource();
-            _listeningThread = new Thread(() => Listen(ipendpoint, _listeningCTS.Token));
+            _listeningThread = new Thread(() => Listen(_listeningCTS.Token));
             _listeningThread.Start();
         }
 
-        protected void Listen(IPEndPoint ipendpoint, CancellationToken ct)
+        protected void Listen(CancellationToken ct)
         {
             while (_listeningThread.IsAlive && !ct.IsCancellationRequested)
             {
                 try
                 {
-                    byte[] msg = UdpClient.Receive(ref ipendpoint);
+                    IPEndPoint sender = null;
+                    byte[] msg = UdpClient.Receive(ref sender);
 
                     OnMessageReceived?.Invoke(msg);
                 }

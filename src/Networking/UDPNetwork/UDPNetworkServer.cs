@@ -26,7 +26,7 @@ namespace RPVoiceChat.Networking
             if (!IsInternalNetwork(ip))
                 SetupUpnp(port);
             OpenUDPClient(port);
-            StartListening(port);
+            StartListening();
             VerifyServerReadiness();
         }
 
