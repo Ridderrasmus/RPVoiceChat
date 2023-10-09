@@ -11,11 +11,13 @@ namespace RPVoiceChat.Networking
 
         private Dictionary<string, ConnectionInfo> connectionsByPlayer = new Dictionary<string, ConnectionInfo>();
         private IPAddress ip;
+        private IPEndPoint ownEndPoint;
 
         public UDPNetworkServer(int port, string ip = null)
         {
             this.port = port;
             this.ip = IPAddress.Parse(ip ?? GetPublicIP());
+            ownEndPoint = GetEndPoint(GetConnection());
             logger = Utils.Logger.server;
 
             OnMessageReceived += MessageReceived;
@@ -73,6 +75,8 @@ namespace RPVoiceChat.Networking
             switch (code)
             {
                 case PacketType.SelfPing:
+                    bool isAuthentic = ownEndPoint.Address == sender.Address && ownEndPoint.Port == sender.Port;
+                    if (!isAuthentic) return;
                     isReady = true;
                     break;
                 case PacketType.Audio:
@@ -87,9 +91,8 @@ namespace RPVoiceChat.Networking
         private void VerifyServerReadiness()
         {
             var selfPingPacket = BitConverter.GetBytes((int)PacketType.SelfPing);
-            var ownEndpoint = GetEndPoint(GetConnection());
 
-            UdpClient.Send(selfPingPacket, selfPingPacket.Length, ownEndpoint);
+            UdpClient.Send(selfPingPacket, selfPingPacket.Length, ownEndPoint);
             Thread.Sleep(500);
 
             if (isReady) return;
