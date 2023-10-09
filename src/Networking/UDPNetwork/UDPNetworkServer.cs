@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Threading;
 
 namespace RPVoiceChat.Networking
 {
@@ -26,6 +27,7 @@ namespace RPVoiceChat.Networking
                 SetupUpnp(port);
             OpenUDPClient(port);
             StartListening(port);
+            VerifyServerReadiness();
         }
 
         public override ConnectionInfo GetConnection()
@@ -70,6 +72,9 @@ namespace RPVoiceChat.Networking
             PacketType code = (PacketType)BitConverter.ToInt32(msg, 0);
             switch (code)
             {
+                case PacketType.SelfPing:
+                    isReady = true;
+                    break;
                 case PacketType.Audio:
                     var packet = NetworkPacket.FromBytes<AudioPacket>(msg);
                     AudioPacketReceived?.Invoke(packet);
@@ -77,6 +82,18 @@ namespace RPVoiceChat.Networking
                 default:
                     throw new Exception($"Unsupported packet type: {code}");
             }
+        }
+
+        private void VerifyServerReadiness()
+        {
+            var selfPingPacket = BitConverter.GetBytes((int)PacketType.SelfPing);
+            var ownEndpoint = GetEndPoint(GetConnection());
+
+            UdpClient.Send(selfPingPacket, selfPingPacket.Length, ownEndpoint);
+            Thread.Sleep(500);
+
+            if (isReady) return;
+            throw new Exception("Server failed readiness probe. Aborting to prevent silent malfunction");
         }
     }
 }

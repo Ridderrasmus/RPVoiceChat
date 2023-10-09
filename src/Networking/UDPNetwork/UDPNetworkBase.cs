@@ -22,6 +22,7 @@ namespace RPVoiceChat.Networking
         protected const string _transportID = "UDP";
         protected bool upnpEnabled = true;
         protected Logger logger;
+        protected bool isReady = false;
 
 
         public string GetTransportID()

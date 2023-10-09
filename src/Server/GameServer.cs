@@ -64,7 +64,6 @@ namespace RPVoiceChat.Server
             if (reserveServer == null)
                 throw new Exception("Failed to launch any server");
 
-            Logger.server.Notification($"Using {reserveServer.GetTransportID()} server from now on");
             SwapActiveServer(reserveServer);
             reserveServer = null;
             Launch();
@@ -100,6 +99,7 @@ namespace RPVoiceChat.Server
 
         private void SwapActiveServer(INetworkServer newTransport)
         {
+            Logger.server.Notification($"Using {newTransport.GetTransportID()} server from now on");
             networkServer = newTransport;
         }
 
