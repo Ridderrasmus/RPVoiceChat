@@ -39,7 +39,7 @@ namespace RPVoiceChat.Networking
 
         private void MessageReceived(byte[] msg)
         {
-            AudioPacket packet = AudioPacket.FromBytes(msg);
+            AudioPacket packet = NetworkPacket.FromBytes<AudioPacket>(msg);
             OnAudioReceived?.Invoke(packet);
         }
     }

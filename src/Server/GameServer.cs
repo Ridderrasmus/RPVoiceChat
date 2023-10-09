@@ -131,7 +131,7 @@ namespace RPVoiceChat.Server
             }
         }
 
-        private void SendPacket(INetworkPacket packet, string playerId)
+        private void SendPacket(NetworkPacket packet, string playerId)
         {
             try
             {

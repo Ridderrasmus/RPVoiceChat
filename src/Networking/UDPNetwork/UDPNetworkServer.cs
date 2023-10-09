@@ -41,7 +41,7 @@ namespace RPVoiceChat.Networking
             return connectionInfo;
         }
 
-        public void SendPacket(INetworkPacket packet, string playerId)
+        public void SendPacket(NetworkPacket packet, string playerId)
         {
             ConnectionInfo connectionInfo;
             if (!connectionsByPlayer.TryGetValue(playerId, out connectionInfo))
