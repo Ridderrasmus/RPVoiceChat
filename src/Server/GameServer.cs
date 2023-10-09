@@ -40,13 +40,13 @@ namespace RPVoiceChat.Server
                 extendedServer?.Launch();
                 api.Event.PlayerNowPlaying += PlayerJoined;
                 api.Event.PlayerDisconnect += PlayerLeft;
-                networkServer.OnReceivedPacket += SendAudioToAllClientsInRange;
+                networkServer.AudioPacketReceived += SendAudioToAllClientsInRange;
                 serverByTransport.Add(networkServer.GetTransportID(), networkServer);
                 Logger.server.Notification($"{networkServer.GetTransportID()} server started");
 
                 if (reserveServer == null) return;
                 Logger.server.Notification($"Launching {reserveServer.GetTransportID()} server");
-                reserveServer.OnReceivedPacket += SendAudioToAllClientsInRange;
+                reserveServer.AudioPacketReceived += SendAudioToAllClientsInRange;
                 serverByTransport.Add(reserveServer.GetTransportID(), reserveServer);
                 Logger.server.Notification($"{reserveServer.GetTransportID()} server started");
                 return;

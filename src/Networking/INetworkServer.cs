@@ -4,7 +4,7 @@ namespace RPVoiceChat.Networking
 {
     public interface INetworkServer
     {
-        public event Action<AudioPacket> OnReceivedPacket;
+        public event Action<AudioPacket> AudioPacketReceived;
 
         public ConnectionInfo GetConnection();
         public string GetTransportID();

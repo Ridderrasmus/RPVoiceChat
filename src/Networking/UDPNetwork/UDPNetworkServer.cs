@@ -6,7 +6,7 @@ namespace RPVoiceChat.Networking
 {
     public class UDPNetworkServer : UDPNetworkBase, IExtendedNetworkServer
     {
-        public event Action<AudioPacket> OnReceivedPacket;
+        public event Action<AudioPacket> AudioPacketReceived;
 
         private Dictionary<string, ConnectionInfo> connectionsByPlayer = new Dictionary<string, ConnectionInfo>();
         private IPAddress ip;
