@@ -37,7 +37,7 @@ namespace RPVoiceChat.Networking
             UdpClient.Send(data, data.Length, serverEndpoint);
         }
 
-        private void MessageReceived(byte[] msg)
+        private void MessageReceived(byte[] msg, IPEndPoint sender)
         {
             AudioPacket packet = NetworkPacket.FromBytes<AudioPacket>(msg);
             OnAudioReceived?.Invoke(packet);

@@ -11,7 +11,7 @@ namespace RPVoiceChat.Networking
 {
     public abstract class UDPNetworkBase : IDisposable
     {
-        public event Action<byte[]> OnMessageReceived;
+        public event Action<byte[], IPEndPoint> OnMessageReceived;
 
         private Thread _listeningThread;
         private CancellationTokenSource _listeningCTS;
@@ -125,7 +125,7 @@ namespace RPVoiceChat.Networking
                     IPEndPoint sender = null;
                     byte[] msg = UdpClient.Receive(ref sender);
 
-                    OnMessageReceived?.Invoke(msg);
+                    OnMessageReceived?.Invoke(msg, sender);
                 }
                 catch (SocketException e)
                 {

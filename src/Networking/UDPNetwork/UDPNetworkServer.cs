@@ -67,7 +67,7 @@ namespace RPVoiceChat.Networking
             logger.VerboseDebug($"{playerId} disconnected from UDP server");
         }
 
-        private void MessageReceived(byte[] msg)
+        private void MessageReceived(byte[] msg, IPEndPoint sender)
         {
             PacketType code = (PacketType)BitConverter.ToInt32(msg, 0);
             switch (code)
