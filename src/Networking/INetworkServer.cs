@@ -2,7 +2,7 @@
 
 namespace RPVoiceChat.Networking
 {
-    public interface INetworkServer
+    public interface INetworkServer : IDisposable
     {
         public event Action<AudioPacket> AudioPacketReceived;
 

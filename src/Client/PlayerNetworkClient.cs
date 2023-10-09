@@ -70,7 +70,6 @@ namespace RPVoiceChat.Client
             if (reserveClient == null)
                 throw new Exception($"Failed to connect to the server. Required transport: {serverConnection.SupportedTransports}");
 
-            Logger.client.Notification($"Using {reserveClient.GetTransportID()} client from now on");
             SwapActiveClient(reserveClient);
             reserveClient = null;
             OnHandshakeRequest(serverConnection);
@@ -78,6 +77,8 @@ namespace RPVoiceChat.Client
 
         private void SwapActiveClient(INetworkClient newClient)
         {
+            Logger.client.Notification($"Using {newClient.GetTransportID()} client from now on");
+            networkClient.Dispose();
             networkClient = newClient;
         }
 

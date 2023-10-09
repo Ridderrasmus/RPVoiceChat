@@ -100,6 +100,7 @@ namespace RPVoiceChat.Server
         private void SwapActiveServer(INetworkServer newTransport)
         {
             Logger.server.Notification($"Using {newTransport.GetTransportID()} server from now on");
+            networkServer.Dispose();
             networkServer = newTransport;
         }
 
