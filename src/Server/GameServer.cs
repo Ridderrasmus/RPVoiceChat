@@ -82,18 +82,19 @@ namespace RPVoiceChat.Server
 
         public void SendAudioToAllClientsInRange(AudioPacket packet)
         {
-            var player = api.World.PlayerByUid(packet.PlayerId);
+            var transmittingPlayer = api.World.PlayerByUid(packet.PlayerId);
             int distance = WorldConfig.GetInt(packet.VoiceLevel);
             int squareDistance = distance * distance;
 
-            foreach (var closePlayer in api.World.AllOnlinePlayers)
+            foreach (IServerPlayer player in api.World.AllOnlinePlayers)
             {
-                if (closePlayer == player ||
-                    closePlayer.Entity == null ||
-                    player.Entity.Pos.SquareDistanceTo(closePlayer.Entity.Pos.XYZ) > squareDistance)
+                if (player == transmittingPlayer ||
+                    player.Entity == null ||
+                    player.ConnectionState != EnumClientState.Playing ||
+                    transmittingPlayer.Entity.Pos.SquareDistanceTo(player.Entity.Pos.XYZ) > squareDistance)
                     continue;
 
-                SendPacket(packet, closePlayer.PlayerUID);
+                SendPacket(packet, player.PlayerUID);
             }
         }
 
