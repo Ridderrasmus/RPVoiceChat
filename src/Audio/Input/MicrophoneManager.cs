@@ -1,4 +1,5 @@
-﻿using RPVoiceChat.Audio.Effects;
+﻿using OpenTK.Audio.OpenAL;
+using RPVoiceChat.Audio.Effects;
 using RPVoiceChat.Utils;
 using System;
 using System.Collections.Concurrent;
@@ -301,7 +302,7 @@ namespace RPVoiceChat.Audio
         private ALFormat GetDefaultInputFormat()
         {
             var format = ALFormat.Mono16;
-            var supportedFormats = OALW.Get(ALGetString.Extensions) ?? "";
+            var supportedFormats = AL.Get(ALGetString.Extensions) ?? "";
             if (supportedFormats.Contains("AL_EXT_MCFORMATS"))
                 format = ALFormat.MultiQuad16Ext;
             else

@@ -37,7 +37,8 @@ namespace RPVoiceChat
             ClientSettings.Init(capi);
 
             // Sneak in native dlls
-            EmbeddedDllClass.LoadNativeDll("RNNoise.dll");
+            EmbeddedDllClass.ExtractEmbeddedDlls();
+            EmbeddedDllClass.LoadDll("RNNoise.dll");
 
             // Init data repositories
             clientSettingsRepository = new ClientSettingsRepository(capi.Logger);

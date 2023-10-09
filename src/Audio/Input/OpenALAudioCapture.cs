@@ -1,4 +1,5 @@
-﻿using RPVoiceChat.Utils;
+﻿using OpenTK.Audio.OpenAL;
+using RPVoiceChat.Utils;
 using System;
 using System.Collections.Generic;
 
@@ -10,7 +11,7 @@ namespace RPVoiceChat.Audio
         {
             get
             {
-                OALCW.GetInteger(_captureDevice, AlcGetInteger.CaptureSamples, 1, out int result);
+                ALC.GetInteger(_captureDevice, AlcGetInteger.CaptureSamples, 1, out int result);
                 return result;
             }
         }
@@ -18,7 +19,7 @@ namespace RPVoiceChat.Audio
         public int Frequency { get; }
         public ALFormat SampleFormat { get; }
         public int BufferSize { get; }
-        public static string DefaultDevice = OALCW.GetString(ALDevice.Null, AlcGetString.CaptureDefaultDeviceSpecifier);
+        public static string DefaultDevice = ALC.GetString(ALDevice.Null, AlcGetString.CaptureDefaultDeviceSpecifier);
         private ALCaptureDevice _captureDevice;
         private bool IsDisposed = false;
         private bool IsRunning = false;
@@ -30,27 +31,27 @@ namespace RPVoiceChat.Audio
             SampleFormat = format;
             BufferSize = bufferSize;
 
-            _captureDevice = OALCW.CaptureOpenDevice(CurrentDevice, Frequency, SampleFormat, BufferSize);
+            _captureDevice = ALC.CaptureOpenDevice(CurrentDevice, Frequency, SampleFormat, BufferSize);
             LogError();
 
             if (_captureDevice == IntPtr.Zero)
             {
                 CurrentDevice = null;
-                _captureDevice = OALCW.CaptureOpenDevice(CurrentDevice, Frequency, SampleFormat, BufferSize);
+                _captureDevice = ALC.CaptureOpenDevice(CurrentDevice, Frequency, SampleFormat, BufferSize);
                 LogError();
             }
 
             if (_captureDevice == IntPtr.Zero)
             {
                 CurrentDevice = DefaultDevice;
-                _captureDevice = OALCW.CaptureOpenDevice(CurrentDevice, Frequency, SampleFormat, BufferSize);
+                _captureDevice = ALC.CaptureOpenDevice(CurrentDevice, Frequency, SampleFormat, BufferSize);
                 LogError();
             }
 
             if (_captureDevice == IntPtr.Zero)
             {
                 SampleFormat = ALFormat.Mono16;
-                _captureDevice = OALCW.CaptureOpenDevice(CurrentDevice, Frequency, ALFormat.Mono16, BufferSize);
+                _captureDevice = ALC.CaptureOpenDevice(CurrentDevice, Frequency, ALFormat.Mono16, BufferSize);
                 LogError();
             }
 
@@ -65,24 +66,24 @@ namespace RPVoiceChat.Audio
 
         public void Start()
         {
-            OALCW.CaptureStart(_captureDevice);
+            ALC.CaptureStart(_captureDevice);
             IsRunning = true;
         }
 
         public void Stop()
         {
-            OALCW.CaptureStop(_captureDevice);
+            ALC.CaptureStop(_captureDevice);
             IsRunning = false;
         }
 
         public void ReadSamples(byte[] buffer, int count)
         {
-            OALCW.CaptureSamples(_captureDevice, buffer, count);
+            ALC.CaptureSamples(_captureDevice, buffer, count);
         }
 
         public static List<string> GetAvailableDevices()
         {
-            var devices = OALCW.GetString(ALDevice.Null, AlcGetStringList.CaptureDeviceSpecifier);
+            var devices = ALC.GetString(ALDevice.Null, AlcGetStringList.CaptureDeviceSpecifier);
 
             return devices;
         }
@@ -94,7 +95,7 @@ namespace RPVoiceChat.Audio
 
         private bool CheckError(ALCaptureDevice device)
         {
-            var ALCError = OALCW.GetError(new ALDevice(device));
+            var ALCError = ALC.GetError(new ALDevice(device));
             if (ALCError == AlcError.NoError) return false;
 
             Logger.client.VerboseDebug($"[Internal] Failed to open capture device: {ALCError}, {CurrentDevice}, {Frequency}, {SampleFormat}, {BufferSize}");
@@ -115,7 +116,7 @@ namespace RPVoiceChat.Audio
             {
                 if (IsRunning) Stop();
 
-                OALCW.CaptureCloseDevice(_captureDevice);
+                ALC.CaptureCloseDevice(_captureDevice);
             }
             IsDisposed = true;
         }

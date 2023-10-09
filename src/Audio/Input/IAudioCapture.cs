@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OpenTK.Audio.OpenAL;
+using System;
 using System.Collections.Generic;
 
 namespace RPVoiceChat.Audio
