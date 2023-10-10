@@ -11,7 +11,7 @@ namespace RPVoiceChat.Networking
         public byte[] ToBytes()
         {
             var stream = new MemoryStream();
-            stream.Write(BitConverter.GetBytes((int)Code));
+            stream.Write(BitConverter.GetBytes((int)Code), 0, 4);
             Serializer.Serialize(stream, this);
             return stream.ToArray();
         }
