@@ -1,4 +1,5 @@
-﻿using RPVoiceChat.Audio.Effects;
+﻿using OpenTK.Audio.OpenAL;
+using RPVoiceChat.Audio.Effects;
 using RPVoiceChat.DB;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Utils;

@@ -11,7 +11,7 @@ namespace RPVoiceChat.Networking
 {
     public abstract class UDPNetworkBase : IDisposable
     {
-        public event Action<byte[]> OnMessageReceived;
+        public event Action<byte[], IPEndPoint> OnMessageReceived;
 
         private Thread _listeningThread;
         private CancellationTokenSource _listeningCTS;
@@ -22,7 +22,12 @@ namespace RPVoiceChat.Networking
         protected const string _transportID = "UDP";
         protected bool upnpEnabled = true;
         protected Logger logger;
+        protected bool isReady = false;
 
+        public UDPNetworkBase(Logger logger)
+        {
+            this.logger = logger;
+        }
 
         public string GetTransportID()
         {
@@ -58,7 +63,8 @@ namespace RPVoiceChat.Networking
             if (ipParts[0] == 10 ||
                (ipParts[0] == 192 && ipParts[1] == 168) ||
                (ipParts[0] == 172 && (ipParts[1] >= 16 && ipParts[1] <= 31)) ||
-               (ipParts[0] == 25 || ipParts[0] == 26))
+               (ipParts[0] == 25 || ipParts[0] == 26) ||
+               (ipParts[0] == 127 && ipParts[1] == 0 && ipParts[2] == 0 && ipParts[3] == 1))
                 return true;
 
             return false;
@@ -106,30 +112,25 @@ namespace RPVoiceChat.Networking
             return port;
         }
 
-        protected void StartListening(int port)
-        {
-            var endpoint = new IPEndPoint(IPAddress.Any, port);
-            StartListening(endpoint);
-        }
-
-        protected void StartListening(IPEndPoint ipendpoint)
+        protected void StartListening()
         {
             if (UdpClient == null) throw new Exception("Udp client has not been initialized. Can't start listening.");
 
             _listeningCTS = new CancellationTokenSource();
-            _listeningThread = new Thread(() => Listen(ipendpoint, _listeningCTS.Token));
+            _listeningThread = new Thread(() => Listen(_listeningCTS.Token));
             _listeningThread.Start();
         }
 
-        protected void Listen(IPEndPoint ipendpoint, CancellationToken ct)
+        protected void Listen(CancellationToken ct)
         {
             while (_listeningThread.IsAlive && !ct.IsCancellationRequested)
             {
                 try
                 {
-                    byte[] msg = UdpClient.Receive(ref ipendpoint);
+                    IPEndPoint sender = null;
+                    byte[] msg = UdpClient.Receive(ref sender);
 
-                    OnMessageReceived?.Invoke(msg);
+                    OnMessageReceived?.Invoke(msg, sender);
                 }
                 catch (SocketException e)
                 {
@@ -156,6 +157,13 @@ namespace RPVoiceChat.Networking
             string publicIPString = new HttpClient().GetStringAsync("https://ipinfo.io/ip").GetAwaiter().GetResult();
 
             return publicIPString;
+        }
+
+        protected bool AssertEqual(IPEndPoint firstEndPoint, IPEndPoint secondEndPoint)
+        {
+            bool isSameAddress = firstEndPoint.Address.MapToIPv4().ToString() == secondEndPoint.Address.MapToIPv4().ToString();
+            bool isSamePort = firstEndPoint.Port == secondEndPoint.Port;
+            return isSameAddress && isSamePort;
         }
 
         public void Dispose()

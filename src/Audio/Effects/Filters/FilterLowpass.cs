@@ -1,4 +1,6 @@
-﻿namespace RPVoiceChat.Audio.Effects
+﻿using OpenTK.Audio.OpenAL;
+
+namespace RPVoiceChat.Audio.Effects
 {
     public class FilterLowpass
     {
@@ -12,7 +14,7 @@
         public FilterLowpass(int source)
         {
             this.source = source;
-            nullFilter = OALCW.EFX.GenFilter();
+            nullFilter = ALC.EFX.GenFilter();
             GenerateFilter();
         }
 
@@ -23,12 +25,12 @@
         /// <param name="gain">The gain from 0.0 to 1.0.</param>
         public void SetHFGain(float gain)
         {
-            OALCW.EFX.Filter(filter, FilterFloat.LowpassGainHF, gain);
+            ALC.EFX.Filter(filter, FilterFloat.LowpassGainHF, gain);
         }
 
         public void SetGain(float gain)
         {
-            OALCW.EFX.Filter(filter, FilterFloat.LowpassGain, gain);
+            ALC.EFX.Filter(filter, FilterFloat.LowpassGain, gain);
         }
 
         public void Start()
@@ -36,7 +38,7 @@
             if (IsEnabled)
                 return;
 
-            OALW.Source(source, ALSourcei.EfxDirectFilter, filter);
+            AL.Source(source, ALSourcei.EfxDirectFilter, filter);
             IsEnabled = true;
         }
 
@@ -45,16 +47,16 @@
             if (!IsEnabled)
                 return;
 
-            OALW.Source(source, ALSourcei.EfxDirectFilter, nullFilter);
+            AL.Source(source, ALSourcei.EfxDirectFilter, nullFilter);
             IsEnabled = false;
         }
 
         private void GenerateFilter()
         {
-            filter = OALCW.EFX.GenFilter();
-            OALCW.EFX.Filter(filter, FilterInteger.FilterType, (int)FilterType.Lowpass);
-            OALCW.EFX.Filter(filter, FilterFloat.LowpassGain, 1.0f);
-            OALCW.EFX.Filter(filter, FilterFloat.LowpassGainHF, 0.2f);
+            filter = ALC.EFX.GenFilter();
+            ALC.EFX.Filter(filter, FilterInteger.FilterType, (int)FilterType.Lowpass);
+            ALC.EFX.Filter(filter, FilterFloat.LowpassGain, 1.0f);
+            ALC.EFX.Filter(filter, FilterFloat.LowpassGainHF, 0.2f);
         }
 
     }

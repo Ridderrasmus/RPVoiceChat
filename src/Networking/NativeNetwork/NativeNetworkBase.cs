@@ -16,5 +16,10 @@ namespace RPVoiceChat.Networking
         {
             return _transportID;
         }
+
+        public void Dispose()
+        {
+            // Game handles disposal for us
+        }
     }
 }

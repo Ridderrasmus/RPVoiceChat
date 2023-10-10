@@ -40,13 +40,13 @@ namespace RPVoiceChat.Server
                 extendedServer?.Launch();
                 api.Event.PlayerNowPlaying += PlayerJoined;
                 api.Event.PlayerDisconnect += PlayerLeft;
-                networkServer.OnReceivedPacket += SendAudioToAllClientsInRange;
+                networkServer.AudioPacketReceived += SendAudioToAllClientsInRange;
                 serverByTransport.Add(networkServer.GetTransportID(), networkServer);
                 Logger.server.Notification($"{networkServer.GetTransportID()} server started");
 
                 if (reserveServer == null) return;
                 Logger.server.Notification($"Launching {reserveServer.GetTransportID()} server");
-                reserveServer.OnReceivedPacket += SendAudioToAllClientsInRange;
+                reserveServer.AudioPacketReceived += SendAudioToAllClientsInRange;
                 serverByTransport.Add(reserveServer.GetTransportID(), reserveServer);
                 Logger.server.Notification($"{reserveServer.GetTransportID()} server started");
                 return;
@@ -64,7 +64,6 @@ namespace RPVoiceChat.Server
             if (reserveServer == null)
                 throw new Exception("Failed to launch any server");
 
-            Logger.server.Notification($"Using {reserveServer.GetTransportID()} server from now on");
             SwapActiveServer(reserveServer);
             reserveServer = null;
             Launch();
@@ -83,23 +82,26 @@ namespace RPVoiceChat.Server
 
         public void SendAudioToAllClientsInRange(AudioPacket packet)
         {
-            var player = api.World.PlayerByUid(packet.PlayerId);
+            var transmittingPlayer = api.World.PlayerByUid(packet.PlayerId);
             int distance = WorldConfig.GetInt(packet.VoiceLevel);
             int squareDistance = distance * distance;
 
-            foreach (var closePlayer in api.World.AllOnlinePlayers)
+            foreach (IServerPlayer player in api.World.AllOnlinePlayers)
             {
-                if (closePlayer == player ||
-                    closePlayer.Entity == null ||
-                    player.Entity.Pos.SquareDistanceTo(closePlayer.Entity.Pos.XYZ) > squareDistance)
+                if (player == transmittingPlayer ||
+                    player.Entity == null ||
+                    player.ConnectionState != EnumClientState.Playing ||
+                    transmittingPlayer.Entity.Pos.SquareDistanceTo(player.Entity.Pos.XYZ) > squareDistance)
                     continue;
 
-                SendPacket(packet, closePlayer.PlayerUID);
+                SendPacket(packet, player.PlayerUID);
             }
         }
 
         private void SwapActiveServer(INetworkServer newTransport)
         {
+            Logger.server.Notification($"Using {newTransport.GetTransportID()} server from now on");
+            networkServer.Dispose();
             networkServer = newTransport;
         }
 
@@ -131,12 +133,12 @@ namespace RPVoiceChat.Server
             }
         }
 
-        private void SendPacket(INetworkPacket packet, string playerId)
+        private void SendPacket(NetworkPacket packet, string playerId)
         {
             try
             {
-                networkServer.SendPacket(packet, playerId);
-                return;
+                bool success = networkServer.SendPacket(packet, playerId);
+                if (success) return;
             }
             catch (Exception e)
             {
@@ -145,12 +147,15 @@ namespace RPVoiceChat.Server
 
             try
             {
-                reserveServer?.SendPacket(packet, playerId);
+                bool success = reserveServer?.SendPacket(packet, playerId) ?? false;
+                if (success) return;
             }
             catch (Exception e)
             {
                 Logger.server.VerboseDebug($"Couldn't use backup server to deliver a packet to {playerId}: {e.Message}");
             }
+
+            Logger.server.Error($"Failed to deliver a packet to {playerId}: All servers refused to serve the client");
         }
 
         public void Dispose()

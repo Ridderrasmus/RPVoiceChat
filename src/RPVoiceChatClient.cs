@@ -22,6 +22,7 @@ namespace RPVoiceChat
 
         private ModMenuDialog configGui;
 
+        private bool isReady = false;
         private bool mutePressed = false;
         private bool voiceMenuPressed = false;
         private bool voiceLevelPressed = false;
@@ -37,7 +38,8 @@ namespace RPVoiceChat
             ClientSettings.Init(capi);
 
             // Sneak in native dlls
-            EmbeddedDllClass.LoadNativeDll("RNNoise.dll");
+            EmbeddedDllClass.ExtractEmbeddedDlls();
+            EmbeddedDllClass.LoadDll("RNNoise.dll");
 
             // Init data repositories
             clientSettingsRepository = new ClientSettingsRepository(capi.Logger);
@@ -111,6 +113,7 @@ namespace RPVoiceChat
             micManager.OnBufferRecorded += OnBufferRecorded;
             micManager.Launch();
             audioOutputManager.Launch();
+            isReady = true;
         }
 
         private void Event_KeyUp(KeyEvent e)
@@ -127,6 +130,7 @@ namespace RPVoiceChat
 
         private void OnAudioReceived(AudioPacket packet)
         {
+            if (!isReady) return;
             audioOutputManager.HandleAudioPacket(packet);
         }
 

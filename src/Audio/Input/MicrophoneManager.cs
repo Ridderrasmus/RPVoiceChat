@@ -1,4 +1,5 @@
-﻿using RPVoiceChat.Audio.Effects;
+﻿using OpenTK.Audio.OpenAL;
+using RPVoiceChat.Audio.Effects;
 using RPVoiceChat.Utils;
 using System;
 using System.Collections.Concurrent;
@@ -6,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Vintagestory.API.Client;
+using Vintagestory.API.MathTools;
 
 namespace RPVoiceChat.Audio
 {
@@ -78,6 +80,13 @@ namespace RPVoiceChat.Audio
             return MaxInputThreshold;
         }
 
+        public void SetMaxInputThreshold(double maxInputThreshold)
+        {
+            int inputThreshold = (int)(GetInputThreshold() / MaxInputThreshold * 100);
+            MaxInputThreshold = maxInputThreshold / 100;
+            SetThreshold(inputThreshold);
+        }
+
         public double GetInputThreshold()
         {
             return inputThreshold;
@@ -133,12 +142,12 @@ namespace RPVoiceChat.Audio
             var rawSampleSize = SampleToByte * InputChannelCount;
             var pcmCount = rawSamples.Length / rawSampleSize;
             short[] pcms = new short[pcmCount];
+            int[] usedChannels = DetectAudioChannels(rawSamples);
 
             for (var rawSampleIndex = 0; rawSampleIndex < rawSamples.Length; rawSampleIndex += rawSampleSize)
             {
                 double pcm = 0;
 
-                int[] usedChannels = DetectAudioChannels(rawSamples);
                 for (var channelIndex = 0; channelIndex < InputChannelCount; channelIndex++)
                 {
                     if (!usedChannels.Contains(channelIndex)) continue;
@@ -146,11 +155,11 @@ namespace RPVoiceChat.Audio
                     var sample = BitConverter.ToInt16(rawSamples, sampleIndex);
                     pcm += sample;
                 }
-                pcm = pcm / Math.Min(usedChannels.Length, 1);
+                pcm = pcm / Math.Max(usedChannels.Length, 1);
                 pcm = pcm * gain;
 
                 var pcmIndex = rawSampleIndex / rawSampleSize;
-                pcms[pcmIndex] = (short)pcm;
+                pcms[pcmIndex] = (short)GameMath.Clamp(pcm, short.MinValue, short.MaxValue);
             }
 
             if (config.IsDenoisingEnabled && denoiser != null && denoiser.SupportsFormat(Frequency, OutputChannelCount, SampleToByte * 8))
@@ -301,7 +310,7 @@ namespace RPVoiceChat.Audio
         private ALFormat GetDefaultInputFormat()
         {
             var format = ALFormat.Mono16;
-            var supportedFormats = OALW.Get(ALGetString.Extensions) ?? "";
+            var supportedFormats = AL.Get(ALGetString.Extensions) ?? "";
             if (supportedFormats.Contains("AL_EXT_MCFORMATS"))
                 format = ALFormat.MultiQuad16Ext;
             else
@@ -347,10 +356,11 @@ namespace RPVoiceChat.Audio
                 }
             }
 
+            bool guessUsedChannels = ClientSettings.GetBool("channelGuessing", true);
             for (var channelIndex = 0; channelIndex < InputChannelCount; channelIndex++)
             {
                 var averageSampleValue = sampleSums[channelIndex] / depth;
-                if (averageSampleValue > 5) usedChannels.Add(channelIndex);
+                if (averageSampleValue > 5 || !guessUsedChannels) usedChannels.Add(channelIndex);
             }
 
             return usedChannels.ToArray();
