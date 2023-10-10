@@ -24,6 +24,10 @@ namespace RPVoiceChat.Networking
         protected Logger logger;
         protected bool isReady = false;
 
+        public UDPNetworkBase(Logger logger)
+        {
+            this.logger = logger;
+        }
 
         public string GetTransportID()
         {
@@ -153,6 +157,13 @@ namespace RPVoiceChat.Networking
             string publicIPString = new HttpClient().GetStringAsync("https://ipinfo.io/ip").GetAwaiter().GetResult();
 
             return publicIPString;
+        }
+
+        protected bool AssertEqual(IPEndPoint firstEndPoint, IPEndPoint secondEndPoint)
+        {
+            bool isSameAddress = firstEndPoint.Address.MapToIPv4().ToString() == secondEndPoint.Address.MapToIPv4().ToString();
+            bool isSamePort = firstEndPoint.Port == secondEndPoint.Port;
+            return isSameAddress && isSamePort;
         }
 
         public void Dispose()

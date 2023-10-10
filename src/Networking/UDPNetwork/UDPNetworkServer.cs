@@ -13,12 +13,11 @@ namespace RPVoiceChat.Networking
         private IPAddress ip;
         private IPEndPoint ownEndPoint;
 
-        public UDPNetworkServer(int port, string ip = null)
+        public UDPNetworkServer(int port, string ip = null) : base(Utils.Logger.server)
         {
             this.port = port;
             this.ip = IPAddress.Parse(ip ?? GetPublicIP());
             ownEndPoint = GetEndPoint(GetConnection());
-            logger = Utils.Logger.server;
 
             OnMessageReceived += MessageReceived;
         }
@@ -100,9 +99,7 @@ namespace RPVoiceChat.Networking
 
         private bool IsSelf(IPEndPoint endPoint)
         {
-            bool isSameAddress = ownEndPoint.Address.MapToIPv4().ToString() == endPoint.Address.MapToIPv4().ToString();
-            bool isSamePort = ownEndPoint.Port == endPoint.Port;
-            return isSameAddress && isSamePort;
+            return AssertEqual(endPoint, ownEndPoint);
         }
     }
 }

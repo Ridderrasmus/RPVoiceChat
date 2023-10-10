@@ -9,9 +9,8 @@ namespace RPVoiceChat.Networking
 
         private IPEndPoint serverEndpoint;
 
-        public UDPNetworkClient()
+        public UDPNetworkClient() : base(Utils.Logger.client)
         {
-            logger = Utils.Logger.client;
 
             OnMessageReceived += MessageReceived;
         }
