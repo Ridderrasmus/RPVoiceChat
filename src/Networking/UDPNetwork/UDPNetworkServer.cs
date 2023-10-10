@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace RPVoiceChat.Networking
 {
@@ -12,12 +13,14 @@ namespace RPVoiceChat.Networking
         private Dictionary<string, ConnectionInfo> connectionsByPlayer = new Dictionary<string, ConnectionInfo>();
         private IPAddress ip;
         private IPEndPoint ownEndPoint;
+        private CancellationTokenSource _selfPingCTS;
 
         public UDPNetworkServer(int port, string ip = null) : base(Utils.Logger.server)
         {
             this.port = port;
             this.ip = IPAddress.Parse(ip ?? GetPublicIP());
             ownEndPoint = GetEndPoint(GetConnection());
+            _selfPingCTS = new CancellationTokenSource();
 
             OnMessageReceived += MessageReceived;
         }
@@ -76,6 +79,7 @@ namespace RPVoiceChat.Networking
                 case PacketType.SelfPing:
                     if (!IsSelf(sender)) return;
                     isReady = true;
+                    _selfPingCTS.Cancel();
                     break;
                 case PacketType.Audio:
                     var packet = NetworkPacket.FromBytes<AudioPacket>(msg);
@@ -86,12 +90,22 @@ namespace RPVoiceChat.Networking
             }
         }
 
+        private void SendEchoPacket(IPEndPoint endPoint)
+        {
+            var echoPacket = BitConverter.GetBytes((int)PacketType.Pong);
+            UdpClient.Send(echoPacket, echoPacket.Length, endPoint);
+        }
+
         private void VerifyServerReadiness()
         {
             var selfPingPacket = BitConverter.GetBytes((int)PacketType.SelfPing);
 
-            UdpClient.Send(selfPingPacket, selfPingPacket.Length, ownEndPoint);
-            Thread.Sleep(500);
+            try
+            {
+                UdpClient.Send(selfPingPacket, selfPingPacket.Length, ownEndPoint);
+                Task.Delay(1000, _selfPingCTS.Token).GetAwaiter().GetResult();
+            }
+            catch (TaskCanceledException) { }
 
             if (isReady) return;
             throw new Exception("Server failed readiness probe. Aborting to prevent silent malfunction");
