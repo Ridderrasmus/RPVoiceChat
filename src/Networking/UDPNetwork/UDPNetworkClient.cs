@@ -43,12 +43,6 @@ namespace RPVoiceChat.Networking
 
         private void MessageReceived(byte[] msg, IPEndPoint sender)
         {
-            if (!IsServer(sender))
-            {
-                logger.Warning($"Received unauthorized message from {sender}, proceeding to ignore it");
-                return;
-            }
-
             PacketType code = (PacketType)BitConverter.ToInt32(msg, 0);
             switch (code)
             {
@@ -79,11 +73,6 @@ namespace RPVoiceChat.Networking
 
             if (isReady) return;
             throw new Exception("Client failed readiness probe. Aborting to prevent silent malfunction");
-        }
-
-        private bool IsServer(IPEndPoint endPoint)
-        {
-            return AssertEqual(endPoint, serverEndpoint);
         }
     }
 }
