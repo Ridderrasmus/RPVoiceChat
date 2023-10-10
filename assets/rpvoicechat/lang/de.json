@@ -37,6 +37,7 @@
     "Gui.ModMenu.Tab.Effects": "Effekte",
     "Gui.ModMenu.Tab.Interface": "Schnittstelle",
     "Gui.ModMenu.Tab.PlayerList": "Spielerliste",
+    "Gui.ModMenu.Tab.Advanced": "Erweitert",
     "Gui.ModMenu.inputDevice.Label": "Eingabegerät",
     "Gui.ModMenu.inputDevice.Tooltip": "Zu verwendendes Eingabegerät",
     "Gui.ModMenu.togglePushToTalk.Label": "Push To Talk",
@@ -48,7 +49,7 @@
     "Gui.ModMenu.outputGain.Label": "Spieler Lautstärke",
     "Gui.ModMenu.outputGain.Tooltip": "Wie stark die Lautstärke der Stimme anderer Spieler erhöht werden kann",
     "Gui.ModMenu.inputGain.Label": "Aufnahme Lautstärke",
-    "Gui.ModMenu.inputGain.Tooltip": "Ändert Ihre eigene Aufnahmelautstärke",
+    "Gui.ModMenu.inputGain.Tooltip": "Ändert Ihre eigene Aufnahmelautstärke. Wenn Sie über 100 % gehen, kann Ihr Ton abgeschnitten und verzerrt werden. Wenn Ihr Mikrofon zu leise ist, erhöhen Sie stattdessen die Lautstärke in Ihren Betriebssystemeinstellungen!",
     "Gui.ModMenu.inputThreshold.Label": "Schwellenwert für Audioeingang",
     "Gui.ModMenu.inputThreshold.Tooltip": "Bei welchem Schwellenwert beginnt Ihr Audio zu übertragen",
     "Gui.ModMenu.audioMeter.Label": "Audiometer",
@@ -62,5 +63,11 @@
     "Gui.ModMenu.denoisingSensitivity.Label": "Erkennung von Hintergrundgeräuschen",
     "Gui.ModMenu.denoisingSensitivity.Tooltip": "Stellt die Empfindlichkeit für Hintergrundgeräusche ein. Audio, das als Rauschen erkannt wird, wird mit maximaler Stärke entrauscht.",
     "Gui.ModMenu.denoisingStrength.Label": "Stärke der Rauschunterdrückung",
-    "Gui.ModMenu.denoisingStrength.Tooltip": "Legt die Intensität der Rauschunterdrückung für Audio fest, das als Stimme erkannt wird. Verringern Sie den Wert, wenn Ihre Stimme zu verzerrt ist."
+    "Gui.ModMenu.denoisingStrength.Tooltip": "Legt die Intensität der Rauschunterdrückung für Audio fest, das als Stimme erkannt wird. Verringern Sie den Wert, wenn Ihre Stimme zu verzerrt ist.",
+    "Gui.ModMenu.toggleChannelGuessing.Label": "Audiokanäle erkennen",
+    "Gui.ModMenu.toggleChannelGuessing.Tooltip": "Wenn Mehrkanal-Audio-Capture unterstützt wird, verwenden wir es und filtern dann leere Kanäle heraus, um Fälle zu berücksichtigen, in denen das Eingabegerät in nicht standardmäßige Kanäle schreibt (z.B. Stereo-Audio auf den Kanälen 3 und 4 statt 1 und 2). Wenn Sie dies deaktivieren, verwendet die Mod alle erfassten Kanäle, was die Lautstärke wahrscheinlich um x2/x4 verringern wird.",
+    "Gui.ModMenu.inputSensitivity.Label": "Maximale Eingangsschwelle",
+    "Gui.ModMenu.inputSensitivity.Tooltip": "Wird verwendet, um die Eingangsschwelle auf ein kürzeres Intervall einzustellen, was eine feinere Steuerung der Sprachaktivierung ermöglicht. Verringern Sie den Wert, wenn Sie die Eingangsschwelle sehr niedrig einstellen müssen. Erhöhen Sie den Wert, wenn die Audioanzeige auf der Registerkarte Audioeingang leicht gefüllt wird. <strong>Hat keinen Einfluss auf die tatsächliche Lautstärke</strong>",
+    "Gui.ModMenu.unscaledAudioMeter.Label": "Unskalierter Audiometer",
+    "Gui.ModMenu.unscaledAudioMeter.Tooltip": "Zeigt Ihre Audio-Amplitude auf der tatsächlichen vollen Skala an, bevor die maximale Eingangsschwelle angewendet wird. Verwenden Sie es als Referenz für die Einstellung der maximalen Eingangsschwelle (das Segment links vom Schieberegler wird auf der Registerkarte Audioeingang angezeigt)."
 }
