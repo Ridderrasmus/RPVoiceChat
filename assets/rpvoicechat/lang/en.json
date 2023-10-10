@@ -37,6 +37,7 @@
     "Gui.ModMenu.Tab.Effects": "Effects",
     "Gui.ModMenu.Tab.Interface": "Interface",
     "Gui.ModMenu.Tab.PlayerList": "Player List",
+    "Gui.ModMenu.Tab.Advanced": "Advanced",
     "Gui.ModMenu.inputDevice.Label": "Input Device",
     "Gui.ModMenu.inputDevice.Tooltip": "Input device to use",
     "Gui.ModMenu.togglePushToTalk.Label": "Push To Talk",
@@ -48,7 +49,7 @@
     "Gui.ModMenu.outputGain.Label": "Players Volume Level",
     "Gui.ModMenu.outputGain.Tooltip": "How much to increase volume of other players",
     "Gui.ModMenu.inputGain.Label": "Recording Volume",
-    "Gui.ModMenu.inputGain.Tooltip": "Changes your own volume",
+    "Gui.ModMenu.inputGain.Tooltip": "Changes your own volume. Going over 100% may clip and distort your audio, if your mic is too low increase the volume in your OS settings instead!",
     "Gui.ModMenu.inputThreshold.Label": "Audio Input Threshold",
     "Gui.ModMenu.inputThreshold.Tooltip": "At which threshold your audio starts transmitting",
     "Gui.ModMenu.audioMeter.Label": "Audio Meter",
@@ -62,5 +63,11 @@
     "Gui.ModMenu.denoisingSensitivity.Label": "Background noise detection",
     "Gui.ModMenu.denoisingSensitivity.Tooltip": "Sets sensitivity for background noise. Audio detected as noise will be denoised with max strength.",
     "Gui.ModMenu.denoisingStrength.Label": "Denoising strength",
-    "Gui.ModMenu.denoisingStrength.Tooltip": "Sets intensity of denosing for audio detected as voice. Lower it if your voice is too distorted."
+    "Gui.ModMenu.denoisingStrength.Tooltip": "Sets intensity of denosing for audio detected as voice. Lower it if your voice is too distorted.",
+    "Gui.ModMenu.toggleChannelGuessing.Label": "Detect audio channels",
+    "Gui.ModMenu.toggleChannelGuessing.Tooltip": "If multichannel audio capture is supported we will use it and then filter out empty channels to account for cases when input device writes in non-default channels(for example, stereo audio on channels 3 and 4 instead of 1 and 2). Disabling this will make mod use all captured channels which will likely decrease your volume by x2/x4.",
+    "Gui.ModMenu.inputSensitivity.Label": "Max input threshold",
+    "Gui.ModMenu.inputSensitivity.Tooltip": "Used to scope input threshold to a shorter interval, which allows for finer control of voice activation. Decrease it if you have to set input threshold very low. Increase if Audio Meter on the audio input tab easily gets filled. <strong>Has no effect on the actual volume</strong>",
+    "Gui.ModMenu.unscaledAudioMeter.Label": "Unscaled Audio Meter",
+    "Gui.ModMenu.unscaledAudioMeter.Tooltip": "Shows your audio amplitude on the actual full scale, before applying max input threshold. Use it as a reference for setting max input threshold(segment to the left from the slider handle will be displayed in audio input tab)"
 }
