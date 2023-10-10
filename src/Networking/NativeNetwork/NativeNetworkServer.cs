@@ -5,7 +5,7 @@ namespace RPVoiceChat.Networking
 {
     public class NativeNetworkServer : NativeNetworkBase, INetworkServer
     {
-        public event Action<AudioPacket> OnReceivedPacket;
+        public event Action<AudioPacket> AudioPacketReceived;
         private ICoreServerAPI api;
         private IServerNetworkChannel channel;
 
@@ -21,15 +21,16 @@ namespace RPVoiceChat.Networking
             return connectionInfo;
         }
 
-        public void SendPacket(INetworkPacket packet, string playerId)
+        public bool SendPacket(NetworkPacket packet, string playerId)
         {
             var player = api.World.PlayerByUid(playerId) as IServerPlayer;
             channel.SendPacket(packet as AudioPacket, player);
+            return true;
         }
 
         private void ReceivedAudioPacketFromClient(IServerPlayer player, AudioPacket packet)
         {
-            OnReceivedPacket?.Invoke(packet);
+            AudioPacketReceived?.Invoke(packet);
         }
     }
 }
