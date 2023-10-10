@@ -13,14 +13,14 @@ namespace RPVoiceChat.Networking
         private Dictionary<string, ConnectionInfo> connectionsByPlayer = new Dictionary<string, ConnectionInfo>();
         private IPAddress ip;
         private IPEndPoint ownEndPoint;
-        private CancellationTokenSource _selfPingCTS;
+        private CancellationTokenSource _readinessProbeCTS;
 
         public UDPNetworkServer(int port, string ip = null) : base(Utils.Logger.server)
         {
             this.port = port;
             this.ip = IPAddress.Parse(ip ?? GetPublicIP());
             ownEndPoint = GetEndPoint(GetConnection());
-            _selfPingCTS = new CancellationTokenSource();
+            _readinessProbeCTS = new CancellationTokenSource();
 
             OnMessageReceived += MessageReceived;
         }
@@ -79,7 +79,10 @@ namespace RPVoiceChat.Networking
                 case PacketType.SelfPing:
                     if (!IsSelf(sender)) return;
                     isReady = true;
-                    _selfPingCTS.Cancel();
+                    _readinessProbeCTS.Cancel();
+                    break;
+                case PacketType.Ping:
+                    SendEchoPacket(sender);
                     break;
                 case PacketType.Audio:
                     var packet = NetworkPacket.FromBytes<AudioPacket>(msg);
@@ -103,7 +106,7 @@ namespace RPVoiceChat.Networking
             try
             {
                 UdpClient.Send(selfPingPacket, selfPingPacket.Length, ownEndPoint);
-                Task.Delay(1000, _selfPingCTS.Token).GetAwaiter().GetResult();
+                Task.Delay(1000, _readinessProbeCTS.Token).GetAwaiter().GetResult();
             }
             catch (TaskCanceledException) { }
 
