@@ -22,6 +22,7 @@ namespace RPVoiceChat
 
         private ModMenuDialog configGui;
 
+        private bool isReady = false;
         private bool mutePressed = false;
         private bool voiceMenuPressed = false;
         private bool voiceLevelPressed = false;
@@ -112,6 +113,7 @@ namespace RPVoiceChat
             micManager.OnBufferRecorded += OnBufferRecorded;
             micManager.Launch();
             audioOutputManager.Launch();
+            isReady = true;
         }
 
         private void Event_KeyUp(KeyEvent e)
@@ -128,6 +130,7 @@ namespace RPVoiceChat
 
         private void OnAudioReceived(AudioPacket packet)
         {
+            if (!isReady) return;
             audioOutputManager.HandleAudioPacket(packet);
         }
 

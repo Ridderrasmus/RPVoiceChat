@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace RPVoiceChat.Networking
 {
@@ -8,10 +10,11 @@ namespace RPVoiceChat.Networking
         public event Action<AudioPacket> OnAudioReceived;
 
         private IPEndPoint serverEndpoint;
+        private CancellationTokenSource _readinessProbeCTS;
 
-        public UDPNetworkClient()
+        public UDPNetworkClient() : base(Utils.Logger.client)
         {
-            logger = Utils.Logger.client;
+            _readinessProbeCTS = new CancellationTokenSource();
 
             OnMessageReceived += MessageReceived;
         }
@@ -23,7 +26,8 @@ namespace RPVoiceChat.Networking
 
             if (!IsInternalNetwork(serverConnection.Address))
                 SetupUpnp(port);
-            StartListening(serverEndpoint);
+            StartListening();
+            VerifyClientReadiness();
 
             var clientConnection = GetConnection();
             return clientConnection;
@@ -37,10 +41,49 @@ namespace RPVoiceChat.Networking
             UdpClient.Send(data, data.Length, serverEndpoint);
         }
 
-        private void MessageReceived(byte[] msg)
+        private void MessageReceived(byte[] msg, IPEndPoint sender)
         {
-            AudioPacket packet = AudioPacket.FromBytes(msg);
-            OnAudioReceived?.Invoke(packet);
+            if (!IsServer(sender))
+            {
+                logger.Warning($"Received unauthorized message from {sender}, proceeding to ignore it");
+                return;
+            }
+
+            PacketType code = (PacketType)BitConverter.ToInt32(msg, 0);
+            switch (code)
+            {
+                case PacketType.Pong:
+                    isReady = true;
+                    _readinessProbeCTS.Cancel();
+                    break;
+                case PacketType.Audio:
+                    AudioPacket packet = NetworkPacket.FromBytes<AudioPacket>(msg);
+                    OnAudioReceived?.Invoke(packet);
+                    break;
+                default:
+                    logger.Error($"Received unsupported packet type: {code}, proceeding to ignore it");
+                    return;
+            }
+        }
+
+        private void VerifyClientReadiness()
+        {
+            var pingPacket = BitConverter.GetBytes((int)PacketType.Ping);
+
+            try
+            {
+                UdpClient.Send(pingPacket, pingPacket.Length, serverEndpoint);
+                Task.Delay(3000, _readinessProbeCTS.Token).GetAwaiter().GetResult();
+            }
+            catch (TaskCanceledException) { }
+
+            if (isReady) return;
+            throw new Exception("Client failed readiness probe. Aborting to prevent silent malfunction");
+        }
+
+        private bool IsServer(IPEndPoint endPoint)
+        {
+            return AssertEqual(endPoint, serverEndpoint);
         }
     }
 }
