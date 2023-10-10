@@ -207,11 +207,13 @@ namespace RPVoiceChat.Gui
             var effectsTab = new ConfigTab("Effects");
             var interfaceTab = new ConfigTab("Interface");
             var playerListTab = new ConfigTab("PlayerList");
+            var advancedTab = new ConfigTab("Advanced");
             RegisterTab(audioInputTab);
             RegisterTab(audioOutputTab);
             RegisterTab(effectsTab);
             RegisterTab(interfaceTab);
             RegisterTab(playerListTab);
+            RegisterTab(advancedTab);
 
             RegisterOption(new ConfigOption
             {
@@ -355,6 +357,36 @@ namespace RPVoiceChat.Gui
                 Tab = playerListTab,
                 CustomElement = new PlayerList(capi, settingsRepository, this)
             });
+
+            RegisterOption(new ConfigOption
+            {
+                Key = "toggleChannelGuessing",
+                Type = ElementType.Switch,
+                Label = true,
+                Tooltip = true,
+                Tab = advancedTab,
+                ToggleAction = OnToggleChannelGuessing
+            });
+
+            RegisterOption(new ConfigOption
+            {
+                Key = "inputSensitivity",
+                Type = ElementType.Slider,
+                Label = true,
+                Tooltip = true,
+                Tab = advancedTab,
+                SlideAction = SlideInputSensitivity
+            });
+
+            RegisterOption(new ConfigOption
+            {
+                Key = "unscaledAudioMeter",
+                Type = ElementType.Custom,
+                Label = true,
+                Tooltip = true,
+                Tab = advancedTab,
+                CustomElement = new AudioMeter(capi, _audioInputManager, this, true)
+            });
         }
 
         protected override void RefreshValues()
@@ -367,8 +399,8 @@ namespace RPVoiceChat.Gui
             SetValue("togglePushToTalk", _config.PushToTalkEnabled);
             SetValue("muteMicrophone", _config.IsMuted);
             SetValue("loopback", _config.IsLoopbackEnabled);
-            SetValue("outputGain", new dynamic[] { _config.OutputGain, 0, 200, 1, "%" });
-            SetValue("inputGain", new dynamic[] { _config.InputGain, 0, 100, 1, "%" });
+            SetValue("outputGain", new dynamic[] { _config.OutputGain, 0, 300, 1, "%" });
+            SetValue("inputGain", new dynamic[] { _config.InputGain, 0, 200, 1, "%", 100 });
             SetValue("inputThreshold", new dynamic[] { _config.InputThreshold, 0, 100, 1, "" });
             SetValue("toggleHUD", _config.IsHUDShown);
             SetValue("toggleMuffling", ClientSettings.GetBool("muffling", true));
@@ -376,15 +408,22 @@ namespace RPVoiceChat.Gui
             SetValue("denoisingSensitivity", new dynamic[] { _config.BackgroungNoiseThreshold, 0, 100, 1, "%" });
             SetValue("denoisingStrength", new dynamic[] { _config.VoiceDenoisingStrength, 0, 100, 1, "%" });
             SetValue("playerList", null);
+            SetValue("toggleChannelGuessing", ClientSettings.GetBool("channelGuessing", true));
+            SetValue("inputSensitivity", new dynamic[] { (int)(_config.MaxInputThreshold * 100), 1, 100, 1, "%" });
         }
 
-        protected void SetValue(string key, dynamic value)
+        private void SetValue(string key, dynamic value)
         {
             GuiElement element = SingleComposer.GetElement(key);
             if (element is null) return;
             else if (element is GuiElementDropDown dropDown) dropDown.SetSelectedValue(value);
             else if (element is GuiElementSwitch switchBox) switchBox.On = value;
-            else if (element is GuiElementSlider slider) slider.SetValues(value[0], value[1], value[2], value[3], value[4]);
+            else if (element is GuiElementSlider slider)
+            {
+                slider.SetValues(value[0], value[1], value[2], value[3], value[4]);
+                if (value.Length < 6) return;
+                slider.SetAlarmValue(value[5]);
+            }
             else if (element is GuiElementVerticalTabs verticalTabs) verticalTabs.activeElement = value;
             else if (element is PlayerList playerList) playerList.SetupElement();
             else throw new Exception("Unknown element type");
@@ -470,6 +509,20 @@ namespace RPVoiceChat.Gui
         {
             _config.VoiceDenoisingStrength = strength;
             _audioInputManager.SetDenoisingStrength(strength);
+            ModConfig.Save(capi);
+
+            return true;
+        }
+
+        private void OnToggleChannelGuessing(bool enabled)
+        {
+            ClientSettings.Set("channelGuessing", enabled);
+        }
+
+        private bool SlideInputSensitivity(int sensitivity)
+        {
+            _audioInputManager.SetMaxInputThreshold(sensitivity);
+            _config.MaxInputThreshold = _audioInputManager.GetMaxInputThreshold();
             ModConfig.Save(capi);
 
             return true;
