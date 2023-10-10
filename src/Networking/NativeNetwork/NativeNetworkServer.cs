@@ -21,10 +21,11 @@ namespace RPVoiceChat.Networking
             return connectionInfo;
         }
 
-        public void SendPacket(NetworkPacket packet, string playerId)
+        public bool SendPacket(NetworkPacket packet, string playerId)
         {
             var player = api.World.PlayerByUid(playerId) as IServerPlayer;
             channel.SendPacket(packet as AudioPacket, player);
+            return true;
         }
 
         private void ReceivedAudioPacketFromClient(IServerPlayer player, AudioPacket packet)

@@ -47,16 +47,16 @@ namespace RPVoiceChat.Networking
             return connectionInfo;
         }
 
-        public void SendPacket(NetworkPacket packet, string playerId)
+        public bool SendPacket(NetworkPacket packet, string playerId)
         {
             ConnectionInfo connectionInfo;
-            if (!connectionsByPlayer.TryGetValue(playerId, out connectionInfo))
-                throw new Exception($"Player {playerId} is not connected to the server");
+            if (!connectionsByPlayer.TryGetValue(playerId, out connectionInfo)) return false;
 
             var data = packet.ToBytes();
             var destination = GetEndPoint(connectionInfo);
 
             UdpClient.Send(data, data.Length, destination);
+            return true;
         }
 
         public void PlayerConnected(string playerId, ConnectionInfo connectionInfo)
@@ -67,6 +67,7 @@ namespace RPVoiceChat.Networking
 
         public void PlayerDisconnected(string playerId)
         {
+            if (!connectionsByPlayer.ContainsKey(playerId)) return;
             connectionsByPlayer.Remove(playerId);
             logger.VerboseDebug($"{playerId} disconnected from UDP server");
         }

@@ -137,8 +137,8 @@ namespace RPVoiceChat.Server
         {
             try
             {
-                networkServer.SendPacket(packet, playerId);
-                return;
+                bool success = networkServer.SendPacket(packet, playerId);
+                if (success) return;
             }
             catch (Exception e)
             {
@@ -147,12 +147,15 @@ namespace RPVoiceChat.Server
 
             try
             {
-                reserveServer?.SendPacket(packet, playerId);
+                bool success = reserveServer?.SendPacket(packet, playerId) ?? false;
+                if (success) return;
             }
             catch (Exception e)
             {
                 Logger.server.VerboseDebug($"Couldn't use backup server to deliver a packet to {playerId}: {e.Message}");
             }
+
+            Logger.server.Error($"Failed to deliver a packet to {playerId}: All servers refused to serve the client");
         }
 
         public void Dispose()

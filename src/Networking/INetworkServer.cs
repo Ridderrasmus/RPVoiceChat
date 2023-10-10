@@ -8,6 +8,6 @@ namespace RPVoiceChat.Networking
 
         public ConnectionInfo GetConnection();
         public string GetTransportID();
-        public void SendPacket(NetworkPacket packet, string playerId);
+        public bool SendPacket(NetworkPacket packet, string playerId);
     }
 }
