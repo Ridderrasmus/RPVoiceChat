@@ -12,6 +12,19 @@ namespace RPVoiceChat.Audio
 {
     public class MicrophoneManager : IDisposable
     {
+        public event Action<AudioData> OnBufferRecorded;
+        public event Action<VoiceLevel> VoiceLevelUpdated;
+        public event Action ClientStartTalking;
+        public event Action ClientStopTalking;
+
+        private ICoreClientAPI capi;
+        private IAudioCapture capture;
+        private IAudioCodec codec;
+        private IDenoiser denoiser;
+        private RPVoiceChatConfig config;
+        private Thread audioCaptureThread;
+        private CancellationTokenSource audioCaptureCTS;
+
         public static int Frequency = 48000;
         public ALFormat InputFormat { get; private set; }
         private ALFormat OutputFormat;
@@ -20,30 +33,15 @@ namespace RPVoiceChat.Audio
         private int InputChannelCount;
         private int OutputChannelCount;
         private const byte SampleToByte = 2;
-        private double MaxInputThreshold;
-        readonly ICoreClientAPI capi;
 
-        private IAudioCapture capture;
-        private IAudioCodec codec;
-        private IDenoiser denoiser;
-        private RPVoiceChatConfig config;
-        private Thread audioCaptureThread;
-        private CancellationTokenSource audioCaptureCTS;
-
+        public double Amplitude { get; private set; }
+        public double AmplitudeAverage { get; private set; }
         public bool Transmitting = false;
         public bool TransmittingOnPreviousStep = false;
         public bool IsDenoisingAvailable = false;
         private VoiceLevel voiceLevel = VoiceLevel.Talking;
         private double inputThreshold;
-
-        public double Amplitude { get; set; }
-        public double AmplitudeAverage { get; set; }
-
-        public event Action<AudioData> OnBufferRecorded;
-        public event Action<VoiceLevel> VoiceLevelUpdated;
-        public event Action ClientStartTalking;
-        public event Action ClientStopTalking;
-
+        private double MaxInputThreshold;
         private List<double> recentAmplitudes = new List<double>();
 
         public MicrophoneManager(ICoreClientAPI capi)
