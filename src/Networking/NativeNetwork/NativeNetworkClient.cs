@@ -14,12 +14,9 @@ namespace RPVoiceChat.Networking
             channel = api.Network.GetChannel(ChannelName).SetMessageHandler<AudioPacket>(HandleAudioPacket);
         }
 
-        public async void SendAudioToServer(AudioPacket packet)
+        public void SendAudioToServer(AudioPacket packet)
         {
-            await Task.Run(() =>
-            {
-                channel.SendPacket(packet);
-            });
+            channel.SendPacket(packet);
         }
 
         private void HandleAudioPacket(AudioPacket packet)
