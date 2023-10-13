@@ -41,12 +41,15 @@ namespace RPVoiceChat.Audio
                 return;
             }
 
-            var currentBuffer = availableBuffers.PopOne();
+            lock (buffer_queue_lock)
+            {
+                var currentBuffer = availableBuffers.PopOne();
 
-            OALW.ClearError();
-            OALW.BufferData(currentBuffer, format, audio, frequency);
-            OALW.SourceQueueBuffer(source, currentBuffer);
-            queuedBuffers.Add(currentBuffer);
+                OALW.ClearError();
+                OALW.BufferData(currentBuffer, format, audio, frequency);
+                OALW.SourceQueueBuffer(source, currentBuffer);
+                queuedBuffers.Add(currentBuffer);
+            }
         }
 
         private void DequeueAudio(object cancellationToken)
