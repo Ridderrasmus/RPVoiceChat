@@ -2,7 +2,6 @@
 using RPVoiceChat.Audio.Effects;
 using RPVoiceChat.Utils;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -31,15 +30,10 @@ namespace RPVoiceChat.Audio
         private Thread audioCaptureThread;
         private CancellationTokenSource audioCaptureCTS;
 
-        private VoiceLevel voiceLevel = VoiceLevel.Talking;
-        public bool canSwitchDevice = true;
         public bool Transmitting = false;
         public bool TransmittingOnPreviousStep = false;
         public bool IsDenoisingAvailable = false;
-
-        private long gameTickId = 0;
-
-        private bool isRecording = false;
+        private VoiceLevel voiceLevel = VoiceLevel.Talking;
         private double inputThreshold;
 
         public double Amplitude { get; set; }
@@ -224,34 +218,6 @@ namespace RPVoiceChat.Audio
             TransmittingOnPreviousStep = Transmitting;
         }
 
-        // Returns the success of the method
-        public bool ToggleRecording()
-        {
-            return (ToggleRecording(!isRecording) == !isRecording);
-        }
-
-        // Returns the recording status
-        public bool ToggleRecording(bool mode)
-        {
-            if (!canSwitchDevice) return isRecording;
-            canSwitchDevice = false;
-            if (isRecording == mode) return mode;
-
-            if (mode)
-            {
-                capture.Start();
-            }
-            else
-            {
-                capture.Stop();
-            }
-
-            isRecording = mode;
-
-            canSwitchDevice = true;
-            return isRecording;
-        }
-
         private IAudioCapture CreateNewCapture(string deviceName, ALFormat? captureFormat = null)
         {
             ALFormat format = captureFormat ?? GetDefaultInputFormat();
@@ -402,8 +368,6 @@ namespace RPVoiceChat.Audio
 
         public void Dispose()
         {
-            capi.Event.UnregisterGameTickListener(gameTickId);
-            gameTickId = 0;
             audioCaptureCTS?.Cancel();
             audioCaptureCTS?.Dispose();
             capture?.Stop();
