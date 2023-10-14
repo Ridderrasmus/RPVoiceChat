@@ -33,7 +33,7 @@ namespace RPVoiceChat.Networking
             return _transportID;
         }
 
-        public virtual ConnectionInfo GetConnection()
+        public virtual ConnectionInfo GetConnectionInfo()
         {
             if (connectionInfo != null) return connectionInfo;
 

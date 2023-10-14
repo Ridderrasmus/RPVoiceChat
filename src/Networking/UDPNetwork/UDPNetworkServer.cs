@@ -20,7 +20,7 @@ namespace RPVoiceChat.Networking
         {
             this.port = port;
             this.ip = IPAddress.Parse(ip ?? NetworkUtils.GetPublicIP());
-            ownEndPoint = NetworkUtils.GetEndPoint(GetConnection());
+            ownEndPoint = NetworkUtils.GetEndPoint(GetConnectionInfo());
             _readinessProbeCTS = new CancellationTokenSource();
 
             OnMessageReceived += MessageReceived;
@@ -35,7 +35,7 @@ namespace RPVoiceChat.Networking
             VerifyServerReadiness();
         }
 
-        public override ConnectionInfo GetConnection()
+        public override ConnectionInfo GetConnectionInfo()
         {
             if (connectionInfo != null) return connectionInfo;
 

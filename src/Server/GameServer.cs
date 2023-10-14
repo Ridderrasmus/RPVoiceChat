@@ -107,7 +107,7 @@ namespace RPVoiceChat.Server
 
         private void InitHandshake(IServerPlayer player)
         {
-            var serverConnection = networkServer.GetConnection();
+            var serverConnection = networkServer.GetConnectionInfo();
             serverConnection.SupportedTransports = serverByTransport.Keys.ToArray();
             handshakeChannel.SendPacket(serverConnection, player);
         }

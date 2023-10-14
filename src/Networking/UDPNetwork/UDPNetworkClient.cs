@@ -30,7 +30,7 @@ namespace RPVoiceChat.Networking
             StartListening();
             VerifyClientReadiness();
 
-            var clientConnection = GetConnection();
+            var clientConnection = GetConnectionInfo();
             return clientConnection;
         }
 
