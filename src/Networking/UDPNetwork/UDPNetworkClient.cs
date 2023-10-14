@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RPVoiceChat.Utils;
+using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,7 +13,7 @@ namespace RPVoiceChat.Networking
         private IPEndPoint serverEndpoint;
         private CancellationTokenSource _readinessProbeCTS;
 
-        public UDPNetworkClient() : base(Utils.Logger.client)
+        public UDPNetworkClient() : base(Logger.client)
         {
             _readinessProbeCTS = new CancellationTokenSource();
 
@@ -21,10 +22,10 @@ namespace RPVoiceChat.Networking
 
         public ConnectionInfo Connect(ConnectionInfo serverConnection)
         {
-            serverEndpoint = GetEndPoint(serverConnection);
+            serverEndpoint = NetworkUtils.GetEndPoint(serverConnection);
             port = OpenUDPClient();
 
-            if (!IsInternalNetwork(serverConnection.Address))
+            if (!NetworkUtils.IsInternalNetwork(serverConnection.Address))
                 SetupUpnp(port);
             StartListening();
             VerifyClientReadiness();

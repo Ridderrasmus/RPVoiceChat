@@ -2,7 +2,6 @@
 using RPVoiceChat.Utils;
 using System;
 using System.Net;
-using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,7 +10,7 @@ namespace RPVoiceChat.Networking
 {
     public abstract class UDPNetworkBase : IDisposable
     {
-        public event Action<byte[], IPEndPoint> OnMessageReceived;
+        protected event Action<byte[], IPEndPoint> OnMessageReceived;
 
         private Thread _listeningThread;
         private CancellationTokenSource _listeningCTS;
@@ -49,25 +48,6 @@ namespace RPVoiceChat.Networking
         public void TogglePortForwarding(bool? state = null)
         {
             upnpEnabled = state ?? !upnpEnabled;
-        }
-
-        protected bool IsInternalNetwork(string ip)
-        {
-            return IsInternalNetwork(IPAddress.Parse(ip));
-        }
-
-        protected bool IsInternalNetwork(IPAddress ip)
-        {
-            byte[] ipParts = ip.GetAddressBytes();
-
-            if (ipParts[0] == 10 ||
-               (ipParts[0] == 192 && ipParts[1] == 168) ||
-               (ipParts[0] == 172 && (ipParts[1] >= 16 && ipParts[1] <= 31)) ||
-               (ipParts[0] == 25 || ipParts[0] == 26) ||
-               (ipParts[0] == 127 && ipParts[1] == 0 && ipParts[2] == 0 && ipParts[3] == 1))
-                return true;
-
-            return false;
         }
 
         protected void SetupUpnp(int port)
@@ -121,7 +101,7 @@ namespace RPVoiceChat.Networking
             _listeningThread.Start();
         }
 
-        protected void Listen(CancellationToken ct)
+        private void Listen(CancellationToken ct)
         {
             while (_listeningThread.IsAlive && !ct.IsCancellationRequested)
             {
@@ -142,28 +122,6 @@ namespace RPVoiceChat.Networking
                     throw e;
                 }
             }
-        }
-
-        protected IPEndPoint GetEndPoint(ConnectionInfo connectionInfo)
-        {
-            var address = IPAddress.Parse(connectionInfo.Address);
-            var endpoint = new IPEndPoint(address, connectionInfo.Port);
-
-            return endpoint;
-        }
-
-        protected string GetPublicIP()
-        {
-            string publicIPString = new HttpClient().GetStringAsync("https://ipinfo.io/ip").GetAwaiter().GetResult();
-
-            return publicIPString;
-        }
-
-        protected bool AssertEqual(IPEndPoint firstEndPoint, IPEndPoint secondEndPoint)
-        {
-            bool isSameAddress = firstEndPoint.Address.MapToIPv4().ToString() == secondEndPoint.Address.MapToIPv4().ToString();
-            bool isSamePort = firstEndPoint.Port == secondEndPoint.Port;
-            return isSameAddress && isSamePort;
         }
 
         public void Dispose()

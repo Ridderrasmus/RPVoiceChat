@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RPVoiceChat.Utils;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
@@ -15,11 +16,11 @@ namespace RPVoiceChat.Networking
         private IPEndPoint ownEndPoint;
         private CancellationTokenSource _readinessProbeCTS;
 
-        public UDPNetworkServer(int port, string ip = null) : base(Utils.Logger.server)
+        public UDPNetworkServer(int port, string ip = null) : base(Logger.server)
         {
             this.port = port;
-            this.ip = IPAddress.Parse(ip ?? GetPublicIP());
-            ownEndPoint = GetEndPoint(GetConnection());
+            this.ip = IPAddress.Parse(ip ?? NetworkUtils.GetPublicIP());
+            ownEndPoint = NetworkUtils.GetEndPoint(GetConnection());
             _readinessProbeCTS = new CancellationTokenSource();
 
             OnMessageReceived += MessageReceived;
@@ -27,7 +28,7 @@ namespace RPVoiceChat.Networking
 
         public void Launch()
         {
-            if (!IsInternalNetwork(ip))
+            if (!NetworkUtils.IsInternalNetwork(ip))
                 SetupUpnp(port);
             OpenUDPClient(port);
             StartListening();
@@ -53,7 +54,7 @@ namespace RPVoiceChat.Networking
             if (!connectionsByPlayer.TryGetValue(playerId, out connectionInfo)) return false;
 
             var data = packet.ToBytes();
-            var destination = GetEndPoint(connectionInfo);
+            var destination = NetworkUtils.GetEndPoint(connectionInfo);
 
             UdpClient.Send(data, data.Length, destination);
             return true;
@@ -62,14 +63,14 @@ namespace RPVoiceChat.Networking
         public void PlayerConnected(string playerId, ConnectionInfo connectionInfo)
         {
             connectionsByPlayer.Add(playerId, connectionInfo);
-            logger.VerboseDebug($"{playerId} connected over UDP");
+            logger.VerboseDebug($"{playerId} connected over {_transportID}");
         }
 
         public void PlayerDisconnected(string playerId)
         {
             if (!connectionsByPlayer.ContainsKey(playerId)) return;
             connectionsByPlayer.Remove(playerId);
-            logger.VerboseDebug($"{playerId} disconnected from UDP server");
+            logger.VerboseDebug($"{playerId} disconnected from {_transportID} server");
         }
 
         private void MessageReceived(byte[] msg, IPEndPoint sender)
@@ -117,7 +118,7 @@ namespace RPVoiceChat.Networking
 
         private bool IsSelf(IPEndPoint endPoint)
         {
-            return AssertEqual(endPoint, ownEndPoint);
+            return NetworkUtils.AssertEqual(endPoint, ownEndPoint);
         }
     }
 }
