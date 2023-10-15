@@ -41,10 +41,5 @@ namespace RPVoiceChat
         private static RPVoiceChatConfig LoadConfig(ICoreAPI api) => api.LoadModConfig<RPVoiceChatConfig>(ConfigFileName);
         private static void GenerateConfig(ICoreAPI api) => api.StoreModConfig(new RPVoiceChatConfig(), ConfigFileName);
         private static void GenerateConfig(ICoreAPI api, RPVoiceChatConfig previousConfig) => api.StoreModConfig(new RPVoiceChatConfig(previousConfig), ConfigFileName);
-
-        public static void Dispose()
-        {
-            Config = null;
-        }
     }
 }

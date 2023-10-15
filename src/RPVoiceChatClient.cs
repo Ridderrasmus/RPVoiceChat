@@ -152,9 +152,7 @@ namespace RPVoiceChat
             patchManager?.Dispose();
             client?.Dispose();
             configGui?.Dispose();
-            ClientSettings.Dispose();
             clientSettingsRepository?.Dispose();
-            base.Dispose();
         }
     }
 }

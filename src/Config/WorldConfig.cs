@@ -1,8 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
-using Vintagestory.API.Client;
+﻿using System.Collections.Generic;
 using Vintagestory.API.Common;
-using Vintagestory.API.Server;
 
 namespace RPVoiceChat
 {
@@ -82,11 +79,6 @@ namespace RPVoiceChat
         private static string Key(string key)
         {
             return $"{modPrefix}:{key}";
-        }
-
-        public static void Dispose()
-        {
-            api = null;
         }
     }
 }
