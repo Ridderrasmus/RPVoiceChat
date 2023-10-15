@@ -17,7 +17,6 @@ namespace RPVoiceChat.Networking
 
         protected UdpClient UdpClient;
         protected int port;
-        protected ConnectionInfo connectionInfo;
         protected const string _transportID = "UDP";
         protected bool upnpEnabled = true;
         protected Logger logger;
@@ -31,18 +30,6 @@ namespace RPVoiceChat.Networking
         public string GetTransportID()
         {
             return _transportID;
-        }
-
-        public virtual ConnectionInfo GetConnectionInfo()
-        {
-            if (connectionInfo != null) return connectionInfo;
-
-            connectionInfo = new ConnectionInfo()
-            {
-                Port = port
-            };
-
-            return connectionInfo;
         }
 
         public void TogglePortForwarding(bool? state = null)

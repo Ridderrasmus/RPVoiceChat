@@ -15,6 +15,7 @@ namespace RPVoiceChat.Networking
         private IPAddress ip;
         private IPEndPoint ownEndPoint;
         private CancellationTokenSource _readinessProbeCTS;
+        private ConnectionInfo connectionInfo;
 
         public UDPNetworkServer(int port, string ip = null) : base(Logger.server)
         {
@@ -35,7 +36,7 @@ namespace RPVoiceChat.Networking
             VerifyServerReadiness();
         }
 
-        public override ConnectionInfo GetConnectionInfo()
+        public ConnectionInfo GetConnectionInfo()
         {
             if (connectionInfo != null) return connectionInfo;
 

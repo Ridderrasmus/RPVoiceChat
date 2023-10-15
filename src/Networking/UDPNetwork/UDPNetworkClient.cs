@@ -30,8 +30,7 @@ namespace RPVoiceChat.Networking
             StartListening();
             VerifyClientReadiness();
 
-            var clientConnection = GetConnectionInfo();
-            return clientConnection;
+            return new ConnectionInfo(port);
         }
 
         public void SendAudioToServer(AudioPacket packet)
