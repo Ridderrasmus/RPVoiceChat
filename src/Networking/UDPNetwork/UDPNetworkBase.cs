@@ -20,11 +20,13 @@ namespace RPVoiceChat.Networking
         protected const string _transportID = "UDP";
         protected bool upnpEnabled = true;
         protected Logger logger;
+        protected CancellationTokenSource _readinessProbeCTS;
         protected bool isReady = false;
 
         public UDPNetworkBase(Logger logger)
         {
             this.logger = logger;
+            _readinessProbeCTS = new CancellationTokenSource();
         }
 
         public string GetTransportID()
@@ -113,6 +115,8 @@ namespace RPVoiceChat.Networking
 
         public void Dispose()
         {
+            _readinessProbeCTS?.Cancel();
+            _readinessProbeCTS?.Dispose();
             _listeningCTS?.Cancel();
             _listeningCTS?.Dispose();
             UdpClient?.Close();

@@ -1,7 +1,6 @@
 ﻿using RPVoiceChat.Utils;
 using System;
 using System.Net;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace RPVoiceChat.Networking
@@ -11,12 +10,9 @@ namespace RPVoiceChat.Networking
         public event Action<AudioPacket> OnAudioReceived;
 
         private IPEndPoint serverEndpoint;
-        private CancellationTokenSource _readinessProbeCTS;
 
         public UDPNetworkClient() : base(Logger.client)
         {
-            _readinessProbeCTS = new CancellationTokenSource();
-
             OnMessageReceived += MessageReceived;
         }
 

@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace RPVoiceChat.Networking
@@ -14,7 +13,6 @@ namespace RPVoiceChat.Networking
         private Dictionary<string, ConnectionInfo> connectionsByPlayer = new Dictionary<string, ConnectionInfo>();
         private IPAddress ip;
         private IPEndPoint ownEndPoint;
-        private CancellationTokenSource _readinessProbeCTS;
         private ConnectionInfo connectionInfo;
 
         public UDPNetworkServer(int port, string ip = null) : base(Logger.server)
@@ -22,7 +20,6 @@ namespace RPVoiceChat.Networking
             this.port = port;
             this.ip = IPAddress.Parse(ip ?? NetworkUtils.GetPublicIP());
             ownEndPoint = NetworkUtils.GetEndPoint(GetConnectionInfo());
-            _readinessProbeCTS = new CancellationTokenSource();
 
             OnMessageReceived += MessageReceived;
         }
