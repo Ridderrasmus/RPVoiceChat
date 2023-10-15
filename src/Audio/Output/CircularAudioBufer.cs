@@ -3,6 +3,7 @@ using RPVoiceChat.Utils;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using Vintagestory.API.Util;
 
 namespace RPVoiceChat.Audio
@@ -10,7 +11,6 @@ namespace RPVoiceChat.Audio
     public class CircularAudioBuffer : IDisposable
     {
         public event Action OnEmptyingQueue;
-        private Thread dequeueAudioThread;
         private CancellationTokenSource dequeueAudioCTS;
         private List<int> availableBuffers = new List<int>();
         private List<int> queuedBuffers = new List<int>();
@@ -25,9 +25,8 @@ namespace RPVoiceChat.Audio
             buffers = OALW.GenBuffers(bufferCount);
             availableBuffers.AddRange(buffers);
 
-            dequeueAudioThread = new Thread(DequeueAudio);
             dequeueAudioCTS = new CancellationTokenSource();
-            dequeueAudioThread.Start(dequeueAudioCTS.Token);
+            DequeueAudio(dequeueAudioCTS.Token);
         }
 
         public void QueueAudio(byte[] audio, ALFormat format, int frequency)
@@ -52,13 +51,12 @@ namespace RPVoiceChat.Audio
             }
         }
 
-        private void DequeueAudio(object cancellationToken)
+        private async void DequeueAudio(CancellationToken ct)
         {
-            CancellationToken ct = (CancellationToken)cancellationToken;
-            while (dequeueAudioThread.IsAlive && !ct.IsCancellationRequested)
+            while (!ct.IsCancellationRequested)
             {
                 FreeProcessedBuffers();
-                Thread.Sleep(30);
+                await Task.Delay(30);
             }
         }
 
