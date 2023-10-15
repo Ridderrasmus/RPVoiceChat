@@ -5,6 +5,7 @@ using RPVoiceChat.Gui;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
 using System;
+using System.Collections.Generic;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
@@ -52,9 +53,13 @@ namespace RPVoiceChat
 
             // Init voice chat client
             bool forwardPorts = !config.ManualPortForwarding;
-            var mainClient = new UDPNetworkClient(forwardPorts);
-            var backupClient = new NativeNetworkClient(capi);
-            client = new PlayerNetworkClient(capi, mainClient, backupClient);
+            var networkTransports = new List<INetworkClient>()
+            {
+                new UDPNetworkClient(forwardPorts),
+                new TCPNetworkClient(),
+                new NativeNetworkClient(capi)
+            };
+            client = new PlayerNetworkClient(capi, networkTransports);
 
             // Initialize gui
             configGui = new ModMenuDialog(capi, micManager, audioOutputManager, clientSettingsRepository);

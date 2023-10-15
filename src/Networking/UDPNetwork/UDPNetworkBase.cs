@@ -58,6 +58,10 @@ namespace RPVoiceChat.Networking
             {
                 logger.Warning("Device discovery got aborted, assuming public IP");
             }
+            catch (NatDeviceNotFoundException)
+            {
+                throw new Exception($"Unable to port forward with UPnP. Make sure your IP is public and UPnP is enabled if you want to use {_transportID} connection.");
+            }
         }
 
         protected void OpenUDPClient(int port)
