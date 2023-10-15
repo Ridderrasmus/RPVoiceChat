@@ -23,20 +23,16 @@ namespace RPVoiceChat.Networking
         protected CancellationTokenSource _readinessProbeCTS;
         protected bool isReady = false;
 
-        public UDPNetworkBase(Logger logger)
+        public UDPNetworkBase(Logger logger, bool forwardPorts)
         {
             this.logger = logger;
+            upnpEnabled = forwardPorts;
             _readinessProbeCTS = new CancellationTokenSource();
         }
 
         public string GetTransportID()
         {
             return _transportID;
-        }
-
-        public void TogglePortForwarding(bool? state = null)
-        {
-            upnpEnabled = state ?? !upnpEnabled;
         }
 
         protected void SetupUpnp(int port)

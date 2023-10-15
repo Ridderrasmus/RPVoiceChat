@@ -11,7 +11,7 @@ namespace RPVoiceChat.Networking
 
         private IPEndPoint serverEndpoint;
 
-        public UDPNetworkClient() : base(Logger.client)
+        public UDPNetworkClient(bool forwardPorts) : base(Logger.client, forwardPorts)
         {
             OnMessageReceived += MessageReceived;
         }

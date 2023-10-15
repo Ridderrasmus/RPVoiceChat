@@ -51,8 +51,8 @@ namespace RPVoiceChat
             patchManager.Patch();
 
             // Init voice chat client
-            var mainClient = new UDPNetworkClient();
-            if (config.ManualPortForwarding) mainClient.TogglePortForwarding(false);
+            bool forwardPorts = !config.ManualPortForwarding;
+            var mainClient = new UDPNetworkClient(forwardPorts);
             var backupClient = new NativeNetworkClient(capi);
             client = new PlayerNetworkClient(capi, mainClient, backupClient);
 
