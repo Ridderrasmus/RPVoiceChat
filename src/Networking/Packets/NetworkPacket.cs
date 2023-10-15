@@ -16,7 +16,7 @@ namespace RPVoiceChat.Networking
             return stream.ToArray();
         }
 
-        public static T FromBytes<T>(byte[] data) where T: NetworkPacket
+        public static T FromBytes<T>(byte[] data) where T : NetworkPacket
         {
             var stream = new MemoryStream(data);
             PacketType code = (PacketType)BitConverter.ToInt32(data, 0);

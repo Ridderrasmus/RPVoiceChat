@@ -86,12 +86,13 @@ namespace RPVoiceChat.Networking
             if (UdpClient == null) throw new Exception("Udp client has not been initialized. Can't start listening.");
 
             _listeningCTS = new CancellationTokenSource();
-            _listeningThread = new Thread(() => Listen(_listeningCTS.Token));
-            _listeningThread.Start();
+            _listeningThread = new Thread(Listen);
+            _listeningThread.Start(_listeningCTS.Token);
         }
 
-        private void Listen(CancellationToken ct)
+        private void Listen(object cancellationToken)
         {
+            CancellationToken ct = (CancellationToken)cancellationToken;
             while (_listeningThread.IsAlive && !ct.IsCancellationRequested)
             {
                 try
