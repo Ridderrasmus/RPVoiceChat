@@ -169,8 +169,9 @@ namespace RPVoiceChat.Networking
             {
                 using var connection = new TCPConnection(logger);
                 connection.ConnectAsync(ownEndPoint)
-                    .ContinueWith(_ =>
-                        connection.SendAsync(selfPingPacket, _readinessProbeCTS.Token)
+                    .ContinueWith(
+                        _ => connection.SendAsync(selfPingPacket, _readinessProbeCTS.Token),
+                        TaskContinuationOptions.OnlyOnRanToCompletion
                     );
                 Task.Delay(1000, _readinessProbeCTS.Token).GetAwaiter().GetResult();
             }

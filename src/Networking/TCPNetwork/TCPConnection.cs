@@ -49,17 +49,21 @@ namespace RPVoiceChat.Networking
             {
                 remoteEndpoint = (IPEndPoint)socket.RemoteEndPoint;
                 port = ((IPEndPoint)socket.LocalEndPoint).Port;
-            });
+            }, TaskContinuationOptions.OnlyOnRanToCompletion);
         }
 
         public void Send(byte[] data)
         {
+            if (socket == null) throw new Exception("Socket already disposed.");
+
             var tcpMessage = PackMessage(data);
             socket.Send(tcpMessage);
         }
 
         public ValueTask<int> SendAsync(byte[] data, CancellationToken ct = default)
         {
+            if (socket == null) throw new Exception("Socket already disposed.");
+
             var tcpMessage = PackMessage(data);
             return socket.SendAsync(tcpMessage, ct);
         }
