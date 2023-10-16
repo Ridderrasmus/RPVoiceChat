@@ -24,12 +24,14 @@ namespace RPVoiceChat.Networking
         {
             this.logger = logger;
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            socket.ReceiveBufferSize = 16384;
         }
 
         public TCPConnection(Logger logger, Socket socket)
         {
             this.logger = logger;
             this.socket = socket;
+            socket.ReceiveBufferSize = 16384;
             remoteEndpoint = (IPEndPoint)socket.RemoteEndPoint;
             port = ((IPEndPoint)socket.LocalEndPoint)?.Port ?? 0;
         }
@@ -56,7 +58,7 @@ namespace RPVoiceChat.Networking
             socket.Send(tcpMessage);
         }
 
-        public ValueTask<int> SendAsync(byte[] data, CancellationToken ct)
+        public ValueTask<int> SendAsync(byte[] data, CancellationToken ct = default)
         {
             var tcpMessage = PackMessage(data);
             return socket.SendAsync(tcpMessage, ct);

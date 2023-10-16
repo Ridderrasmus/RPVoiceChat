@@ -140,7 +140,7 @@ namespace RPVoiceChat.Networking
                     break;
                 case PacketType.Audio:
                     var packet = NetworkPacket.FromBytes<AudioPacket>(msg);
-                    AudioPacketReceived?.Invoke(packet);
+                    _ = Task.Run(() => AudioPacketReceived?.Invoke(packet));
                     break;
                 default:
                     throw new Exception($"Unsupported packet type: {code}");
@@ -152,7 +152,7 @@ namespace RPVoiceChat.Networking
             var echoPacket = BitConverter.GetBytes((int)PacketType.Pong);
             try
             {
-                connection.Send(echoPacket);
+                connection.SendAsync(echoPacket);
             }
             catch (Exception e)
             {
