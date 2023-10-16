@@ -15,7 +15,7 @@ namespace RPVoiceChat.Networking
         private IPEndPoint ownEndPoint;
         private ConnectionInfo connectionInfo;
 
-        public UDPNetworkServer(int port, string ip = null) : base(Logger.server)
+        public UDPNetworkServer(int port, string ip, bool forwardPorts) : base(Logger.server, forwardPorts)
         {
             this.port = port;
             this.ip = IPAddress.Parse(ip ?? NetworkUtils.GetPublicIP());

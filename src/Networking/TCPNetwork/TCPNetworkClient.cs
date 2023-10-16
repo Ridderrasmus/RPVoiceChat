@@ -5,25 +5,19 @@ using System.Threading.Tasks;
 
 namespace RPVoiceChat.Networking
 {
-    public class UDPNetworkClient : UDPNetworkBase, IExtendedNetworkClient
+    public class TCPNetworkClient : TCPNetworkBase, IExtendedNetworkClient
     {
         public event Action<AudioPacket> OnAudioReceived;
 
         private IPEndPoint serverEndpoint;
+        private TCPConnection connection;
 
-        public UDPNetworkClient(bool forwardPorts) : base(Logger.client, forwardPorts)
-        {
-            OnMessageReceived += MessageReceived;
-        }
+        public TCPNetworkClient() : base(Logger.client) { }
 
         public ConnectionInfo Connect(ConnectionInfo serverConnection)
         {
             serverEndpoint = NetworkUtils.GetEndPoint(serverConnection);
-            port = OpenUDPClient();
-
-            if (!NetworkUtils.IsInternalNetwork(serverConnection.Address))
-                SetupUpnp(port);
-            StartListening();
+            connection = OpenConnection(serverEndpoint);
             VerifyClientReadiness();
 
             return new ConnectionInfo(port);
@@ -31,13 +25,24 @@ namespace RPVoiceChat.Networking
 
         public void SendAudioToServer(AudioPacket packet)
         {
-            if (UdpClient == null || serverEndpoint == null) throw new Exception("Udp client or server endpoint has not been initialized.");
+            if (connection == null) throw new Exception($"{_transportID} connection has not been initialized.");
 
             var data = packet.ToBytes();
-            UdpClient.Send(data, data.Length, serverEndpoint);
+            connection.Send(data);
         }
 
-        private void MessageReceived(byte[] msg, IPEndPoint sender)
+        private TCPConnection OpenConnection(IPEndPoint endPoint)
+        {
+            var connection = new TCPConnection(logger);
+            connection.OnMessageReceived += MessageReceived;
+            connection.Connect(endPoint);
+            connection.StartListening();
+            port = connection.port;
+
+            return connection;
+        }
+
+        private void MessageReceived(byte[] msg, TCPConnection _)
         {
             PacketType code = (PacketType)BitConverter.ToInt32(msg, 0);
             switch (code)
@@ -62,13 +67,19 @@ namespace RPVoiceChat.Networking
 
             try
             {
-                UdpClient.Send(pingPacket, pingPacket.Length, serverEndpoint);
+                connection.SendAsync(pingPacket, _readinessProbeCTS.Token);
                 Task.Delay(3000, _readinessProbeCTS.Token).GetAwaiter().GetResult();
             }
             catch (TaskCanceledException) { }
 
             if (isReady) return;
             throw new Exception("Client failed readiness probe. Aborting to prevent silent malfunction");
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            connection?.Dispose();
         }
     }
 }
