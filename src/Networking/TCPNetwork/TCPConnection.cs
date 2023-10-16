@@ -45,7 +45,7 @@ namespace RPVoiceChat.Networking
 
         public Task ConnectAsync(IPEndPoint endPoint)
         {
-            return socket.ConnectAsync(endPoint).ContinueWith(_ =>
+            return Task.Run(() => socket.Connect(endPoint)).ContinueWith(_ =>
             {
                 remoteEndpoint = (IPEndPoint)socket.RemoteEndPoint;
                 port = ((IPEndPoint)socket.LocalEndPoint).Port;
@@ -60,12 +60,12 @@ namespace RPVoiceChat.Networking
             socket.Send(tcpMessage);
         }
 
-        public ValueTask<int> SendAsync(byte[] data, CancellationToken ct = default)
+        public void SendAsync(byte[] data, CancellationToken ct = default)
         {
             if (socket == null) throw new Exception("Socket already disposed.");
 
             var tcpMessage = PackMessage(data);
-            return socket.SendAsync(tcpMessage, ct);
+            Task.Run(() => socket.Send(tcpMessage));
         }
 
         public void StartListening()
@@ -83,7 +83,7 @@ namespace RPVoiceChat.Networking
             {
                 try
                 {
-                    var streamLength = await socket.ReceiveAsync(receiveBuffer);
+                    var streamLength = await Task.Run(() => socket.Receive(receiveBuffer));
                     ct.ThrowIfCancellationRequested();
                     if (streamLength <= 0) throw new SocketException((int)SocketError.ConnectionReset);
 

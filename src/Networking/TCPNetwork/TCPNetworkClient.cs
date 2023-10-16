@@ -68,7 +68,7 @@ namespace RPVoiceChat.Networking
             try
             {
                 connection.SendAsync(pingPacket, _readinessProbeCTS.Token);
-                Task.Delay(3000, _readinessProbeCTS.Token).GetAwaiter().GetResult();
+                Task.Delay(5000, _readinessProbeCTS.Token).GetAwaiter().GetResult();
             }
             catch (TaskCanceledException) { }
 

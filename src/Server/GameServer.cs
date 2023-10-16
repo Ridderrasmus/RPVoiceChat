@@ -43,8 +43,11 @@ namespace RPVoiceChat.Server
 
         public void PlayerLeft(IServerPlayer player)
         {
-            foreach (IExtendedNetworkServer extendedServer in activeServers)
-                extendedServer?.PlayerDisconnected(player.PlayerUID);
+            foreach (var server in activeServers)
+            {
+                if (server is not IExtendedNetworkServer extendedServer) continue;
+                extendedServer.PlayerDisconnected(player.PlayerUID);
+            }
         }
 
         public void SendAudioToAllClientsInRange(AudioPacket packet)
