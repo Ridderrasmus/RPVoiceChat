@@ -120,19 +120,17 @@ namespace RPVoiceChat.Audio
             var clientEntity = capi.World.Player?.Entity;
             if (clientEntity == null || capture == null) return;
 
-            bool isMuted = config.IsMuted;
-            bool isSleeping = clientEntity.AnimManager.IsAnimationActive("sleep");
-            if (isMuted || isSleeping || !clientEntity.Alive) return;
-
             int samplesAvailable = capture.AvailableSamples;
             int frameSize = codec.GetFrameSize();
             int samplesToRead = samplesAvailable - samplesAvailable % frameSize;
-
-            int bufferLength = samplesToRead * SampleToByte * InputChannelCount;
             if (samplesToRead <= 0) return;
-
+            int bufferLength = samplesToRead * SampleToByte * InputChannelCount;
             var sampleBuffer = new byte[bufferLength];
             capture.ReadSamples(sampleBuffer, samplesToRead);
+
+            bool isMuted = config.IsMuted;
+            bool isSleeping = clientEntity.AnimManager.IsAnimationActive("sleep");
+            if (isMuted || isSleeping || !clientEntity.Alive) return;
 
             AudioData data = ProcessAudio(sampleBuffer);
             TransmitAudio(data);
