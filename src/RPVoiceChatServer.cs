@@ -1,6 +1,7 @@
-﻿using RPVoiceChat.Networking;
+using RPVoiceChat.Networking;
 using RPVoiceChat.Server;
 using RPVoiceChat.Utils;
+using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;
 using Vintagestory.API.Server;
@@ -16,9 +17,14 @@ namespace RPVoiceChat
             sapi = api;
 
             bool forwardPorts = !config.ManualPortForwarding;
-            var mainServer = new UDPNetworkServer(config.ServerPort, config.ServerIP, forwardPorts);
-            var backupServer = new NativeNetworkServer(api);
-            server = new GameServer(sapi, mainServer, backupServer);
+            var networkTransports = new List<INetworkServer>()
+            {
+                new UDPNetworkServer(config.ServerPort, config.ServerIP, forwardPorts),
+                new TCPNetworkServer(config.ServerPort, config.ServerIP),
+                new NativeNetworkServer(api)
+            };
+
+            server = new GameServer(sapi, networkTransports);
             server.Launch();
 
             // Register/load world config

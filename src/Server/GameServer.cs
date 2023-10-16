@@ -1,9 +1,7 @@
-﻿using Open.Nat;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Vintagestory.API.Server;
 
 namespace RPVoiceChat.Server
@@ -11,62 +9,30 @@ namespace RPVoiceChat.Server
     public class GameServer : IDisposable
     {
         private ICoreServerAPI api;
-        private INetworkServer networkServer;
-        private INetworkServer reserveServer;
+        private List<INetworkServer> _initialTransports;
+        private List<INetworkServer> activeServers;
         private IServerNetworkChannel handshakeChannel;
-        private Dictionary<string, INetworkServer> serverByTransport;
+        private Dictionary<string, INetworkServer> serverByTransportID = new Dictionary<string, INetworkServer>();
+        private ConnectionRequest connectionRequest;
 
-        public GameServer(ICoreServerAPI sapi, INetworkServer server, INetworkServer _reserveServer = null)
+        public GameServer(ICoreServerAPI sapi, List<INetworkServer> serverTransports)
         {
             api = sapi;
-            networkServer = server;
-            reserveServer = _reserveServer;
+            _initialTransports = serverTransports;
             handshakeChannel = sapi.Network
                 .RegisterChannel("RPVCHandshake")
+                .RegisterMessageType<ConnectionRequest>()
                 .RegisterMessageType<ConnectionInfo>()
                 .SetMessageHandler<ConnectionInfo>(FinalizeHandshake);
-
-            if (reserveServer is IExtendedNetworkServer)
-                throw new NotSupportedException("Reserve server requiring handshake is not supported");
         }
 
         public void Launch()
         {
-            serverByTransport = new Dictionary<string, INetworkServer>();
-            try
-            {
-                Logger.server.Notification($"Launching {networkServer.GetTransportID()} server");
-                var extendedServer = networkServer as IExtendedNetworkServer;
-                extendedServer?.Launch();
-                api.Event.PlayerNowPlaying += PlayerJoined;
-                api.Event.PlayerDisconnect += PlayerLeft;
-                networkServer.AudioPacketReceived += SendAudioToAllClientsInRange;
-                serverByTransport.Add(networkServer.GetTransportID(), networkServer);
-                Logger.server.Notification($"{networkServer.GetTransportID()} server started");
+            LaunchServers();
+            if (activeServers.Count == 0) throw new Exception("Failed to launch any server");
 
-                if (reserveServer == null) return;
-                Logger.server.Notification($"Launching {reserveServer.GetTransportID()} server");
-                reserveServer.AudioPacketReceived += SendAudioToAllClientsInRange;
-                serverByTransport.Add(reserveServer.GetTransportID(), reserveServer);
-                Logger.server.Notification($"{reserveServer.GetTransportID()} server started");
-                return;
-            }
-            catch (NatDeviceNotFoundException)
-            {
-                Logger.server.Error($"Failed to launch {networkServer.GetTransportID()} server: Unable to port forward with UPnP. " +
-                    $"Make sure your IP is public and UPnP is enabled if you want to use {networkServer.GetTransportID()} server.");
-            }
-            catch (Exception e)
-            {
-                Logger.server.Error($"Failed to launch {networkServer.GetTransportID()} server:\n{e}");
-            }
-
-            if (reserveServer == null)
-                throw new Exception("Failed to launch any server");
-
-            SwapActiveServer(reserveServer);
-            reserveServer = null;
-            Launch();
+            api.Event.PlayerNowPlaying += PlayerJoined;
+            api.Event.PlayerDisconnect += PlayerLeft;
         }
 
         public void PlayerJoined(IServerPlayer player)
@@ -76,8 +42,8 @@ namespace RPVoiceChat.Server
 
         public void PlayerLeft(IServerPlayer player)
         {
-            var extendedServer = networkServer as IExtendedNetworkServer;
-            extendedServer?.PlayerDisconnected(player.PlayerUID);
+            foreach (IExtendedNetworkServer extendedServer in activeServers)
+                extendedServer?.PlayerDisconnected(player.PlayerUID);
         }
 
         public void SendAudioToAllClientsInRange(AudioPacket packet)
@@ -98,26 +64,48 @@ namespace RPVoiceChat.Server
             }
         }
 
-        private void SwapActiveServer(INetworkServer newTransport)
+        private void LaunchServers()
         {
-            Logger.server.Notification($"Using {newTransport.GetTransportID()} server from now on");
-            networkServer.Dispose();
-            networkServer = newTransport;
+            activeServers = new List<INetworkServer>();
+            foreach (var transport in _initialTransports)
+            {
+                try
+                {
+                    LaunchServer(transport);
+                    transport.AudioPacketReceived += SendAudioToAllClientsInRange;
+                }
+                catch (Exception e)
+                {
+                    Logger.server.Error($"Failed to launch {transport.GetTransportID()} server:\n{e}");
+                    transport.Dispose();
+                }
+            }
+        }
+
+        private void LaunchServer(INetworkServer server)
+        {
+            var transportID = server.GetTransportID();
+            Logger.server.Notification($"Launching {transportID} server");
+            if (server is IExtendedNetworkServer extendedServer)
+                extendedServer?.Launch();
+
+            activeServers.Add(server);
+            serverByTransportID.Add(transportID, server);
+            Logger.server.Notification($"{transportID} server started");
         }
 
         private void InitHandshake(IServerPlayer player)
         {
-            var serverConnection = networkServer.GetConnectionInfo();
-            serverConnection.SupportedTransports = serverByTransport.Keys.ToArray();
-            handshakeChannel.SendPacket(serverConnection, player);
+            var connectionRequest = GetConnectionRequest();
+            handshakeChannel.SendPacket(connectionRequest, player);
         }
 
         private void FinalizeHandshake(IServerPlayer player, ConnectionInfo playerConnection)
         {
-            var playerTransport = playerConnection.SupportedTransports.FirstOrDefault();
-            if (!serverByTransport.ContainsKey(playerTransport)) return;
+            var playerTransport = playerConnection.Transport;
+            if (!serverByTransportID.ContainsKey(playerTransport)) return;
 
-            var extendedServer = serverByTransport[playerTransport] as IExtendedNetworkServer;
+            var extendedServer = serverByTransportID[playerTransport] as IExtendedNetworkServer;
             if (extendedServer == null) return;
             try
             {
@@ -135,35 +123,41 @@ namespace RPVoiceChat.Server
 
         private void SendPacket(NetworkPacket packet, string playerId)
         {
-            try
+            foreach (var server in activeServers)
             {
-                bool success = networkServer.SendPacket(packet, playerId);
-                if (success) return;
+                try
+                {
+                    bool success = server.SendPacket(packet, playerId);
+                    if (success) return;
+                }
+                catch (Exception e)
+                {
+                    Logger.server.VerboseDebug($"Couldn't use {server.GetTransportID()} server to deliver a packet to {playerId}: {e.Message}");
+                }
             }
-            catch (Exception e)
-            {
-                Logger.server.VerboseDebug($"Couldn't use main server to deliver a packet to {playerId}: {e.Message}");
-            }
+            Logger.server.Error($"Failed to deliver a packet to {playerId}: All active servers refused to serve the player");
+        }
 
-            try
-            {
-                bool success = reserveServer?.SendPacket(packet, playerId) ?? false;
-                if (success) return;
-            }
-            catch (Exception e)
-            {
-                Logger.server.VerboseDebug($"Couldn't use backup server to deliver a packet to {playerId}: {e.Message}");
-            }
+        private ConnectionRequest GetConnectionRequest()
+        {
+            if (connectionRequest != null) return connectionRequest;
 
-            Logger.server.Error($"Failed to deliver a packet to {playerId}: All servers refused to serve the client");
+            var serverConnectionInfos = new List<ConnectionInfo>();
+            foreach (var server in activeServers)
+            {
+                var connectionInfo = server.GetConnectionInfo();
+                connectionInfo.Transport = server.GetTransportID();
+                serverConnectionInfos.Add(connectionInfo);
+            }
+            connectionRequest = new ConnectionRequest(serverConnectionInfos);
+
+            return connectionRequest;
         }
 
         public void Dispose()
         {
-            var disposableServer = networkServer as IDisposable;
-            var disposableReserveServer = reserveServer as IDisposable;
-            disposableServer?.Dispose();
-            disposableReserveServer?.Dispose();
+            foreach (var server in activeServers)
+                server.Dispose();
         }
     }
 }
