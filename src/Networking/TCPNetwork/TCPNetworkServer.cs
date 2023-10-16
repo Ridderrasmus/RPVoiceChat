@@ -122,12 +122,12 @@ namespace RPVoiceChat.Networking
             connectionsByAddress[sender.ToString()] = connection;
         }
 
-        private void ConnectionClosed(TCPConnection connection)
+        private void ConnectionClosed(bool isGraceful, TCPConnection connection)
         {
             var address = connection.remoteEndpoint.ToString();
             if (!connectionsByAddress.ContainsKey(address)) return;
             connectionsByAddress.Remove(address);
-            logger.VerboseDebug($"Connection with {address} was closed");
+            logger.VerboseDebug($"{_transportID} connection with {address} was closed {(isGraceful ? "gracefully" : "unexpectedly")}");
         }
 
         private void MessageReceived(byte[] msg, TCPConnection channel)

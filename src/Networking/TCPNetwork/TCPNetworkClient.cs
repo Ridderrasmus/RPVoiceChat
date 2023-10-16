@@ -25,6 +25,11 @@ namespace RPVoiceChat.Networking
 
         public void SendAudioToServer(AudioPacket packet)
         {
+            if (isReady == false)
+            {
+                logger.Warning($"Attempting to send audio over {_transportID} while client isn't ready. Skipping sending.");
+                return;
+            }
             if (connection == null) throw new Exception($"{_transportID} connection has not been initialized.");
 
             var data = packet.ToBytes();
@@ -35,11 +40,31 @@ namespace RPVoiceChat.Networking
         {
             var connection = new TCPConnection(logger);
             connection.OnMessageReceived += MessageReceived;
+            connection.OnDisconnected += ConnectionClosed;
             connection.Connect(endPoint);
             connection.StartListening();
             port = connection.port;
 
             return connection;
+        }
+
+        private void ConnectionClosed(bool isGraceful, TCPConnection _)
+        {
+            isReady = false;
+            logger.Notification($"Connection with {_transportID} server was closed");
+            if (isGraceful) return;
+            try
+            {
+                logger.Notification($"Attempting reconnect to {_transportID} server");
+                connection.Reconnect(serverEndpoint);
+                connection.StartListening();
+                VerifyClientReadiness();
+                logger.Notification($"Successfully reconnected to {_transportID} server");
+            }
+            catch(Exception e)
+            {
+                logger.Warning($"Unable to reconnect to {_transportID}:\n{e}");
+            }
         }
 
         private void MessageReceived(byte[] msg, TCPConnection _)
