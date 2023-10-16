@@ -1,4 +1,5 @@
-﻿using RPVoiceChat.Utils;
+using Open.Nat;
+using RPVoiceChat.Utils;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -15,21 +16,25 @@ namespace RPVoiceChat.Networking
         private Dictionary<string, TCPConnection> connectionsByAddress = new Dictionary<string, TCPConnection>();
         private Dictionary<string, ConnectionInfo> connectionInfoByPlayer = new Dictionary<string, ConnectionInfo>();
         private IPAddress ip;
+        protected bool upnpEnabled;
         private IPEndPoint ownEndPoint;
         private ConnectionInfo connectionInfo;
         private Socket socket;
         private Thread _listeningThread;
         private CancellationTokenSource _listeningCTS;
 
-        public TCPNetworkServer(int port, string ip = null) : base(Logger.server)
+        public TCPNetworkServer(int port, string ip, bool forwardPorts) : base(Logger.server)
         {
             this.port = port;
             this.ip = IPAddress.Parse(ip ?? NetworkUtils.GetPublicIP());
+            upnpEnabled = forwardPorts;
             ownEndPoint = NetworkUtils.GetEndPoint(GetConnectionInfo());
         }
 
         public void Launch()
         {
+            if (!NetworkUtils.IsInternalNetwork(ip))
+                SetupUpnp(port);
             StartServer();
             VerifyServerReadiness();
         }
@@ -158,6 +163,35 @@ namespace RPVoiceChat.Networking
             {
                 logger.Debug($"Failed to send echo request to {connection.remoteEndpoint}: {e.Message}");
                 connection.Disconnect();
+            }
+        }
+
+        protected void SetupUpnp(int port)
+        {
+            if (!upnpEnabled) return;
+
+            try
+            {
+                // UPnP using Open.Nat
+                logger.VerboseDebug("Attempting to portforward with UPnP");
+                NatDiscoverer discoverer = new NatDiscoverer();
+                CancellationTokenSource cts = new CancellationTokenSource(5000);
+                Task<NatDevice> task = Task.Run(() => discoverer.DiscoverDeviceAsync(PortMapper.Upnp, cts));
+                NatDevice device = task.GetAwaiter().GetResult();
+
+                if (device == null)
+                    throw new NatDeviceNotFoundException("NatDiscoverer have not returned the NatDevice");
+
+                logger.VerboseDebug("Found a UPnP device, creating port map");
+                device.CreatePortMapAsync(new Mapping(Protocol.Tcp, port, port, "Vintage Story Voice Chat"));
+            }
+            catch (TaskCanceledException)
+            {
+                logger.Warning("Device discovery got aborted, assuming public IP");
+            }
+            catch (NatDeviceNotFoundException)
+            {
+                logger.Warning($"Failed to port forward with UPnP. {_transportID} server may not be available if your IP is private or you are behind NAT");
             }
         }
 

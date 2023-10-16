@@ -20,7 +20,7 @@ namespace RPVoiceChat
             var networkTransports = new List<INetworkServer>()
             {
                 new UDPNetworkServer(config.ServerPort, config.ServerIP, forwardPorts),
-                new TCPNetworkServer(config.ServerPort, config.ServerIP),
+                new TCPNetworkServer(config.ServerPort, config.ServerIP, forwardPorts),
                 new NativeNetworkServer(api)
             };
 

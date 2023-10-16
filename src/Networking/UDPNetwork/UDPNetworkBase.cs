@@ -18,7 +18,7 @@ namespace RPVoiceChat.Networking
         protected UdpClient UdpClient;
         protected int port;
         protected const string _transportID = "UDP";
-        protected bool upnpEnabled = true;
+        protected bool upnpEnabled;
         protected Logger logger;
         protected CancellationTokenSource _readinessProbeCTS;
         protected bool isReady = false;
