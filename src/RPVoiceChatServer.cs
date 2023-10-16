@@ -165,7 +165,6 @@ namespace RPVoiceChat
         public override void Dispose()
         {
             server?.Dispose();
-            base.Dispose();
         }
     }
 }

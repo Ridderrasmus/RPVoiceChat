@@ -6,7 +6,7 @@ namespace RPVoiceChat.Networking
     {
         public event Action<AudioPacket> AudioPacketReceived;
 
-        public ConnectionInfo GetConnection();
+        public ConnectionInfo GetConnectionInfo();
         public string GetTransportID();
         public bool SendPacket(NetworkPacket packet, string playerId);
     }

@@ -15,7 +15,7 @@ namespace RPVoiceChat.Networking
             channel = sapi.Network.GetChannel(ChannelName).SetMessageHandler<AudioPacket>(ReceivedAudioPacketFromClient);
         }
 
-        public ConnectionInfo GetConnection()
+        public ConnectionInfo GetConnectionInfo()
         {
             var connectionInfo = new ConnectionInfo();
             return connectionInfo;
