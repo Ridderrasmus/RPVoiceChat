@@ -15,7 +15,6 @@ namespace RPVoiceChat.Networking
         public TCPNetworkBase(Logger logger)
         {
             this.logger = logger;
-            _readinessProbeCTS = new CancellationTokenSource();
         }
 
         public string GetTransportID()

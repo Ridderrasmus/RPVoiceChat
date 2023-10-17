@@ -1,6 +1,7 @@
-﻿using RPVoiceChat.Utils;
+using RPVoiceChat.Utils;
 using System;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace RPVoiceChat.Networking
@@ -8,6 +9,7 @@ namespace RPVoiceChat.Networking
     public class TCPNetworkClient : TCPNetworkBase, IExtendedNetworkClient
     {
         public event Action<AudioPacket> OnAudioReceived;
+        public event Action OnConnectionLost;
 
         private IPEndPoint serverEndpoint;
         private TCPConnection connection;
@@ -25,6 +27,11 @@ namespace RPVoiceChat.Networking
 
         public void SendAudioToServer(AudioPacket packet)
         {
+            if (isReady == false)
+            {
+                logger.Warning($"Attempting to send audio over {_transportID} while client isn't ready. Skipping sending.");
+                return;
+            }
             if (connection == null) throw new Exception($"{_transportID} connection has not been initialized.");
 
             var data = packet.ToBytes();
@@ -35,11 +42,21 @@ namespace RPVoiceChat.Networking
         {
             var connection = new TCPConnection(logger);
             connection.OnMessageReceived += MessageReceived;
+            connection.OnDisconnected += ConnectionClosed;
             connection.Connect(endPoint);
             connection.StartListening();
             port = connection.port;
 
             return connection;
+        }
+
+        private void ConnectionClosed(bool isGraceful, TCPConnection closedConnection)
+        {
+            isReady = false;
+            logger.Notification($"Connection with {_transportID} server was closed");
+            closedConnection.Dispose();
+            if (isGraceful) return;
+            OnConnectionLost?.Invoke();
         }
 
         private void MessageReceived(byte[] msg, TCPConnection _)
@@ -64,6 +81,7 @@ namespace RPVoiceChat.Networking
         private void VerifyClientReadiness()
         {
             var pingPacket = BitConverter.GetBytes((int)PacketType.Ping);
+            _readinessProbeCTS = new CancellationTokenSource();
 
             try
             {
