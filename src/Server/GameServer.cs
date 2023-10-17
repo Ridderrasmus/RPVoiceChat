@@ -42,7 +42,8 @@ namespace RPVoiceChat.Server
 
         public void PlayerLeft(IServerPlayer player)
         {
-            foreach (var server in activeServers) {
+            foreach (var server in activeServers)
+            {
                 if (server is not IExtendedNetworkServer extendedServer) continue;
                 extendedServer.PlayerDisconnected(player.PlayerUID);
             }
