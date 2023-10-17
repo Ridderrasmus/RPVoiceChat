@@ -147,12 +147,17 @@ namespace RPVoiceChat.Networking
 
             try
             {
-                while (stream.Position < stream.Length)
+                long bytesLeft = stream.Length;
+                while (bytesLeft >= 4)
                 {
                     int messageLength = reader.ReadInt32();
+                    bytesLeft -= 4;
+                    if (bytesLeft < messageLength || messageLength < 0) break;
                     byte[] message = reader.ReadBytes(messageLength);
                     messages.Add(message);
+                    bytesLeft = stream.Length - stream.Position;
                 }
+                if (bytesLeft != 0) logger.Warning("Found fragmented packet in message buffer. Proceeding to drop it");
             }
             catch (Exception e)
             {
