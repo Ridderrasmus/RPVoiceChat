@@ -15,6 +15,7 @@ namespace RPVoiceChat.Client
         private List<INetworkClient> reserveTransports;
         private INetworkClient activeTransport;
         private IClientNetworkChannel handshakeChannel;
+        private ConnectionInfo[] serverConnections;
         private bool isConnected = false;
 
         public PlayerNetworkClient(ICoreClientAPI capi, List<INetworkClient> clientTransports)
@@ -38,12 +39,18 @@ namespace RPVoiceChat.Client
 
         private void OnHandshakeRequest(ConnectionRequest connectionRequest)
         {
+            serverConnections = connectionRequest.SupportedTransports;
+            Connect();
+        }
+
+        private void Connect()
+        {
             while (reserveTransports.Count > 0)
             {
                 var transport = reserveTransports.PopOne();
                 try
                 {
-                    ConnectWith(transport, connectionRequest);
+                    ConnectWith(transport);
                     return;
                 }
                 catch (Exception e)
@@ -52,21 +59,24 @@ namespace RPVoiceChat.Client
                     transport.Dispose();
                 }
             }
-            IEnumerable<string> serverTransports = connectionRequest.SupportedTransports.Select(e => e.Transport);
-            throw new Exception($"Failed to connect to the server. Supported transports: {string.Join(", ", serverTransports)}");
+            IEnumerable<string> serverTransportIDs = serverConnections.Select(e => e.Transport);
+            throw new Exception($"Failed to connect to the server. Supported transports: {string.Join(", ", serverTransportIDs)}");
         }
 
-        private void ConnectWith(INetworkClient transport, ConnectionRequest connectionRequest)
+        private void ConnectWith(INetworkClient transport)
         {
             var transportID = transport.GetTransportID();
             Logger.client.Notification($"Attempting to connect with {transportID} client");
-            var serverConnectionInfo = connectionRequest.SupportedTransports.FirstOrDefault(e => e.Transport == transportID);
-            if (serverConnectionInfo == null)
+            var serverConnection = serverConnections.FirstOrDefault(e => e.Transport == transportID);
+            if (serverConnection == null)
                 throw new Exception("Server doesn't support client's transport");
 
             ConnectionInfo clientConnection = new ConnectionInfo();
             if (transport is IExtendedNetworkClient extendedTransport)
-                clientConnection = extendedTransport?.Connect(serverConnectionInfo);
+            {
+                clientConnection = extendedTransport?.Connect(serverConnection);
+                extendedTransport.OnConnectionLost += ConnectionLost;
+            }
             clientConnection.Transport = transportID;
             handshakeChannel.SendPacket(clientConnection);
 
@@ -78,6 +88,34 @@ namespace RPVoiceChat.Client
         private void AudioPacketReceived(AudioPacket packet)
         {
             OnAudioReceived?.Invoke(packet);
+        }
+
+        private void ConnectionLost()
+        {
+            if (isConnected == false || activeTransport == null) return;
+            isConnected = false;
+            if (activeTransport is IExtendedNetworkClient extendedTransport)
+                extendedTransport.OnConnectionLost -= ConnectionLost;
+
+            Reconnect();
+        }
+
+        private void Reconnect()
+        {
+            var transport = activeTransport;
+            activeTransport = null;
+            try
+            {
+                Logger.client.Notification($"Reconnecting...");
+                ConnectWith(transport);
+                return;
+            }
+            catch (Exception e)
+            {
+                Logger.client.Warning($"Unable to reconnect to {transport.GetTransportID()}:\n{e}");
+            }
+            transport.Dispose();
+            Connect();
         }
 
         public void Dispose()

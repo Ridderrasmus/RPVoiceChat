@@ -1,6 +1,7 @@
-﻿using RPVoiceChat.Utils;
+using RPVoiceChat.Utils;
 using System;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace RPVoiceChat.Networking
@@ -8,6 +9,7 @@ namespace RPVoiceChat.Networking
     public class TCPNetworkClient : TCPNetworkBase, IExtendedNetworkClient
     {
         public event Action<AudioPacket> OnAudioReceived;
+        public event Action OnConnectionLost;
 
         private IPEndPoint serverEndpoint;
         private TCPConnection connection;
@@ -48,23 +50,13 @@ namespace RPVoiceChat.Networking
             return connection;
         }
 
-        private void ConnectionClosed(bool isGraceful, TCPConnection _)
+        private void ConnectionClosed(bool isGraceful, TCPConnection closedConnection)
         {
             isReady = false;
             logger.Notification($"Connection with {_transportID} server was closed");
+            closedConnection.Dispose();
             if (isGraceful) return;
-            try
-            {
-                logger.Notification($"Attempting reconnect to {_transportID} server");
-                connection.Reconnect(serverEndpoint);
-                connection.StartListening();
-                VerifyClientReadiness();
-                logger.Notification($"Successfully reconnected to {_transportID} server");
-            }
-            catch(Exception e)
-            {
-                logger.Warning($"Unable to reconnect to {_transportID}:\n{e}");
-            }
+            OnConnectionLost?.Invoke();
         }
 
         private void MessageReceived(byte[] msg, TCPConnection _)
@@ -89,6 +81,7 @@ namespace RPVoiceChat.Networking
         private void VerifyClientReadiness()
         {
             var pingPacket = BitConverter.GetBytes((int)PacketType.Ping);
+            _readinessProbeCTS = new CancellationTokenSource();
 
             try
             {

@@ -19,21 +19,16 @@ namespace RPVoiceChat.Networking
         private Logger logger;
         private Socket socket;
         private CancellationTokenSource _listeningCTS;
+        private bool isDisposed = false;
 
-        public TCPConnection(Logger logger)
+        public TCPConnection(Logger logger, Socket existingSocket = null)
         {
             this.logger = logger;
-            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            socket = existingSocket;
+            socket ??= new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             socket.ReceiveBufferSize = 16384;
-        }
-
-        public TCPConnection(Logger logger, Socket socket)
-        {
-            this.logger = logger;
-            this.socket = socket;
-            socket.ReceiveBufferSize = 16384;
-            remoteEndpoint = (IPEndPoint)socket.RemoteEndPoint;
-            port = ((IPEndPoint)socket.LocalEndPoint)?.Port ?? 0;
+            remoteEndpoint = socket.RemoteEndPoint as IPEndPoint;
+            port = (socket.LocalEndPoint as IPEndPoint)?.Port ?? 0;
         }
 
         public void Connect(IPEndPoint endPoint)
@@ -52,20 +47,25 @@ namespace RPVoiceChat.Networking
             }, TaskContinuationOptions.OnlyOnRanToCompletion);
         }
 
-        public void Reconnect(IPEndPoint endPoint)
-        {
-            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            socket.Bind(new IPEndPoint(IPAddress.Any, port));
-            socket.ReceiveBufferSize = 16384;
-            Connect(endPoint);
-        }
-
         public void Send(byte[] data)
         {
             if (socket == null) throw new Exception("Socket already disposed.");
 
             var tcpMessage = PackMessage(data);
-            socket.Send(tcpMessage);
+            try
+            {
+                socket.Send(tcpMessage);
+            }
+            catch (Exception e)
+            {
+                if (e is SocketException se &&
+                    (se.SocketErrorCode == SocketError.NotConnected ||
+                    se.SocketErrorCode == SocketError.OperationAborted ||
+                    se.SocketErrorCode == SocketError.Interrupted) ||
+                    _listeningCTS.IsCancellationRequested) return;
+                logger.Error($"Failed to send TCP packet to server:\n{e}");
+                Disconnect(false);
+            }
         }
 
         public ValueTask<int> SendAsync(byte[] data, CancellationToken ct = default)
@@ -164,13 +164,14 @@ namespace RPVoiceChat.Networking
 
         public void Disconnect(bool isGraceful = true)
         {
-            Dispose();
+            try { socket?.Disconnect(true); } catch { }
             OnDisconnected?.Invoke(isGraceful, this);
         }
 
         public void Dispose()
         {
-            if (socket == null) return;
+            if (isDisposed || socket == null) return;
+            isDisposed = true;
             _listeningCTS?.Cancel();
             _listeningCTS?.Dispose();
             socket.Close();

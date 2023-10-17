@@ -65,6 +65,7 @@ namespace RPVoiceChat.Networking
 
         public void PlayerConnected(string playerId, ConnectionInfo connectionInfo)
         {
+            if (connectionInfoByPlayer.ContainsKey(playerId)) PlayerDisconnected(playerId);
             connectionInfoByPlayer.Add(playerId, connectionInfo);
             logger.VerboseDebug($"{playerId} connected over {_transportID}");
         }
@@ -127,6 +128,7 @@ namespace RPVoiceChat.Networking
             var address = connection.remoteEndpoint.ToString();
             if (!connectionsByAddress.ContainsKey(address)) return;
             connectionsByAddress.Remove(address);
+            connection.Dispose();
             logger.VerboseDebug($"{_transportID} connection with {address} was closed {(isGraceful ? "gracefully" : "unexpectedly")}");
         }
 
@@ -198,6 +200,7 @@ namespace RPVoiceChat.Networking
         private void VerifyServerReadiness()
         {
             var selfPingPacket = BitConverter.GetBytes((int)PacketType.SelfPing);
+            _readinessProbeCTS = new CancellationTokenSource();
 
             try
             {
