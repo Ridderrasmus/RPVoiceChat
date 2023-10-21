@@ -124,7 +124,7 @@ namespace RPVoiceChat.Networking
                     }
                     else isGraceful = false;
 
-                    logger.Debug($"Closing TCP connection with {remoteEndpoint?.Address}, reason: {reason}");
+                    logger.Debug($"Closing TCP connection with {remoteEndpoint}, reason: {reason}");
                     Disconnect(isGraceful, isHalfClosed);
                     return;
                 }
@@ -161,7 +161,7 @@ namespace RPVoiceChat.Networking
                     messages.Add(message);
                     bytesLeft = stream.Length - stream.Position;
                 }
-                if (bytesLeft != 0) logger.Warning("Found fragmented packet in message buffer. Proceeding to drop it");
+                if (bytesLeft != 0) logger.Warning($"Found fragmented packet in message buffer of {remoteEndpoint}. Proceeding to drop it");
             }
             catch (Exception e)
             {
