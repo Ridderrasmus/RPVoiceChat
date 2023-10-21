@@ -12,7 +12,7 @@ namespace RPVoiceChat.Networking
     public class TCPConnection : IDisposable
     {
         public event Action<byte[], TCPConnection> OnMessageReceived;
-        public event Action<bool, TCPConnection> OnDisconnected;
+        public event Action<bool, bool, TCPConnection> OnDisconnected;
 
         public IPEndPoint remoteEndpoint;
         public int port;
@@ -106,6 +106,7 @@ namespace RPVoiceChat.Networking
                 {
                     string reason = e.ToString();
                     bool isGraceful = true;
+                    bool isHalfClosed = false;
                     if (ct.IsCancellationRequested) reason = "Graceful exit";
                     else if (e is SocketException se)
                     {
@@ -117,11 +118,12 @@ namespace RPVoiceChat.Networking
                             _ => se.ToString()
                         };
                         if (reason == se.ToString()) isGraceful = false;
+                        if (se.SocketErrorCode == SocketError.ConnectionReset) isHalfClosed = true;
                     }
                     else isGraceful = false;
 
-                    logger.Debug($"Closing TCP connection, reason: {reason}");
-                    Disconnect(isGraceful);
+                    logger.Debug($"Closing TCP connection with {remoteEndpoint?.Address}, reason: {reason}");
+                    Disconnect(isGraceful, isHalfClosed);
                     return;
                 }
             }
@@ -167,10 +169,10 @@ namespace RPVoiceChat.Networking
             return messages;
         }
 
-        public void Disconnect(bool isGraceful = true)
+        public void Disconnect(bool isGraceful = true, bool isHalfClosed = false)
         {
             try { socket?.Disconnect(true); } catch { }
-            OnDisconnected?.Invoke(isGraceful, this);
+            OnDisconnected?.Invoke(isGraceful, isHalfClosed, this);
         }
 
         public void Dispose()

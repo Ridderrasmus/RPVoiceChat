@@ -50,13 +50,14 @@ namespace RPVoiceChat.Networking
             return connection;
         }
 
-        private void ConnectionClosed(bool isGraceful, TCPConnection closedConnection)
+        private void ConnectionClosed(bool isGraceful, bool isHalfClosed, TCPConnection closedConnection)
         {
             isReady = false;
-            logger.Notification($"Connection with {_transportID} server was closed");
+            var closeType = isGraceful ? "gracefully" : "unexpectedly";
+            closeType = isHalfClosed ? "by server's request" : closeType;
+            logger.Notification($"Connection with {_transportID} server was closed {closeType}");
             closedConnection.Dispose();
-            if (isGraceful) return;
-            bool canReconnect = !isGraceful;
+            bool canReconnect = !isGraceful || isHalfClosed;
             OnConnectionLost?.Invoke(canReconnect);
         }
 
