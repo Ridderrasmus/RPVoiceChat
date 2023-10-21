@@ -4,7 +4,7 @@ namespace RPVoiceChat.Networking
 {
     public interface IExtendedNetworkClient : INetworkClient
     {
-        public event Action OnConnectionLost;
+        public event Action<bool> OnConnectionLost;
 
         public ConnectionInfo Connect(ConnectionInfo serverConnection);
     }

@@ -9,7 +9,7 @@ namespace RPVoiceChat.Networking
     public class TCPNetworkClient : TCPNetworkBase, IExtendedNetworkClient
     {
         public event Action<AudioPacket> OnAudioReceived;
-        public event Action OnConnectionLost;
+        public event Action<bool> OnConnectionLost;
 
         private IPEndPoint serverEndpoint;
         private TCPConnection connection;
@@ -56,7 +56,8 @@ namespace RPVoiceChat.Networking
             logger.Notification($"Connection with {_transportID} server was closed");
             closedConnection.Dispose();
             if (isGraceful) return;
-            OnConnectionLost?.Invoke();
+            bool canReconnect = !isGraceful;
+            OnConnectionLost?.Invoke(canReconnect);
         }
 
         private void MessageReceived(byte[] msg, TCPConnection _)
