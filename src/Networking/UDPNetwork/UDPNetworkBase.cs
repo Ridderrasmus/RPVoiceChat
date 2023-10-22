@@ -109,6 +109,12 @@ namespace RPVoiceChat.Networking
                     if (e.SocketErrorCode == SocketError.Interrupted ||
                         ct.IsCancellationRequested) return;
 
+                    if (!isReady)
+                    {
+                        logger.Warning($"Caught unexpected error, but proceeding to ignore it because transport isn't ready yet:\n{e}");
+                        return;
+                    }
+
                     throw e;
                 }
             }
