@@ -12,7 +12,7 @@ namespace RPVoiceChat.Networking
     public class TCPConnection : IDisposable
     {
         public event Action<byte[], TCPConnection> OnMessageReceived;
-        public event Action<bool, TCPConnection> OnDisconnected;
+        public event Action<bool, bool, TCPConnection> OnDisconnected;
 
         public IPEndPoint remoteEndpoint;
         public int port;
@@ -20,15 +20,19 @@ namespace RPVoiceChat.Networking
         private Socket socket;
         private CancellationTokenSource _listeningCTS;
         private bool isDisposed = false;
+        private byte[] receiveBuffer;
 
         public TCPConnection(Logger logger, Socket existingSocket = null)
         {
             this.logger = logger;
             socket = existingSocket;
             socket ??= new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            socket.ReceiveBufferSize = 16384;
+            socket.ReceiveBufferSize = 400 * 1024;
+            socket.NoDelay = true;
             remoteEndpoint = socket.RemoteEndPoint as IPEndPoint;
             port = (socket.LocalEndPoint as IPEndPoint)?.Port ?? 0;
+
+            receiveBuffer = new byte[socket.ReceiveBufferSize];
         }
 
         public void Connect(IPEndPoint endPoint)
@@ -86,19 +90,17 @@ namespace RPVoiceChat.Networking
 
         private async void Listen(CancellationToken ct)
         {
-            byte[] receiveBuffer = new byte[socket.ReceiveBufferSize];
             while (!ct.IsCancellationRequested)
             {
                 try
                 {
                     var streamLength = await Task.Run(() => socket.Receive(receiveBuffer));
                     ct.ThrowIfCancellationRequested();
-                    if (streamLength <= 0) throw new SocketException((int)SocketError.ConnectionReset);
+                    if (streamLength == 0) throw new SocketException((int)SocketError.ConnectionReset);
 
-                    byte[] data = new byte[streamLength];
-                    Buffer.BlockCopy(receiveBuffer, 0, data, 0, streamLength);
+                    List<byte[]> messages = ParseMessages(receiveBuffer, streamLength);
+                    if (streamLength == receiveBuffer.Length) ClearNetworkStream();
 
-                    List<byte[]> messages = ParseMessages(data);
                     foreach (var msg in messages)
                         OnMessageReceived?.Invoke(msg, this);
                 }
@@ -106,6 +108,7 @@ namespace RPVoiceChat.Networking
                 {
                     string reason = e.ToString();
                     bool isGraceful = true;
+                    bool isHalfClosed = false;
                     if (ct.IsCancellationRequested) reason = "Graceful exit";
                     else if (e is SocketException se)
                     {
@@ -117,11 +120,12 @@ namespace RPVoiceChat.Networking
                             _ => se.ToString()
                         };
                         if (reason == se.ToString()) isGraceful = false;
+                        if (se.SocketErrorCode == SocketError.ConnectionReset) isHalfClosed = true;
                     }
                     else isGraceful = false;
 
-                    logger.Debug($"Closing TCP connection, reason: {reason}");
-                    Disconnect(isGraceful);
+                    logger.Debug($"Closing TCP connection with {remoteEndpoint}, reason: {reason}");
+                    Disconnect(isGraceful, isHalfClosed);
                     return;
                 }
             }
@@ -139,16 +143,16 @@ namespace RPVoiceChat.Networking
             return tcpMessage;
         }
 
-        private List<byte[]> ParseMessages(byte[] data)
+        private List<byte[]> ParseMessages(byte[] data, int length)
         {
             var messages = new List<byte[]>();
-            var stream = new MemoryStream(data);
+            var stream = new MemoryStream(data, 0, length);
             using var reader = new BinaryReader(stream);
 
             try
             {
                 long bytesLeft = stream.Length;
-                while (bytesLeft >= 4)
+                while (bytesLeft > 4)
                 {
                     int messageLength = reader.ReadInt32();
                     bytesLeft -= 4;
@@ -157,7 +161,7 @@ namespace RPVoiceChat.Networking
                     messages.Add(message);
                     bytesLeft = stream.Length - stream.Position;
                 }
-                if (bytesLeft != 0) logger.Warning("Found fragmented packet in message buffer. Proceeding to drop it");
+                if (bytesLeft != 0) logger.Warning($"Found fragmented packet in message buffer of {remoteEndpoint}. Proceeding to drop it");
             }
             catch (Exception e)
             {
@@ -167,10 +171,20 @@ namespace RPVoiceChat.Networking
             return messages;
         }
 
-        public void Disconnect(bool isGraceful = true)
+        private void ClearNetworkStream()
+        {
+            logger.Debug($"Unclogging message buffer for {remoteEndpoint}");
+            int bytesRead;
+            do
+            {
+                bytesRead = socket.Receive(receiveBuffer);
+            } while (bytesRead == receiveBuffer.Length);
+        }
+
+        public void Disconnect(bool isGraceful = true, bool isHalfClosed = false)
         {
             try { socket?.Disconnect(true); } catch { }
-            OnDisconnected?.Invoke(isGraceful, this);
+            OnDisconnected?.Invoke(isGraceful, isHalfClosed, this);
         }
 
         public void Dispose()

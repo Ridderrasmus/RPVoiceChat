@@ -17,6 +17,7 @@ namespace RPVoiceChat.Client
         private IClientNetworkChannel handshakeChannel;
         private ConnectionInfo[] serverConnections;
         private bool isConnected = false;
+        private bool isDisposed = false;
 
         public PlayerNetworkClient(ICoreClientAPI capi, List<INetworkClient> clientTransports)
         {
@@ -90,38 +91,46 @@ namespace RPVoiceChat.Client
             OnAudioReceived?.Invoke(packet);
         }
 
-        private void ConnectionLost()
+        private void ConnectionLost(bool canReconnect)
         {
             if (isConnected == false || activeTransport == null) return;
+
+            Logger.client.Notification($"{activeTransport.GetTransportID()} transport reported connection loss");
             isConnected = false;
             if (activeTransport is IExtendedNetworkClient extendedTransport)
                 extendedTransport.OnConnectionLost -= ConnectionLost;
 
-            Reconnect();
+            if (canReconnect && Reconnect()) return;
+            if (isDisposed) return;
+            activeTransport.Dispose();
+            activeTransport = null;
+            Connect();
         }
 
-        private void Reconnect()
+        private bool Reconnect()
         {
+            Logger.client.Notification($"Reconnecting...");
             var transport = activeTransport;
-            activeTransport = null;
             try
             {
-                Logger.client.Notification($"Reconnecting...");
                 ConnectWith(transport);
-                return;
+                return true;
             }
             catch (Exception e)
             {
-                Logger.client.Warning($"Unable to reconnect to {transport.GetTransportID()}:\n{e}");
+                if (isDisposed) return false;
+                Logger.client.Warning($"Unable to reconnect to {transport.GetTransportID()} server:\n{e}");
             }
-            transport.Dispose();
-            Connect();
+            return false;
         }
 
         public void Dispose()
         {
+            if (isDisposed) return;
+            isDisposed = true;
             isConnected = false;
             activeTransport?.Dispose();
+            activeTransport = null;
             foreach (var transport in reserveTransports)
                 transport.Dispose();
         }
