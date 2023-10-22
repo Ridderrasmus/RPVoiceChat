@@ -17,6 +17,7 @@ namespace RPVoiceChat.Client
         private IClientNetworkChannel handshakeChannel;
         private ConnectionInfo[] serverConnections;
         private bool isConnected = false;
+        private bool isDisposed = false;
 
         public PlayerNetworkClient(ICoreClientAPI capi, List<INetworkClient> clientTransports)
         {
@@ -100,6 +101,7 @@ namespace RPVoiceChat.Client
                 extendedTransport.OnConnectionLost -= ConnectionLost;
 
             if (canReconnect && Reconnect()) return;
+            if (isDisposed) return;
             activeTransport.Dispose();
             activeTransport = null;
             Connect();
@@ -116,15 +118,19 @@ namespace RPVoiceChat.Client
             }
             catch (Exception e)
             {
-                Logger.client.Warning($"Unable to reconnect to {transport.GetTransportID()}:\n{e}");
+                if (isDisposed) return false;
+                Logger.client.Warning($"Unable to reconnect to {transport.GetTransportID()} server:\n{e}");
             }
             return false;
         }
 
         public void Dispose()
         {
+            if (isDisposed) return;
+            isDisposed = true;
             isConnected = false;
             activeTransport?.Dispose();
+            activeTransport = null;
             foreach (var transport in reserveTransports)
                 transport.Dispose();
         }
