@@ -2,6 +2,7 @@ using Open.Nat;
 using RPVoiceChat.Utils;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -14,7 +15,7 @@ namespace RPVoiceChat.Networking
         public event Action<AudioPacket> AudioPacketReceived;
 
         private Dictionary<string, TCPConnection> connectionsByAddress = new Dictionary<string, TCPConnection>();
-        private Dictionary<string, ConnectionInfo> connectionInfoByPlayer = new Dictionary<string, ConnectionInfo>();
+        private Dictionary<string, string> playerAddresses = new Dictionary<string, string>();
         private IPAddress ip;
         protected bool upnpEnabled;
         private IPEndPoint ownEndPoint;
@@ -65,15 +66,16 @@ namespace RPVoiceChat.Networking
 
         public void PlayerConnected(string playerId, ConnectionInfo connectionInfo)
         {
-            if (connectionInfoByPlayer.ContainsKey(playerId)) PlayerDisconnected(playerId);
-            connectionInfoByPlayer.Add(playerId, connectionInfo);
+            if (playerAddresses.ContainsKey(playerId)) PlayerDisconnected(playerId);
+            var playerAddress = NetworkUtils.GetEndPoint(connectionInfo).ToString();
+            playerAddresses.Add(playerId, playerAddress);
             logger.VerboseDebug($"{playerId} connected over {_transportID}");
         }
 
         public void PlayerDisconnected(string playerId)
         {
-            if (!connectionInfoByPlayer.ContainsKey(playerId)) return;
-            connectionInfoByPlayer.Remove(playerId);
+            if (!playerAddresses.ContainsKey(playerId)) return;
+            playerAddresses.Remove(playerId);
             logger.VerboseDebug($"{playerId} disconnected from {_transportID} server");
         }
 
@@ -127,11 +129,15 @@ namespace RPVoiceChat.Networking
         {
             var address = connection.remoteEndpoint.ToString();
             if (!connectionsByAddress.ContainsKey(address)) return;
+
+            string player = ResolvePlayer(connection);
             connectionsByAddress.Remove(address);
             connection.Dispose();
+
             var closeType = isGraceful ? "gracefully" : "unexpectedly";
             closeType = isHalfClosed ? "by client's request" : closeType;
             logger.VerboseDebug($"{_transportID} connection with {address} was closed {closeType}");
+            if (player != null) PlayerDisconnected(player);
         }
 
         private void MessageReceived(byte[] msg, TCPConnection channel)
@@ -222,13 +228,21 @@ namespace RPVoiceChat.Networking
 
         private TCPConnection ResolveConnection(string playerId)
         {
-            ConnectionInfo connectionInfo;
+            string playerAddress;
             TCPConnection connection;
-            if (!connectionInfoByPlayer.TryGetValue(playerId, out connectionInfo)) return null;
-            string playerIp = NetworkUtils.GetEndPoint(connectionInfo).ToString();
-            if (!connectionsByAddress.TryGetValue(playerIp, out connection)) return null;
+            if (!playerAddresses.TryGetValue(playerId, out playerAddress)) return null;
+            if (!connectionsByAddress.TryGetValue(playerAddress, out connection)) return null;
 
             return connection;
+        }
+
+        private string ResolvePlayer(TCPConnection connection)
+        {
+            var playerAddress = connectionsByAddress.FirstOrDefault(e => e.Value == connection).Key;
+            if (playerAddress == null) return null;
+            var playerId = playerAddresses.FirstOrDefault(e => e.Value == playerAddress).Key;
+
+            return playerId;
         }
 
         public override void Dispose()
