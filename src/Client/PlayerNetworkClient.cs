@@ -118,7 +118,11 @@ namespace RPVoiceChat.Client
             }
             catch (Exception e)
             {
-                if (isDisposed) return false;
+                if (isDisposed)
+                {
+                    Logger.client.Notification("Aborting due to mod unloading.");
+                    return false;
+                }
                 Logger.client.Warning($"Unable to reconnect to {transport.GetTransportID()} server:\n{e}");
             }
             return false;
