@@ -33,9 +33,8 @@ namespace RPVoiceChat.Blocks
 
         public override float OnGettingBroken(IPlayer player, BlockSelection blockSel, ItemSlot itemslot, float remainingResistance, float dt, int counter)
         {
-            if (itemslot.Itemstack.Collectible.FirstCodePart() == "hammer" && api.Side == EnumAppSide.Client)
+            if (!itemslot.Empty && itemslot.Itemstack.Collectible.FirstCodePart() == "hammer" && api.Side == EnumAppSide.Client)
             {
-                api.Logger.Debug("OnGettingBroken being executed");
                 BlockEntityChurchBellPart bigBellPart = player.Entity.World.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityChurchBellPart;
                 bigBellPart?.OnHammerHitOver(player, player.CurrentBlockSelection.HitPosition);
 

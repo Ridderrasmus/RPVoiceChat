@@ -61,6 +61,9 @@ namespace RPVoiceChat.BlockEntities
                 particleProperties = BlockEntityAnvil.bigMetalSparks;
 
                 defMesh = capi.TesselatorManager.GetDefaultBlockMesh(Block).Clone();
+
+                capi.TesselatorManager.GetDefaultBlockMesh(Block).Clear();
+
                 var assetLoc = new AssetLocation("rpvoicechat", "shapes/" + Block.Shape.Base.Path + "-flux.json");
                 FluxShape = Shape.TryGet(api, assetLoc);
 
@@ -122,7 +125,8 @@ namespace RPVoiceChat.BlockEntities
             float temp = 1500;
             foreach (ItemSlot slot in BellPartSlots)
                 temp = Math.Min(temp, slot.Itemstack.Collectible.GetTemperature(Api.World, slot.Itemstack));
-            
+
+
 
             if (temp > 800)
             {
@@ -137,7 +141,12 @@ namespace RPVoiceChat.BlockEntities
 
             if (hammerHits > 11)
             {
-                Api.World.BlockAccessor.SetBlock(Api.World.GetBlock(new AssetLocation("rpvoicechat", Block.Code.ToString().Replace("part", "layer"))).Id, Pos);
+                var newBlock = Api.World.GetBlock(new AssetLocation(Block.Code.ToString().Replace("part", "layer")));
+                Api.World.BlockAccessor.SetBlock(0, Pos);
+                Api.World.BlockAccessor.SetBlock(newBlock.Id, Pos);
+
+                BlockEntityChurchBellLayer belayer = Api.World.BlockAccessor.GetBlockEntity(Pos) as BlockEntityChurchBellLayer;
+                belayer?.OnBlockPlaced(new ItemStack(newBlock, 1));
             }
         }
 
