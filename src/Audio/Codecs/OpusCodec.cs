@@ -35,18 +35,17 @@ namespace RPVoiceChat.Audio
         public byte[] Encode(short[] pcmData)
         {
             const int maxPacketSize = 1276;
+            byte[] encodedBuffer = new byte[maxPacketSize];
             var encoded = new MemoryStream();
-
             try
             {
                 for (var pcmOffset = 0; pcmOffset < pcmData.Length; pcmOffset += FrameSize)
                 {
-                    byte[] encodedData = new byte[maxPacketSize];
-                    int encodedLength = encoder.Encode(pcmData, pcmOffset, FrameSize, encodedData, 0, maxPacketSize);
+                    int encodedLength = encoder.Encode(pcmData, pcmOffset, FrameSize, encodedBuffer, 0, maxPacketSize);
                     byte[] packetSize = BitConverter.GetBytes(encodedLength);
 
                     encoded.Write(packetSize, 0, packetSize.Length);
-                    encoded.Write(encodedData, 0, encodedLength);
+                    encoded.Write(encodedBuffer, 0, encodedLength);
                 }
             }
             catch (Exception e)
@@ -59,6 +58,7 @@ namespace RPVoiceChat.Audio
 
         public byte[] Decode(byte[] encodedData)
         {
+            short[] decodedBuffer = new short[FrameSize];
             var decoded = new MemoryStream();
             var stream = new MemoryStream(encodedData);
             using (var reader = new BinaryReader(stream))
@@ -70,9 +70,8 @@ namespace RPVoiceChat.Audio
                         int packetSize = reader.ReadInt32();
                         byte[] encodedPacket = reader.ReadBytes(packetSize);
 
-                        short[] decodedData = new short[FrameSize];
-                        int decodedLength = decoder.Decode(encodedPacket, 0, packetSize, decodedData, 0, FrameSize, false);
-                        byte[] decodedPacket = ToBytes(decodedData, 0, decodedLength);
+                        int decodedLength = decoder.Decode(encodedPacket, 0, packetSize, decodedBuffer, 0, FrameSize, false);
+                        byte[] decodedPacket = ShortsToBytes(decodedBuffer, 0, decodedLength);
 
                         decoded.Write(decodedPacket, 0, decodedPacket.Length);
                     }
@@ -86,12 +85,11 @@ namespace RPVoiceChat.Audio
             return decoded.ToArray();
         }
 
-        private byte[] ToBytes(short[] audio, int offset, int length)
+        private byte[] ShortsToBytes(short[] audio, int offset, int length)
         {
-            int typeSize = sizeof(short);
-            byte[] byteBuffer = new byte[length * typeSize];
-            int bytesToCopy = (length - offset) * typeSize;
-            Buffer.BlockCopy(audio, offset, byteBuffer, offset * typeSize, bytesToCopy);
+            byte[] byteBuffer = new byte[length * sizeof(short)];
+            int bytesToCopy = (length - offset) * sizeof(short);
+            Buffer.BlockCopy(audio, offset, byteBuffer, offset * sizeof(short), bytesToCopy);
 
             return byteBuffer;
         }
