@@ -14,10 +14,11 @@ namespace RPVoiceChat.BlockEntities
     public class BlockEntityChurchBellLayer : BlockEntityContainer
     {
         private string[] bellLayerNames = new string[] { "churchbell-layer-bottom", "churchbell-layer-middle", "churchbell-layer-top", "churchbell-layer-topmost" };
+        private float[] bellLayerHeights = new float[] { 1f, 1f, 1f, 1f };
 
 
         public MeshRef[] BellLayerMeshRef = new MeshRef[4];
-        public MeshRef[] FluxMeshRef = new MeshRef[4];
+        public MeshRef[] FluxMeshRef = new MeshRef[3];
 
         // The inveotry slot for the church bell parts
         InventoryGeneric inv;
@@ -60,7 +61,6 @@ namespace RPVoiceChat.BlockEntities
             {
                 renderer = new ChurchBellLayerRenderer(capi, this);
 
-                defMesh = capi.TesselatorManager.GetDefaultBlockMesh(Block).Clone();
 
                 updateMeshRefs();
             }
@@ -72,32 +72,44 @@ namespace RPVoiceChat.BlockEntities
             
             var capi = Api as ICoreClientAPI;
 
-
-            // If the inventory contains flux, then we want to render the flux mesh for as many times flux there is
-            // unless there is more flux than there are church bell parts
-            for (int i = 0; i < FluxSlot.StackSize; i++)
-            {
-                if (BellLayerSlots[i].Empty) break;
-
-                var fluxPart = Shape.TryGet(Api, new AssetLocation("rpvoicechat", "shapes/block/churchbell/botpartflux.json"));
-                if (fluxPart == null)
-                    throw new Exception("Flux shape is null");
-
-                MeshData meshdata;
-                capi.Tesselator.TesselateShape(Block, fluxPart, out meshdata);
-                meshdata = meshdata.Rotate(new Vec3f(0.5f, 0f, 0.5f), 0, 1.57079633f * (i + 1), 0f);
-                FluxMeshRef[i] = capi.Render.UploadMesh(meshdata);
-            }
+            
 
             // If the inventory contains the big bell parts, then we want to render the big bell part mesh
             for (int i = 0; i < BellLayerSlots.Length; i++)
             {
                 if (BellLayerSlots[i].Empty) break;
 
-                MeshData meshdata = defMesh;
-                meshdata = meshdata.Rotate(new Vec3f(0.5f, 0f, 0.5f), 0, 1.57079633f * (i), 0f);
+                MeshData meshdata = capi.TesselatorManager.GetDefaultBlockMesh(BellLayerSlots[i].Itemstack.Block);
+
+                for (int j = 0; j < i; j++)
+                    if (!BellLayerSlots[j].Empty)
+                        meshdata = meshdata.Translate(0, bellLayerHeights[j], 0);
+
                 BellLayerMeshRef[i] = capi.Render.UploadMesh(meshdata);
             }
+
+            // If the inventory contains flux AND two big bell layers then we want to render the flux mesh between the two big bell layers
+            // The fitting flux mesh is derived from the lower big bell layer
+            for (int i = 0; i < 3; i++)
+            {
+                if (BellLayerSlots[i].Empty && BellLayerSlots[i+1].Empty) break;
+
+                
+
+                var fluxPart = Shape.TryGet(Api, new AssetLocation("rpvoicechat", $"shapes/block/churchbell/{bellLayerNames[i]}-flux.json"));
+                if (fluxPart == null)
+                    throw new Exception("Flux shape is null");
+
+                MeshData meshdata;
+                capi.Tesselator.TesselateShape(Block, fluxPart, out meshdata);
+
+                for (int j = 0; j < i; j++)
+                    if (!BellLayerSlots[j].Empty)
+                        meshdata = meshdata.Translate(0, bellLayerHeights[j], 0);
+
+                FluxMeshRef[i] = capi.Render.UploadMesh(meshdata);
+            }
+
         }
 
         public override void OnBlockPlaced(ItemStack byItemStack = null)
