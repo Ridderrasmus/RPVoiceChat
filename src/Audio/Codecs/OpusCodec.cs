@@ -8,20 +8,20 @@ namespace RPVoiceChat.Audio
 {
     public class OpusCodec : IAudioCodec
     {
+        public int SampleRate { get; }
+        public int Channels { get; }
+        public int FrameSize { get; }
         private OpusEncoder encoder;
         private OpusDecoder decoder;
-        private int sampleRate;
-        private int channels;
-        private int frameSize;
 
         public OpusCodec(int frequency, int channelCount)
         {
-            sampleRate = frequency;
-            channels = channelCount;
-            frameSize = sampleRate / 100 * channels; // 10ms frame window
+            SampleRate = frequency;
+            Channels = channelCount;
+            FrameSize = SampleRate / 100 * Channels; // 10ms frame window
 
-            encoder = new OpusEncoder(sampleRate, channels, OpusApplication.OPUS_APPLICATION_VOIP);
-            decoder = new OpusDecoder(sampleRate, channels);
+            encoder = new OpusEncoder(SampleRate, Channels, OpusApplication.OPUS_APPLICATION_VOIP);
+            decoder = new OpusDecoder(SampleRate, Channels);
 
             encoder.Bitrate = 40000;
             encoder.Complexity = 10;
@@ -39,10 +39,10 @@ namespace RPVoiceChat.Audio
 
             try
             {
-                for (var pcmOffset = 0; pcmOffset < pcmData.Length; pcmOffset += frameSize)
+                for (var pcmOffset = 0; pcmOffset < pcmData.Length; pcmOffset += FrameSize)
                 {
                     byte[] encodedData = new byte[maxPacketSize];
-                    int encodedLength = encoder.Encode(pcmData, pcmOffset, frameSize, encodedData, 0, maxPacketSize);
+                    int encodedLength = encoder.Encode(pcmData, pcmOffset, FrameSize, encodedData, 0, maxPacketSize);
                     byte[] packetSize = BitConverter.GetBytes(encodedLength);
 
                     encoded.Write(packetSize, 0, packetSize.Length);
@@ -70,8 +70,8 @@ namespace RPVoiceChat.Audio
                         int packetSize = reader.ReadInt32();
                         byte[] encodedPacket = reader.ReadBytes(packetSize);
 
-                        short[] decodedData = new short[frameSize];
-                        int decodedLength = decoder.Decode(encodedPacket, 0, packetSize, decodedData, 0, frameSize, false);
+                        short[] decodedData = new short[FrameSize];
+                        int decodedLength = decoder.Decode(encodedPacket, 0, packetSize, decodedData, 0, FrameSize, false);
                         byte[] decodedPacket = ToBytes(decodedData, 0, decodedLength);
 
                         decoded.Write(decodedPacket, 0, decodedPacket.Length);
@@ -84,11 +84,6 @@ namespace RPVoiceChat.Audio
             }
 
             return decoded.ToArray();
-        }
-
-        public int GetFrameSize()
-        {
-            return frameSize;
         }
 
         private byte[] ToBytes(short[] audio, int offset, int length)
