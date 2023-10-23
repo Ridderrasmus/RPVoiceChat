@@ -1,6 +1,7 @@
 ﻿using RPVoiceChat.BlockEntityRenderers;
 using RPVoiceChat.Utils;
 using System;
+using System.Linq;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -12,7 +13,10 @@ namespace RPVoiceChat.BlockEntities
 {
     public class BlockEntityChurchBellLayer : BlockEntityContainer
     {
-        public MeshRef[] BellPartMeshRef = new MeshRef[4];
+        private string[] bellLayerNames = new string[] { "churchbell-layer-bottom", "churchbell-layer-middle", "churchbell-layer-top", "churchbell-layer-topmost" };
+
+
+        public MeshRef[] BellLayerMeshRef = new MeshRef[4];
         public MeshRef[] FluxMeshRef = new MeshRef[4];
 
         // The inveotry slot for the church bell parts
@@ -22,13 +26,12 @@ namespace RPVoiceChat.BlockEntities
         public ItemSlot FluxSlot => inv[0];
 
         // The slots for the big bell parts are the second, third, fourth, and fifth slots in the inventory
-        public ItemSlot[] BellPartSlots => new ItemSlot[] { inv[1], inv[2], inv[3], inv[4] };
+        public ItemSlot[] BellLayerSlots => new ItemSlot[] { inv[1], inv[2], inv[3], inv[4] };
 
 
         // Stuff that should be defined in JSON
         public int ron;
         public int FluxShapePath;
-
         public int hammerHits;
 
 
@@ -39,6 +42,8 @@ namespace RPVoiceChat.BlockEntities
         public override InventoryBase Inventory => inv;
 
         public override string InventoryClassName => "churchbelllayer";
+
+        public string[] BellLayerName { get => bellLayerNames; set => bellLayerNames = value; }
 
         public BlockEntityChurchBellLayer()
         {
@@ -72,7 +77,7 @@ namespace RPVoiceChat.BlockEntities
             // unless there is more flux than there are church bell parts
             for (int i = 0; i < FluxSlot.StackSize; i++)
             {
-                if (BellPartSlots[i].Empty) break;
+                if (BellLayerSlots[i].Empty) break;
 
                 var fluxPart = Shape.TryGet(Api, new AssetLocation("rpvoicechat", "shapes/block/churchbell/botpartflux.json"));
                 if (fluxPart == null)
@@ -85,13 +90,13 @@ namespace RPVoiceChat.BlockEntities
             }
 
             // If the inventory contains the big bell parts, then we want to render the big bell part mesh
-            for (int i = 0; i < BellPartSlots.Length; i++)
+            for (int i = 0; i < BellLayerSlots.Length; i++)
             {
-                if (BellPartSlots[i].Empty) break;
+                if (BellLayerSlots[i].Empty) break;
 
                 MeshData meshdata = defMesh;
                 meshdata = meshdata.Rotate(new Vec3f(0.5f, 0f, 0.5f), 0, 1.57079633f * (i), 0f);
-                BellPartMeshRef[i] = capi.Render.UploadMesh(meshdata);
+                BellLayerMeshRef[i] = capi.Render.UploadMesh(meshdata);
             }
         }
 
@@ -99,8 +104,15 @@ namespace RPVoiceChat.BlockEntities
         {
             if (byItemStack != null)
             {
-                BellPartSlots[0].Itemstack = byItemStack.Clone();
-                BellPartSlots[0].Itemstack.StackSize = 1;
+                for (int i = 0; i < 4; i++)
+                {
+                    if (byItemStack.Collectible.Code.Path == BellLayerName[i])
+                    {
+                        BellLayerSlots[i].Itemstack = byItemStack.Clone();
+                        BellLayerSlots[i].Itemstack.StackSize = 1;
+                        break;
+                    }
+                }
 
                 updateMeshRefs();
             }
@@ -108,7 +120,7 @@ namespace RPVoiceChat.BlockEntities
 
         public void OnHammerHitOver(IPlayer byPlayer, Vec3d hitPosition)
         {
-            foreach (ItemSlot slot in BellPartSlots)
+            foreach (ItemSlot slot in BellLayerSlots)
                 if (slot.Empty) return;
 
             if (!TestReadyToMerge(false)) return;
@@ -116,7 +128,7 @@ namespace RPVoiceChat.BlockEntities
             hammerHits++;
 
             float temp = 1500;
-            foreach (ItemSlot slot in BellPartSlots)
+            foreach (ItemSlot slot in BellLayerSlots)
                 temp = Math.Min(temp, slot.Itemstack.Collectible.GetTemperature(Api.World, slot.Itemstack));
             
 
@@ -140,7 +152,7 @@ namespace RPVoiceChat.BlockEntities
         private bool TestReadyToMerge(bool triggerMessage = true)
         {
 
-            foreach (ItemSlot slot in BellPartSlots)
+            foreach (ItemSlot slot in BellLayerSlots)
             { 
                 if (slot.Empty)
                 {
@@ -182,12 +194,20 @@ namespace RPVoiceChat.BlockEntities
 
             if (hotbarslot.Itemstack.Collectible.Code.Path == "powderedborax")
             {
-                if (FluxSlot.Empty)
+
+                // Right clicks with powdered borax
+
+                // Check amount of filled Layer slots
+                int filledLayerSlots = 0;
+                foreach (ItemSlot slot in BellLayerSlots)
+                    if (!slot.Empty) filledLayerSlots++;
+
+                if (FluxSlot.Empty && 1 < filledLayerSlots)
                 {
                     FluxSlot.Itemstack = hotbarslot.TakeOut(1);
                     updateMeshRefs();
                     return true;
-                } else if (FluxSlot.Itemstack.StackSize < 4)
+                } else if (FluxSlot.Itemstack.StackSize < filledLayerSlots - 1)
                 {
                     FluxSlot.Itemstack.StackSize++;
                     hotbarslot.TakeOut(1);
@@ -200,18 +220,20 @@ namespace RPVoiceChat.BlockEntities
                 }
             }
 
-            if (hotbarslot.Itemstack.Collectible.Code.Path == Block.Code.Path)
+
+
+            if (bellLayerNames.Contains(hotbarslot.Itemstack.Collectible.Code.Path))
             {
                 for (int i = 0; i < 4; i++)
                 {
-                    if (!BellPartSlots[i].Empty) continue;
 
-                    BellPartSlots[i].Itemstack = hotbarslot.TakeOut(1);
+                    // If current container slot is empty or the item in the hotbar doesn't fit to the current container slot, continue
+                    if (!BellLayerSlots[i].Empty || hotbarslot.Itemstack.Collectible.Code.Path != BellLayerName[i]) continue;
+
+                    BellLayerSlots[i].Itemstack = hotbarslot.TakeOut(1);
                     updateMeshRefs();
                     return true;
                 }
-
-
             }
 
             return true;
@@ -226,7 +248,7 @@ namespace RPVoiceChat.BlockEntities
             foreach (MeshRef meshref in FluxMeshRef)
                 meshref?.Dispose();
             
-            foreach (MeshRef meshref in BellPartMeshRef)
+            foreach (MeshRef meshref in BellLayerMeshRef)
                 meshref?.Dispose();
         }
 
@@ -239,7 +261,7 @@ namespace RPVoiceChat.BlockEntities
             foreach (MeshRef meshref in FluxMeshRef)
                 meshref?.Dispose();
 
-            foreach (MeshRef meshref in BellPartMeshRef)
+            foreach (MeshRef meshref in BellLayerMeshRef)
                 meshref?.Dispose();
         }
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
@@ -260,7 +282,27 @@ namespace RPVoiceChat.BlockEntities
 
         public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
         {
+            foreach (ItemSlot slot in BellLayerSlots)
+            {
+                if (slot.Empty) continue;
+                string temp = slot.Itemstack.Collectible.GetTemperature(Api.World, slot.Itemstack).ToString();
 
+                dsc.AppendLine(slot.Itemstack.GetName() + " - " + temp + "°C");
+            }
+
+            if (!FluxSlot.Empty)
+            {
+                dsc.AppendLine(FluxSlot.Itemstack.StackSize + " " + FluxSlot.Itemstack.GetName());
+            }
+
+            if (TestReadyToMerge(false))
+            {
+                dsc.AppendLine("Ready to weld");
+            }
+            else
+            {
+                dsc.AppendLine("Not ready to weld");
+            }
         }
 
     }
