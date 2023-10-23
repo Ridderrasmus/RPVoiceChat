@@ -24,7 +24,7 @@ namespace RPVoiceChat.Audio
         private SortedList orderingQueue = SortedList.Synchronized(new SortedList());
         private int orderingDelay = 100;
         private long lastAudioSequenceNumber = -1;
-        private Dictionary<string, IAudioCodec> codecs = new Dictionary<string, IAudioCodec>();
+        private IAudioCodec codec;
         private FilterLowpass lowpassFilter;
 
         private ICoreClientAPI capi;
@@ -75,18 +75,10 @@ namespace RPVoiceChat.Audio
             OALW.Source(source, ALSourcef.RolloffFactor, rolloffFactor);
         }
 
-        public IAudioCodec GetOrCreateAudioCodec(int frequency, int channels)
+        public void UpdateAudioFormat(int frequency, int channels)
         {
-            string codecSettings = $"{frequency}:{channels}";
-            IAudioCodec codec;
-
-            if (!codecs.TryGetValue(codecSettings, out codec))
-            {
-                codec = new OpusCodec(frequency, channels);
-                codecs.Add(codecSettings, codec);
-            }
-
-            return codec;
+            if (codec?.SampleRate == frequency && codec?.Channels == channels) return;
+            codec = new OpusCodec(frequency, channels);
         }
 
         public void UpdatePlayer()
@@ -237,6 +229,7 @@ namespace RPVoiceChat.Audio
                 orderingQueue.RemoveAt(0);
             }
 
+            if (codec != null) audio.data = codec.Decode(audio.data);
             buffer.QueueAudio(audio.data, audio.format, audio.frequency);
 
             // The source can stop playing if it finishes everything in queue
