@@ -18,25 +18,21 @@ namespace RPVoiceChat.Networking
         protected UdpClient UdpClient;
         protected int port;
         protected const string _transportID = "UDP";
-        protected bool upnpEnabled = true;
+        protected bool upnpEnabled;
         protected Logger logger;
         protected CancellationTokenSource _readinessProbeCTS;
         protected bool isReady = false;
 
-        public UDPNetworkBase(Logger logger)
+        public UDPNetworkBase(Logger logger, bool forwardPorts)
         {
             this.logger = logger;
+            upnpEnabled = forwardPorts;
             _readinessProbeCTS = new CancellationTokenSource();
         }
 
         public string GetTransportID()
         {
             return _transportID;
-        }
-
-        public void TogglePortForwarding(bool? state = null)
-        {
-            upnpEnabled = state ?? !upnpEnabled;
         }
 
         protected void SetupUpnp(int port)
@@ -61,6 +57,10 @@ namespace RPVoiceChat.Networking
             catch (TaskCanceledException)
             {
                 logger.Warning("Device discovery got aborted, assuming public IP");
+            }
+            catch (NatDeviceNotFoundException)
+            {
+                throw new Exception($"Unable to port forward with UPnP. Make sure your IP is public and UPnP is enabled if you want to use {_transportID} connection.");
             }
         }
 
@@ -108,6 +108,12 @@ namespace RPVoiceChat.Networking
                     if (e.SocketErrorCode == SocketError.ConnectionReset) continue;
                     if (e.SocketErrorCode == SocketError.Interrupted ||
                         ct.IsCancellationRequested) return;
+
+                    if (!isReady)
+                    {
+                        logger.Warning($"Caught unexpected error, but proceeding to ignore it because transport isn't ready yet:\n{e}");
+                        return;
+                    }
 
                     throw e;
                 }
