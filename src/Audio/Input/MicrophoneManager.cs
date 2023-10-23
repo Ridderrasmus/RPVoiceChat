@@ -2,7 +2,6 @@
 using RPVoiceChat.Audio.Effects;
 using RPVoiceChat.Utils;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -13,6 +12,19 @@ namespace RPVoiceChat.Audio
 {
     public class MicrophoneManager : IDisposable
     {
+        public event Action<AudioData> OnBufferRecorded;
+        public event Action<VoiceLevel> VoiceLevelUpdated;
+        public event Action ClientStartTalking;
+        public event Action ClientStopTalking;
+
+        private ICoreClientAPI capi;
+        private IAudioCapture capture;
+        private IAudioCodec codec;
+        private IDenoiser denoiser;
+        private RPVoiceChatConfig config;
+        private Thread audioCaptureThread;
+        private CancellationTokenSource audioCaptureCTS;
+
         public static int Frequency = 48000;
         public ALFormat InputFormat { get; private set; }
         private ALFormat OutputFormat;
@@ -21,42 +33,21 @@ namespace RPVoiceChat.Audio
         private int InputChannelCount;
         private int OutputChannelCount;
         private const byte SampleToByte = 2;
-        private double MaxInputThreshold;
-        readonly ICoreClientAPI capi;
 
-        private IAudioCapture capture;
-        private IAudioCodec codec;
-        private IDenoiser denoiser;
-        private RPVoiceChatConfig config;
-        private ConcurrentQueue<AudioData> audioDataQueue = new ConcurrentQueue<AudioData>();
-        private Thread audioProcessingThread;
-        private CancellationTokenSource audioProcessingCTS;
-
-        private VoiceLevel voiceLevel = VoiceLevel.Talking;
-        public bool canSwitchDevice = true;
+        public double Amplitude { get; private set; }
+        public double AmplitudeAverage { get; private set; }
         public bool Transmitting = false;
         public bool TransmittingOnPreviousStep = false;
         public bool IsDenoisingAvailable = false;
-
-        private long gameTickId = 0;
-
-        private bool isRecording = false;
+        private VoiceLevel voiceLevel = VoiceLevel.Talking;
         private double inputThreshold;
-
-        public double Amplitude { get; set; }
-        public double AmplitudeAverage { get; set; }
-
-        public event Action<AudioData> OnBufferRecorded;
-        public event Action<VoiceLevel> VoiceLevelUpdated;
-        public event Action ClientStartTalking;
-        public event Action ClientStopTalking;
-
+        private double MaxInputThreshold;
         private List<double> recentAmplitudes = new List<double>();
 
         public MicrophoneManager(ICoreClientAPI capi)
         {
-            audioProcessingThread = new Thread(ProcessAudio);
-            audioProcessingCTS = new CancellationTokenSource();
+            audioCaptureThread = new Thread(CaptureAudio);
+            audioCaptureCTS = new CancellationTokenSource();
             this.capi = capi;
             config = ModConfig.Config;
             MaxInputThreshold = config.MaxInputThreshold;
@@ -70,8 +61,7 @@ namespace RPVoiceChat.Audio
 
         public void Launch()
         {
-            audioProcessingThread.Start(audioProcessingCTS.Token);
-            gameTickId = capi.Event.RegisterGameTickListener(UpdateCaptureAudioSamples, 100);
+            audioCaptureThread.Start(audioCaptureCTS.Token);
             capture?.Start();
         }
 
@@ -112,32 +102,44 @@ namespace RPVoiceChat.Audio
             denoiser?.SetVoiceDenoisingStrength(strength / 100f);
         }
 
-        public void UpdateCaptureAudioSamples(float deltaTime)
+        private void CaptureAudio(object cancellationToken)
         {
-            bool isMuted = config.IsMuted;
-            var clientEntity = capi.World.Player?.Entity;
+            CancellationToken ct = (CancellationToken)cancellationToken;
+            while (audioCaptureThread.IsAlive && !ct.IsCancellationRequested)
+            {
+                Thread.Sleep(100);
+                UpdateCaptureAudioSamples();
+            }
+        }
 
-            if (isMuted || clientEntity == null || capture == null || !clientEntity.Alive || clientEntity.AnimManager.IsAnimationActive("sleep"))
-                return;
+        /// <summary>
+        /// Reads captured audio as frames, processes captured frames and transmits them
+        /// </summary>
+        private void UpdateCaptureAudioSamples()
+        {
+            var clientEntity = capi.World.Player?.Entity;
+            if (clientEntity == null || capture == null) return;
 
             int samplesAvailable = capture.AvailableSamples;
             int frameSize = codec.GetFrameSize();
             int samplesToRead = samplesAvailable - samplesAvailable % frameSize;
-
-            int bufferLength = samplesToRead * SampleToByte * InputChannelCount;
             if (samplesToRead <= 0) return;
-
+            int bufferLength = samplesToRead * SampleToByte * InputChannelCount;
             var sampleBuffer = new byte[bufferLength];
             capture.ReadSamples(sampleBuffer, samplesToRead);
 
-            AudioData data = PreprocessRawAudio(sampleBuffer);
-            audioDataQueue.Enqueue(data);
+            bool isMuted = config.IsMuted;
+            bool isSleeping = clientEntity.AnimManager.IsAnimationActive("sleep");
+            if (isMuted || isSleeping || !clientEntity.Alive) return;
+
+            AudioData data = ProcessAudio(sampleBuffer);
+            TransmitAudio(data);
         }
 
         /// <summary>
         /// Converts audio to Mono16, applies gain, applies denoising, calculates amplitude and applies encoding
         /// </summary>
-        private AudioData PreprocessRawAudio(byte[] rawSamples)
+        private AudioData ProcessAudio(byte[] rawSamples)
         {
             var rawSampleSize = SampleToByte * InputChannelCount;
             var pcmCount = rawSamples.Length / rawSampleSize;
@@ -183,77 +185,33 @@ namespace RPVoiceChat.Audio
             };
         }
 
-        private void ProcessAudio(object cancellationToken)
+        private void TransmitAudio(AudioData data)
         {
-            CancellationToken ct = (CancellationToken)cancellationToken;
-            while (audioProcessingThread.IsAlive && !ct.IsCancellationRequested)
+            Amplitude = data.amplitude;
+            recentAmplitudes.Add(Amplitude);
+
+            if (recentAmplitudes.Count > 3)
             {
-                if (!audioDataQueue.TryDequeue(out var data))
-                {
-                    Thread.Sleep(30);
-                    continue;
-                }
-
-                Amplitude = data.amplitude;
-                recentAmplitudes.Add(Amplitude);
-
-                if (recentAmplitudes.Count > 3)
-                {
-                    recentAmplitudes.RemoveAt(0);
-
-                    AmplitudeAverage = recentAmplitudes.Average();
-                }
-
-                // Handle Push to Talk
-                if (config.PushToTalkEnabled)
-                {
-                    Transmitting = capi.Input.KeyboardKeyState[capi.Input.GetHotKeyByCode("voicechatPTT").CurrentMapping.KeyCode];
-                }
-                else
-                {
-                    Transmitting = Amplitude >= inputThreshold || AmplitudeAverage >= inputThreshold;
-                }
-
-                if (Transmitting)
-                {
-                    if (!TransmittingOnPreviousStep) ClientStartTalking?.Invoke();
-                    OnBufferRecorded?.Invoke(data);
-                }
-                else if (TransmittingOnPreviousStep)
-                {
-                    ClientStopTalking?.Invoke();
-                }
-
-                TransmittingOnPreviousStep = Transmitting;
-            }
-        }
-
-        // Returns the success of the method
-        public bool ToggleRecording()
-        {
-            return (ToggleRecording(!isRecording) == !isRecording);
-        }
-
-        // Returns the recording status
-        public bool ToggleRecording(bool mode)
-        {
-            if (!canSwitchDevice) return isRecording;
-            canSwitchDevice = false;
-            if (isRecording == mode) return mode;
-
-            if (mode)
-            {
-                capture.Start();
-            }
-            else
-            {
-                capture.Stop();
+                recentAmplitudes.RemoveAt(0);
+                AmplitudeAverage = recentAmplitudes.Average();
             }
 
-            isRecording = mode;
+            // Handle Push to Talk
+            bool isPTTKeyPressed = capi.Input.KeyboardKeyState[capi.Input.GetHotKeyByCode("voicechatPTT").CurrentMapping.KeyCode];
+            bool isAboveInputThreshold = Amplitude >= inputThreshold || AmplitudeAverage >= inputThreshold;
+            Transmitting = config.PushToTalkEnabled ? isPTTKeyPressed : isAboveInputThreshold;
 
-            canSwitchDevice = true;
-            return isRecording;
+            if (Transmitting)
+            {
+                if (!TransmittingOnPreviousStep) ClientStartTalking?.Invoke();
+                OnBufferRecorded?.Invoke(data);
+            }
+            else if (TransmittingOnPreviousStep)
+            {
+                ClientStopTalking?.Invoke();
+            }
+
+            TransmittingOnPreviousStep = Transmitting;
         }
 
         private IAudioCapture CreateNewCapture(string deviceName, ALFormat? captureFormat = null)
@@ -406,10 +364,8 @@ namespace RPVoiceChat.Audio
 
         public void Dispose()
         {
-            capi.Event.UnregisterGameTickListener(gameTickId);
-            gameTickId = 0;
-            audioProcessingCTS?.Cancel();
-            audioProcessingCTS?.Dispose();
+            audioCaptureCTS?.Cancel();
+            audioCaptureCTS?.Dispose();
             capture?.Stop();
             capture?.Dispose();
             denoiser?.Dispose();

@@ -10,63 +10,29 @@ namespace RPVoiceChat.Networking
 {
     public abstract class UDPNetworkBase : IDisposable
     {
-        public event Action<byte[], IPEndPoint> OnMessageReceived;
+        protected event Action<byte[], IPEndPoint> OnMessageReceived;
 
         private Thread _listeningThread;
         private CancellationTokenSource _listeningCTS;
 
         protected UdpClient UdpClient;
         protected int port;
-        protected ConnectionInfo connectionInfo;
         protected const string _transportID = "UDP";
-        protected bool upnpEnabled = true;
+        protected bool upnpEnabled;
         protected Logger logger;
+        protected CancellationTokenSource _readinessProbeCTS;
         protected bool isReady = false;
 
-        public UDPNetworkBase(Logger logger)
+        public UDPNetworkBase(Logger logger, bool forwardPorts)
         {
             this.logger = logger;
+            upnpEnabled = forwardPorts;
+            _readinessProbeCTS = new CancellationTokenSource();
         }
 
         public string GetTransportID()
         {
             return _transportID;
-        }
-
-        public virtual ConnectionInfo GetConnection()
-        {
-            if (connectionInfo != null) return connectionInfo;
-
-            connectionInfo = new ConnectionInfo()
-            {
-                Port = port
-            };
-
-            return connectionInfo;
-        }
-
-        public void TogglePortForwarding(bool? state = null)
-        {
-            upnpEnabled = state ?? !upnpEnabled;
-        }
-
-        protected bool IsInternalNetwork(string ip)
-        {
-            return IsInternalNetwork(IPAddress.Parse(ip));
-        }
-
-        protected bool IsInternalNetwork(IPAddress ip)
-        {
-            byte[] ipParts = ip.GetAddressBytes();
-
-            if (ipParts[0] == 10 ||
-               (ipParts[0] == 192 && ipParts[1] == 168) ||
-               (ipParts[0] == 172 && (ipParts[1] >= 16 && ipParts[1] <= 31)) ||
-               (ipParts[0] == 25 || ipParts[0] == 26) ||
-               (ipParts[0] == 127 && ipParts[1] == 0 && ipParts[2] == 0 && ipParts[3] == 1))
-                return true;
-
-            return false;
         }
 
         protected void SetupUpnp(int port)
@@ -92,6 +58,10 @@ namespace RPVoiceChat.Networking
             {
                 logger.Warning("Device discovery got aborted, assuming public IP");
             }
+            catch (NatDeviceNotFoundException)
+            {
+                throw new Exception($"Unable to port forward with UPnP. Make sure your IP is public and UPnP is enabled if you want to use {_transportID} connection.");
+            }
         }
 
         protected void OpenUDPClient(int port)
@@ -116,12 +86,13 @@ namespace RPVoiceChat.Networking
             if (UdpClient == null) throw new Exception("Udp client has not been initialized. Can't start listening.");
 
             _listeningCTS = new CancellationTokenSource();
-            _listeningThread = new Thread(() => Listen(_listeningCTS.Token));
-            _listeningThread.Start();
+            _listeningThread = new Thread(Listen);
+            _listeningThread.Start(_listeningCTS.Token);
         }
 
-        protected void Listen(CancellationToken ct)
+        private void Listen(object cancellationToken)
         {
+            CancellationToken ct = (CancellationToken)cancellationToken;
             while (_listeningThread.IsAlive && !ct.IsCancellationRequested)
             {
                 try
@@ -138,35 +109,21 @@ namespace RPVoiceChat.Networking
                     if (e.SocketErrorCode == SocketError.Interrupted ||
                         ct.IsCancellationRequested) return;
 
+                    if (!isReady)
+                    {
+                        logger.Warning($"Caught unexpected error, but proceeding to ignore it because transport isn't ready yet:\n{e}");
+                        return;
+                    }
+
                     throw e;
                 }
             }
         }
 
-        protected IPEndPoint GetEndPoint(ConnectionInfo connectionInfo)
-        {
-            var address = IPAddress.Parse(connectionInfo.Address);
-            var endpoint = new IPEndPoint(address, connectionInfo.Port);
-
-            return endpoint;
-        }
-
-        protected string GetPublicIP()
-        {
-            string publicIPString = new WebClient().DownloadString("https://ipinfo.io/ip");
-
-            return publicIPString;
-        }
-
-        protected bool AssertEqual(IPEndPoint firstEndPoint, IPEndPoint secondEndPoint)
-        {
-            bool isSameAddress = firstEndPoint.Address.MapToIPv4().ToString() == secondEndPoint.Address.MapToIPv4().ToString();
-            bool isSamePort = firstEndPoint.Port == secondEndPoint.Port;
-            return isSameAddress && isSamePort;
-        }
-
         public void Dispose()
         {
+            _readinessProbeCTS?.Cancel();
+            _readinessProbeCTS?.Dispose();
             _listeningCTS?.Cancel();
             _listeningCTS?.Dispose();
             UdpClient?.Close();

@@ -5,6 +5,7 @@ using RPVoiceChat.Gui;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
 using System;
+using System.Collections.Generic;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
@@ -51,10 +52,14 @@ namespace RPVoiceChat
             patchManager.Patch();
 
             // Init voice chat client
-            var mainClient = new UDPNetworkClient();
-            if (config.ManualPortForwarding) mainClient.TogglePortForwarding(false);
-            var backupClient = new NativeNetworkClient(capi);
-            client = new PlayerNetworkClient(capi, mainClient, backupClient);
+            bool forwardPorts = !config.ManualPortForwarding;
+            var networkTransports = new List<INetworkClient>()
+            {
+                new UDPNetworkClient(forwardPorts),
+                new TCPNetworkClient(),
+                new NativeNetworkClient(capi)
+            };
+            client = new PlayerNetworkClient(capi, networkTransports);
 
             // Initialize gui
             configGui = new ModMenuDialog(capi, micManager, audioOutputManager, clientSettingsRepository);
@@ -152,9 +157,7 @@ namespace RPVoiceChat
             patchManager?.Dispose();
             client?.Dispose();
             configGui?.Dispose();
-            ClientSettings.Dispose();
             clientSettingsRepository?.Dispose();
-            base.Dispose();
         }
     }
 }

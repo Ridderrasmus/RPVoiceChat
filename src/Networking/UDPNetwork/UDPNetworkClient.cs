@@ -1,6 +1,6 @@
-﻿using System;
+﻿using RPVoiceChat.Utils;
+using System;
 using System.Net;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace RPVoiceChat.Networking
@@ -8,29 +8,26 @@ namespace RPVoiceChat.Networking
     public class UDPNetworkClient : UDPNetworkBase, IExtendedNetworkClient
     {
         public event Action<AudioPacket> OnAudioReceived;
+        public event Action<bool> OnConnectionLost = delegate { }; //UDP is connectionless, event should never fire
 
         private IPEndPoint serverEndpoint;
-        private CancellationTokenSource _readinessProbeCTS;
 
-        public UDPNetworkClient() : base(Utils.Logger.client)
+        public UDPNetworkClient(bool forwardPorts) : base(Logger.client, forwardPorts)
         {
-            _readinessProbeCTS = new CancellationTokenSource();
-
             OnMessageReceived += MessageReceived;
         }
 
         public ConnectionInfo Connect(ConnectionInfo serverConnection)
         {
-            serverEndpoint = GetEndPoint(serverConnection);
+            serverEndpoint = NetworkUtils.GetEndPoint(serverConnection);
             port = OpenUDPClient();
 
-            if (!IsInternalNetwork(serverConnection.Address))
+            if (!NetworkUtils.IsInternalNetwork(serverConnection.Address))
                 SetupUpnp(port);
             StartListening();
             VerifyClientReadiness();
 
-            var clientConnection = GetConnection();
-            return clientConnection;
+            return new ConnectionInfo(port);
         }
 
         public void SendAudioToServer(AudioPacket packet)

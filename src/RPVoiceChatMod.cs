@@ -21,11 +21,5 @@ namespace RPVoiceChat
             ItemRegistry.RegisterItems(api);
             BlockRegistry.RegisterBlocks(api);
         }
-
-        public override void Dispose()
-        {
-            WorldConfig.Dispose();
-            ModConfig.Dispose();
-        }
     }
 }
