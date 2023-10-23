@@ -202,13 +202,13 @@ namespace RPVoiceChat.Audio
         {
             if (orderingQueue.ContainsKey(sequenceNumber))
             {
-                Logger.client.Debug("Audio sequence already received, skipping enqueueing");
+                Logger.client.VerboseDebug($"Audio sequence {sequenceNumber} already received, skipping enqueueing");
                 return;
             }
 
-            if (lastAudioSequenceNumber > sequenceNumber)
+            if (lastAudioSequenceNumber >= sequenceNumber)
             {
-                Logger.client.Debug("Audio sequence arrived too late, skipping enqueueing");
+                Logger.client.VerboseDebug($"Audio sequence {sequenceNumber} arrived too late, skipping enqueueing");
                 return;
             }
 
