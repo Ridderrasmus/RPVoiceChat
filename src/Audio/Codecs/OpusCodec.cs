@@ -23,7 +23,7 @@ namespace RPVoiceChat.Audio
             encoder = new OpusEncoder(SampleRate, Channels, OpusApplication.OPUS_APPLICATION_VOIP);
             decoder = new OpusDecoder(SampleRate, Channels);
 
-            encoder.Bitrate = 40000;
+            encoder.Bitrate = 40 * 1024;
             encoder.Complexity = 10;
             encoder.SignalType = OpusSignal.OPUS_SIGNAL_VOICE;
             encoder.ForceMode = OpusMode.MODE_SILK_ONLY;
