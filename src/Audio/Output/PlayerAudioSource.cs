@@ -4,7 +4,6 @@ using RPVoiceChat.DB;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Utils;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
@@ -21,7 +20,9 @@ namespace RPVoiceChat.Audio
         private const int BufferCount = 20;
         private int source;
         private CircularAudioBuffer buffer;
-        private SortedList orderingQueue = SortedList.Synchronized(new SortedList());
+        private SortedList<long, AudioData> orderingQueue = new SortedList<long, AudioData>();
+        private object ordering_queue_lock = new object();
+        private object dequeue_audio_lock = new object();
         private int orderingDelay = 100;
         private long lastAudioSequenceNumber = -1;
         private IAudioCodec codec;
@@ -218,25 +219,25 @@ namespace RPVoiceChat.Audio
 
         public async void DequeueAudio()
         {
-            AudioData audio;
-
             await Task.Delay(orderingDelay);
 
-            lock (orderingQueue.SyncRoot)
+            lock (dequeue_audio_lock)
             {
-                audio = orderingQueue.GetByIndex(0) as AudioData;
-                lastAudioSequenceNumber = (long)orderingQueue.GetKey(0);
-                orderingQueue.RemoveAt(0);
-            }
+                AudioData audio;
+                lock (ordering_queue_lock)
+                {
+                    lastAudioSequenceNumber = orderingQueue.Keys[0];
+                    audio = orderingQueue[lastAudioSequenceNumber];
+                    orderingQueue.RemoveAt(0);
+                }
 
-            if (codec != null) audio.data = codec.Decode(audio.data);
-            buffer.QueueAudio(audio.data, audio.format, audio.frequency);
+                if (codec != null) audio.data = codec.Decode(audio.data);
+                buffer.QueueAudio(audio.data, audio.format, audio.frequency);
 
-            // The source can stop playing if it finishes everything in queue
-            var state = OALW.GetSourceState(source);
-            if (state != ALSourceState.Playing)
-            {
-                StartPlaying();
+                // The source can stop playing if it finishes everything in queue
+                var state = OALW.GetSourceState(source);
+                if (state != ALSourceState.Playing)
+                    StartPlaying();
             }
         }
 
