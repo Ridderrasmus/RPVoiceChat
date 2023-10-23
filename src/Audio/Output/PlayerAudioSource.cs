@@ -201,19 +201,23 @@ namespace RPVoiceChat.Audio
 
         public void EnqueueAudio(AudioData audio, long sequenceNumber)
         {
-            if (orderingQueue.ContainsKey(sequenceNumber))
+            lock (ordering_queue_lock)
             {
-                Logger.client.VerboseDebug($"Audio sequence {sequenceNumber} already received, skipping enqueueing");
-                return;
+                if (orderingQueue.ContainsKey(sequenceNumber))
+                {
+                    Logger.client.VerboseDebug($"Audio sequence {sequenceNumber} already received, skipping enqueueing");
+                    return;
+                }
+
+                if (lastAudioSequenceNumber >= sequenceNumber)
+                {
+                    Logger.client.VerboseDebug($"Audio sequence {sequenceNumber} arrived too late, skipping enqueueing");
+                    return;
+                }
+
+                orderingQueue.Add(sequenceNumber, audio);
             }
 
-            if (lastAudioSequenceNumber >= sequenceNumber)
-            {
-                Logger.client.VerboseDebug($"Audio sequence {sequenceNumber} arrived too late, skipping enqueueing");
-                return;
-            }
-
-            orderingQueue.Add(sequenceNumber, audio);
             DequeueAudio();
         }
 
