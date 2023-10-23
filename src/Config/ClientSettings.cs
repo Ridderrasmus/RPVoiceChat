@@ -80,10 +80,5 @@ namespace RPVoiceChat
         {
             return $"{modPrefix}_{key}";
         }
-
-        public static void Dispose()
-        {
-            capi = null;
-        }
     }
 }

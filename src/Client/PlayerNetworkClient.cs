@@ -68,7 +68,7 @@ namespace RPVoiceChat.Client
             }
 
             if (reserveClient == null)
-                throw new Exception($"Failed to connect to the server. Required transport: {serverConnection.SupportedTransports}");
+                throw new Exception($"Failed to connect to the server. Supported transports: {string.Join(", ", serverConnection.SupportedTransports)}");
 
             SwapActiveClient(reserveClient);
             reserveClient = null;
