@@ -4,7 +4,6 @@ using RPVoiceChat.DB;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Utils;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
@@ -21,10 +20,12 @@ namespace RPVoiceChat.Audio
         private const int BufferCount = 20;
         private int source;
         private CircularAudioBuffer buffer;
-        private SortedList orderingQueue = SortedList.Synchronized(new SortedList());
+        private SortedList<long, AudioData> orderingQueue = new SortedList<long, AudioData>();
+        private object ordering_queue_lock = new object();
+        private object dequeue_audio_lock = new object();
         private int orderingDelay = 100;
         private long lastAudioSequenceNumber = -1;
-        private Dictionary<string, IAudioCodec> codecs = new Dictionary<string, IAudioCodec>();
+        private IAudioCodec codec;
         private FilterLowpass lowpassFilter;
         private EffectsExtension effectsExtension;
 
@@ -77,18 +78,10 @@ namespace RPVoiceChat.Audio
             OALW.Source(source, ALSourcef.RolloffFactor, rolloffFactor);
         }
 
-        public IAudioCodec GetOrCreateAudioCodec(int frequency, int channels)
+        public void UpdateAudioFormat(int frequency, int channels)
         {
-            string codecSettings = $"{frequency}:{channels}";
-            IAudioCodec codec;
-
-            if (!codecs.TryGetValue(codecSettings, out codec))
-            {
-                codec = new OpusCodec(frequency, channels);
-                codecs.Add(codecSettings, codec);
-            }
-
-            return codec;
+            if (codec?.SampleRate == frequency && codec?.Channels == channels) return;
+            codec = new OpusCodec(frequency, channels);
         }
 
         public void UpdatePlayer()
@@ -210,42 +203,47 @@ namespace RPVoiceChat.Audio
 
         public void EnqueueAudio(AudioData audio, long sequenceNumber)
         {
-            if (orderingQueue.ContainsKey(sequenceNumber))
+            lock (ordering_queue_lock)
             {
-                Logger.client.Debug("Audio sequence already received, skipping enqueueing");
-                return;
+                if (orderingQueue.ContainsKey(sequenceNumber))
+                {
+                    Logger.client.VerboseDebug($"Audio sequence {sequenceNumber} already received, skipping enqueueing");
+                    return;
+                }
+
+                if (lastAudioSequenceNumber >= sequenceNumber)
+                {
+                    Logger.client.VerboseDebug($"Audio sequence {sequenceNumber} arrived too late, skipping enqueueing");
+                    return;
+                }
+
+                orderingQueue.Add(sequenceNumber, audio);
             }
 
-            if (lastAudioSequenceNumber > sequenceNumber)
-            {
-                Logger.client.Debug("Audio sequence arrived too late, skipping enqueueing");
-                return;
-            }
-
-            orderingQueue.Add(sequenceNumber, audio);
             DequeueAudio();
         }
 
         public async void DequeueAudio()
         {
-            AudioData audio;
-
             await Task.Delay(orderingDelay);
 
-            lock (orderingQueue.SyncRoot)
+            lock (dequeue_audio_lock)
             {
-                audio = orderingQueue.GetByIndex(0) as AudioData;
-                lastAudioSequenceNumber = (long)orderingQueue.GetKey(0);
-                orderingQueue.RemoveAt(0);
-            }
+                AudioData audio;
+                lock (ordering_queue_lock)
+                {
+                    lastAudioSequenceNumber = orderingQueue.Keys[0];
+                    audio = orderingQueue[lastAudioSequenceNumber];
+                    orderingQueue.RemoveAt(0);
+                }
 
-            buffer.QueueAudio(audio.data, audio.format, audio.frequency);
+                if (codec != null) audio.data = codec.Decode(audio.data);
+                buffer.QueueAudio(audio.data, audio.format, audio.frequency);
 
-            // The source can stop playing if it finishes everything in queue
-            var state = OALW.GetSourceState(source);
-            if (state != ALSourceState.Playing)
-            {
-                StartPlaying();
+                // The source can stop playing if it finishes everything in queue
+                var state = OALW.GetSourceState(source);
+                if (state != ALSourceState.Playing)
+                    StartPlaying();
             }
         }
 

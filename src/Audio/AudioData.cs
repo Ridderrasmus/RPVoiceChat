@@ -13,13 +13,11 @@ namespace RPVoiceChat.Audio
 
         public AudioData() { }
 
-        public static AudioData FromPacket(AudioPacket audioPacket, IAudioCodec codec = null)
+        public static AudioData FromPacket(AudioPacket audioPacket)
         {
-            var data = codec?.Decode(audioPacket.AudioData) ?? audioPacket.AudioData;
-
             return new AudioData()
             {
-                data = data,
+                data = audioPacket.AudioData,
                 frequency = audioPacket.Frequency,
                 format = audioPacket.Format,
                 voiceLevel = audioPacket.VoiceLevel,
