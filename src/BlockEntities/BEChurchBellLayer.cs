@@ -1,5 +1,4 @@
 ﻿using RPVoiceChat.BlockEntityRenderers;
-using RPVoiceChat.Utils;
 using System;
 using System.Linq;
 using System.Text;
@@ -11,27 +10,29 @@ using Vintagestory.GameContent;
 
 namespace RPVoiceChat.BlockEntities
 {
-    public class BlockEntityChurchBellLayer : BlockEntityChurchBellPart
+    public class BlockEntityChurchBellLayer : BlockEntityContainer
     {
         private string[] bellLayerNames = new string[] { "churchbell-layer-bottom", "churchbell-layer-middle", "churchbell-layer-top", "churchbell-layer-topmost" };
-        private float[] bellLayerHeights = new float[] { 0.75f, 0.5f, 0.5f, 0.5f };
-        private new int neededFlux = 3;
+        private float[] bellLayerHeights = new float[] { 0f, 0.75f, 2f, 3.75f };
+        private int neededFlux = 3;
 
 
         public MeshRef[] BellLayerMeshRef = new MeshRef[4];
-        public new MeshRef[] FluxMeshRef = new MeshRef[3];
+        public MeshRef[] FluxMeshRef = new MeshRef[3];
 
         // The inveotry slot for the church bell parts
         InventoryGeneric inv;
+
+        // The slot for the flux
+        public ItemSlot FluxSlot => inv[0];
 
         // The slots for the big bell parts are the second, third, fourth, and fifth slots in the inventory
         public ItemSlot[] BellLayerSlots => new ItemSlot[] { inv[1], inv[2], inv[3], inv[4] };
 
 
         // Stuff that should be defined in JSON
-        public int ron;
-        public new int FluxShapePath;
-        public new int hammerHits;
+        public int FluxShapePath;
+        public int hammerHits;
 
 
         ChurchBellLayerRenderer renderer;
@@ -77,11 +78,10 @@ namespace RPVoiceChat.BlockEntities
             {
                 if (BellLayerSlots[i].Empty) break;
 
-                MeshData meshdata = capi.TesselatorManager.GetDefaultBlockMesh(BellLayerSlots[i].Itemstack.Block);
+                MeshData meshdata = capi.TesselatorManager.GetDefaultBlockMesh(BellLayerSlots[i].Itemstack.Block).Clone();
 
-                for (int j = 0; j < i; j++)
-                    if (!BellLayerSlots[j].Empty)
-                        meshdata = meshdata.Translate(0, bellLayerHeights[j], 0);
+                if (!BellLayerSlots[i].Empty)
+                    meshdata = meshdata.Translate(0, bellLayerHeights[i], 0);
 
                 BellLayerMeshRef[i] = capi.Render.UploadMesh(meshdata);
             }
@@ -92,7 +92,7 @@ namespace RPVoiceChat.BlockEntities
             {
                 if (BellLayerSlots[i].Empty && BellLayerSlots[i+1].Empty) break;
 
-                if (FluxSlot.Empty || FluxSlot.StackSize < i) break;
+                if (FluxSlot.Empty || FluxSlot.StackSize < i+1) break;
                 
 
                 var fluxShape = Shape.TryGet(Api, new AssetLocation("rpvoicechat", $"shapes/block/churchbell/{bellLayerNames[i]}-flux.json"));
@@ -129,7 +129,7 @@ namespace RPVoiceChat.BlockEntities
             }
         }
 
-        public new void OnHammerHitOver(IPlayer byPlayer, Vec3d hitPosition)
+        public void OnHammerHitOver(IPlayer byPlayer, Vec3d hitPosition)
         {
 
 
@@ -166,7 +166,7 @@ namespace RPVoiceChat.BlockEntities
             }
         }
 
-        public new bool TestReadyToMerge(bool triggerMessage = true)
+        public bool TestReadyToMerge(bool triggerMessage = true)
         {
 
             foreach (ItemSlot slot in BellLayerSlots)
@@ -176,15 +176,8 @@ namespace RPVoiceChat.BlockEntities
                     if (triggerMessage && Api is ICoreClientAPI capi)
                     {
                         capi.TriggerIngameError(capi.World.Player, "missingparts", "You need to add all the parts to the weld");
-                        capi.Logger.Debug("Missing something in this slot");
                     }
                     return false;
-                } else
-                {
-                    if (Api is ICoreClientAPI capi)
-                    {
-                        capi.Logger.Debug($"We have {slot.Itemstack.GetName()} in this slot");
-                    }
                 }
 
                 if (slot.Itemstack.Collectible.GetTemperature(Api.World, slot.Itemstack) < 550)
@@ -197,7 +190,7 @@ namespace RPVoiceChat.BlockEntities
                 }
             }
 
-            if (FluxSlot.Empty || FluxSlot.Itemstack.StackSize > neededFlux)
+            if (FluxSlot.Empty || FluxSlot.Itemstack.StackSize < neededFlux)
             {
                 if (triggerMessage && Api is ICoreClientAPI capi)
                 {
@@ -209,7 +202,7 @@ namespace RPVoiceChat.BlockEntities
             return true;
         }
 
-        public new bool OnInteract(IPlayer byPlayer)
+        public bool OnInteract(IPlayer byPlayer)
         {
             ItemSlot hotbarslot = byPlayer.InventoryManager.ActiveHotbarSlot;
             ICoreClientAPI capi = Api as ICoreClientAPI;
@@ -231,7 +224,7 @@ namespace RPVoiceChat.BlockEntities
                     FluxSlot.Itemstack = hotbarslot.TakeOut(1);
                     updateMeshRefs();
                     return true;
-                } else if (FluxSlot.Itemstack.StackSize < filledLayerSlots - 1)
+                } else if (!FluxSlot.Empty && FluxSlot.Itemstack.StackSize < filledLayerSlots - 1)
                 {
                     FluxSlot.Itemstack.StackSize++;
                     hotbarslot.TakeOut(1);

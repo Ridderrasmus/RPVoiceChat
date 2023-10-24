@@ -148,7 +148,7 @@ namespace RPVoiceChat.BlockEntities
             {
                 var newBlock = Api.World.GetBlock(new AssetLocation(Block.Code.ToString().Replace("part", "layer")));
                 ItemStack newStack = new ItemStack(newBlock);
-                newStack.Collectible.SetTemperature(Api.World, newStack, temp);
+                newStack.Collectible.SetTemperature(Api.World, newStack, temp, false);
 
                 Api.World.BlockAccessor.SetBlock(0, Pos, new ItemStack());
 
