@@ -2,6 +2,7 @@
 {
     public interface IAudioCodec
     {
+        public string Name { get; }
         public int SampleRate { get; }
         public int Channels { get; }
         public int FrameSize { get; }

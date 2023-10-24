@@ -8,6 +8,8 @@ namespace RPVoiceChat.Audio
 {
     public class OpusCodec : IAudioCodec
     {
+        public const string _Name = "Opus";
+        public string Name { get; } = _Name;
         public int SampleRate { get; }
         public int Channels { get; }
         public int FrameSize { get; }
@@ -85,7 +87,7 @@ namespace RPVoiceChat.Audio
             return decoded.ToArray();
         }
 
-        private byte[] ShortsToBytes(short[] audio, int offset, int length)
+        public static byte[] ShortsToBytes(short[] audio, int offset, int length)
         {
             byte[] byteBuffer = new byte[length * sizeof(short)];
             int bytesToCopy = (length - offset) * sizeof(short);

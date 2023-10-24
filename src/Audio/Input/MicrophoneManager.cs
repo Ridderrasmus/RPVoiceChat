@@ -173,15 +173,20 @@ namespace RPVoiceChat.Audio
 
             var amplitude = Math.Sqrt(sampleSquareSum / pcmCount);
 
-            byte[] opusEncodedAudio = codec.Encode(pcms);
+            byte[] audio;
+            bool shouldEncode = WorldConfig.GetBool("encode-audio");
+            if (shouldEncode) audio = codec.Encode(pcms);
+            else audio = OpusCodec.ShortsToBytes(pcms, 0, pcms.Length);
+            string codecName = shouldEncode ? codec.Name : "None";
 
             return new AudioData()
             {
-                data = opusEncodedAudio,
+                data = audio,
                 frequency = Frequency,
                 format = OutputFormat,
                 amplitude = amplitude,
                 voiceLevel = voiceLevel,
+                codec = codecName
             };
         }
 
