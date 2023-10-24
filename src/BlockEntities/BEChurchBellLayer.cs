@@ -13,14 +13,14 @@ namespace RPVoiceChat.BlockEntities
     public class BlockEntityChurchBellLayer : BlockEntityContainer
     {
         private string[] bellLayerNames = new string[] { "churchbell-layer-bottom", "churchbell-layer-middle", "churchbell-layer-top", "churchbell-layer-topmost" };
-        private float[] bellLayerHeights = new float[] { 0f, 0.75f, 2f, 3.75f };
+        private float[] bellLayerHeights = new float[] { 0f, 0.375f, 0.6665f, 0.9375f };
         private int neededFlux = 3;
 
 
         public MeshRef[] BellLayerMeshRef = new MeshRef[4];
         public MeshRef[] FluxMeshRef = new MeshRef[3];
 
-        // The inveotry slot for the church bell parts
+        // The inventory slot for the church bell parts
         InventoryGeneric inv;
 
         // The slot for the flux
@@ -76,12 +76,15 @@ namespace RPVoiceChat.BlockEntities
             // If the inventory contains the big bell parts, then we want to render the big bell part mesh
             for (int i = 0; i < BellLayerSlots.Length; i++)
             {
-                if (BellLayerSlots[i].Empty) break;
+                if (BellLayerSlots[i].Empty) continue;
 
                 MeshData meshdata = capi.TesselatorManager.GetDefaultBlockMesh(BellLayerSlots[i].Itemstack.Block).Clone();
 
-                if (!BellLayerSlots[i].Empty)
-                    meshdata = meshdata.Translate(0, bellLayerHeights[i], 0);
+                for (int j = 0; j <= i; j++)
+                {
+                    if (!BellLayerSlots[i].Empty)
+                        meshdata = meshdata.Translate(0, bellLayerHeights[i], 0);
+                }
 
                 BellLayerMeshRef[i] = capi.Render.UploadMesh(meshdata);
             }
