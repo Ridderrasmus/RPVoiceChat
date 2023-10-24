@@ -26,7 +26,7 @@ namespace RPVoiceChat.BlockEntities
 
 
         // Stuff that should be defined in JSON
-        public int ron;
+        public int neededFlux = 4;
         public int FluxShapePath;
 
         public int hammerHits;
@@ -115,6 +115,8 @@ namespace RPVoiceChat.BlockEntities
 
         public void OnHammerHitOver(IPlayer byPlayer, Vec3d hitPosition)
         {
+
+
             foreach (ItemSlot slot in BellPartSlots)
                 if (slot.Empty) return;
 
@@ -130,27 +132,33 @@ namespace RPVoiceChat.BlockEntities
 
             if (temp > 800)
             {
-                particleProperties.MinPos = Pos.ToVec3d().Add(hitPosition.X, hitPosition.Y, hitPosition.Z);
-                particleProperties.VertexFlags = (byte)GameMath.Clamp((int)(temp - 700) / 2, 32, 128);
-                Api.World.SpawnParticles(particleProperties, null);
+                if (Api.Side == EnumAppSide.Client)
+                {
+                    BlockEntityAnvil.bigMetalSparks.MinPos = Pos.ToVec3d().Add(hitPosition.X, hitPosition.Y, hitPosition.Z);
+                    BlockEntityAnvil.bigMetalSparks.VertexFlags = (byte)GameMath.Clamp((int)(temp - 700) / 2, 32, 128);
+                    Api.World.SpawnParticles(BlockEntityAnvil.bigMetalSparks, null);
 
-                BlockEntityAnvil.smallMetalSparks.MinPos = Pos.ToVec3d().Add(hitPosition.X, hitPosition.Y, hitPosition.Z);
-                BlockEntityAnvil.smallMetalSparks.VertexFlags = (byte)GameMath.Clamp((int)(temp - 770) / 3, 32, 128);
-                Api.World.SpawnParticles(BlockEntityAnvil.smallMetalSparks, null);
+                    BlockEntityAnvil.smallMetalSparks.MinPos = Pos.ToVec3d().Add(hitPosition.X, hitPosition.Y, hitPosition.Z);
+                    BlockEntityAnvil.smallMetalSparks.VertexFlags = (byte)GameMath.Clamp((int)(temp - 770) / 3, 32, 128);
+                    Api.World.SpawnParticles(BlockEntityAnvil.smallMetalSparks, null);
+                }
             }
 
             if (hammerHits > 11)
             {
                 var newBlock = Api.World.GetBlock(new AssetLocation(Block.Code.ToString().Replace("part", "layer")));
-                Api.World.BlockAccessor.SetBlock(0, Pos);
-                Api.World.BlockAccessor.SetBlock(newBlock.Id, Pos);
+                ItemStack newStack = new ItemStack(newBlock);
+                newStack.Collectible.SetTemperature(Api.World, newStack, temp);
 
-                BlockEntityChurchBellLayer belayer = Api.World.BlockAccessor.GetBlockEntity(Pos) as BlockEntityChurchBellLayer;
-                belayer?.OnBlockPlaced(new ItemStack(newBlock, 1));
+                Api.World.BlockAccessor.SetBlock(0, Pos, new ItemStack());
+
+                inv.Clear();
+
+                Api.World.BlockAccessor.SetBlock(newBlock.Id, Pos, newStack);
             }
         }
 
-        private bool TestReadyToMerge(bool triggerMessage = true)
+        public bool TestReadyToMerge(bool triggerMessage = true)
         {
 
             foreach (ItemSlot slot in BellPartSlots)
@@ -174,7 +182,7 @@ namespace RPVoiceChat.BlockEntities
                 }
             }
 
-            if (FluxSlot.Empty || FluxSlot.Itemstack.StackSize < 4)
+            if (FluxSlot.Empty || FluxSlot.Itemstack.StackSize < neededFlux)
             {
                 if (triggerMessage && Api is ICoreClientAPI capi)
                 {

@@ -24,12 +24,12 @@ namespace RPVoiceChat.BlockEntityRenderers
 
         public void OnRenderFrame(float deltaTime, EnumRenderStage stage)
         {
-            if (blockEntityChurchBellLayer.BellPartMeshRef[0] == null) return;
+            if (blockEntityChurchBellLayer.BellLayerMeshRef[0] == null) return;
 
             IRenderAPI rpi = capi.Render;
             Vec3d camPos = capi.World.Player.Entity.CameraPos;
 
-            int temp = (int)blockEntityChurchBellLayer.BellPartSlots[0].Itemstack.Collectible.GetTemperature(capi.World, blockEntityChurchBellLayer.BellPartSlots[0].Itemstack);
+            int temp = (int)blockEntityChurchBellLayer.BellLayerSlots[0].Itemstack.Collectible.GetTemperature(capi.World, blockEntityChurchBellLayer.BellLayerSlots[0].Itemstack);
             Vec4f lightrgbs = capi.World.BlockAccessor.GetLightRGBs(blockEntityChurchBellLayer.Pos.X, blockEntityChurchBellLayer.Pos.Y, blockEntityChurchBellLayer.Pos.Z);
             float[] glowColor = ColorUtil.GetIncandescenceColorAsColor4f(temp);
             int extraGlow = GameMath.Clamp((temp - 550) / 2, 0, 255);
@@ -53,12 +53,12 @@ namespace RPVoiceChat.BlockEntityRenderers
 
             
 
-            for (int i = 0; i < blockEntityChurchBellLayer.BellPartMeshRef.Length; i++)
+            for (int i = 0; i < blockEntityChurchBellLayer.BellLayerMeshRef.Length; i++)
             {
-                if (blockEntityChurchBellLayer.BellPartMeshRef[i] == null || blockEntityChurchBellLayer.BellPartMeshRef[i].Disposed) break;
+                if (blockEntityChurchBellLayer.BellLayerMeshRef[i] == null || blockEntityChurchBellLayer.BellLayerMeshRef[i].Disposed) break;
                 
 
-                rpi.RenderMesh(blockEntityChurchBellLayer.BellPartMeshRef[i]);
+                rpi.RenderMesh(blockEntityChurchBellLayer.BellLayerMeshRef[i]);
             }
 
             for (int i = 0; i < blockEntityChurchBellLayer.FluxMeshRef.Length; i++)

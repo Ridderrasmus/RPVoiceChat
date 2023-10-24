@@ -11,20 +11,18 @@ using Vintagestory.GameContent;
 
 namespace RPVoiceChat.BlockEntities
 {
-    public class BlockEntityChurchBellLayer : BlockEntityContainer
+    public class BlockEntityChurchBellLayer : BlockEntityChurchBellPart
     {
         private string[] bellLayerNames = new string[] { "churchbell-layer-bottom", "churchbell-layer-middle", "churchbell-layer-top", "churchbell-layer-topmost" };
-        private float[] bellLayerHeights = new float[] { 1f, 1f, 1f, 1f };
+        private float[] bellLayerHeights = new float[] { 0.75f, 0.5f, 0.5f, 0.5f };
+        private new int neededFlux = 3;
 
 
         public MeshRef[] BellLayerMeshRef = new MeshRef[4];
-        public MeshRef[] FluxMeshRef = new MeshRef[3];
+        public new MeshRef[] FluxMeshRef = new MeshRef[3];
 
         // The inveotry slot for the church bell parts
         InventoryGeneric inv;
-
-        // The slot for the flux is the first slot in the inventory
-        public ItemSlot FluxSlot => inv[0];
 
         // The slots for the big bell parts are the second, third, fourth, and fifth slots in the inventory
         public ItemSlot[] BellLayerSlots => new ItemSlot[] { inv[1], inv[2], inv[3], inv[4] };
@@ -32,8 +30,8 @@ namespace RPVoiceChat.BlockEntities
 
         // Stuff that should be defined in JSON
         public int ron;
-        public int FluxShapePath;
-        public int hammerHits;
+        public new int FluxShapePath;
+        public new int hammerHits;
 
 
         ChurchBellLayerRenderer renderer;
@@ -90,18 +88,19 @@ namespace RPVoiceChat.BlockEntities
 
             // If the inventory contains flux AND two big bell layers then we want to render the flux mesh between the two big bell layers
             // The fitting flux mesh is derived from the lower big bell layer
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < BellLayerSlots.Length - 1; i++)
             {
                 if (BellLayerSlots[i].Empty && BellLayerSlots[i+1].Empty) break;
 
+                if (FluxSlot.Empty || FluxSlot.StackSize < i) break;
                 
 
-                var fluxPart = Shape.TryGet(Api, new AssetLocation("rpvoicechat", $"shapes/block/churchbell/{bellLayerNames[i]}-flux.json"));
-                if (fluxPart == null)
-                    throw new Exception("Flux shape is null");
+                var fluxShape = Shape.TryGet(Api, new AssetLocation("rpvoicechat", $"shapes/block/churchbell/{bellLayerNames[i]}-flux.json"));
+                if (fluxShape == null)
+                    throw new Exception($"Layer flux shape is null for: {bellLayerNames[i]}");
 
                 MeshData meshdata;
-                capi.Tesselator.TesselateShape(Block, fluxPart, out meshdata);
+                capi.Tesselator.TesselateShape(Block, fluxShape, out meshdata);
 
                 for (int j = 0; j < i; j++)
                     if (!BellLayerSlots[j].Empty)
@@ -130,12 +129,14 @@ namespace RPVoiceChat.BlockEntities
             }
         }
 
-        public void OnHammerHitOver(IPlayer byPlayer, Vec3d hitPosition)
+        public new void OnHammerHitOver(IPlayer byPlayer, Vec3d hitPosition)
         {
+
+
             foreach (ItemSlot slot in BellLayerSlots)
                 if (slot.Empty) return;
 
-            if (!TestReadyToMerge(false)) return;
+            if (!TestReadyToMerge(true)) return;
 
             hammerHits++;
 
@@ -146,22 +147,26 @@ namespace RPVoiceChat.BlockEntities
 
             if (temp > 800)
             {
-                BlockEntityAnvil.bigMetalSparks.MinPos = Pos.ToVec3d().Add(hitPosition.X, hitPosition.Y, hitPosition.Z);
-                BlockEntityAnvil.bigMetalSparks.VertexFlags = (byte)GameMath.Clamp((int)(temp - 700) / 2, 32, 128);
-                Api.World.SpawnParticles(BlockEntityAnvil.bigMetalSparks, byPlayer);
+                if (Api.Side == EnumAppSide.Client)
+                {
+                    BlockEntityAnvil.bigMetalSparks.MinPos = Pos.ToVec3d().Add(hitPosition.X, hitPosition.Y, hitPosition.Z);
+                    BlockEntityAnvil.bigMetalSparks.VertexFlags = (byte)GameMath.Clamp((int)(temp - 700) / 2, 32, 128);
+                    Api.World.SpawnParticles(BlockEntityAnvil.bigMetalSparks, byPlayer);
 
-                BlockEntityAnvil.smallMetalSparks.MinPos = Pos.ToVec3d().Add(hitPosition.X, hitPosition.Y, hitPosition.Z);
-                BlockEntityAnvil.smallMetalSparks.VertexFlags = (byte)GameMath.Clamp((int)(temp - 770) / 3, 32, 128);
-                Api.World.SpawnParticles(BlockEntityAnvil.smallMetalSparks, byPlayer);
+                    BlockEntityAnvil.smallMetalSparks.MinPos = Pos.ToVec3d().Add(hitPosition.X, hitPosition.Y, hitPosition.Z);
+                    BlockEntityAnvil.smallMetalSparks.VertexFlags = (byte)GameMath.Clamp((int)(temp - 770) / 3, 32, 128);
+                    Api.World.SpawnParticles(BlockEntityAnvil.smallMetalSparks, byPlayer);
+                }
             }
 
             if (hammerHits > 11)
             {
-                Api.World.BlockAccessor.SetBlock(Api.World.GetBlock(new AssetLocation("churchbell")).Id, Pos);
+                Block churchbellBlock = Api.World.GetBlock(new AssetLocation("rpvoicechat", "churchbell"));
+                Api.World.BlockAccessor.SetBlock(churchbellBlock.Id, Pos, new ItemStack(churchbellBlock));
             }
         }
 
-        private bool TestReadyToMerge(bool triggerMessage = true)
+        public new bool TestReadyToMerge(bool triggerMessage = true)
         {
 
             foreach (ItemSlot slot in BellLayerSlots)
@@ -171,8 +176,15 @@ namespace RPVoiceChat.BlockEntities
                     if (triggerMessage && Api is ICoreClientAPI capi)
                     {
                         capi.TriggerIngameError(capi.World.Player, "missingparts", "You need to add all the parts to the weld");
+                        capi.Logger.Debug("Missing something in this slot");
                     }
                     return false;
+                } else
+                {
+                    if (Api is ICoreClientAPI capi)
+                    {
+                        capi.Logger.Debug($"We have {slot.Itemstack.GetName()} in this slot");
+                    }
                 }
 
                 if (slot.Itemstack.Collectible.GetTemperature(Api.World, slot.Itemstack) < 550)
@@ -185,7 +197,7 @@ namespace RPVoiceChat.BlockEntities
                 }
             }
 
-            if (FluxSlot.Empty)
+            if (FluxSlot.Empty || FluxSlot.Itemstack.StackSize > neededFlux)
             {
                 if (triggerMessage && Api is ICoreClientAPI capi)
                 {
@@ -197,7 +209,7 @@ namespace RPVoiceChat.BlockEntities
             return true;
         }
 
-        public bool OnInteract(IPlayer byPlayer)
+        public new bool OnInteract(IPlayer byPlayer)
         {
             ItemSlot hotbarslot = byPlayer.InventoryManager.ActiveHotbarSlot;
             ICoreClientAPI capi = Api as ICoreClientAPI;

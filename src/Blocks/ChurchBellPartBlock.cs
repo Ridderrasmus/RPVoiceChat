@@ -31,17 +31,20 @@ namespace RPVoiceChat.Blocks
             return true;
         }
 
-        public override float OnGettingBroken(IPlayer player, BlockSelection blockSel, ItemSlot itemslot, float remainingResistance, float dt, int counter)
-        {
-            if (!itemslot.Empty && itemslot.Itemstack.Collectible.FirstCodePart() == "hammer" && api.Side == EnumAppSide.Client)
-            {
-                BlockEntityChurchBellPart bigBellPart = player.Entity.World.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityChurchBellPart;
-                bigBellPart?.OnHammerHitOver(player, player.CurrentBlockSelection.HitPosition);
 
-                return 800f;
-            }
+        //public override float OnGettingBroken(IPlayer player, BlockSelection blockSel, ItemSlot itemslot, float remainingResistance, float dt, int counter)
+        //{
+        //    if (!itemslot.Empty && itemslot.Itemstack.Collectible.FirstCodePart() == "hammer")
+        //    {
+        //        // Functions here aren't being called on server. Need to fix that.
 
-            return base.OnGettingBroken(player, blockSel, itemslot, remainingResistance, dt, counter);
-        }
+        //        BlockEntityChurchBellPart bigBellPart = player.Entity.World.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityChurchBellPart;
+        //        bigBellPart?.OnHammerHitOver(player, player.CurrentBlockSelection.HitPosition);
+
+        //        return 800f;
+        //    }
+
+        //    return base.OnGettingBroken(player, blockSel, itemslot, remainingResistance, dt, counter);
+        //}
     }
 }
