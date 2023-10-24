@@ -35,6 +35,7 @@
   },
   "textures": {
     "chalk2": { "base": "game:block/stone/rock/chalk2" },
+    "brass": { "base": "game:block/metal/ingot/brass" },
     "steel": { "base": "game:block/metal/ingot/steel" },
     "tin": { "base": "game:block/metal/ingot/tin" }
   },
