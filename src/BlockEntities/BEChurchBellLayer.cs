@@ -82,8 +82,8 @@ namespace RPVoiceChat.BlockEntities
 
                 for (int j = 0; j <= i; j++)
                 {
-                    if (!BellLayerSlots[i].Empty)
-                        meshdata = meshdata.Translate(0, bellLayerHeights[i], 0);
+                    if (!BellLayerSlots[j].Empty)
+                        meshdata = meshdata.Translate(0, bellLayerHeights[j], 0);
                 }
 
                 BellLayerMeshRef[i] = capi.Render.UploadMesh(meshdata);
