@@ -32,6 +32,7 @@ namespace RPVoiceChat
             WorldConfig.Set(VoiceLevel.Talking, WorldConfig.GetInt(VoiceLevel.Talking));
             WorldConfig.Set(VoiceLevel.Shouting, WorldConfig.GetInt(VoiceLevel.Shouting));
             WorldConfig.Set("force-render-name-tags", WorldConfig.GetBool("force-render-name-tags", true));
+            WorldConfig.Set("encode-audio", WorldConfig.GetBool("encode-audio", true));
 
             // Register commands
             registerCommands();
@@ -94,6 +95,11 @@ namespace RPVoiceChat
                     .WithArgs(parsers.Bool("toggle"))
                     .HandleWith(ToggleVoip)
                 .EndSub()
+                .BeginSub("encodingtoggle")
+                    .WithDesc("Toggles audio encoding on the server")
+                    .WithArgs(parsers.Bool("toggle"))
+                    .HandleWith(ToggleEncoding)
+                .EndSub()
                 .BeginSub("forcenametags")
                     .WithDesc(UIUtils.I18n("Command.ForceNameTags.Desc"))
                     .WithAdditionalInformation(UIUtils.I18n("Command.ForceNameTags.Help"))
@@ -111,6 +117,15 @@ namespace RPVoiceChat
 
             string stateAsText = state ? "Enabled" : "Disabled";
             return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
+        }
+
+        private TextCommandResult ToggleEncoding(TextCommandCallingArgs args) {
+            bool state = (bool)args[0];
+
+            WorldConfig.Set("encode-audio", state);
+
+            string stateAsText = state ? "Enabled" : "Disabled";
+            return TextCommandResult.Success($"Encoding set to {stateAsText}");
         }
 
         private TextCommandResult ToggleVoip(TextCommandCallingArgs args)

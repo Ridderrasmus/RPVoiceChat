@@ -1,4 +1,4 @@
-﻿using OpenTK.Audio.OpenAL;
+using OpenTK.Audio.OpenAL;
 using RPVoiceChat.DB;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
@@ -67,19 +67,11 @@ namespace RPVoiceChat.Audio
                 return;
             }
 
-            PlayerAudioSource source;
-            string playerId = packet.PlayerId;
-
-            if (!playerSources.TryGetValue(playerId, out source) || source.IsDisposed)
+            PlayerAudioSource source = GetOrCreatePlayerSource(packet.PlayerId);
+            if (source == null)
             {
-                var player = capi.World.PlayerByUid(playerId);
-                if (player == null)
-                {
-                    Logger.client.Error($"Could not find player for playerId {playerId}");
-                    return;
-                }
-
-                source = CreatePlayerSource(player);
+                Logger.client.Debug("Unable to resolve player ID into player source, dropping packet");
+                return;
             }
 
             HandleAudioPacket(packet, source);
@@ -87,16 +79,15 @@ namespace RPVoiceChat.Audio
 
         public void HandleAudioPacket(AudioPacket packet, PlayerAudioSource source)
         {
+            string codec = packet.Codec;
             int frequency = packet.Frequency;
             int channels = AudioUtils.ChannelsPerFormat(packet.Format);
+            AudioData audioData = AudioData.FromPacket(packet);
 
-            IAudioCodec codec = source.GetOrCreateAudioCodec(frequency, channels);
-            AudioData audioData = AudioData.FromPacket(packet, codec);
-
-            // Update the voice level if it has changed
             if (source.voiceLevel != packet.VoiceLevel)
                 source.UpdateVoiceLevel(packet.VoiceLevel);
             source.UpdatePlayer();
+            source.UpdateAudioFormat(codec, frequency, channels);
             source.EnqueueAudio(audioData, packet.SequenceNumber);
         }
 
@@ -116,6 +107,18 @@ namespace RPVoiceChat.Audio
 
             if (!isLoopbackEnabled) return;
             localPlayerAudioSource.StartPlaying();
+        }
+
+        private PlayerAudioSource GetOrCreatePlayerSource(string playerId)
+        {
+            PlayerAudioSource source;
+            if (playerSources.TryGetValue(playerId, out source) && !source.IsDisposed)
+                return source;
+
+            var player = capi.World.PlayerByUid(playerId);
+            if (player == null) return null;
+
+            return CreatePlayerSource(player);
         }
 
         private PlayerAudioSource CreatePlayerSource(IPlayer player)

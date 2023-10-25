@@ -8,22 +8,24 @@ namespace RPVoiceChat.Audio
 {
     public class OpusCodec : IAudioCodec
     {
+        public const string _Name = "Opus";
+        public string Name { get; } = _Name;
+        public int SampleRate { get; }
+        public int Channels { get; }
+        public int FrameSize { get; }
         private OpusEncoder encoder;
         private OpusDecoder decoder;
-        private int sampleRate;
-        private int channels;
-        private int frameSize;
 
         public OpusCodec(int frequency, int channelCount)
         {
-            sampleRate = frequency;
-            channels = channelCount;
-            frameSize = sampleRate / 100 * channels; // 10ms frame window
+            SampleRate = frequency;
+            Channels = channelCount;
+            FrameSize = SampleRate / 100 * Channels; // 10ms frame window
 
-            encoder = new OpusEncoder(sampleRate, channels, OpusApplication.OPUS_APPLICATION_VOIP);
-            decoder = new OpusDecoder(sampleRate, channels);
+            encoder = new OpusEncoder(SampleRate, Channels, OpusApplication.OPUS_APPLICATION_VOIP);
+            decoder = new OpusDecoder(SampleRate, Channels);
 
-            encoder.Bitrate = 40000;
+            encoder.Bitrate = 40 * 1024;
             encoder.Complexity = 10;
             encoder.SignalType = OpusSignal.OPUS_SIGNAL_VOICE;
             encoder.ForceMode = OpusMode.MODE_SILK_ONLY;
@@ -35,18 +37,17 @@ namespace RPVoiceChat.Audio
         public byte[] Encode(short[] pcmData)
         {
             const int maxPacketSize = 1276;
+            byte[] encodedBuffer = new byte[maxPacketSize];
             var encoded = new MemoryStream();
-
             try
             {
-                for (var pcmOffset = 0; pcmOffset < pcmData.Length; pcmOffset += frameSize)
+                for (var pcmOffset = 0; pcmOffset < pcmData.Length; pcmOffset += FrameSize)
                 {
-                    byte[] encodedData = new byte[maxPacketSize];
-                    int encodedLength = encoder.Encode(pcmData, pcmOffset, frameSize, encodedData, 0, maxPacketSize);
+                    int encodedLength = encoder.Encode(pcmData, pcmOffset, FrameSize, encodedBuffer, 0, maxPacketSize);
                     byte[] packetSize = BitConverter.GetBytes(encodedLength);
 
                     encoded.Write(packetSize, 0, packetSize.Length);
-                    encoded.Write(encodedData, 0, encodedLength);
+                    encoded.Write(encodedBuffer, 0, encodedLength);
                 }
             }
             catch (Exception e)
@@ -59,6 +60,7 @@ namespace RPVoiceChat.Audio
 
         public byte[] Decode(byte[] encodedData)
         {
+            short[] decodedBuffer = new short[FrameSize];
             var decoded = new MemoryStream();
             var stream = new MemoryStream(encodedData);
             using (var reader = new BinaryReader(stream))
@@ -70,9 +72,8 @@ namespace RPVoiceChat.Audio
                         int packetSize = reader.ReadInt32();
                         byte[] encodedPacket = reader.ReadBytes(packetSize);
 
-                        short[] decodedData = new short[frameSize];
-                        int decodedLength = decoder.Decode(encodedPacket, 0, packetSize, decodedData, 0, frameSize, false);
-                        byte[] decodedPacket = ToBytes(decodedData, 0, decodedLength);
+                        int decodedLength = decoder.Decode(encodedPacket, 0, packetSize, decodedBuffer, 0, FrameSize, false);
+                        byte[] decodedPacket = ShortsToBytes(decodedBuffer, 0, decodedLength);
 
                         decoded.Write(decodedPacket, 0, decodedPacket.Length);
                     }
@@ -86,17 +87,11 @@ namespace RPVoiceChat.Audio
             return decoded.ToArray();
         }
 
-        public int GetFrameSize()
+        public static byte[] ShortsToBytes(short[] audio, int offset, int length)
         {
-            return frameSize;
-        }
-
-        private byte[] ToBytes(short[] audio, int offset, int length)
-        {
-            int typeSize = sizeof(short);
-            byte[] byteBuffer = new byte[length * typeSize];
-            int bytesToCopy = (length - offset) * typeSize;
-            Buffer.BlockCopy(audio, offset, byteBuffer, offset * typeSize, bytesToCopy);
+            byte[] byteBuffer = new byte[length * sizeof(short)];
+            int bytesToCopy = (length - offset) * sizeof(short);
+            Buffer.BlockCopy(audio, offset, byteBuffer, offset * sizeof(short), bytesToCopy);
 
             return byteBuffer;
         }
