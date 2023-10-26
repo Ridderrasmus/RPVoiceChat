@@ -10,6 +10,7 @@ namespace RPVoiceChat.Audio
         public ALFormat format;
         public double amplitude;
         public VoiceLevel voiceLevel;
+        public string codec;
 
         public AudioData() { }
 
@@ -21,6 +22,7 @@ namespace RPVoiceChat.Audio
                 frequency = audioPacket.Frequency,
                 format = audioPacket.Format,
                 voiceLevel = audioPacket.VoiceLevel,
+                codec = audioPacket.Codec,
             };
         }
     }
