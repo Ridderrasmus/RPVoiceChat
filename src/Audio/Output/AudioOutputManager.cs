@@ -76,6 +76,7 @@ namespace RPVoiceChat.Audio
 
         public void HandleAudioPacket(AudioPacket packet, PlayerAudioSource source)
         {
+            string codec = packet.Codec;
             int frequency = packet.Frequency;
             int channels = AudioUtils.ChannelsPerFormat(packet.Format);
             AudioData audioData = AudioData.FromPacket(packet);
@@ -83,7 +84,7 @@ namespace RPVoiceChat.Audio
             if (source.voiceLevel != packet.VoiceLevel)
                 source.UpdateVoiceLevel(packet.VoiceLevel);
             source.UpdatePlayer();
-            source.UpdateAudioFormat(frequency, channels);
+            source.UpdateAudioFormat(codec, frequency, channels);
             source.EnqueueAudio(audioData, packet.SequenceNumber);
         }
 
