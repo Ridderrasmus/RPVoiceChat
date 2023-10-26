@@ -95,7 +95,24 @@ namespace RPVoiceChat
                     .WithAdditionalInformation(UIUtils.I18n("Command.ForceNameTags.Help"))
                     .WithArgs(parsers.Bool("state"))
                     .HandleWith(ToggleForceNameTags)
+                .EndSub()
+                .BeginSub("encodeaudio")
+                    .WithDesc(UIUtils.I18n("Command.EncodeAudio.Desc"))
+                    .WithAdditionalInformation(UIUtils.I18n("Command.EncodeAudio.Help"))
+                    .WithArgs(parsers.Bool("state"))
+                    .HandleWith(ToggleAudioEncoding)
                 .EndSub();
+        }
+
+        private TextCommandResult ToggleAudioEncoding(TextCommandCallingArgs args)
+        {
+            const string i18nPrefix = "Command.EncodeAudio.Success";
+            bool state = (bool)args[0];
+
+            WorldConfig.Set("encode-audio", state);
+
+            string stateAsText = state ? "Enabled" : "Disabled";
+            return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
         }
 
         private TextCommandResult ToggleForceNameTags(TextCommandCallingArgs args)
