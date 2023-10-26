@@ -32,6 +32,7 @@ namespace RPVoiceChat
             WorldConfig.Set(VoiceLevel.Talking, WorldConfig.GetInt(VoiceLevel.Talking));
             WorldConfig.Set(VoiceLevel.Shouting, WorldConfig.GetInt(VoiceLevel.Shouting));
             WorldConfig.Set("force-render-name-tags", WorldConfig.GetBool("force-render-name-tags", true));
+            WorldConfig.Set("encode-audio", WorldConfig.GetBool("encode-audio", true));
 
             // Register commands
             registerCommands();
