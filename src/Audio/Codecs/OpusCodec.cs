@@ -8,6 +8,8 @@ namespace RPVoiceChat.Audio
 {
     public class OpusCodec : IAudioCodec
     {
+        public const string _Name = "Opus";
+        public string Name { get; } = _Name;
         public int SampleRate { get; }
         public int Channels { get; }
         public int FrameSize { get; }
