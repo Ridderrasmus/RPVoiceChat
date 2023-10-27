@@ -79,9 +79,11 @@ namespace RPVoiceChat.Audio
         public void UpdateAudioFormat(string codecName, int frequency, int channels)
         {
             if (codec?.Name == codecName && codec?.SampleRate == frequency && codec?.Channels == channels) return;
+
             codec = codecName switch
             {
                 OpusCodec._Name => new OpusCodec(frequency, channels),
+                DummyCodec._Name => new DummyCodec(frequency, channels),
                 _ => null
             };
         }

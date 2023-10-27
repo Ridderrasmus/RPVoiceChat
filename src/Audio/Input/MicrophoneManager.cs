@@ -53,9 +53,9 @@ namespace RPVoiceChat.Audio
             MaxInputThreshold = config.MaxInputThreshold;
             SetThreshold(config.InputThreshold);
             SetGain(config.InputGain);
-
+            SetOutputFormat(ALFormat.Mono16);
+            SetCodec(OpusCodec._Name);
             capture = CreateNewCapture(config.CurrentInputDevice);
-            codec = CreateNewCodec(ALFormat.Mono16);
             denoiser = TryLoadDenoiser();
         }
 
@@ -120,6 +120,10 @@ namespace RPVoiceChat.Audio
             var clientEntity = capi.World.Player?.Entity;
             if (clientEntity == null || capture == null) return;
 
+            bool shouldEncode = WorldConfig.GetBool("encode-audio");
+            var targetCodec = shouldEncode ? OpusCodec._Name : DummyCodec._Name;
+            SetCodec(targetCodec);
+
             int samplesAvailable = capture.AvailableSamples;
             int frameSize = codec.FrameSize;
             int samplesToRead = samplesAvailable - samplesAvailable % frameSize;
@@ -173,11 +177,7 @@ namespace RPVoiceChat.Audio
 
             var amplitude = Math.Sqrt(sampleSquareSum / pcmCount);
 
-            byte[] audio;
-            bool shouldEncode = WorldConfig.GetBool("encode-audio");
-            if (shouldEncode) audio = codec.Encode(pcms);
-            else audio = AudioUtils.ShortsToBytes(pcms, 0, pcms.Length);
-            string codecName = shouldEncode ? codec.Name : null;
+            byte[] audio = codec.Encode(pcms);
 
             return new AudioData()
             {
@@ -186,7 +186,7 @@ namespace RPVoiceChat.Audio
                 format = OutputFormat,
                 amplitude = amplitude,
                 voiceLevel = voiceLevel,
-                codec = codecName,
+                codec = codec.Name,
             };
         }
 
@@ -246,13 +246,16 @@ namespace RPVoiceChat.Audio
             return newCapture;
         }
 
-        private IAudioCodec CreateNewCodec(ALFormat outputFormat)
+        private void SetCodec(string codecName)
         {
-            SetOutputFormat(outputFormat);
+            if (codec?.Name == codecName && codec?.Channels == OutputChannelCount) return;
 
-            var codec = new OpusCodec(Frequency, OutputChannelCount);
-
-            return codec;
+            codec = codecName switch
+            {
+                OpusCodec._Name => new OpusCodec(Frequency, OutputChannelCount),
+                DummyCodec._Name => new DummyCodec(Frequency, OutputChannelCount),
+                _ => throw new ArgumentException($"{codecName} is not a valid codec name")
+            };
         }
 
         private IDenoiser TryLoadDenoiser()
