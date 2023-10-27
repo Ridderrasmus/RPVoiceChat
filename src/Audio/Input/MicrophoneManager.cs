@@ -32,7 +32,7 @@ namespace RPVoiceChat.Audio
         private float gain;
         private int InputChannelCount;
         private int OutputChannelCount;
-        private const byte SampleToByte = 2;
+        private const byte SampleSize = 2;
 
         public double Amplitude { get; private set; }
         public double AmplitudeAverage { get; private set; }
@@ -128,7 +128,7 @@ namespace RPVoiceChat.Audio
             int frameSize = codec.FrameSize;
             int samplesToRead = samplesAvailable - samplesAvailable % frameSize;
             if (samplesToRead <= 0) return;
-            int bufferLength = samplesToRead * SampleToByte * InputChannelCount;
+            int bufferLength = samplesToRead * SampleSize * InputChannelCount;
             var sampleBuffer = new byte[bufferLength];
             capture.ReadSamples(sampleBuffer, samplesToRead);
 
@@ -145,7 +145,7 @@ namespace RPVoiceChat.Audio
         /// </summary>
         private AudioData ProcessAudio(byte[] rawSamples)
         {
-            var rawSampleSize = SampleToByte * InputChannelCount;
+            var rawSampleSize = SampleSize * InputChannelCount;
             var pcmCount = rawSamples.Length / rawSampleSize;
             short[] pcms = new short[pcmCount];
             int[] usedChannels = DetectAudioChannels(rawSamples);
@@ -157,7 +157,7 @@ namespace RPVoiceChat.Audio
                 for (var channelIndex = 0; channelIndex < InputChannelCount; channelIndex++)
                 {
                     if (!usedChannels.Contains(channelIndex)) continue;
-                    var sampleIndex = rawSampleIndex + channelIndex * SampleToByte;
+                    var sampleIndex = rawSampleIndex + channelIndex * SampleSize;
                     var sample = BitConverter.ToInt16(rawSamples, sampleIndex);
                     pcm += sample;
                 }
@@ -168,7 +168,7 @@ namespace RPVoiceChat.Audio
                 pcms[pcmIndex] = (short)GameMath.Clamp(pcm, short.MinValue, short.MaxValue);
             }
 
-            if (config.IsDenoisingEnabled && denoiser != null && denoiser.SupportsFormat(Frequency, OutputChannelCount, SampleToByte * 8))
+            if (config.IsDenoisingEnabled && denoiser != null && denoiser.SupportsFormat(Frequency, OutputChannelCount, SampleSize * 8))
                 denoiser.Denoise(ref pcms);
 
             double sampleSquareSum = 0;
@@ -177,11 +177,11 @@ namespace RPVoiceChat.Audio
 
             var amplitude = Math.Sqrt(sampleSquareSum / pcmCount);
 
-            byte[] audio = codec.Encode(pcms);
+            byte[] encodedAudio = codec.Encode(pcms);
 
             return new AudioData()
             {
-                data = audio,
+                data = encodedAudio,
                 frequency = Frequency,
                 format = OutputFormat,
                 amplitude = amplitude,
@@ -309,8 +309,8 @@ namespace RPVoiceChat.Audio
             List<int> usedChannels = new List<int>();
             var sampleSums = new int[InputChannelCount];
 
-            var rawSampleSize = SampleToByte * InputChannelCount;
-            int monoSampleSize = SampleToByte;
+            var rawSampleSize = SampleSize * InputChannelCount;
+            int monoSampleSize = SampleSize;
 
             for (var rawSampleIndex = 0; rawSampleIndex < rawSampleSize * depth; rawSampleIndex += rawSampleSize)
             {
