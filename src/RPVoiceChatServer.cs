@@ -140,8 +140,10 @@ namespace RPVoiceChat
             int whisper = WorldConfig.GetInt(VoiceLevel.Whispering);
             int talk = WorldConfig.GetInt(VoiceLevel.Talking);
             int shout = WorldConfig.GetInt(VoiceLevel.Shouting);
+            bool forceNameTags = WorldConfig.GetBool("force-render-name-tags");
+            bool encoding = WorldConfig.GetBool("encode-audio");
 
-            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout));
+            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceNameTags, encoding));
         }
 
         private TextCommandResult SetWhisperHandler(TextCommandCallingArgs args)
