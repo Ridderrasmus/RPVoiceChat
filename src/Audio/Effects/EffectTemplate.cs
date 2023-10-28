@@ -1,4 +1,4 @@
-﻿namespace RPVoiceChat.Audio.Effects
+namespace RPVoiceChat.Audio.Effects
 {
     public class EffectTemplate
     {

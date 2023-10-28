@@ -1,4 +1,4 @@
-﻿using RPVoiceChat.Audio;
+using RPVoiceChat.Audio;
 using System;
 using System.Collections.Generic;
 using Vintagestory.API.Client;
