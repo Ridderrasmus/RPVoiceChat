@@ -1,4 +1,4 @@
-﻿using RPVoiceChat.Utils;
+using RPVoiceChat.Utils;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -111,7 +111,7 @@ namespace RPVoiceChat.Networking
             catch (TaskCanceledException) { }
 
             if (isReady) return;
-            throw new Exception("Server failed readiness probe. Aborting to prevent silent malfunction");
+            throw new HealthCheckException(NetworkSide.Server);
         }
 
         private bool IsSelf(IPEndPoint endPoint)

@@ -1,4 +1,4 @@
-﻿using RPVoiceChat.Utils;
+using RPVoiceChat.Utils;
 using System;
 using System.Net;
 using System.Threading.Tasks;
@@ -69,7 +69,7 @@ namespace RPVoiceChat.Networking
             catch (TaskCanceledException) { }
 
             if (isReady) return;
-            throw new Exception("Client failed readiness probe. Aborting to prevent silent malfunction");
+            throw new HealthCheckException(NetworkSide.Client);
         }
     }
 }

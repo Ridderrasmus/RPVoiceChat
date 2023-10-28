@@ -93,7 +93,7 @@ namespace RPVoiceChat.Networking
             catch (TaskCanceledException) { }
 
             if (isReady) return;
-            throw new Exception("Client failed readiness probe. Aborting to prevent silent malfunction");
+            throw new HealthCheckException(NetworkSide.Client);
         }
 
         public override void Dispose()
