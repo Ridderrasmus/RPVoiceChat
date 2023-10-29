@@ -8,7 +8,7 @@ namespace RPVoiceChat.Networking
     public class UDPNetworkClient : UDPNetworkBase, IExtendedNetworkClient
     {
         public event Action<AudioPacket> OnAudioReceived;
-        public event Action<bool> OnConnectionLost = delegate { }; //UDP is connectionless, event should never fire
+        public event Action<bool, IExtendedNetworkClient> OnConnectionLost = delegate { }; //UDP is connectionless, event should never fire
 
         private IPEndPoint serverEndpoint;
 

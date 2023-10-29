@@ -25,7 +25,7 @@ namespace RPVoiceChat.Client
                 .RegisterChannel("RPVCHandshake")
                 .RegisterMessageType<ConnectionRequest>()
                 .RegisterMessageType<ConnectionInfo>()
-                .SetMessageHandler<ConnectionRequest>(OnHandshakeRequest);
+                .SetMessageHandler<ConnectionRequest>(OnConnectionRequest);
 
             foreach (var transport in _initialTransports)
                 transport.OnAudioReceived += AudioPacketReceived;
@@ -33,7 +33,7 @@ namespace RPVoiceChat.Client
 
         public void SendAudioToServer(AudioPacket packet)
         {
-            if (!isConnected) return;
+            if (isDisposed || !isConnected) return;
 
             foreach (var transport in activeTransports)
             {
@@ -50,7 +50,7 @@ namespace RPVoiceChat.Client
             Logger.client.Warning("Failed to send audio packet to server: All active network clients reported a failure");
         }
 
-        private void OnHandshakeRequest(ConnectionRequest connectionRequest)
+        private void OnConnectionRequest(ConnectionRequest connectionRequest)
         {
             serverConnections = connectionRequest.SupportedTransports;
             Connect();
@@ -104,26 +104,20 @@ namespace RPVoiceChat.Client
             OnAudioReceived?.Invoke(packet);
         }
 
-        private void ConnectionLost(bool canReconnect)
+        private void ConnectionLost(bool canReconnect, IExtendedNetworkClient transport)
         {
-            if (isConnected == false || activeTransport == null) return;
+            Logger.client.Notification($"{transport.GetTransportID()} transport reported connection loss");
+            transport.OnConnectionLost -= ConnectionLost;
 
-            Logger.client.Notification($"{activeTransport.GetTransportID()} transport reported connection loss");
-            isConnected = false;
-            if (activeTransport is IExtendedNetworkClient extendedTransport)
-                extendedTransport.OnConnectionLost -= ConnectionLost;
-
-            if (canReconnect && Reconnect()) return;
+            if (canReconnect && Reconnect(transport)) return;
             if (isDisposed) return;
-            activeTransport.Dispose();
-            activeTransport = null;
-            Connect();
+            activeTransports.Remove(transport);
+            transport.Dispose();
         }
 
-        private bool Reconnect()
+        private bool Reconnect(IExtendedNetworkClient transport)
         {
             Logger.client.Notification($"Reconnecting...");
-            var transport = activeTransport;
             try
             {
                 ConnectWith(transport);
