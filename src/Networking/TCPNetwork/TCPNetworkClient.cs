@@ -11,6 +11,8 @@ namespace RPVoiceChat.Networking
         public event Action<AudioPacket> OnAudioReceived;
         public event Action<bool, IExtendedNetworkClient> OnConnectionLost;
 
+        private const int maxConnectionAttempts = 5;
+        private int connectionAttempt = 0;
         private IPEndPoint serverEndpoint;
         private TCPConnection connection;
 
@@ -19,8 +21,7 @@ namespace RPVoiceChat.Networking
         public ConnectionInfo Connect(ConnectionInfo serverConnection)
         {
             serverEndpoint = NetworkUtils.GetEndPoint(serverConnection);
-            connection = OpenConnection(serverEndpoint);
-            VerifyClientReadiness();
+            Connect();
 
             return new ConnectionInfo(port);
         }
@@ -36,6 +37,24 @@ namespace RPVoiceChat.Networking
             var data = packet.ToBytes();
             connection.Send(data);
             return true;
+        }
+
+        private ConnectionInfo Connect()
+        {
+            connectionAttempt++;
+            try
+            {
+                connection = OpenConnection(serverEndpoint);
+                VerifyClientReadiness();
+                connectionAttempt = 0;
+                return new ConnectionInfo(port);
+            }
+            catch
+            {
+                if (connectionAttempt > maxConnectionAttempts) throw;
+                logger.VerboseDebug($"[Internal] Connection attempt over {_transportID} failed, retrying ({connectionAttempt}/{maxConnectionAttempts})");
+                return Connect();
+            }
         }
 
         private TCPConnection OpenConnection(IPEndPoint endPoint)
@@ -88,7 +107,7 @@ namespace RPVoiceChat.Networking
             try
             {
                 connection.SendAsync(pingPacket, _readinessProbeCTS.Token);
-                Task.Delay(5000, _readinessProbeCTS.Token).GetAwaiter().GetResult();
+                Task.Delay(3000, _readinessProbeCTS.Token).GetAwaiter().GetResult();
             }
             catch (TaskCanceledException) { }
 
