@@ -183,7 +183,11 @@ namespace RPVoiceChat.Networking
 
         public void Disconnect(bool isGraceful = true, bool isHalfClosed = false)
         {
-            try { socket?.Disconnect(true); } catch { }
+            try
+            {
+                socket?.Shutdown(SocketShutdown.Both);
+                socket?.Disconnect(true);
+            } catch { }
             OnDisconnected?.Invoke(isGraceful, isHalfClosed, this);
         }
 
