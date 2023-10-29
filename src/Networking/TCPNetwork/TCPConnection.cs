@@ -156,12 +156,12 @@ namespace RPVoiceChat.Networking
                 {
                     int messageLength = reader.ReadInt32();
                     bytesLeft -= 4;
-                    if (bytesLeft < messageLength || messageLength < 0) break;
+                    if (messageLength > bytesLeft || messageLength < 1) break;
                     byte[] message = reader.ReadBytes(messageLength);
                     messages.Add(message);
                     bytesLeft = stream.Length - stream.Position;
                 }
-                if (bytesLeft != 0) logger.Warning($"Found fragmented packet in message buffer of {remoteEndpoint}. Proceeding to drop it");
+                if (bytesLeft != 0) logger.Warning($"Found fragmented packet in message buffer of {remoteEndpoint}. Proceeding to drop it. (Message queue at {length}/{receiveBuffer.Length})");
             }
             catch (Exception e)
             {
