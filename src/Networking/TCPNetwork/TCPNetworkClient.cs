@@ -25,17 +25,17 @@ namespace RPVoiceChat.Networking
             return new ConnectionInfo(port);
         }
 
-        public void SendAudioToServer(AudioPacket packet)
+        public bool SendAudioToServer(AudioPacket packet)
         {
-            if (isReady == false)
+            if (isReady == false || connection == null)
             {
                 logger.Warning($"Attempting to send audio over {_transportID} while client isn't ready. Skipping sending.");
-                return;
+                return false;
             }
-            if (connection == null) throw new Exception($"{_transportID} connection has not been initialized.");
 
             var data = packet.ToBytes();
             connection.Send(data);
+            return true;
         }
 
         private TCPConnection OpenConnection(IPEndPoint endPoint)

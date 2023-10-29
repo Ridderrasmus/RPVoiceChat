@@ -30,12 +30,17 @@ namespace RPVoiceChat.Networking
             return new ConnectionInfo(port);
         }
 
-        public void SendAudioToServer(AudioPacket packet)
+        public bool SendAudioToServer(AudioPacket packet)
         {
-            if (UdpClient == null || serverEndpoint == null) throw new Exception("Udp client or server endpoint has not been initialized.");
+            if (UdpClient == null || serverEndpoint == null)
+            {
+                logger.Warning($"{_transportID} client or server endpoint have not been initialized.");
+                return false;
+            }
 
             var data = packet.ToBytes();
             UdpClient.Send(data, data.Length, serverEndpoint);
+            return true;
         }
 
         private void MessageReceived(byte[] msg, IPEndPoint sender)

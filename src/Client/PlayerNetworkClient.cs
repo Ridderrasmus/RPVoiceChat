@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Vintagestory.API.Client;
-using Vintagestory.API.Util;
 
 namespace RPVoiceChat.Client
 {
@@ -12,8 +11,8 @@ namespace RPVoiceChat.Client
     {
         public event Action<AudioPacket> OnAudioReceived;
 
-        private List<INetworkClient> reserveTransports;
-        private INetworkClient activeTransport;
+        private List<INetworkClient> _initialTransports;
+        private List<INetworkClient> activeTransports;
         private IClientNetworkChannel handshakeChannel;
         private ConnectionInfo[] serverConnections;
         private bool isConnected = false;
@@ -21,21 +20,34 @@ namespace RPVoiceChat.Client
 
         public PlayerNetworkClient(ICoreClientAPI capi, List<INetworkClient> clientTransports)
         {
-            reserveTransports = clientTransports;
+            _initialTransports = clientTransports;
             handshakeChannel = capi.Network
                 .RegisterChannel("RPVCHandshake")
                 .RegisterMessageType<ConnectionRequest>()
                 .RegisterMessageType<ConnectionInfo>()
                 .SetMessageHandler<ConnectionRequest>(OnHandshakeRequest);
 
-            foreach (var transport in reserveTransports)
+            foreach (var transport in _initialTransports)
                 transport.OnAudioReceived += AudioPacketReceived;
         }
 
         public void SendAudioToServer(AudioPacket packet)
         {
             if (!isConnected) return;
-            activeTransport.SendAudioToServer(packet);
+
+            foreach (var transport in activeTransports)
+            {
+                try
+                {
+                    bool success = transport.SendAudioToServer(packet);
+                    if (success) return;
+                }
+                catch (Exception e)
+                {
+                    Logger.client.Warning($"Couldn't use {transport.GetTransportID()} client to send audio packet to server: {e.Message}");
+                }
+            }
+            Logger.client.Warning("Failed to send audio packet to server: All active network clients reported a failure");
         }
 
         private void OnHandshakeRequest(ConnectionRequest connectionRequest)
@@ -46,13 +58,12 @@ namespace RPVoiceChat.Client
 
         private void Connect()
         {
-            while (reserveTransports.Count > 0)
+            activeTransports = new List<INetworkClient>();
+            foreach (var transport in _initialTransports)
             {
-                var transport = reserveTransports.PopOne();
                 try
                 {
                     ConnectWith(transport);
-                    return;
                 }
                 catch (Exception e)
                 {
@@ -60,6 +71,9 @@ namespace RPVoiceChat.Client
                     transport.Dispose();
                 }
             }
+            isConnected = true;
+
+            if (activeTransports.Count > 0) return;
             IEnumerable<string> serverTransportIDs = serverConnections.Select(e => e.Transport);
             throw new Exception($"Failed to connect to the server. Supported transports: {string.Join(", ", serverTransportIDs)}");
         }
@@ -81,8 +95,7 @@ namespace RPVoiceChat.Client
             clientConnection.Transport = transportID;
             handshakeChannel.SendPacket(clientConnection);
 
-            activeTransport = transport;
-            isConnected = true;
+            activeTransports.Add(transport);
             Logger.client.Notification($"Successfully connected with the {transportID} client");
         }
 
@@ -132,10 +145,7 @@ namespace RPVoiceChat.Client
         {
             if (isDisposed) return;
             isDisposed = true;
-            isConnected = false;
-            activeTransport?.Dispose();
-            activeTransport = null;
-            foreach (var transport in reserveTransports)
+            foreach (var transport in activeTransports)
                 transport.Dispose();
         }
     }

@@ -13,9 +13,10 @@ namespace RPVoiceChat.Networking
             channel = api.Network.GetChannel(ChannelName).SetMessageHandler<AudioPacket>(HandleAudioPacket);
         }
 
-        public void SendAudioToServer(AudioPacket packet)
+        public bool SendAudioToServer(AudioPacket packet)
         {
             channel.SendPacket(packet);
+            return true;
         }
 
         private void HandleAudioPacket(AudioPacket packet)

@@ -176,7 +176,7 @@ namespace RPVoiceChat.Networking
             }
         }
 
-        protected void SetupUpnp(int port)
+        private void SetupUpnp(int port)
         {
             if (!upnpEnabled) return;
 
