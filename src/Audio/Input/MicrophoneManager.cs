@@ -32,7 +32,7 @@ namespace RPVoiceChat.Audio
         private float gain;
         private int InputChannelCount;
         private int OutputChannelCount;
-        private const byte SampleToByte = 2;
+        private const byte SampleSize = 2;
 
         public double Amplitude { get; private set; }
         public double AmplitudeAverage { get; private set; }
@@ -53,9 +53,9 @@ namespace RPVoiceChat.Audio
             MaxInputThreshold = config.MaxInputThreshold;
             SetThreshold(config.InputThreshold);
             SetGain(config.InputGain);
-
+            SetOutputFormat(ALFormat.Mono16);
+            SetCodec(OpusCodec._Name);
             capture = CreateNewCapture(config.CurrentInputDevice);
-            codec = CreateNewCodec(ALFormat.Mono16);
             denoiser = TryLoadDenoiser();
         }
 
@@ -120,11 +120,15 @@ namespace RPVoiceChat.Audio
             var clientEntity = capi.World.Player?.Entity;
             if (clientEntity == null || capture == null) return;
 
+            bool shouldEncode = WorldConfig.GetBool("encode-audio");
+            var targetCodec = shouldEncode ? OpusCodec._Name : DummyCodec._Name;
+            SetCodec(targetCodec);
+
             int samplesAvailable = capture.AvailableSamples;
             int frameSize = codec.FrameSize;
             int samplesToRead = samplesAvailable - samplesAvailable % frameSize;
             if (samplesToRead <= 0) return;
-            int bufferLength = samplesToRead * SampleToByte * InputChannelCount;
+            int bufferLength = samplesToRead * SampleSize * InputChannelCount;
             var sampleBuffer = new byte[bufferLength];
             capture.ReadSamples(sampleBuffer, samplesToRead);
 
@@ -141,7 +145,7 @@ namespace RPVoiceChat.Audio
         /// </summary>
         private AudioData ProcessAudio(byte[] rawSamples)
         {
-            var rawSampleSize = SampleToByte * InputChannelCount;
+            var rawSampleSize = SampleSize * InputChannelCount;
             var pcmCount = rawSamples.Length / rawSampleSize;
             short[] pcms = new short[pcmCount];
             int[] usedChannels = DetectAudioChannels(rawSamples);
@@ -153,7 +157,7 @@ namespace RPVoiceChat.Audio
                 for (var channelIndex = 0; channelIndex < InputChannelCount; channelIndex++)
                 {
                     if (!usedChannels.Contains(channelIndex)) continue;
-                    var sampleIndex = rawSampleIndex + channelIndex * SampleToByte;
+                    var sampleIndex = rawSampleIndex + channelIndex * SampleSize;
                     var sample = BitConverter.ToInt16(rawSamples, sampleIndex);
                     pcm += sample;
                 }
@@ -164,7 +168,7 @@ namespace RPVoiceChat.Audio
                 pcms[pcmIndex] = (short)GameMath.Clamp(pcm, short.MinValue, short.MaxValue);
             }
 
-            if (config.IsDenoisingEnabled && denoiser != null && denoiser.SupportsFormat(Frequency, OutputChannelCount, SampleToByte * 8))
+            if (config.IsDenoisingEnabled && denoiser != null && denoiser.SupportsFormat(Frequency, OutputChannelCount, SampleSize * 8))
                 denoiser.Denoise(ref pcms);
 
             double sampleSquareSum = 0;
@@ -173,15 +177,16 @@ namespace RPVoiceChat.Audio
 
             var amplitude = Math.Sqrt(sampleSquareSum / pcmCount);
 
-            byte[] opusEncodedAudio = codec.Encode(pcms);
+            byte[] encodedAudio = codec.Encode(pcms);
 
             return new AudioData()
             {
-                data = opusEncodedAudio,
+                data = encodedAudio,
                 frequency = Frequency,
                 format = OutputFormat,
                 amplitude = amplitude,
                 voiceLevel = voiceLevel,
+                codec = codec.Name,
             };
         }
 
@@ -241,13 +246,16 @@ namespace RPVoiceChat.Audio
             return newCapture;
         }
 
-        private IAudioCodec CreateNewCodec(ALFormat outputFormat)
+        private void SetCodec(string codecName)
         {
-            SetOutputFormat(outputFormat);
+            if (codec?.Name == codecName && codec?.Channels == OutputChannelCount) return;
 
-            var codec = new OpusCodec(Frequency, OutputChannelCount);
-
-            return codec;
+            codec = codecName switch
+            {
+                OpusCodec._Name => new OpusCodec(Frequency, OutputChannelCount),
+                DummyCodec._Name => new DummyCodec(Frequency, OutputChannelCount),
+                _ => throw new ArgumentException($"{codecName} is not a valid codec name")
+            };
         }
 
         private IDenoiser TryLoadDenoiser()
@@ -301,8 +309,8 @@ namespace RPVoiceChat.Audio
             List<int> usedChannels = new List<int>();
             var sampleSums = new int[InputChannelCount];
 
-            var rawSampleSize = SampleToByte * InputChannelCount;
-            int monoSampleSize = SampleToByte;
+            var rawSampleSize = SampleSize * InputChannelCount;
+            int monoSampleSize = SampleSize;
 
             for (var rawSampleIndex = 0; rawSampleIndex < rawSampleSize * depth; rawSampleIndex += rawSampleSize)
             {
