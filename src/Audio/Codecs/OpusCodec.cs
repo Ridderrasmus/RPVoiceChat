@@ -1,4 +1,4 @@
-﻿using Concentus.Enums;
+using Concentus.Enums;
 using Concentus.Structs;
 using RPVoiceChat.Utils;
 using System;

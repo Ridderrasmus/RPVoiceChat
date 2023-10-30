@@ -1,4 +1,4 @@
-﻿namespace RPVoiceChat.Networking
+namespace RPVoiceChat.Networking
 {
     public enum PacketType
     {

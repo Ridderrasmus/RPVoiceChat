@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data.SQLite;
 using Vintagestory.API.Common;
 

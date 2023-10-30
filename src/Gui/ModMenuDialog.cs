@@ -1,4 +1,4 @@
-﻿using RPVoiceChat.Audio;
+using RPVoiceChat.Audio;
 using RPVoiceChat.DB;
 using RPVoiceChat.Utils;
 using System;

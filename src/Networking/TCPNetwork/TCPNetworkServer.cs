@@ -176,7 +176,7 @@ namespace RPVoiceChat.Networking
             }
         }
 
-        protected void SetupUpnp(int port)
+        private void SetupUpnp(int port)
         {
             if (!upnpEnabled) return;
 
@@ -223,7 +223,7 @@ namespace RPVoiceChat.Networking
             catch (TaskCanceledException) { }
 
             if (isReady) return;
-            throw new Exception("Server failed readiness probe. Aborting to prevent silent malfunction");
+            throw new HealthCheckException(NetworkSide.Server);
         }
 
         private TCPConnection ResolveConnection(string playerId)
