@@ -1,4 +1,4 @@
-﻿using Open.Nat;
+using Open.Nat;
 using RPVoiceChat.Utils;
 using System;
 using System.Net;
@@ -48,8 +48,7 @@ namespace RPVoiceChat.Networking
                 Task<NatDevice> task = Task.Run(() => discoverer.DiscoverDeviceAsync(PortMapper.Upnp, cts));
                 NatDevice device = task.GetAwaiter().GetResult();
 
-                if (device == null)
-                    throw new NatDeviceNotFoundException("NatDiscoverer have not returned the NatDevice");
+                if (device == null) throw new NatDeviceNotFoundException();
 
                 logger.VerboseDebug("Found a UPnP device, creating port map");
                 device.CreatePortMapAsync(new Mapping(Protocol.Udp, port, port, "Vintage Story Voice Chat"));
@@ -60,13 +59,14 @@ namespace RPVoiceChat.Networking
             }
             catch (NatDeviceNotFoundException)
             {
-                throw new Exception($"Unable to port forward with UPnP. Make sure your IP is public and UPnP is enabled if you want to use {_transportID} connection.");
+                logger.Warning($"Unable to port forward with UPnP, {_transportID} connection may not be available. Make sure your IP is public and UPnP is enabled if you want to use {_transportID} transport.");
             }
         }
 
         protected void OpenUDPClient(int port)
         {
             UdpClient = new UdpClient(port);
+            UdpClient.Client.ReceiveBufferSize = UdpClient.Client.SendBufferSize = 64 * 1024;
         }
 
         protected int OpenUDPClient()
@@ -75,6 +75,7 @@ namespace RPVoiceChat.Networking
             UdpClient = new UdpClient();
             IPEndPoint endpoint = new IPEndPoint(IPAddress.Any, port);
             UdpClient.Client.Bind(endpoint);
+            UdpClient.Client.ReceiveBufferSize = UdpClient.Client.SendBufferSize = 64 * 1024;
 
             var localEndpoint = UdpClient.Client.LocalEndPoint as IPEndPoint;
             port = localEndpoint.Port;

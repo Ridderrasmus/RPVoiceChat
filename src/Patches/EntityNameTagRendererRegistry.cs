@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using RPVoiceChat.Gui;
 using System.Reflection;
 using Vintagestory.API.Client;

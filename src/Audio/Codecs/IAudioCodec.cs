@@ -1,4 +1,4 @@
-﻿namespace RPVoiceChat.Audio
+namespace RPVoiceChat.Audio
 {
     public interface IAudioCodec
     {
