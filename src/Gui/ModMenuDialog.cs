@@ -400,7 +400,7 @@ namespace RPVoiceChat.Gui
             SetValue("muteMicrophone", _config.IsMuted);
             SetValue("loopback", _config.IsLoopbackEnabled);
             SetValue("outputGain", new dynamic[] { _config.OutputGain, 0, 300, 1, "%" });
-            SetValue("inputGain", new dynamic[] { _config.InputGain, 0, 200, 1, "%", 100 });
+            SetValue("inputGain", new dynamic[] { _config.InputGain, 0, 400, 1, "%" });
             SetValue("inputThreshold", new dynamic[] { _config.InputThreshold, 0, 100, 1, "" });
             SetValue("toggleHUD", _config.IsHUDShown);
             SetValue("toggleMuffling", ClientSettings.GetBool("muffling", true));
