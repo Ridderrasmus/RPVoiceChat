@@ -1,4 +1,4 @@
-﻿using RPVoiceChat.Utils;
+using RPVoiceChat.Utils;
 using System;
 using System.Net;
 using System.Threading.Tasks;
@@ -8,7 +8,7 @@ namespace RPVoiceChat.Networking
     public class UDPNetworkClient : UDPNetworkBase, IExtendedNetworkClient
     {
         public event Action<AudioPacket> OnAudioReceived;
-        public event Action<bool> OnConnectionLost = delegate { }; //UDP is connectionless, event should never fire
+        public event Action<bool, IExtendedNetworkClient> OnConnectionLost = delegate { }; //UDP is connectionless, event should never fire
 
         private IPEndPoint serverEndpoint;
 
@@ -30,12 +30,17 @@ namespace RPVoiceChat.Networking
             return new ConnectionInfo(port);
         }
 
-        public void SendAudioToServer(AudioPacket packet)
+        public bool SendAudioToServer(AudioPacket packet)
         {
-            if (UdpClient == null || serverEndpoint == null) throw new Exception("Udp client or server endpoint has not been initialized.");
+            if (UdpClient == null || serverEndpoint == null)
+            {
+                logger.Warning($"{_transportID} client or server endpoint have not been initialized.");
+                return false;
+            }
 
             var data = packet.ToBytes();
             UdpClient.Send(data, data.Length, serverEndpoint);
+            return true;
         }
 
         private void MessageReceived(byte[] msg, IPEndPoint sender)
@@ -69,7 +74,7 @@ namespace RPVoiceChat.Networking
             catch (TaskCanceledException) { }
 
             if (isReady) return;
-            throw new Exception("Client failed readiness probe. Aborting to prevent silent malfunction");
+            throw new HealthCheckException(NetworkSide.Client);
         }
     }
 }

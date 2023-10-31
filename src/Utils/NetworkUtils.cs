@@ -1,4 +1,4 @@
-﻿using RPVoiceChat.Networking;
+using RPVoiceChat.Networking;
 using System;
 using System.Collections.Generic;
 using System.Linq;

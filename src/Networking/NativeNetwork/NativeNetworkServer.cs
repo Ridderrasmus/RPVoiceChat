@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Vintagestory.API.Server;
 
 namespace RPVoiceChat.Networking

@@ -1,4 +1,4 @@
-﻿using OpenTK.Audio.OpenAL;
+using OpenTK.Audio.OpenAL;
 using RPVoiceChat.Networking;
 
 namespace RPVoiceChat.Audio
@@ -22,7 +22,7 @@ namespace RPVoiceChat.Audio
                 frequency = audioPacket.Frequency,
                 format = audioPacket.Format,
                 voiceLevel = audioPacket.VoiceLevel,
-                codec = audioPacket.Codec
+                codec = audioPacket.Codec,
             };
         }
     }

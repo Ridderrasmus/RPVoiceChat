@@ -1,10 +1,10 @@
-﻿using RPVoiceChat.Networking;
+using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Vintagestory.API.Client;
-using Vintagestory.API.Util;
+using Vintagestory.Client.NoObf;
 
 namespace RPVoiceChat.Client
 {
@@ -12,33 +12,49 @@ namespace RPVoiceChat.Client
     {
         public event Action<AudioPacket> OnAudioReceived;
 
-        private List<INetworkClient> reserveTransports;
-        private INetworkClient activeTransport;
+        private ICoreClientAPI api;
+        private List<INetworkClient> _initialTransports;
+        private List<INetworkClient> activeTransports;
         private IClientNetworkChannel handshakeChannel;
         private ConnectionInfo[] serverConnections;
         private bool isConnected = false;
         private bool isDisposed = false;
+        private bool isShutdown { get => isDisposed || (api as ClientCoreAPI)?.disposed == true; }
 
         public PlayerNetworkClient(ICoreClientAPI capi, List<INetworkClient> clientTransports)
         {
-            reserveTransports = clientTransports;
+            api = capi;
+            _initialTransports = clientTransports;
             handshakeChannel = capi.Network
                 .RegisterChannel("RPVCHandshake")
                 .RegisterMessageType<ConnectionRequest>()
                 .RegisterMessageType<ConnectionInfo>()
-                .SetMessageHandler<ConnectionRequest>(OnHandshakeRequest);
+                .SetMessageHandler<ConnectionRequest>(OnConnectionRequest);
 
-            foreach (var transport in reserveTransports)
+            foreach (var transport in _initialTransports)
                 transport.OnAudioReceived += AudioPacketReceived;
         }
 
         public void SendAudioToServer(AudioPacket packet)
         {
-            if (!isConnected) return;
-            activeTransport.SendAudioToServer(packet);
+            if (isShutdown || !isConnected) return;
+
+            foreach (var transport in activeTransports)
+            {
+                try
+                {
+                    bool success = transport.SendAudioToServer(packet);
+                    if (success) return;
+                }
+                catch (Exception e)
+                {
+                    Logger.client.Warning($"Couldn't use {transport.GetTransportID()} client to send audio packet to server: {e.Message}");
+                }
+            }
+            Logger.client.Warning("Failed to send audio packet to server: All active network clients reported a failure");
         }
 
-        private void OnHandshakeRequest(ConnectionRequest connectionRequest)
+        private void OnConnectionRequest(ConnectionRequest connectionRequest)
         {
             serverConnections = connectionRequest.SupportedTransports;
             Connect();
@@ -46,13 +62,12 @@ namespace RPVoiceChat.Client
 
         private void Connect()
         {
-            while (reserveTransports.Count > 0)
+            activeTransports = new List<INetworkClient>();
+            foreach (var transport in _initialTransports)
             {
-                var transport = reserveTransports.PopOne();
                 try
                 {
                     ConnectWith(transport);
-                    return;
                 }
                 catch (Exception e)
                 {
@@ -60,6 +75,10 @@ namespace RPVoiceChat.Client
                     transport.Dispose();
                 }
             }
+            isConnected = true;
+
+            if (activeTransports[0] is NativeNetworkClient) api.Event.EnqueueMainThreadTask(() => api.ShowChatMessage($"<strong>[RPVoiceChat]: Failed to connect with custom network clients, audio stability will be degraded</strong>"), "rpvoicechat:PlayerNetworkClient");
+            if (activeTransports.Count > 0) return;
             IEnumerable<string> serverTransportIDs = serverConnections.Select(e => e.Transport);
             throw new Exception($"Failed to connect to the server. Supported transports: {string.Join(", ", serverTransportIDs)}");
         }
@@ -70,7 +89,10 @@ namespace RPVoiceChat.Client
             Logger.client.Notification($"Attempting to connect with {transportID} client");
             var serverConnection = serverConnections.FirstOrDefault(e => e.Transport == transportID);
             if (serverConnection == null)
-                throw new Exception("Server doesn't support client's transport");
+            {
+                Logger.client.Notification($"Server doesn't support {transportID} transport, aborting");
+                return;
+            }
 
             ConnectionInfo clientConnection = new ConnectionInfo();
             if (transport is IExtendedNetworkClient extendedTransport)
@@ -81,8 +103,7 @@ namespace RPVoiceChat.Client
             clientConnection.Transport = transportID;
             handshakeChannel.SendPacket(clientConnection);
 
-            activeTransport = transport;
-            isConnected = true;
+            activeTransports.Add(transport);
             Logger.client.Notification($"Successfully connected with the {transportID} client");
         }
 
@@ -91,26 +112,23 @@ namespace RPVoiceChat.Client
             OnAudioReceived?.Invoke(packet);
         }
 
-        private void ConnectionLost(bool canReconnect)
+        private void ConnectionLost(bool canReconnect, IExtendedNetworkClient transport)
         {
-            if (isConnected == false || activeTransport == null) return;
+            var transportID = transport.GetTransportID();
+            Logger.client.Notification($"{transportID} transport reported connection loss");
+            transport.OnConnectionLost -= ConnectionLost;
 
-            Logger.client.Notification($"{activeTransport.GetTransportID()} transport reported connection loss");
-            isConnected = false;
-            if (activeTransport is IExtendedNetworkClient extendedTransport)
-                extendedTransport.OnConnectionLost -= ConnectionLost;
-
-            if (canReconnect && Reconnect()) return;
-            if (isDisposed) return;
-            activeTransport.Dispose();
-            activeTransport = null;
-            Connect();
+            if (isShutdown) return;
+            if (canReconnect && Reconnect(transport)) return;
+            if (isShutdown) return;
+            activeTransports.Remove(transport);
+            transport.Dispose();
+            api.Event.EnqueueMainThreadTask(() => api.ShowChatMessage($"<strong>[RPVoiceChat]: Failed to reconnect with {transportID} client, audio stability will be degraded</strong>"), "rpvoicechat:PlayerNetworkClient");
         }
 
-        private bool Reconnect()
+        private bool Reconnect(IExtendedNetworkClient transport)
         {
             Logger.client.Notification($"Reconnecting...");
-            var transport = activeTransport;
             try
             {
                 ConnectWith(transport);
@@ -118,7 +136,7 @@ namespace RPVoiceChat.Client
             }
             catch (Exception e)
             {
-                if (isDisposed)
+                if (isShutdown)
                 {
                     Logger.client.Notification("Aborting due to mod unloading.");
                     return false;
@@ -132,10 +150,7 @@ namespace RPVoiceChat.Client
         {
             if (isDisposed) return;
             isDisposed = true;
-            isConnected = false;
-            activeTransport?.Dispose();
-            activeTransport = null;
-            foreach (var transport in reserveTransports)
+            foreach (var transport in activeTransports)
                 transport.Dispose();
         }
     }

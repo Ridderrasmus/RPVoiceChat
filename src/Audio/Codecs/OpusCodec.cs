@@ -1,4 +1,4 @@
-﻿using Concentus.Enums;
+using Concentus.Enums;
 using Concentus.Structs;
 using RPVoiceChat.Utils;
 using System;
@@ -73,7 +73,7 @@ namespace RPVoiceChat.Audio
                         byte[] encodedPacket = reader.ReadBytes(packetSize);
 
                         int decodedLength = decoder.Decode(encodedPacket, 0, packetSize, decodedBuffer, 0, FrameSize, false);
-                        byte[] decodedPacket = ShortsToBytes(decodedBuffer, 0, decodedLength);
+                        byte[] decodedPacket = AudioUtils.ShortsToBytes(decodedBuffer, 0, decodedLength);
 
                         decoded.Write(decodedPacket, 0, decodedPacket.Length);
                     }
@@ -85,15 +85,6 @@ namespace RPVoiceChat.Audio
             }
 
             return decoded.ToArray();
-        }
-
-        public static byte[] ShortsToBytes(short[] audio, int offset, int length)
-        {
-            byte[] byteBuffer = new byte[length * sizeof(short)];
-            int bytesToCopy = (length - offset) * sizeof(short);
-            Buffer.BlockCopy(audio, offset, byteBuffer, offset * sizeof(short), bytesToCopy);
-
-            return byteBuffer;
         }
     }
 }

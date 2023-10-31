@@ -9,8 +9,10 @@ namespace RPVoiceChat.Networking
     public class TCPNetworkClient : TCPNetworkBase, IExtendedNetworkClient
     {
         public event Action<AudioPacket> OnAudioReceived;
-        public event Action<bool> OnConnectionLost;
+        public event Action<bool, IExtendedNetworkClient> OnConnectionLost;
 
+        private const int maxConnectionAttempts = 5;
+        private int connectionAttempt = 0;
         private IPEndPoint serverEndpoint;
         private TCPConnection connection;
 
@@ -19,23 +21,40 @@ namespace RPVoiceChat.Networking
         public ConnectionInfo Connect(ConnectionInfo serverConnection)
         {
             serverEndpoint = NetworkUtils.GetEndPoint(serverConnection);
-            connection = OpenConnection(serverEndpoint);
-            VerifyClientReadiness();
+            Connect();
 
             return new ConnectionInfo(port);
         }
 
-        public void SendAudioToServer(AudioPacket packet)
+        public bool SendAudioToServer(AudioPacket packet)
         {
-            if (isReady == false)
+            if (isReady == false || connection == null)
             {
                 logger.Warning($"Attempting to send audio over {_transportID} while client isn't ready. Skipping sending.");
-                return;
+                return false;
             }
-            if (connection == null) throw new Exception($"{_transportID} connection has not been initialized.");
 
             var data = packet.ToBytes();
             connection.Send(data);
+            return true;
+        }
+
+        private ConnectionInfo Connect()
+        {
+            connectionAttempt++;
+            try
+            {
+                connection = OpenConnection(serverEndpoint);
+                VerifyClientReadiness();
+                connectionAttempt = 0;
+                return new ConnectionInfo(port);
+            }
+            catch
+            {
+                if (connectionAttempt > maxConnectionAttempts) throw;
+                logger.VerboseDebug($"[Internal] Connection attempt over {_transportID} failed, retrying ({connectionAttempt}/{maxConnectionAttempts})");
+                return Connect();
+            }
         }
 
         private TCPConnection OpenConnection(IPEndPoint endPoint)
@@ -58,7 +77,7 @@ namespace RPVoiceChat.Networking
             logger.VerboseDebug($"Connection with {_transportID} server was closed {closeType}");
             closedConnection.Dispose();
             bool canReconnect = !isGraceful || isHalfClosed;
-            OnConnectionLost?.Invoke(canReconnect);
+            OnConnectionLost?.Invoke(canReconnect, this);
         }
 
         private void MessageReceived(byte[] msg, TCPConnection _)
@@ -88,12 +107,12 @@ namespace RPVoiceChat.Networking
             try
             {
                 connection.SendAsync(pingPacket, _readinessProbeCTS.Token);
-                Task.Delay(5000, _readinessProbeCTS.Token).GetAwaiter().GetResult();
+                Task.Delay(3000, _readinessProbeCTS.Token).GetAwaiter().GetResult();
             }
             catch (TaskCanceledException) { }
 
             if (isReady) return;
-            throw new Exception("Client failed readiness probe. Aborting to prevent silent malfunction");
+            throw new HealthCheckException(NetworkSide.Client);
         }
 
         public override void Dispose()

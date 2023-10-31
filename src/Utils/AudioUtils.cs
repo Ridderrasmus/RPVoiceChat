@@ -17,5 +17,14 @@ namespace RPVoiceChat.Utils
                     throw new NotSupportedException($"Format {format} is not supported for capture");
             }
         }
+
+        public static byte[] ShortsToBytes(short[] audio, int offset, int length)
+        {
+            byte[] byteBuffer = new byte[length * sizeof(short)];
+            int bytesToCopy = (length - offset) * sizeof(short);
+            Buffer.BlockCopy(audio, offset, byteBuffer, offset * sizeof(short), bytesToCopy);
+
+            return byteBuffer;
+        }
     }
 }
