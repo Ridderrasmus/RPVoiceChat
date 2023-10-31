@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 
 namespace RPVoiceChat.Gui
 {
@@ -399,8 +400,8 @@ namespace RPVoiceChat.Gui
             SetValue("togglePushToTalk", _config.PushToTalkEnabled);
             SetValue("muteMicrophone", _config.IsMuted);
             SetValue("loopback", _config.IsLoopbackEnabled);
-            SetValue("outputGain", new dynamic[] { _config.OutputGain, 0, 300, 1, "%" });
-            SetValue("inputGain", new dynamic[] { _config.InputGain, 0, 200, 1, "%", 100 });
+            SetValue("outputGain", new dynamic[] { _config.OutputGain, 0, 200, 1, "%" });
+            SetValue("inputGain", new dynamic[] { _config.InputGain, 0, 400, 1, "%" });
             SetValue("inputThreshold", new dynamic[] { _config.InputThreshold, 0, 100, 1, "" });
             SetValue("toggleHUD", _config.IsHUDShown);
             SetValue("toggleMuffling", ClientSettings.GetBool("muffling", true));
@@ -420,7 +421,8 @@ namespace RPVoiceChat.Gui
             else if (element is GuiElementSwitch switchBox) switchBox.On = value;
             else if (element is GuiElementSlider slider)
             {
-                slider.SetValues(value[0], value[1], value[2], value[3], value[4]);
+                int sliderValue = GameMath.Clamp(value[0], value[1], value[2]);
+                slider.SetValues(sliderValue, value[1], value[2], value[3], value[4]);
                 if (value.Length < 6) return;
                 slider.SetAlarmValue(value[5]);
             }
