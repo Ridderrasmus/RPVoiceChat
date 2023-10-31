@@ -17,28 +17,33 @@ namespace RPVoiceChat.Audio
         public event Action ClientStartTalking;
         public event Action ClientStopTalking;
 
-        private ICoreClientAPI capi;
+        // TODO: split MicrophoneManager into 3 classes
+        // Audio cature
+        public static int Frequency = 48000;
         private IAudioCapture capture;
-        private IAudioCodec codec;
-        private IDenoiser denoiser;
-        private RPVoiceChatConfig config;
         private Thread audioCaptureThread;
         private CancellationTokenSource audioCaptureCTS;
-
-        public static int Frequency = 48000;
-        public ALFormat InputFormat { get; private set; }
-        private ALFormat OutputFormat;
         private int BufferSize = (int)(Frequency * 0.5);
-        private float gain;
         private int InputChannelCount;
-        private int OutputChannelCount;
         private const byte SampleSize = 2;
 
+        // Audio processing
+        private IAudioCodec codec;
+        private IDenoiser denoiser;
+        private ALFormat OutputFormat;
+        private int OutputChannelCount;
+        private float gain;
+        private const short _maxSampleVolume = (short)(0.7 * short.MaxValue);
+        private List<float> recentGainLimits = new List<float>();
+
+        // Aplication interface/audio management
         public double Amplitude { get; private set; }
         public double AmplitudeAverage { get; private set; }
         public bool Transmitting = false;
         public bool TransmittingOnPreviousStep = false;
         public bool IsDenoisingAvailable = false;
+        private ICoreClientAPI capi;
+        private RPVoiceChatConfig config;
         private VoiceLevel voiceLevel = VoiceLevel.Talking;
         private double inputThreshold;
         private double MaxInputThreshold;
@@ -141,7 +146,7 @@ namespace RPVoiceChat.Audio
         }
 
         /// <summary>
-        /// Converts audio to Mono16, applies gain, applies denoising, calculates amplitude and applies encoding
+        /// Converts audio to Mono16, applies denoising, applies gain, calculates amplitude and encodes the result
         /// </summary>
         private AudioData ProcessAudio(byte[] rawSamples)
         {
@@ -149,11 +154,12 @@ namespace RPVoiceChat.Audio
             var pcmCount = rawSamples.Length / rawSampleSize;
             short[] pcms = new short[pcmCount];
             int[] usedChannels = DetectAudioChannels(rawSamples);
+            double peakPcmValue = 1;
 
+            // Convert audio to mono, find peaks
             for (var rawSampleIndex = 0; rawSampleIndex < rawSamples.Length; rawSampleIndex += rawSampleSize)
             {
                 double pcm = 0;
-
                 for (var channelIndex = 0; channelIndex < InputChannelCount; channelIndex++)
                 {
                     if (!usedChannels.Contains(channelIndex)) continue;
@@ -161,22 +167,35 @@ namespace RPVoiceChat.Audio
                     var sample = BitConverter.ToInt16(rawSamples, sampleIndex);
                     pcm += sample;
                 }
-                pcm = pcm / Math.Max(usedChannels.Length, 1);
-                pcm = pcm * gain;
+                pcm /= Math.Max(usedChannels.Length, 1);
+
+                var abs = Math.Abs(pcm);
+                if (abs > peakPcmValue) peakPcmValue = abs;
 
                 var pcmIndex = rawSampleIndex / rawSampleSize;
-                pcms[pcmIndex] = (short)GameMath.Clamp(pcm, short.MinValue, short.MaxValue);
+                pcms[pcmIndex] = (short)pcm;
             }
 
+            // Calculate volume amplification
+            float maxSafeGain = Math.Min(gain, (float)(_maxSampleVolume / peakPcmValue));
+            recentGainLimits.Add(maxSafeGain);
+            if (recentGainLimits.Count > 10) recentGainLimits.RemoveAt(0);
+            float volumeAmplification = GameMath.Min(gain, maxSafeGain, recentGainLimits.Average());
+
+            // Denoise audio if applicable
             if (config.IsDenoisingEnabled && denoiser != null && denoiser.SupportsFormat(Frequency, OutputChannelCount, SampleSize * 8))
                 denoiser.Denoise(ref pcms);
 
+            // Amplify volume and calculate amplitude
             double sampleSquareSum = 0;
             for (var i = 0; i < pcms.Length; i++)
+            {
+                pcms[i] = (short)GameMath.Clamp(pcms[i] * volumeAmplification, short.MinValue, short.MaxValue);
                 sampleSquareSum += Math.Pow((float)pcms[i] / short.MaxValue, 2);
-
+            }
             var amplitude = Math.Sqrt(sampleSquareSum / pcmCount);
 
+            // Encode audio
             byte[] encodedAudio = codec.Encode(pcms);
 
             return new AudioData()
@@ -287,7 +306,6 @@ namespace RPVoiceChat.Audio
 
         private void SetInputFormat(ALFormat format)
         {
-            InputFormat = format;
             InputChannelCount = AudioUtils.ChannelsPerFormat(format);
         }
 
