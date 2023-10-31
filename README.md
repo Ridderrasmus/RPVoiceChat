@@ -41,8 +41,8 @@ The settings relevant to users are:
 - `IsDenoisingEnabled` - Whether or not your audio should be denoised. The default value is `false`.
 - `IsHUDShown` - Whether or not the HUD should be shown. The default value is `true`.
 - `IsMuted` - Whether or not you are muted. The default value is `false`.
-- `OutputGain` - The volume level of other players in percent (0-300). The default value is `100`.
-- `InputGain` - The volume level of your microphone in percent (0-200). The default value is `100`.
+- `OutputGain` - The volume level of other players in percent (0-200). The default value is `100`.
+- `InputGain` - The volume level of your microphone in percent (0-400). The default value is `100`.
 - `InputThreshold` - The current setting of your audio input threshold in percent (0-100). The default value is `20`.
 - `BackgroungNoiseThreshold` - Sensitivity of the denoiser in percent (0-100). 0 means all audio is voice, 100 means all audio is noise. If audio is detected as noise it will be denoised at max strength. The default value is `50`.
 - `VoiceDenoisingStrength` - Intensity of voice denoising in percent (0-100). Low value won't remove noise when you are speaking, high value may decrease audio quality. The default value is `80`.
