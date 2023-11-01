@@ -381,6 +381,8 @@ namespace RPVoiceChat.Gui
 
             var outputGain = ClientSettings.OutputGain * 100;
             var inputGainDBS = AudioUtils.FactorToDBs(ClientSettings.InputGain) * 10;
+            var denoisingSensitivity = ClientSettings.BackgroundNoiseThreshold * 100;
+            var denoisingStrength = ClientSettings.VoiceDenoisingStrength * 100;
             SetValue("configTabs", ClientSettings.ActiveConfigTab);
             SetValue("inputDevice", _config.CurrentInputDevice ?? "Default");
             SetValue("togglePushToTalk", _config.PushToTalkEnabled);
@@ -391,9 +393,9 @@ namespace RPVoiceChat.Gui
             SetValue("inputThreshold", new dynamic[] { _config.InputThreshold, 0, 100, 1, "" });
             SetValue("toggleHUD", _config.IsHUDShown);
             SetValue("toggleMuffling", ClientSettings.Muffling);
-            SetValue("toggleDenoising", _config.IsDenoisingEnabled);
-            SetValue("denoisingSensitivity", new dynamic[] { _config.BackgroungNoiseThreshold, 0, 100, 1, "%" });
-            SetValue("denoisingStrength", new dynamic[] { _config.VoiceDenoisingStrength, 0, 100, 1, "%" });
+            SetValue("toggleDenoising", ClientSettings.Denoising);
+            SetValue("denoisingSensitivity", new dynamic[] { denoisingSensitivity, 0, 100, 1, "%" });
+            SetValue("denoisingStrength", new dynamic[] { denoisingStrength, 0, 100, 1, "%" });
             SetValue("playerList", null);
             SetValue("toggleChannelGuessing", ClientSettings.ChannelGuessing);
         }
@@ -497,24 +499,23 @@ namespace RPVoiceChat.Gui
 
         private void OnToggleDenoising(bool enabled)
         {
-            _config.IsDenoisingEnabled = enabled;
-            ModConfig.Save(capi);
+            ClientSettings.Denoising = enabled;
         }
 
-        private bool SlideDenoisingSensitivity(int sensitivity)
+        private bool SlideDenoisingSensitivity(int intSensitivity)
         {
-            _config.BackgroungNoiseThreshold = sensitivity;
+            float sensitivity = (float)intSensitivity / 100;
+            ClientSettings.BackgroundNoiseThreshold = sensitivity;
             _audioInputManager.SetDenoisingSensitivity(sensitivity);
-            ModConfig.Save(capi);
 
             return true;
         }
 
-        private bool SlideDenoisingStrength(int strength)
+        private bool SlideDenoisingStrength(int intStrength)
         {
-            _config.VoiceDenoisingStrength = strength;
+            float strength = (float)intStrength / 100;
+            ClientSettings.VoiceDenoisingStrength = strength;
             _audioInputManager.SetDenoisingStrength(strength);
-            ModConfig.Save(capi);
 
             return true;
         }

@@ -6,7 +6,10 @@ namespace RPVoiceChat
     {
         public static float OutputGain { get => GetFloat("outputGain", 1); set => Set("outputGain", value); }
         public static float InputGain { get => GetFloat("inputGain", 1); set => Set("inputGain", value); }
+        public static float BackgroundNoiseThreshold { get => GetFloat("denoisingSensitivity", 0.5f); set => Set("denoisingSensitivity", value); }
+        public static float VoiceDenoisingStrength { get => GetFloat("denoisingStrength", 0.1f); set => Set("denoisingStrength", value); }
         public static bool Muffling { get => GetBool("muffling", true); set => Set("muffling", value); }
+        public static bool Denoising { get => GetBool("denoising", false); set => Set("denoising", value); }
         public static bool ChannelGuessing { get => GetBool("channelGuessing", true); set => Set("channelGuessing", value); }
         public static int ActiveConfigTab { get => GetInt("activeConfigTab", 0); set => Set("activeConfigTab", value); }
 

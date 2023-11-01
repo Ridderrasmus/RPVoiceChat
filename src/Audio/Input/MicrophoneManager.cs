@@ -90,14 +90,14 @@ namespace RPVoiceChat.Audio
             gain = newGain;
         }
 
-        public void SetDenoisingSensitivity(int sensitivity)
+        public void SetDenoisingSensitivity(float sensitivity)
         {
-            denoiser?.SetBackgroundNoiseThreshold(sensitivity / 100f);
+            denoiser?.SetBackgroundNoiseThreshold(sensitivity);
         }
 
-        public void SetDenoisingStrength(int strength)
+        public void SetDenoisingStrength(float strength)
         {
-            denoiser?.SetVoiceDenoisingStrength(strength / 100f);
+            denoiser?.SetVoiceDenoisingStrength(strength);
         }
 
         private void CaptureAudio(object cancellationToken)
@@ -176,7 +176,7 @@ namespace RPVoiceChat.Audio
             float volumeAmplification = Math.Min(maxSafeGain, recentGainLimits.Average());
 
             // Denoise audio if applicable
-            if (config.IsDenoisingEnabled && denoiser != null && denoiser.SupportsFormat(Frequency, OutputChannelCount, SampleSize * 8))
+            if (ClientSettings.Denoising && denoiser?.SupportsFormat(Frequency, OutputChannelCount, SampleSize * 8) == true)
                 denoiser.Denoise(ref pcms);
 
             // Amplify volume and calculate amplitude
@@ -272,7 +272,7 @@ namespace RPVoiceChat.Audio
             IDenoiser denoiser = null;
             try
             {
-                denoiser = new RNNoiseDenoiser(config.BackgroungNoiseThreshold, config.VoiceDenoisingStrength);
+                denoiser = new RNNoiseDenoiser(ClientSettings.BackgroundNoiseThreshold, ClientSettings.VoiceDenoisingStrength);
                 IsDenoisingAvailable = true;
             }
             catch (DllNotFoundException)

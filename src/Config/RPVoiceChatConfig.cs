@@ -20,12 +20,9 @@ namespace RPVoiceChat
         // stored here for persistence across sessions
         public bool PushToTalkEnabled = false;
         public bool IsLoopbackEnabled = false;
-        public bool IsDenoisingEnabled = false;
         public bool IsHUDShown = true;
         public bool IsMuted = false;
         public int InputThreshold = 20;
-        public int BackgroungNoiseThreshold = 50;
-        public int VoiceDenoisingStrength = 80;
         public string CurrentInputDevice;
 
         public RPVoiceChatConfig() { }
@@ -40,13 +37,10 @@ namespace RPVoiceChat
 
             PushToTalkEnabled = previousConfig.PushToTalkEnabled;
             IsLoopbackEnabled = previousConfig.IsLoopbackEnabled;
-            IsDenoisingEnabled = previousConfig.IsDenoisingEnabled;
             IsHUDShown = previousConfig.IsHUDShown;
             IsMuted = previousConfig.IsMuted;
             InputThreshold = previousConfig.InputThreshold;
             CurrentInputDevice = previousConfig.CurrentInputDevice;
-            BackgroungNoiseThreshold = previousConfig.BackgroungNoiseThreshold;
-            VoiceDenoisingStrength = previousConfig.VoiceDenoisingStrength;
         }
     }
 }
