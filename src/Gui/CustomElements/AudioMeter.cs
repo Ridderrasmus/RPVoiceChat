@@ -54,14 +54,12 @@ namespace RPVoiceChat.Gui
             var element = parrentDialog.SingleComposer.GetElement(key);
             if (element == null) return;
 
-            double amplitude = _audioInputManager.Amplitude;
-            if (ModConfig.Config.IsMuted) amplitude = 0;
-            UpdateVisuals(amplitude);
+            UpdateVisuals();
         }
 
-        private void UpdateVisuals(double amplitude)
+        private void UpdateVisuals()
         {
-            float displayValue = (float)Math.Round(amplitude * coefficient);
+            float displayValue = (float)Math.Round(_audioInputManager.Amplitude * coefficient);
 
             ShouldFlash = _audioInputManager.Transmitting;
             SetValue(displayValue);

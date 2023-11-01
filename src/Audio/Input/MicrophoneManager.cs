@@ -132,7 +132,17 @@ namespace RPVoiceChat.Audio
 
             bool isMuted = config.IsMuted;
             bool isSleeping = clientEntity.AnimManager.IsAnimationActive("sleep");
-            if (isMuted || isSleeping || !clientEntity.Alive) return;
+            if (isMuted || isSleeping || !clientEntity.Alive)
+            {
+                if (recentAmplitudes.Count == 0) return;
+                recentAmplitudes.Clear();
+                Amplitude = 0;
+                Transmitting = false;
+                TransmissionStateChanged?.Invoke();
+                transmittingOnPreviousStep = Transmitting;
+                stepsSinceLastTransmission = deactivationWindow;
+                return;
+            }
 
             AudioData data = ProcessAudio(sampleBuffer);
             TransmitAudio(data);
