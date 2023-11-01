@@ -26,5 +26,15 @@ namespace RPVoiceChat.Utils
 
             return byteBuffer;
         }
+
+        public static float DBsToFactor(float dB)
+        {
+            return (float)Math.Pow(10, dB / 20);
+        }
+
+        public static float FactorToDBs(float factor)
+        {
+            return (float)Math.Log10(factor) * 20;
+        }
     }
 }

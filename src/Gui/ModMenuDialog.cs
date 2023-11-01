@@ -55,6 +55,7 @@ namespace RPVoiceChat.Gui
             public IExtendedGuiElement CustomElement;
             public Action<bool> ToggleAction;
             public ActionConsumable<int> SlideAction;
+            public SliderTooltipDelegate SlideTooltip;
             public string[] DropdownValues { get; internal set; }
             public string[] DropdownNames { get; internal set; }
             public SelectionChangedDelegate DropdownSelect { get; internal set; }
@@ -123,7 +124,10 @@ namespace RPVoiceChat.Gui
                 switch (option.Type)
                 {
                     case ElementType.Slider:
-                        composer.AddSlider(option.SlideAction, wideSettingBounds, option.Key);
+                        var slider = new GuiElementSlider(capi, option.SlideAction, wideSettingBounds);
+                        if (option.SlideTooltip != null)
+                            slider.OnSliderTooltip = option.SlideTooltip;
+                        composer.AddInteractiveElement(slider, option.Key);
                         break;
 
                     case ElementType.Switch:
@@ -274,7 +278,8 @@ namespace RPVoiceChat.Gui
                 Label = true,
                 Tooltip = true,
                 Tab = audioInputTab,
-                SlideAction = SlideInputGain
+                SlideAction = SlideInputGain,
+                SlideTooltip = SlideInputGainTooltip
             });
 
             RegisterOption(new ConfigOption
@@ -375,14 +380,14 @@ namespace RPVoiceChat.Gui
                 return;
 
             var outputGain = ClientSettings.OutputGain * 100;
-            var inputGain = ClientSettings.InputGain * 100;
+            var inputGainDBS = AudioUtils.FactorToDBs(ClientSettings.InputGain) * 10;
             SetValue("configTabs", ClientSettings.ActiveConfigTab);
             SetValue("inputDevice", _config.CurrentInputDevice ?? "Default");
             SetValue("togglePushToTalk", _config.PushToTalkEnabled);
             SetValue("muteMicrophone", _config.IsMuted);
             SetValue("loopback", _config.IsLoopbackEnabled);
             SetValue("outputGain", new dynamic[] { outputGain, 0, 200, 1, "%" });
-            SetValue("inputGain", new dynamic[] { inputGain, 0, 400, 1, "%" });
+            SetValue("inputGain", new dynamic[] { inputGainDBS, -200, 200, 1, "" });
             SetValue("inputThreshold", new dynamic[] { _config.InputThreshold, 0, 100, 1, "" });
             SetValue("toggleHUD", _config.IsHUDShown);
             SetValue("toggleMuffling", ClientSettings.Muffling);
@@ -444,13 +449,30 @@ namespace RPVoiceChat.Gui
             return true;
         }
 
-        private bool SlideInputGain(int intGain)
+        private bool SlideInputGain(int intDBGain)
         {
-            float gain = (float)intGain / 100;
+            float dBGain = (float)intDBGain / 10;
+            float gain = AudioUtils.DBsToFactor(dBGain);
+            if (intDBGain == -200) gain = 0;
             ClientSettings.InputGain = gain;
             _audioInputManager.SetGain(gain);
 
             return true;
+        }
+
+        private string SlideInputGainTooltip(int value)
+        {
+            if (value == -200) return "Off";
+            return SlideDecibelsTooltip(value);
+        }
+
+        private string SlideDecibelsTooltip(int value)
+        {
+            string sign = value < 0 ? "-" : "+";
+            int integerPart = Math.Abs(value / 10);
+            int decimalPart = Math.Abs(value % 10);
+            string dBValueAsText = $"{sign}{integerPart}.{decimalPart}";
+            return $"{dBValueAsText}dB";
         }
 
         private bool SlideInputThreshold(int threshold)
