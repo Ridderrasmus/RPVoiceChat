@@ -39,10 +39,9 @@ namespace RPVoiceChat.Audio
 
         // Aplication interface/audio management
         public double Amplitude { get; private set; }
-        public double AmplitudeAverage { get; private set; }
-        public bool Transmitting = false;
-        public bool TransmittingOnPreviousStep = false;
         public bool IsDenoisingAvailable = false;
+        public bool Transmitting = false;
+        private bool TransmittingOnPreviousStep = false;
         private ICoreClientAPI capi;
         private RPVoiceChatConfig config;
         private VoiceLevel voiceLevel = VoiceLevel.Talking;
@@ -204,18 +203,12 @@ namespace RPVoiceChat.Audio
 
         private void TransmitAudio(AudioData data)
         {
-            Amplitude = data.amplitude;
-            recentAmplitudes.Add(Amplitude);
+            recentAmplitudes.Add(data.amplitude);
+            if (recentAmplitudes.Count > 3) recentAmplitudes.RemoveAt(0);
+            Amplitude = Math.Max(data.amplitude, recentAmplitudes.Average());
 
-            if (recentAmplitudes.Count > 3)
-            {
-                recentAmplitudes.RemoveAt(0);
-                AmplitudeAverage = recentAmplitudes.Average();
-            }
-
-            // Handle Push to Talk
             bool isPTTKeyPressed = capi.Input.KeyboardKeyState[capi.Input.GetHotKeyByCode("voicechatPTT").CurrentMapping.KeyCode];
-            bool isAboveInputThreshold = Amplitude >= inputThreshold || AmplitudeAverage >= inputThreshold;
+            bool isAboveInputThreshold = Amplitude >= inputThreshold;
             Transmitting = config.PushToTalkEnabled ? isPTTKeyPressed : isAboveInputThreshold;
 
             if (Transmitting)
