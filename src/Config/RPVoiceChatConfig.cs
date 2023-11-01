@@ -23,8 +23,6 @@ namespace RPVoiceChat
         public bool IsDenoisingEnabled = false;
         public bool IsHUDShown = true;
         public bool IsMuted = false;
-        public int OutputGain = 100;
-        public int InputGain = 100;
         public int InputThreshold = 20;
         public int BackgroungNoiseThreshold = 50;
         public int VoiceDenoisingStrength = 80;
@@ -49,8 +47,6 @@ namespace RPVoiceChat
             IsDenoisingEnabled = previousConfig.IsDenoisingEnabled;
             IsHUDShown = previousConfig.IsHUDShown;
             IsMuted = previousConfig.IsMuted;
-            OutputGain = previousConfig.OutputGain;
-            InputGain = previousConfig.InputGain;
             InputThreshold = previousConfig.InputThreshold;
             CurrentInputDevice = previousConfig.CurrentInputDevice;
             BackgroungNoiseThreshold = previousConfig.BackgroungNoiseThreshold;

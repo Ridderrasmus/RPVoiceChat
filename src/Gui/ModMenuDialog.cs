@@ -95,8 +95,7 @@ namespace RPVoiceChat.Gui
         {
             _isSetup = true;
 
-            var activeTabIndex = ClientSettings.GetInt("activeConfigTab", 0);
-            var activeTab = ConfigTabs[activeTabIndex];
+            var activeTab = ConfigTabs[ClientSettings.ActiveConfigTab];
             var displayedOptions = ConfigOptions.FindAll(e => e.Tab == activeTab && e.Enabled);
             double maxTextWidth = displayedOptions.DefaultIfEmpty().Max(e => e?.TextWidth ?? 0);
             double maxTabWidth = ConfigTabs.DefaultIfEmpty().Max(e => e?.TextWidth ?? 0);
@@ -181,7 +180,7 @@ namespace RPVoiceChat.Gui
 
         private void OnTabClicked(int dataIntOrIndex, GuiTab _)
         {
-            ClientSettings.Set("activeConfigTab", dataIntOrIndex);
+            ClientSettings.ActiveConfigTab = dataIntOrIndex;
             SetupDialog();
             RefreshValues();
         }
@@ -395,21 +394,23 @@ namespace RPVoiceChat.Gui
             if (!IsOpened())
                 return;
 
-            SetValue("configTabs", ClientSettings.GetInt("activeConfigTab", 0));
+            var outputGain = ClientSettings.OutputGain * 100;
+            var inputGain = ClientSettings.InputGain * 100;
+            SetValue("configTabs", ClientSettings.ActiveConfigTab);
             SetValue("inputDevice", _config.CurrentInputDevice ?? "Default");
             SetValue("togglePushToTalk", _config.PushToTalkEnabled);
             SetValue("muteMicrophone", _config.IsMuted);
             SetValue("loopback", _config.IsLoopbackEnabled);
-            SetValue("outputGain", new dynamic[] { _config.OutputGain, 0, 200, 1, "%" });
-            SetValue("inputGain", new dynamic[] { _config.InputGain, 0, 400, 1, "%" });
+            SetValue("outputGain", new dynamic[] { outputGain, 0, 200, 1, "%" });
+            SetValue("inputGain", new dynamic[] { inputGain, 0, 400, 1, "%" });
             SetValue("inputThreshold", new dynamic[] { _config.InputThreshold, 0, 100, 1, "" });
             SetValue("toggleHUD", _config.IsHUDShown);
-            SetValue("toggleMuffling", ClientSettings.GetBool("muffling", true));
+            SetValue("toggleMuffling", ClientSettings.Muffling);
             SetValue("toggleDenoising", _config.IsDenoisingEnabled);
             SetValue("denoisingSensitivity", new dynamic[] { _config.BackgroungNoiseThreshold, 0, 100, 1, "%" });
             SetValue("denoisingStrength", new dynamic[] { _config.VoiceDenoisingStrength, 0, 100, 1, "%" });
             SetValue("playerList", null);
-            SetValue("toggleChannelGuessing", ClientSettings.GetBool("channelGuessing", true));
+            SetValue("toggleChannelGuessing", ClientSettings.ChannelGuessing);
             SetValue("inputSensitivity", new dynamic[] { (int)(_config.MaxInputThreshold * 100), 1, 100, 1, "%" });
         }
 
@@ -421,7 +422,7 @@ namespace RPVoiceChat.Gui
             else if (element is GuiElementSwitch switchBox) switchBox.On = value;
             else if (element is GuiElementSlider slider)
             {
-                int sliderValue = GameMath.Clamp(value[0], value[1], value[2]);
+                int sliderValue = GameMath.Clamp((int)value[0], value[1], value[2]);
                 slider.SetValues(sliderValue, value[1], value[2], value[3], value[4]);
                 if (value.Length < 6) return;
                 slider.SetAlarmValue(value[5]);
@@ -455,18 +456,19 @@ namespace RPVoiceChat.Gui
             _audioOutputManager.IsLoopbackEnabled = enabled;
         }
 
-        private bool SlideOutputGain(int gain)
+        private bool SlideOutputGain(int intGain)
         {
-            _config.OutputGain = gain;
-            ModConfig.Save(capi);
+            float gain = (float)intGain / 100;
+            ClientSettings.OutputGain = gain;
+            PlayerListener.SetGain(gain);
 
             return true;
         }
 
-        private bool SlideInputGain(int gain)
+        private bool SlideInputGain(int intGain)
         {
-            _config.InputGain = gain;
-            ModConfig.Save(capi);
+            float gain = (float)intGain / 100;
+            ClientSettings.InputGain = gain;
             _audioInputManager.SetGain(gain);
 
             return true;
@@ -489,7 +491,7 @@ namespace RPVoiceChat.Gui
 
         private void OnToggleMuffling(bool enabled)
         {
-            ClientSettings.Set("muffling", enabled);
+            ClientSettings.Muffling = enabled;
         }
 
         private void OnToggleDenoising(bool enabled)
@@ -518,7 +520,7 @@ namespace RPVoiceChat.Gui
 
         private void OnToggleChannelGuessing(bool enabled)
         {
-            ClientSettings.Set("channelGuessing", enabled);
+            ClientSettings.ChannelGuessing = enabled;
         }
 
         private bool SlideInputSensitivity(int sensitivity)

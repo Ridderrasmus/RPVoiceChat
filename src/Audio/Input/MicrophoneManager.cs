@@ -57,7 +57,7 @@ namespace RPVoiceChat.Audio
             config = ModConfig.Config;
             MaxInputThreshold = config.MaxInputThreshold;
             SetThreshold(config.InputThreshold);
-            SetGain(config.InputGain);
+            SetGain(ClientSettings.InputGain);
             SetOutputFormat(ALFormat.Mono16);
             SetCodec(OpusCodec._Name);
             capture = CreateNewCapture(config.CurrentInputDevice);
@@ -92,9 +92,9 @@ namespace RPVoiceChat.Audio
             inputThreshold = (threshold / 100.0) * MaxInputThreshold;
         }
 
-        public void SetGain(int newGain)
+        public void SetGain(float newGain)
         {
-            gain = newGain / 100f;
+            gain = newGain;
         }
 
         public void SetDenoisingSensitivity(int sensitivity)
@@ -340,7 +340,7 @@ namespace RPVoiceChat.Audio
                 }
             }
 
-            bool guessUsedChannels = ClientSettings.GetBool("channelGuessing", true);
+            bool guessUsedChannels = ClientSettings.ChannelGuessing;
             for (var channelIndex = 0; channelIndex < InputChannelCount; channelIndex++)
             {
                 var averageSampleValue = sampleSums[channelIndex] / depth;
