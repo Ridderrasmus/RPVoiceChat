@@ -6,6 +6,6 @@ namespace RPVoiceChat
     {
         public override string StackTrace => null;
 
-        public NoStackTraceException(string message): base(message) { }
+        public NoStackTraceException(string message) : base(message) { }
     }
 }

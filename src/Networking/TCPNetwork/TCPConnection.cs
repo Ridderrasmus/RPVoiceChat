@@ -187,7 +187,8 @@ namespace RPVoiceChat.Networking
             {
                 socket?.Shutdown(SocketShutdown.Both);
                 socket?.Disconnect(true);
-            } catch { }
+            }
+            catch { }
             OnDisconnected?.Invoke(isGraceful, isHalfClosed, this);
         }
 

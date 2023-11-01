@@ -28,10 +28,7 @@ namespace RPVoiceChat
         public int VoiceDenoisingStrength = 80;
         public string CurrentInputDevice;
 
-        public RPVoiceChatConfig()
-        {
-
-        }
+        public RPVoiceChatConfig() { }
 
         public RPVoiceChatConfig(RPVoiceChatConfig previousConfig)
         {
@@ -51,6 +48,5 @@ namespace RPVoiceChat
             BackgroungNoiseThreshold = previousConfig.BackgroungNoiseThreshold;
             VoiceDenoisingStrength = previousConfig.VoiceDenoisingStrength;
         }
-
     }
 }

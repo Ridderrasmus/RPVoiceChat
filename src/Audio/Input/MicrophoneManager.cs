@@ -25,7 +25,7 @@ namespace RPVoiceChat.Audio
         private CancellationTokenSource audioCaptureCTS;
         private int BufferSize = (int)(Frequency * 0.5);
         private int InputChannelCount;
-        private const byte SampleSize = 2;
+        private const byte SampleSize = sizeof(short);
 
         // Audio processing
         private IAudioCodec codec;
