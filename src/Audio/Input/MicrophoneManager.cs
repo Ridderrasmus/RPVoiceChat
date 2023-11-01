@@ -14,8 +14,7 @@ namespace RPVoiceChat.Audio
     {
         public event Action<AudioData> OnBufferRecorded;
         public event Action<VoiceLevel> VoiceLevelUpdated;
-        public event Action ClientStartTalking;
-        public event Action ClientStopTalking;
+        public event Action TransmissionStateChanged;
 
         // TODO: split MicrophoneManager into 3 classes
         // Audio cature
@@ -41,12 +40,14 @@ namespace RPVoiceChat.Audio
         public double Amplitude { get; private set; }
         public bool IsDenoisingAvailable = false;
         public bool Transmitting = false;
-        private bool TransmittingOnPreviousStep = false;
+        private const int deactivationWindow = 4;
+        private int stepsSinceLastTransmission = deactivationWindow;
+        private bool transmittingOnPreviousStep = false;
         private ICoreClientAPI capi;
         private RPVoiceChatConfig config;
         private VoiceLevel voiceLevel = VoiceLevel.Talking;
         private double inputThreshold;
-        private double MaxInputThreshold = _maxVolume / 2;
+        private double maxInputThreshold = _maxVolume / 2;
         private List<double> recentAmplitudes = new List<double>();
 
         public MicrophoneManager(ICoreClientAPI capi)
@@ -71,7 +72,7 @@ namespace RPVoiceChat.Audio
 
         public double GetMaxInputThreshold()
         {
-            return MaxInputThreshold;
+            return maxInputThreshold;
         }
 
         public double GetInputThreshold()
@@ -81,7 +82,7 @@ namespace RPVoiceChat.Audio
 
         public void SetThreshold(int threshold)
         {
-            inputThreshold = (threshold / 100.0) * MaxInputThreshold;
+            inputThreshold = (threshold / 100.0) * maxInputThreshold;
         }
 
         public void SetGain(float newGain)
@@ -203,25 +204,28 @@ namespace RPVoiceChat.Audio
 
         private void TransmitAudio(AudioData data)
         {
+            // Smooth out amplitude changes
             recentAmplitudes.Add(data.amplitude);
             if (recentAmplitudes.Count > 3) recentAmplitudes.RemoveAt(0);
             Amplitude = Math.Max(data.amplitude, recentAmplitudes.Average());
 
+            // Check if activation conditions are met
             bool isPTTKeyPressed = capi.Input.KeyboardKeyState[capi.Input.GetHotKeyByCode("voicechatPTT").CurrentMapping.KeyCode];
             bool isAboveInputThreshold = Amplitude >= inputThreshold;
             Transmitting = config.PushToTalkEnabled ? isPTTKeyPressed : isAboveInputThreshold;
 
-            if (Transmitting)
-            {
-                if (!TransmittingOnPreviousStep) ClientStartTalking?.Invoke();
-                OnBufferRecorded?.Invoke(data);
-            }
-            else if (TransmittingOnPreviousStep)
-            {
-                ClientStopTalking?.Invoke();
-            }
+            // Apply deactivation timeout
+            stepsSinceLastTransmission++;
+            if (Transmitting) stepsSinceLastTransmission = 0;
+            Transmitting = stepsSinceLastTransmission < deactivationWindow;
 
-            TransmittingOnPreviousStep = Transmitting;
+            // Trigger notifcation when start/stop transmitting
+            if (Transmitting != transmittingOnPreviousStep)
+                TransmissionStateChanged?.Invoke();
+            transmittingOnPreviousStep = Transmitting;
+
+            // Transmit
+            if (Transmitting) OnBufferRecorded?.Invoke(data);
         }
 
         private IAudioCapture CreateNewCapture(string deviceName, ALFormat? captureFormat = null)
