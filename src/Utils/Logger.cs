@@ -26,8 +26,8 @@ namespace RPVoiceChat.Utils
 
         public void Error(string message, params object[] args)
         {
-            lock (main_file_lock) api.Logger.Error($"[RPVoiceChat] {message}", args);
-            lock (debug_file_lock) api.Logger.VerboseDebug($"[Error] [RPVoiceChat] {message}", args);
+            lock (main_file_lock) api.Logger?.Error($"[RPVoiceChat] {message}", args);
+            lock (debug_file_lock) api.Logger?.VerboseDebug($"[Error] [RPVoiceChat] {message}", args);
         }
 
         public void Debug(string message)
@@ -37,7 +37,7 @@ namespace RPVoiceChat.Utils
 
         public void Debug(string message, params object[] args)
         {
-            lock (debug_file_lock) api.Logger.Debug($"[RPVoiceChat] {message}", args);
+            lock (debug_file_lock) api.Logger?.Debug($"[RPVoiceChat] {message}", args);
         }
 
         public void VerboseDebug(string message)
@@ -47,7 +47,7 @@ namespace RPVoiceChat.Utils
 
         public void VerboseDebug(string message, params object[] args)
         {
-            lock (debug_file_lock) api.Logger.VerboseDebug($"[RPVoiceChat] {message}", args);
+            lock (debug_file_lock) api.Logger?.VerboseDebug($"[RPVoiceChat] {message}", args);
         }
 
         public void Warning(string message)
@@ -57,8 +57,8 @@ namespace RPVoiceChat.Utils
 
         public void Warning(string message, params object[] args)
         {
-            lock (main_file_lock) api.Logger.Warning($"[RPVoiceChat] {message}", args);
-            lock (debug_file_lock) api.Logger.VerboseDebug($"[Warning] [RPVoiceChat] {message}", args);
+            lock (main_file_lock) api.Logger?.Warning($"[RPVoiceChat] {message}", args);
+            lock (debug_file_lock) api.Logger?.VerboseDebug($"[Warning] [RPVoiceChat] {message}", args);
         }
 
         public void Notification(string message)
@@ -68,8 +68,8 @@ namespace RPVoiceChat.Utils
 
         public void Notification(string message, params object[] args)
         {
-            lock (main_file_lock) api.Logger.Notification($"[RPVoiceChat] {message}", args);
-            lock (debug_file_lock) api.Logger.VerboseDebug($"[Notification] [RPVoiceChat] {message}", args);
+            lock (main_file_lock) api.Logger?.Notification($"[RPVoiceChat] {message}", args);
+            lock (debug_file_lock) api.Logger?.VerboseDebug($"[Notification] [RPVoiceChat] {message}", args);
         }
     }
 }
