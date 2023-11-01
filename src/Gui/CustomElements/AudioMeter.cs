@@ -24,7 +24,6 @@ namespace RPVoiceChat.Gui
 
             parrentDialog.OnOpened += OnDialogOpen;
             parrentDialog.OnClosed += OnDialogClosed;
-            ModConfig.ConfigUpdated += OnConfigUpdate;
         }
 
         public void Init(string elementKey, ElementBounds bounds, GuiComposer composer)
@@ -48,11 +47,6 @@ namespace RPVoiceChat.Gui
         private void OnDialogClosed()
         {
             api.Event.UnregisterGameTickListener(gameTickListenerId);
-        }
-
-        private void OnConfigUpdate()
-        {
-            SetCoefficient();
         }
 
         private void TickUpdate(float _)

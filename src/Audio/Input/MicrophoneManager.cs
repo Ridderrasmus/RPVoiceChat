@@ -33,7 +33,8 @@ namespace RPVoiceChat.Audio
         private ALFormat OutputFormat;
         private int OutputChannelCount;
         private float gain;
-        private const short _maxSampleVolume = (short)(0.7 * short.MaxValue);
+        private const double _maxVolume = 0.7;
+        private const short maxSampleValue = (short)(_maxVolume * short.MaxValue);
         private List<float> recentGainLimits = new List<float>();
 
         // Aplication interface/audio management
@@ -46,7 +47,7 @@ namespace RPVoiceChat.Audio
         private RPVoiceChatConfig config;
         private VoiceLevel voiceLevel = VoiceLevel.Talking;
         private double inputThreshold;
-        private double MaxInputThreshold;
+        private double MaxInputThreshold = _maxVolume / 2;
         private List<double> recentAmplitudes = new List<double>();
 
         public MicrophoneManager(ICoreClientAPI capi)
@@ -55,7 +56,6 @@ namespace RPVoiceChat.Audio
             audioCaptureCTS = new CancellationTokenSource();
             this.capi = capi;
             config = ModConfig.Config;
-            MaxInputThreshold = config.MaxInputThreshold;
             SetThreshold(config.InputThreshold);
             SetGain(ClientSettings.InputGain);
             SetOutputFormat(ALFormat.Mono16);
@@ -73,13 +73,6 @@ namespace RPVoiceChat.Audio
         public double GetMaxInputThreshold()
         {
             return MaxInputThreshold;
-        }
-
-        public void SetMaxInputThreshold(double maxInputThreshold)
-        {
-            int inputThreshold = (int)(GetInputThreshold() / MaxInputThreshold * 100);
-            MaxInputThreshold = maxInputThreshold / 100;
-            SetThreshold(inputThreshold);
         }
 
         public double GetInputThreshold()
@@ -177,10 +170,10 @@ namespace RPVoiceChat.Audio
             }
 
             // Calculate volume amplification
-            float maxSafeGain = Math.Min(gain, (float)(_maxSampleVolume / peakPcmValue));
+            float maxSafeGain = Math.Min(gain, (float)(maxSampleValue / peakPcmValue));
             recentGainLimits.Add(maxSafeGain);
             if (recentGainLimits.Count > 10) recentGainLimits.RemoveAt(0);
-            float volumeAmplification = GameMath.Min(gain, maxSafeGain, recentGainLimits.Average());
+            float volumeAmplification = Math.Min(maxSafeGain, recentGainLimits.Average());
 
             // Denoise audio if applicable
             if (config.IsDenoisingEnabled && denoiser != null && denoiser.SupportsFormat(Frequency, OutputChannelCount, SampleSize * 8))

@@ -27,7 +27,6 @@ namespace RPVoiceChat
         public int BackgroungNoiseThreshold = 50;
         public int VoiceDenoisingStrength = 80;
         public string CurrentInputDevice;
-        public double MaxInputThreshold = 0.24;
 
         public RPVoiceChatConfig()
         {
@@ -51,7 +50,6 @@ namespace RPVoiceChat
             CurrentInputDevice = previousConfig.CurrentInputDevice;
             BackgroungNoiseThreshold = previousConfig.BackgroungNoiseThreshold;
             VoiceDenoisingStrength = previousConfig.VoiceDenoisingStrength;
-            MaxInputThreshold = previousConfig.MaxInputThreshold;
         }
 
     }
