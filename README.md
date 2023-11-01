@@ -35,7 +35,7 @@ You can configure your microphone volume and the volume of everyone else in your
 The mod is highly configurable and can be configured more deeply in the modconfig file. You'll find this file in the `ModConfig` folder in the same directory as your `Mods` folder. The file is called `rpvoicechat.json`.
 
 The settings relevant to users are:
-- `ManualPortForwarding` - Determines whether the mod should skip port forwarding with UPnP and assume that ports are open. The default value is `false`.
+- `ManualPortForwarding` - Determines whether the mod should skip port forwarding with UPnP and assume that ports are open. **Setting this to true means that you take full responsibility for opening ports and if they are not open mod will work incorrectly.** The default value is `false`.
 - `PushToTalkEnabled` - Whether push to talk is enabled. The default value is `false`.
 - `IsLoopbackEnabled` - The setting that defines whether you should be able to hear what you're transmitting. The default value is `false`.
 - `IsDenoisingEnabled` - Whether or not your audio should be denoised. The default value is `false`.
@@ -52,7 +52,7 @@ The settings relevant to users are:
 The mod is highly configurable and can be configured more deeply in the modconfig file. You'll find this file in the `ModConfig` folder in the same directory as your `Mods` folder. The file is called `rpvoicechat.json`.
 
 The settings relevant to server owners are:
-- `ManualPortForwarding` - Determines whether the mod should skip port forwarding with UPnP and assume that ports are open. The default value is `false`.
+- `ManualPortForwarding` - Determines whether the mod should skip port forwarding with UPnP and assume that ports are open. **Setting this to true means that you take full responsibility for opening ports and if they are not open mod will work incorrectly.** The default value is `false`.
 - `ServerPort` - The port to use for the voice networking. The default value is `52525`.
 - `ServerIP` - The ip for clients to connect to. Leave it as is unless you are playing through LAN, in which case set it to address of your private network(e.g. `"25.95.127.13"`). The default value is `null`.
 - `AdditionalContent` - Whether additional modded content(bells, horns, etc) should be enabled. The default value is `true`.
