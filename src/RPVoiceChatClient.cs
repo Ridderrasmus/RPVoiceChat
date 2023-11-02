@@ -36,7 +36,6 @@ namespace RPVoiceChat
         public override void StartClientSide(ICoreClientAPI api)
         {
             capi = api;
-            ClientSettings.Init(capi);
 
             // Sneak in native dlls
             EmbeddedDllClass.ExtractEmbeddedDlls();

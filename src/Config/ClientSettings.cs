@@ -1,4 +1,5 @@
 using Vintagestory.API.Client;
+using Vintagestory.API.Common;
 
 namespace RPVoiceChat
 {
@@ -16,9 +17,10 @@ namespace RPVoiceChat
         private const string modPrefix = "RPVoiceChat";
         private static ICoreClientAPI capi;
 
-        public static void Init(ICoreClientAPI api)
+        public static void Init(ICoreAPI api)
         {
-            capi = api;
+            if (api is ICoreClientAPI capi)
+                ClientSettings.capi = capi;
         }
 
         public static void Set(string key, int value)
