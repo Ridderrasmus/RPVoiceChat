@@ -55,11 +55,11 @@ namespace RPVoiceChat.Networking
             }
             catch (TaskCanceledException)
             {
-                logger.Warning("Device discovery got aborted, assuming public IP");
+                throw new NoStackTraceException("Device discovery got aborted");
             }
             catch (NatDeviceNotFoundException)
             {
-                logger.Warning($"Unable to port forward with UPnP, {_transportID} connection may not be available. Make sure your IP is public and UPnP is enabled if you want to use {_transportID} transport.");
+                throw new NoStackTraceException($"Unable to port forward with UPnP, {_transportID} connection may not be available. Make sure your IP is public and UPnP is enabled if you want to use {_transportID} transport.");
             }
         }
 

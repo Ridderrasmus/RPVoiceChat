@@ -14,34 +14,39 @@ namespace RPVoiceChat.Audio
     {
         public event Action<AudioData> OnBufferRecorded;
         public event Action<VoiceLevel> VoiceLevelUpdated;
-        public event Action ClientStartTalking;
-        public event Action ClientStopTalking;
+        public event Action TransmissionStateChanged;
 
-        private ICoreClientAPI capi;
+        // TODO: split MicrophoneManager into 3 classes
+        // Audio cature
+        public static int Frequency = 48000;
         private IAudioCapture capture;
-        private IAudioCodec codec;
-        private IDenoiser denoiser;
-        private RPVoiceChatConfig config;
         private Thread audioCaptureThread;
         private CancellationTokenSource audioCaptureCTS;
-
-        public static int Frequency = 48000;
-        public ALFormat InputFormat { get; private set; }
-        private ALFormat OutputFormat;
         private int BufferSize = (int)(Frequency * 0.5);
-        private float gain;
         private int InputChannelCount;
-        private int OutputChannelCount;
-        private const byte SampleSize = 2;
+        private const byte SampleSize = sizeof(short);
 
+        // Audio processing
+        private IAudioCodec codec;
+        private IDenoiser denoiser;
+        private ALFormat OutputFormat;
+        private int OutputChannelCount;
+        private float gain;
+        private const double _maxVolume = 0.7;
+        private const short maxSampleValue = (short)(_maxVolume * short.MaxValue);
+        private List<float> recentGainLimits = new List<float>();
+
+        // Aplication interface/audio management
         public double Amplitude { get; private set; }
-        public double AmplitudeAverage { get; private set; }
-        public bool Transmitting = false;
-        public bool TransmittingOnPreviousStep = false;
         public bool IsDenoisingAvailable = false;
+        public bool Transmitting = false;
+        private const int deactivationWindow = 4;
+        private int stepsSinceLastTransmission = deactivationWindow;
+        private bool transmittingOnPreviousStep = false;
+        private ICoreClientAPI capi;
         private VoiceLevel voiceLevel = VoiceLevel.Talking;
         private double inputThreshold;
-        private double MaxInputThreshold;
+        private double maxInputThreshold = _maxVolume / 2;
         private List<double> recentAmplitudes = new List<double>();
 
         public MicrophoneManager(ICoreClientAPI capi)
@@ -49,13 +54,11 @@ namespace RPVoiceChat.Audio
             audioCaptureThread = new Thread(CaptureAudio);
             audioCaptureCTS = new CancellationTokenSource();
             this.capi = capi;
-            config = ModConfig.Config;
-            MaxInputThreshold = config.MaxInputThreshold;
-            SetThreshold(config.InputThreshold);
-            SetGain(config.InputGain);
+            SetThreshold(ClientSettings.InputThreshold);
+            SetGain(ClientSettings.InputGain);
             SetOutputFormat(ALFormat.Mono16);
             SetCodec(OpusCodec._Name);
-            capture = CreateNewCapture(config.CurrentInputDevice);
+            capture = CreateNewCapture(ClientSettings.CurrentInputDevice);
             denoiser = TryLoadDenoiser();
         }
 
@@ -67,14 +70,7 @@ namespace RPVoiceChat.Audio
 
         public double GetMaxInputThreshold()
         {
-            return MaxInputThreshold;
-        }
-
-        public void SetMaxInputThreshold(double maxInputThreshold)
-        {
-            int inputThreshold = (int)(GetInputThreshold() / MaxInputThreshold * 100);
-            MaxInputThreshold = maxInputThreshold / 100;
-            SetThreshold(inputThreshold);
+            return maxInputThreshold;
         }
 
         public double GetInputThreshold()
@@ -82,24 +78,24 @@ namespace RPVoiceChat.Audio
             return inputThreshold;
         }
 
-        public void SetThreshold(int threshold)
+        public void SetThreshold(float threshold)
         {
-            inputThreshold = (threshold / 100.0) * MaxInputThreshold;
+            inputThreshold = threshold * maxInputThreshold;
         }
 
-        public void SetGain(int newGain)
+        public void SetGain(float newGain)
         {
-            gain = newGain / 100f;
+            gain = newGain;
         }
 
-        public void SetDenoisingSensitivity(int sensitivity)
+        public void SetDenoisingSensitivity(float sensitivity)
         {
-            denoiser?.SetBackgroundNoiseThreshold(sensitivity / 100f);
+            denoiser?.SetBackgroundNoiseThreshold(sensitivity);
         }
 
-        public void SetDenoisingStrength(int strength)
+        public void SetDenoisingStrength(float strength)
         {
-            denoiser?.SetVoiceDenoisingStrength(strength / 100f);
+            denoiser?.SetVoiceDenoisingStrength(strength);
         }
 
         private void CaptureAudio(object cancellationToken)
@@ -132,16 +128,26 @@ namespace RPVoiceChat.Audio
             var sampleBuffer = new byte[bufferLength];
             capture.ReadSamples(sampleBuffer, samplesToRead);
 
-            bool isMuted = config.IsMuted;
+            bool isMuted = ClientSettings.IsMuted;
             bool isSleeping = clientEntity.AnimManager.IsAnimationActive("sleep");
-            if (isMuted || isSleeping || !clientEntity.Alive) return;
+            if (isMuted || isSleeping || !clientEntity.Alive)
+            {
+                if (recentAmplitudes.Count == 0) return;
+                recentAmplitudes.Clear();
+                Amplitude = 0;
+                Transmitting = false;
+                TransmissionStateChanged?.Invoke();
+                transmittingOnPreviousStep = Transmitting;
+                stepsSinceLastTransmission = deactivationWindow;
+                return;
+            }
 
             AudioData data = ProcessAudio(sampleBuffer);
             TransmitAudio(data);
         }
 
         /// <summary>
-        /// Converts audio to Mono16, applies gain, applies denoising, calculates amplitude and applies encoding
+        /// Converts audio to Mono16, applies denoising, applies gain, calculates amplitude and encodes the result
         /// </summary>
         private AudioData ProcessAudio(byte[] rawSamples)
         {
@@ -149,11 +155,12 @@ namespace RPVoiceChat.Audio
             var pcmCount = rawSamples.Length / rawSampleSize;
             short[] pcms = new short[pcmCount];
             int[] usedChannels = DetectAudioChannels(rawSamples);
+            double peakPcmValue = 1;
 
+            // Convert audio to mono, find peaks
             for (var rawSampleIndex = 0; rawSampleIndex < rawSamples.Length; rawSampleIndex += rawSampleSize)
             {
                 double pcm = 0;
-
                 for (var channelIndex = 0; channelIndex < InputChannelCount; channelIndex++)
                 {
                     if (!usedChannels.Contains(channelIndex)) continue;
@@ -161,22 +168,35 @@ namespace RPVoiceChat.Audio
                     var sample = BitConverter.ToInt16(rawSamples, sampleIndex);
                     pcm += sample;
                 }
-                pcm = pcm / Math.Max(usedChannels.Length, 1);
-                pcm = pcm * gain;
+                pcm /= Math.Max(usedChannels.Length, 1);
+
+                var abs = Math.Abs(pcm);
+                if (abs > peakPcmValue) peakPcmValue = abs;
 
                 var pcmIndex = rawSampleIndex / rawSampleSize;
-                pcms[pcmIndex] = (short)GameMath.Clamp(pcm, short.MinValue, short.MaxValue);
+                pcms[pcmIndex] = (short)pcm;
             }
 
-            if (config.IsDenoisingEnabled && denoiser != null && denoiser.SupportsFormat(Frequency, OutputChannelCount, SampleSize * 8))
+            // Calculate volume amplification
+            float maxSafeGain = Math.Min(gain, (float)(maxSampleValue / peakPcmValue));
+            recentGainLimits.Add(maxSafeGain);
+            if (recentGainLimits.Count > 10) recentGainLimits.RemoveAt(0);
+            float volumeAmplification = Math.Min(maxSafeGain, recentGainLimits.Average());
+
+            // Denoise audio if applicable
+            if (ClientSettings.Denoising && denoiser?.SupportsFormat(Frequency, OutputChannelCount, SampleSize * 8) == true)
                 denoiser.Denoise(ref pcms);
 
+            // Amplify volume and calculate amplitude
             double sampleSquareSum = 0;
             for (var i = 0; i < pcms.Length; i++)
+            {
+                pcms[i] = (short)GameMath.Clamp(pcms[i] * volumeAmplification, short.MinValue, short.MaxValue);
                 sampleSquareSum += Math.Pow((float)pcms[i] / short.MaxValue, 2);
-
+            }
             var amplitude = Math.Sqrt(sampleSquareSum / pcmCount);
 
+            // Encode audio
             byte[] encodedAudio = codec.Encode(pcms);
 
             return new AudioData()
@@ -192,31 +212,28 @@ namespace RPVoiceChat.Audio
 
         private void TransmitAudio(AudioData data)
         {
-            Amplitude = data.amplitude;
-            recentAmplitudes.Add(Amplitude);
+            // Smooth out amplitude changes
+            recentAmplitudes.Add(data.amplitude);
+            if (recentAmplitudes.Count > 3) recentAmplitudes.RemoveAt(0);
+            Amplitude = Math.Max(data.amplitude, recentAmplitudes.Average());
 
-            if (recentAmplitudes.Count > 3)
-            {
-                recentAmplitudes.RemoveAt(0);
-                AmplitudeAverage = recentAmplitudes.Average();
-            }
-
-            // Handle Push to Talk
+            // Check if activation conditions are met
             bool isPTTKeyPressed = capi.Input.KeyboardKeyState[capi.Input.GetHotKeyByCode("voicechatPTT").CurrentMapping.KeyCode];
-            bool isAboveInputThreshold = Amplitude >= inputThreshold || AmplitudeAverage >= inputThreshold;
-            Transmitting = config.PushToTalkEnabled ? isPTTKeyPressed : isAboveInputThreshold;
+            bool isAboveInputThreshold = Amplitude >= inputThreshold;
+            Transmitting = ClientSettings.PushToTalkEnabled ? isPTTKeyPressed : isAboveInputThreshold;
 
-            if (Transmitting)
-            {
-                if (!TransmittingOnPreviousStep) ClientStartTalking?.Invoke();
-                OnBufferRecorded?.Invoke(data);
-            }
-            else if (TransmittingOnPreviousStep)
-            {
-                ClientStopTalking?.Invoke();
-            }
+            // Apply deactivation timeout
+            stepsSinceLastTransmission++;
+            if (Transmitting) stepsSinceLastTransmission = 0;
+            Transmitting = stepsSinceLastTransmission < deactivationWindow;
 
-            TransmittingOnPreviousStep = Transmitting;
+            // Trigger notifcation when start/stop transmitting
+            if (Transmitting != transmittingOnPreviousStep)
+                TransmissionStateChanged?.Invoke();
+            transmittingOnPreviousStep = Transmitting;
+
+            // Transmit
+            if (Transmitting) OnBufferRecorded?.Invoke(data);
         }
 
         private IAudioCapture CreateNewCapture(string deviceName, ALFormat? captureFormat = null)
@@ -240,8 +257,7 @@ namespace RPVoiceChat.Audio
                 Logger.client.Error($"Could not create audio capture device {deviceName} in {format} format:\n{e}");
             }
             SetInputFormat(format);
-            config.CurrentInputDevice = deviceName ?? "Default";
-            ModConfig.Save(capi);
+            ClientSettings.CurrentInputDevice = deviceName ?? "Default";
 
             return newCapture;
         }
@@ -263,7 +279,7 @@ namespace RPVoiceChat.Audio
             IDenoiser denoiser = null;
             try
             {
-                denoiser = new RNNoiseDenoiser(config.BackgroungNoiseThreshold, config.VoiceDenoisingStrength);
+                denoiser = new RNNoiseDenoiser(ClientSettings.BackgroundNoiseThreshold, ClientSettings.VoiceDenoisingStrength);
                 IsDenoisingAvailable = true;
             }
             catch (DllNotFoundException)
@@ -287,7 +303,6 @@ namespace RPVoiceChat.Audio
 
         private void SetInputFormat(ALFormat format)
         {
-            InputFormat = format;
             InputChannelCount = AudioUtils.ChannelsPerFormat(format);
         }
 
@@ -322,7 +337,7 @@ namespace RPVoiceChat.Audio
                 }
             }
 
-            bool guessUsedChannels = ClientSettings.GetBool("channelGuessing", true);
+            bool guessUsedChannels = ClientSettings.ChannelGuessing;
             for (var channelIndex = 0; channelIndex < InputChannelCount; channelIndex++)
             {
                 var averageSampleValue = sampleSums[channelIndex] / depth;

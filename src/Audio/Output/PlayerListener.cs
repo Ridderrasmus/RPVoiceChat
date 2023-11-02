@@ -11,14 +11,11 @@ namespace RPVoiceChat.Audio
         public static void Init(ICoreClientAPI api)
         {
             capi = api;
-            SetGain(ModConfig.Config.OutputGain);
-
-            ModConfig.ConfigUpdated += OnConfigUpdate;
+            SetGain(ClientSettings.OutputGain);
         }
 
         public static void SetGain(float newGain)
         {
-            newGain /= 100f;
             if (newGain == gain) return;
 
             gain = newGain;
@@ -31,16 +28,10 @@ namespace RPVoiceChat.Audio
             OALW.Listener(ALListenerf.Gain, gain);
         }
 
-        private static void OnConfigUpdate()
-        {
-            SetGain(ModConfig.Config.OutputGain);
-        }
-
         public static void Dispose()
         {
             capi = null;
             gain = 1;
-            ModConfig.ConfigUpdated -= OnConfigUpdate;
         }
     }
 }

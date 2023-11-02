@@ -10,6 +10,7 @@ namespace RPVoiceChat
 
         public override void StartPre(ICoreAPI api)
         {
+            ClientSettings.Init(api);
             ModConfig.ReadConfig(api);
             config = ModConfig.Config;
             WorldConfig.Init(api);

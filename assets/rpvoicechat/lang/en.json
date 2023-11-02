@@ -53,7 +53,7 @@
     "Gui.ModMenu.outputGain.Label": "Players Volume Level",
     "Gui.ModMenu.outputGain.Tooltip": "How much to increase volume of other players",
     "Gui.ModMenu.inputGain.Label": "Recording Volume",
-    "Gui.ModMenu.inputGain.Tooltip": "Changes your own volume. Going over 100% may clip and distort your audio, if your mic is too low increase the volume in your OS settings instead!",
+    "Gui.ModMenu.inputGain.Tooltip": "Changes your own volume",
     "Gui.ModMenu.inputThreshold.Label": "Audio Input Threshold",
     "Gui.ModMenu.inputThreshold.Tooltip": "At which threshold your audio starts transmitting",
     "Gui.ModMenu.audioMeter.Label": "Audio Meter",
