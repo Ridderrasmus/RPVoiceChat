@@ -21,6 +21,7 @@ namespace RPVoiceChat
                 else
                 {
                     GenerateConfig(api, Config);
+                    Config = LoadConfig(api);
                 }
             }
             catch
@@ -37,6 +38,6 @@ namespace RPVoiceChat
 
         private static RPVoiceChatConfig LoadConfig(ICoreAPI api) => api.LoadModConfig<RPVoiceChatConfig>(ConfigFileName);
         private static void GenerateConfig(ICoreAPI api) => api.StoreModConfig(new RPVoiceChatConfig(), ConfigFileName);
-        private static void GenerateConfig(ICoreAPI api, RPVoiceChatConfig previousConfig) => api.StoreModConfig(new RPVoiceChatConfig(previousConfig), ConfigFileName);
+        private static void GenerateConfig(ICoreAPI api, RPVoiceChatConfig previousConfig) => api.StoreModConfig(new RPVoiceChatConfig(api.Side, previousConfig), ConfigFileName);
     }
 }

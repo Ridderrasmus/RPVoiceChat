@@ -1,7 +1,12 @@
+using System;
+using Vintagestory.API.Common;
+
 namespace RPVoiceChat
 {
     public class RPVoiceChatConfig
     {
+        private const string _version = "v1";
+        public string Version;
 
         // --- Shared Config ---
         // These are meant to be set by anyone and
@@ -27,8 +32,9 @@ namespace RPVoiceChat
 
         public RPVoiceChatConfig() { }
 
-        public RPVoiceChatConfig(RPVoiceChatConfig previousConfig)
+        public RPVoiceChatConfig(EnumAppSide side, RPVoiceChatConfig previousConfig)
         {
+            Version = previousConfig.Version;
             ManualPortForwarding = previousConfig.ManualPortForwarding;
 
             ServerPort = previousConfig.ServerPort;
@@ -41,6 +47,14 @@ namespace RPVoiceChat
             IsMuted = previousConfig.IsMuted;
             InputThreshold = previousConfig.InputThreshold;
             CurrentInputDevice = previousConfig.CurrentInputDevice;
+
+            if (Version != _version)
+                UpdateConfigVersion(side);
+        }
+
+        public void UpdateConfigVersion(EnumAppSide side)
+        {
+            Version = _version;
         }
     }
 }
