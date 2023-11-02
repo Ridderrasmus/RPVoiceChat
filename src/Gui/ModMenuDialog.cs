@@ -381,17 +381,18 @@ namespace RPVoiceChat.Gui
 
             var outputGain = ClientSettings.OutputGain * 100;
             var inputGainDBS = AudioUtils.FactorToDBs(ClientSettings.InputGain) * 10;
+            var inputThreshold = ClientSettings.InputThreshold * 100;
             var denoisingSensitivity = ClientSettings.BackgroundNoiseThreshold * 100;
             var denoisingStrength = ClientSettings.VoiceDenoisingStrength * 100;
             SetValue("configTabs", ClientSettings.ActiveConfigTab);
-            SetValue("inputDevice", _config.CurrentInputDevice ?? "Default");
-            SetValue("togglePushToTalk", _config.PushToTalkEnabled);
-            SetValue("muteMicrophone", _config.IsMuted);
-            SetValue("loopback", _config.IsLoopbackEnabled);
+            SetValue("inputDevice", ClientSettings.CurrentInputDevice ?? "Default");
+            SetValue("togglePushToTalk", ClientSettings.PushToTalkEnabled);
+            SetValue("muteMicrophone", ClientSettings.IsMuted);
+            SetValue("loopback", ClientSettings.Loopback);
             SetValue("outputGain", new dynamic[] { outputGain, 0, 200, 1, "%" });
             SetValue("inputGain", new dynamic[] { inputGainDBS, -200, 200, 1, "" });
-            SetValue("inputThreshold", new dynamic[] { _config.InputThreshold, 0, 100, 1, "" });
-            SetValue("toggleHUD", _config.IsHUDShown);
+            SetValue("inputThreshold", new dynamic[] { inputThreshold, 0, 100, 1, "" });
+            SetValue("toggleHUD", ClientSettings.ShowHud);
             SetValue("toggleMuffling", ClientSettings.Muffling);
             SetValue("toggleDenoising", ClientSettings.Denoising);
             SetValue("denoisingSensitivity", new dynamic[] { denoisingSensitivity, 0, 100, 1, "%" });
@@ -425,21 +426,18 @@ namespace RPVoiceChat.Gui
 
         private void OnTogglePushToTalk(bool enabled)
         {
-            _config.PushToTalkEnabled = enabled;
-            ModConfig.Save(capi);
+            ClientSettings.PushToTalkEnabled = enabled;
         }
 
         private void OnToggleMuted(bool enabled)
         {
-            _config.IsMuted = enabled;
-            ModConfig.Save(capi);
+            ClientSettings.IsMuted = enabled;
             capi.Event.PushEvent("rpvoicechat:hudUpdate");
         }
 
         protected void OnToggleLoopback(bool enabled)
         {
-            _config.IsLoopbackEnabled = enabled;
-            ModConfig.Save(capi);
+            ClientSettings.Loopback = enabled;
             _audioOutputManager.IsLoopbackEnabled = enabled;
         }
 
@@ -478,19 +476,18 @@ namespace RPVoiceChat.Gui
             return $"{dBValueAsText}dB";
         }
 
-        private bool SlideInputThreshold(int threshold)
+        private bool SlideInputThreshold(int intThreshold)
         {
-            _config.InputThreshold = threshold;
+            float threshold = (float)intThreshold / 100;
+            ClientSettings.InputThreshold = threshold;
             _audioInputManager.SetThreshold(threshold);
-            ModConfig.Save(capi);
 
             return true;
         }
 
         private void OnToggleHUD(bool enabled)
         {
-            _config.IsHUDShown = enabled;
-            ModConfig.Save(capi);
+            ClientSettings.ShowHud = enabled;
             capi.Event.PushEvent("rpvoicechat:hudUpdate");
         }
 

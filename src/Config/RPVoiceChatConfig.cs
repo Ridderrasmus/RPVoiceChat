@@ -23,15 +23,18 @@ namespace RPVoiceChat
         // --- Client Settings ---
         // These are meant to be set by the client, but are
         // stored here for persistence across sessions
+        [Obsolete("This setting was moved into ClientSettings and only kept here for backwards compatibility. It will soon be removed.")]
         public bool PushToTalkEnabled = false;
-        public bool IsLoopbackEnabled = false;
-        public bool IsHUDShown = true;
+        [Obsolete("This setting was moved into ClientSettings and only kept here for backwards compatibility. It will soon be removed.")]
         public bool IsMuted = false;
+        [Obsolete("This setting was moved into ClientSettings and only kept here for backwards compatibility. It will soon be removed.")]
         public int InputThreshold = 20;
+        [Obsolete("This setting was moved into ClientSettings and only kept here for backwards compatibility. It will soon be removed.")]
         public string CurrentInputDevice;
 
         public RPVoiceChatConfig() { }
 
+#pragma warning disable CS0618 // Type or member is obsolete
         public RPVoiceChatConfig(EnumAppSide side, RPVoiceChatConfig previousConfig)
         {
             Version = previousConfig.Version;
@@ -42,8 +45,6 @@ namespace RPVoiceChat
             AdditionalContent = previousConfig.AdditionalContent;
 
             PushToTalkEnabled = previousConfig.PushToTalkEnabled;
-            IsLoopbackEnabled = previousConfig.IsLoopbackEnabled;
-            IsHUDShown = previousConfig.IsHUDShown;
             IsMuted = previousConfig.IsMuted;
             InputThreshold = previousConfig.InputThreshold;
             CurrentInputDevice = previousConfig.CurrentInputDevice;
@@ -54,7 +55,13 @@ namespace RPVoiceChat
 
         public void UpdateConfigVersion(EnumAppSide side)
         {
+            if (side == EnumAppSide.Server) return;
+            ClientSettings.PushToTalkEnabled = PushToTalkEnabled;
+            ClientSettings.IsMuted = IsMuted;
+            ClientSettings.InputThreshold = (float)InputThreshold / 100;
+            ClientSettings.CurrentInputDevice = CurrentInputDevice;
             Version = _version;
         }
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 }

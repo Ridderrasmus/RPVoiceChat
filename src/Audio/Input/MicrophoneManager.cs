@@ -44,7 +44,6 @@ namespace RPVoiceChat.Audio
         private int stepsSinceLastTransmission = deactivationWindow;
         private bool transmittingOnPreviousStep = false;
         private ICoreClientAPI capi;
-        private RPVoiceChatConfig config;
         private VoiceLevel voiceLevel = VoiceLevel.Talking;
         private double inputThreshold;
         private double maxInputThreshold = _maxVolume / 2;
@@ -55,12 +54,11 @@ namespace RPVoiceChat.Audio
             audioCaptureThread = new Thread(CaptureAudio);
             audioCaptureCTS = new CancellationTokenSource();
             this.capi = capi;
-            config = ModConfig.Config;
-            SetThreshold(config.InputThreshold);
+            SetThreshold(ClientSettings.InputThreshold);
             SetGain(ClientSettings.InputGain);
             SetOutputFormat(ALFormat.Mono16);
             SetCodec(OpusCodec._Name);
-            capture = CreateNewCapture(config.CurrentInputDevice);
+            capture = CreateNewCapture(ClientSettings.CurrentInputDevice);
             denoiser = TryLoadDenoiser();
         }
 
@@ -80,9 +78,9 @@ namespace RPVoiceChat.Audio
             return inputThreshold;
         }
 
-        public void SetThreshold(int threshold)
+        public void SetThreshold(float threshold)
         {
-            inputThreshold = (threshold / 100.0) * maxInputThreshold;
+            inputThreshold = threshold * maxInputThreshold;
         }
 
         public void SetGain(float newGain)
@@ -130,7 +128,7 @@ namespace RPVoiceChat.Audio
             var sampleBuffer = new byte[bufferLength];
             capture.ReadSamples(sampleBuffer, samplesToRead);
 
-            bool isMuted = config.IsMuted;
+            bool isMuted = ClientSettings.IsMuted;
             bool isSleeping = clientEntity.AnimManager.IsAnimationActive("sleep");
             if (isMuted || isSleeping || !clientEntity.Alive)
             {
@@ -222,7 +220,7 @@ namespace RPVoiceChat.Audio
             // Check if activation conditions are met
             bool isPTTKeyPressed = capi.Input.KeyboardKeyState[capi.Input.GetHotKeyByCode("voicechatPTT").CurrentMapping.KeyCode];
             bool isAboveInputThreshold = Amplitude >= inputThreshold;
-            Transmitting = config.PushToTalkEnabled ? isPTTKeyPressed : isAboveInputThreshold;
+            Transmitting = ClientSettings.PushToTalkEnabled ? isPTTKeyPressed : isAboveInputThreshold;
 
             // Apply deactivation timeout
             stepsSinceLastTransmission++;
@@ -259,8 +257,7 @@ namespace RPVoiceChat.Audio
                 Logger.client.Error($"Could not create audio capture device {deviceName} in {format} format:\n{e}");
             }
             SetInputFormat(format);
-            config.CurrentInputDevice = deviceName ?? "Default";
-            ModConfig.Save(capi);
+            ClientSettings.CurrentInputDevice = deviceName ?? "Default";
 
             return newCapture;
         }

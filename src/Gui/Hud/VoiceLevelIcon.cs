@@ -58,7 +58,7 @@ namespace RPVoiceChat.Gui
 
         private void UpdateDisplay()
         {
-            bool shouldDisplay = ModConfig.Config.IsHUDShown;
+            bool shouldDisplay = ClientSettings.ShowHud;
             bool successful = shouldDisplay ? TryOpen() : TryClose();
 
             if (!successful) bindToMainThread(UpdateDisplay)();

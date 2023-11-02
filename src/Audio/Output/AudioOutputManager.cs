@@ -12,7 +12,6 @@ namespace RPVoiceChat.Audio
     public class AudioOutputManager : IDisposable
     {
         ICoreClientAPI capi;
-        RPVoiceChatConfig _config;
         private bool isLoopbackEnabled;
         public bool IsLoopbackEnabled
         {
@@ -41,8 +40,7 @@ namespace RPVoiceChat.Audio
 
         public AudioOutputManager(ICoreClientAPI api, ClientSettingsRepository settingsRepository)
         {
-            _config = ModConfig.Config;
-            IsLoopbackEnabled = _config.IsLoopbackEnabled;
+            IsLoopbackEnabled = ClientSettings.Loopback;
             capi = api;
             clientSettings = settingsRepository;
         }

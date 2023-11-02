@@ -8,7 +8,6 @@ namespace RPVoiceChat.Gui
     public class SpeechIndicator : HudElement
     {
         private const float size = 64;
-        private RPVoiceChatConfig config;
         private MicrophoneManager audioInputManager;
         private ElementBounds dialogBounds = new ElementBounds()
         {
@@ -23,7 +22,6 @@ namespace RPVoiceChat.Gui
 
         public SpeechIndicator(ICoreClientAPI capi, MicrophoneManager microphoneManager) : base(capi)
         {
-            config = ModConfig.Config;
             audioInputManager = microphoneManager;
 
             GuiDialogCreateCharacterPatch.OnCharacterSelection += bindToMainThread(UpdateVoiceType);
@@ -55,7 +53,7 @@ namespace RPVoiceChat.Gui
         private void UpdateDisplay()
         {
             bool isTalking = audioInputManager.Transmitting;
-            bool shouldDisplay = (config.IsMuted || isTalking) && config.IsHUDShown;
+            bool shouldDisplay = (ClientSettings.IsMuted || isTalking) && ClientSettings.ShowHud;
             bool successful = shouldDisplay ? TryOpen() : TryClose();
 
             if (!successful) bindToMainThread(UpdateDisplay)();
@@ -65,7 +63,7 @@ namespace RPVoiceChat.Gui
         {
             SingleComposer = capi.Gui.CreateCompo("rpvcspeechindicator", dialogBounds)
                 .AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation("rpvoicechat", "textures/gui/" + voiceType + ".png"))
-                .AddIf(config.IsMuted)
+                .AddIf(ClientSettings.IsMuted)
                 .AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation("rpvoicechat", "textures/gui/muted.png"))
                 .EndIf()
                 .Compose();

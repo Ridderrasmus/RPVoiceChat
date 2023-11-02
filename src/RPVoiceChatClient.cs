@@ -103,8 +103,7 @@ namespace RPVoiceChat
 
                 mutePressed = true;
 
-                config.IsMuted = !config.IsMuted;
-                ModConfig.Save(capi);
+                ClientSettings.IsMuted = !ClientSettings.IsMuted;
                 capi.Event.PushEvent("rpvoicechat:hudUpdate");
                 return true;
             });

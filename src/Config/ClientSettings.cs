@@ -7,12 +7,18 @@ namespace RPVoiceChat
     {
         public static float OutputGain { get => GetFloat("outputGain", 1); set => Set("outputGain", value); }
         public static float InputGain { get => GetFloat("inputGain", 1); set => Set("inputGain", value); }
+        public static float InputThreshold { get => GetFloat("inputThreshold", 0.2f); set => Set("inputThreshold", value); }
         public static float BackgroundNoiseThreshold { get => GetFloat("denoisingSensitivity", 0.5f); set => Set("denoisingSensitivity", value); }
         public static float VoiceDenoisingStrength { get => GetFloat("denoisingStrength", 0.1f); set => Set("denoisingStrength", value); }
+        public static bool PushToTalkEnabled { get => GetBool("ptt", false); set => Set("ptt", value); }
+        public static bool IsMuted { get => GetBool("muteMic", false); set => Set("muteMic", value); }
+        public static bool Loopback { get => GetBool("loopback", false); set => Set("loopback", value); }
+        public static bool ShowHud { get => GetBool("showHud", true); set => Set("showHud", value); }
         public static bool Muffling { get => GetBool("muffling", true); set => Set("muffling", value); }
         public static bool Denoising { get => GetBool("denoising", false); set => Set("denoising", value); }
         public static bool ChannelGuessing { get => GetBool("channelGuessing", true); set => Set("channelGuessing", value); }
         public static int ActiveConfigTab { get => GetInt("activeConfigTab", 0); set => Set("activeConfigTab", value); }
+        public static string CurrentInputDevice { get => GetStr("inputDevice"); set => Set("inputDevice", value); }
 
         private const string modPrefix = "RPVoiceChat";
         private static ICoreClientAPI capi;
