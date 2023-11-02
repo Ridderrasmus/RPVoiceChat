@@ -23,7 +23,7 @@ namespace RPVoiceChat.Gui
         private const double sliderWidth = 200.0;
         private const int tooltipWidth = 260;
         private const int _tabTextPadding = 4;
-        private bool _isSetup;
+        private bool isSetup;
         private List<ConfigOption> ConfigOptions = new List<ConfigOption>();
         private List<ConfigTab> ConfigTabs = new List<ConfigTab>();
 
@@ -94,7 +94,7 @@ namespace RPVoiceChat.Gui
 
         protected void SetupDialog()
         {
-            _isSetup = true;
+            isSetup = true;
 
             var activeTab = ConfigTabs[ClientSettings.ActiveConfigTab];
             var displayedOptions = ConfigOptions.FindAll(e => e.Tab == activeTab && e.Enabled);
@@ -125,8 +125,7 @@ namespace RPVoiceChat.Gui
                 {
                     case ElementType.Slider:
                         var slider = new GuiElementSlider(capi, option.SlideAction, wideSettingBounds);
-                        if (option.SlideTooltip != null)
-                            slider.OnSliderTooltip = option.SlideTooltip;
+                        if (option.SlideTooltip != null) slider.OnSliderTooltip = option.SlideTooltip;
                         composer.AddInteractiveElement(slider, option.Key);
                         break;
 
@@ -166,7 +165,7 @@ namespace RPVoiceChat.Gui
 
         public override bool TryOpen()
         {
-            if (!_isSetup)
+            if (!isSetup)
                 SetupDialog();
 
             var success = base.TryOpen();
@@ -196,15 +195,13 @@ namespace RPVoiceChat.Gui
 
     public class ModMenuDialog : ConfigDialog
     {
-        private RPVoiceChatConfig _config;
-        private MicrophoneManager _audioInputManager;
-        private AudioOutputManager _audioOutputManager;
+        private MicrophoneManager audioInputManager;
+        private AudioOutputManager audioOutputManager;
 
-        public ModMenuDialog(ICoreClientAPI capi, MicrophoneManager audioInputManager, AudioOutputManager audioOutputManager, ClientSettingsRepository settingsRepository) : base(capi)
+        public ModMenuDialog(ICoreClientAPI capi, MicrophoneManager _audioInputManager, AudioOutputManager _audioOutputManager, ClientSettingsRepository settingsRepository) : base(capi)
         {
-            _config = ModConfig.Config;
-            _audioInputManager = audioInputManager;
-            _audioOutputManager = audioOutputManager;
+            audioInputManager = _audioInputManager;
+            audioOutputManager = _audioOutputManager;
 
             var audioInputTab = new ConfigTab("AudioInput");
             var audioOutputTab = new ConfigTab("AudioOutput");
@@ -226,8 +223,8 @@ namespace RPVoiceChat.Gui
                 Label = true,
                 Tooltip = true,
                 Tab = audioInputTab,
-                DropdownNames = _audioInputManager.GetInputDeviceNames(),
-                DropdownValues = _audioInputManager.GetInputDeviceNames(),
+                DropdownNames = audioInputManager.GetInputDeviceNames(),
+                DropdownValues = audioInputManager.GetInputDeviceNames(),
                 DropdownSelect = OnChangeInputDevice
             });
 
@@ -299,7 +296,7 @@ namespace RPVoiceChat.Gui
                 Label = true,
                 Tooltip = true,
                 Tab = audioInputTab,
-                CustomElement = new AudioMeter(capi, _audioInputManager, this)
+                CustomElement = new AudioMeter(capi, audioInputManager, this)
             });
 
             RegisterOption(new ConfigOption
@@ -421,7 +418,7 @@ namespace RPVoiceChat.Gui
 
         private void OnChangeInputDevice(string value, bool selected)
         {
-            _audioInputManager.SetInputDevice(value);
+            audioInputManager.SetInputDevice(value);
         }
 
         private void OnTogglePushToTalk(bool enabled)
@@ -438,7 +435,7 @@ namespace RPVoiceChat.Gui
         protected void OnToggleLoopback(bool enabled)
         {
             ClientSettings.Loopback = enabled;
-            _audioOutputManager.IsLoopbackEnabled = enabled;
+            audioOutputManager.IsLoopbackEnabled = enabled;
         }
 
         private bool SlideOutputGain(int intGain)
@@ -456,7 +453,7 @@ namespace RPVoiceChat.Gui
             float gain = AudioUtils.DBsToFactor(dBGain);
             if (intDBGain == -200) gain = 0;
             ClientSettings.InputGain = gain;
-            _audioInputManager.SetGain(gain);
+            audioInputManager.SetGain(gain);
 
             return true;
         }
@@ -480,7 +477,7 @@ namespace RPVoiceChat.Gui
         {
             float threshold = (float)intThreshold / 100;
             ClientSettings.InputThreshold = threshold;
-            _audioInputManager.SetThreshold(threshold);
+            audioInputManager.SetThreshold(threshold);
 
             return true;
         }
@@ -505,7 +502,7 @@ namespace RPVoiceChat.Gui
         {
             float sensitivity = (float)intSensitivity / 100;
             ClientSettings.BackgroundNoiseThreshold = sensitivity;
-            _audioInputManager.SetDenoisingSensitivity(sensitivity);
+            audioInputManager.SetDenoisingSensitivity(sensitivity);
 
             return true;
         }
@@ -514,7 +511,7 @@ namespace RPVoiceChat.Gui
         {
             float strength = (float)intStrength / 100;
             ClientSettings.VoiceDenoisingStrength = strength;
-            _audioInputManager.SetDenoisingStrength(strength);
+            audioInputManager.SetDenoisingStrength(strength);
 
             return true;
         }

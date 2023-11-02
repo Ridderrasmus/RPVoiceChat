@@ -21,7 +21,7 @@ namespace RPVoiceChat
 
         protected ICoreClientAPI capi;
 
-        private ModMenuDialog configGui;
+        private ModMenuDialog modMenuDialog;
 
         private bool isReady = false;
         private bool mutePressed = false;
@@ -61,7 +61,7 @@ namespace RPVoiceChat
             client = new PlayerNetworkClient(capi, networkTransports);
 
             // Initialize gui
-            configGui = new ModMenuDialog(capi, micManager, audioOutputManager, clientSettingsRepository);
+            modMenuDialog = new ModMenuDialog(capi, micManager, audioOutputManager, clientSettingsRepository);
             capi.Gui.RegisterDialog(new SpeechIndicator(capi, micManager));
             capi.Gui.RegisterDialog(new VoiceLevelIcon(capi, micManager));
             new PlayerNameTagRenderer(capi, audioOutputManager);
@@ -81,7 +81,7 @@ namespace RPVoiceChat
 
                 voiceMenuPressed = true;
 
-                configGui.Toggle();
+                modMenuDialog.Toggle();
                 return true;
             });
 
@@ -155,7 +155,7 @@ namespace RPVoiceChat
             audioOutputManager?.Dispose();
             patchManager?.Dispose();
             client?.Dispose();
-            configGui?.Dispose();
+            modMenuDialog?.Dispose();
             clientSettingsRepository?.Dispose();
         }
     }
