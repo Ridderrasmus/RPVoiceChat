@@ -433,6 +433,7 @@ namespace RPVoiceChat.Gui
         {
             _config.IsMuted = enabled;
             ModConfig.Save(capi);
+            capi.Event.PushEvent("rpvoicechat:hudUpdate");
         }
 
         protected void OnToggleLoopback(bool enabled)
@@ -490,6 +491,7 @@ namespace RPVoiceChat.Gui
         {
             _config.IsHUDShown = enabled;
             ModConfig.Save(capi);
+            capi.Event.PushEvent("rpvoicechat:hudUpdate");
         }
 
         private void OnToggleMuffling(bool enabled)

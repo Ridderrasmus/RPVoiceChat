@@ -1,4 +1,3 @@
-using System;
 using Vintagestory.API.Common;
 
 namespace RPVoiceChat
@@ -7,7 +6,6 @@ namespace RPVoiceChat
     {
         private const string ConfigFileName = "rpvoicechat.json";
         public static RPVoiceChatConfig Config { get; private set; }
-        public static event Action ConfigUpdated;
 
         public static void ReadConfig(ICoreAPI api)
         {
@@ -35,7 +33,6 @@ namespace RPVoiceChat
         public static void Save(ICoreAPI api)
         {
             GenerateConfig(api, Config);
-            ConfigUpdated?.Invoke();
         }
 
         private static RPVoiceChatConfig LoadConfig(ICoreAPI api) => api.LoadModConfig<RPVoiceChatConfig>(ConfigFileName);

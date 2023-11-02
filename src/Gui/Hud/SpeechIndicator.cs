@@ -28,7 +28,7 @@ namespace RPVoiceChat.Gui
 
             GuiDialogCreateCharacterPatch.OnCharacterSelection += bindToMainThread(UpdateVoiceType);
             microphoneManager.TransmissionStateChanged += bindToMainThread(UpdateDisplay);
-            ModConfig.ConfigUpdated += bindToMainThread(OnConfigUpdate);
+            capi.Event.RegisterEventBusListener(OnHudUpdate, 0.5, "rpvoicechat:hudUpdate");
         }
 
         public override void OnOwnPlayerDataReceived()
@@ -47,9 +47,9 @@ namespace RPVoiceChat.Gui
             return () => { capi.Event.EnqueueMainThreadTask(function, "rpvoicechat:SpeechIndicator"); };
         }
 
-        private void OnConfigUpdate()
+        private void OnHudUpdate(string _, ref EnumHandling __, object ___)
         {
-            SetupIcon();
+            bindToMainThread(SetupIcon)();
         }
 
         private void UpdateDisplay()
