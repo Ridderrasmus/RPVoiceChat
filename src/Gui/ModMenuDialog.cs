@@ -176,6 +176,12 @@ namespace RPVoiceChat.Gui
             return true;
         }
 
+        public override bool TryClose()
+        {
+            ClientSettings.Save();
+            return base.TryClose();
+        }
+
         private void OnTitleBarCloseClicked()
         {
             TryClose();

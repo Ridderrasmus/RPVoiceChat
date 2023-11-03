@@ -151,6 +151,7 @@ namespace RPVoiceChat
 
         public override void Dispose()
         {
+            ClientSettings.Save();
             micManager?.Dispose();
             audioOutputManager?.Dispose();
             patchManager?.Dispose();
