@@ -1,3 +1,4 @@
+using System;
 using Vintagestory.API.Common;
 
 namespace RPVoiceChat
@@ -11,24 +12,16 @@ namespace RPVoiceChat
         {
             try
             {
-                Config = LoadConfig(api);
-
-                if (Config == null)
-                {
-                    GenerateConfig(api);
-                    Config = LoadConfig(api);
-                }
-                else
-                {
-                    GenerateConfig(api, Config);
-                    Config = LoadConfig(api);
-                }
+                var config = LoadConfig(api) ?? new RPVoiceChatConfig();
+                GenerateConfig(api, config);
             }
-            catch
+            catch (Exception e)
             {
+                api.Logger.Warning($"[RPVoiceChat] Unable to load mod config, generating default one. Reason:\n{e}");
                 GenerateConfig(api);
-                Config = LoadConfig(api);
             }
+
+            Config = LoadConfig(api);
         }
 
         public static void Save(ICoreAPI api)
