@@ -218,7 +218,7 @@ namespace RPVoiceChat.Networking
                         _ => connection.SendAsync(selfPingPacket, _readinessProbeCTS.Token),
                         TaskContinuationOptions.OnlyOnRanToCompletion
                     );
-                Task.Delay(1000, _readinessProbeCTS.Token).GetAwaiter().GetResult();
+                Task.Delay(5000, _readinessProbeCTS.Token).GetAwaiter().GetResult();
             }
             catch (TaskCanceledException) { }
 

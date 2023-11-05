@@ -106,7 +106,7 @@ namespace RPVoiceChat.Networking
             try
             {
                 UdpClient.Send(selfPingPacket, selfPingPacket.Length, ownEndPoint);
-                Task.Delay(1000, _readinessProbeCTS.Token).GetAwaiter().GetResult();
+                Task.Delay(5000, _readinessProbeCTS.Token).GetAwaiter().GetResult();
             }
             catch (TaskCanceledException) { }
 
