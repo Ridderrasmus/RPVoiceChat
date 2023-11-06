@@ -105,6 +105,7 @@ namespace RPVoiceChat
 
                 ClientSettings.IsMuted = !ClientSettings.IsMuted;
                 capi.Event.PushEvent("rpvoicechat:hudUpdate");
+                ClientSettings.Save();
                 return true;
             });
 

@@ -36,13 +36,13 @@ namespace RPVoiceChat.Audio
 
         private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
         private PlayerAudioSource localPlayerAudioSource;
-        private ClientSettingsRepository clientSettings;
+        private ClientSettingsRepository clientSettingsRepo;
 
         public AudioOutputManager(ICoreClientAPI api, ClientSettingsRepository settingsRepository)
         {
             IsLoopbackEnabled = ClientSettings.Loopback;
             capi = api;
-            clientSettings = settingsRepository;
+            clientSettingsRepo = settingsRepository;
         }
 
         public void Launch()
@@ -95,7 +95,7 @@ namespace RPVoiceChat.Audio
 
         private void ClientLoaded()
         {
-            localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, capi, clientSettings)
+            localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, capi, clientSettingsRepo)
             {
                 IsLocational = false,
             };
@@ -118,7 +118,7 @@ namespace RPVoiceChat.Audio
 
         private PlayerAudioSource CreatePlayerSource(IPlayer player)
         {
-            var source = new PlayerAudioSource(player, capi, clientSettings);
+            var source = new PlayerAudioSource(player, capi, clientSettingsRepo);
             playerSources.AddOrUpdate(player.PlayerUID, source, (_, __) => source);
             source.StartPlaying();
 
