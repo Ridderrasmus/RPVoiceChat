@@ -35,24 +35,13 @@ You can configure your microphone volume and the volume of everyone else in your
 The mod is highly configurable and can be configured more deeply in the modconfig file. You'll find this file in the `ModConfig` folder in the same directory as your `Mods` folder. The file is called `rpvoicechat.json`.
 
 The settings relevant to users are:
-- `ManualPortForwarding` - Determines whether the mod should skip port forwarding with UPnP and assume that ports are open. The default value is `false`.
-- `PushToTalkEnabled` - Whether push to talk is enabled. The default value is `false`.
-- `IsLoopbackEnabled` - The setting that defines whether you should be able to hear what you're transmitting. The default value is `false`.
-- `IsDenoisingEnabled` - Whether or not your audio should be denoised. The default value is `false`.
-- `IsHUDShown` - Whether or not the HUD should be shown. The default value is `true`.
-- `IsMuted` - Whether or not you are muted. The default value is `false`.
-- `OutputGain` - The volume level of other players in percent (0-200). The default value is `100`.
-- `InputGain` - The volume level of your microphone in percent (0-400). The default value is `100`.
-- `InputThreshold` - The current setting of your audio input threshold in percent (0-100). The default value is `20`.
-- `BackgroungNoiseThreshold` - Sensitivity of the denoiser in percent (0-100). 0 means all audio is voice, 100 means all audio is noise. If audio is detected as noise it will be denoised at max strength. The default value is `50`.
-- `VoiceDenoisingStrength` - Intensity of voice denoising in percent (0-100). Low value won't remove noise when you are speaking, high value may decrease audio quality. The default value is `80`.
-- `MaxInputThreshold` - This configures how finely tuned the input threshold should be. The smaller number the more sensitive the input will be. The default value is `0.24`.
+- `ManualPortForwarding` - Determines whether the mod should skip port forwarding with UPnP and assume that ports are open. **Setting this to true means that you take full responsibility for opening ports and if they are not open mod will work incorrectly.** The default value is `false`.
  
 ## <a name="configuration-server"></a>Configuration (For server owners)
 The mod is highly configurable and can be configured more deeply in the modconfig file. You'll find this file in the `ModConfig` folder in the same directory as your `Mods` folder. The file is called `rpvoicechat.json`.
 
 The settings relevant to server owners are:
-- `ManualPortForwarding` - Determines whether the mod should skip port forwarding with UPnP and assume that ports are open. The default value is `false`.
+- `ManualPortForwarding` - Determines whether the mod should skip port forwarding with UPnP and assume that ports are open. **Setting this to true means that you take full responsibility for opening ports and if they are not open mod will work incorrectly.** The default value is `false`.
 - `ServerPort` - The port to use for the voice networking. The default value is `52525`.
 - `ServerIP` - The ip for clients to connect to. Leave it as is unless you are playing through LAN, in which case set it to address of your private network(e.g. `"25.95.127.13"`). The default value is `null`.
 - `AdditionalContent` - Whether additional modded content(bells, horns, etc) should be enabled. The default value is `true`.

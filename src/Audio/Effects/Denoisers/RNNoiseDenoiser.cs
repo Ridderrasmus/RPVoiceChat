@@ -46,6 +46,7 @@ namespace RPVoiceChat.Audio.Effects
                 {
                     var remainingDataLength = rawAudio.Length - offset;
                     var denoisedAudio = new float[FRAME_SIZE];
+                    var frameLength = FRAME_SIZE;
                     using (var denoisedBuffer = new PointerSource(denoisedAudio))
                     {
                         var inPtr = pcmBuffer.ptr + offset * sizeof(float);
@@ -54,7 +55,8 @@ namespace RPVoiceChat.Audio.Effects
                         // If last frame is too small right pad it with zeros
                         if (remainingDataLength < FRAME_SIZE)
                         {
-                            Array.Copy(rawAudio, offset, denoisedAudio, 0, remainingDataLength);
+                            frameLength = remainingDataLength;
+                            Array.Copy(rawAudio, offset, denoisedAudio, 0, frameLength);
                             inPtr = outPtr;
                         }
 
@@ -64,7 +66,7 @@ namespace RPVoiceChat.Audio.Effects
                             for (var i = 0; i < denoisedAudio.Length; i++)
                                 denoisedAudio[i] = denoisedAudio[i] * strength + rawAudio[offset + i] * (1 - strength);
 
-                        denoisedAudio.CopyTo(rawAudio, offset);
+                        Array.Copy(denoisedAudio, 0, rawAudio, offset, frameLength);
                     }
                 }
             }

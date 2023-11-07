@@ -10,7 +10,7 @@ namespace RPVoiceChat.Server
     {
         private ICoreServerAPI api;
         private List<INetworkServer> _initialTransports;
-        private List<INetworkServer> activeServers;
+        private List<INetworkServer> activeServers = new List<INetworkServer>();
         private IServerNetworkChannel handshakeChannel;
         private Dictionary<string, INetworkServer> serverByTransportID = new Dictionary<string, INetworkServer>();
         private ConnectionRequest connectionRequest;

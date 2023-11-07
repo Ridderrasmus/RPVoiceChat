@@ -32,7 +32,7 @@ namespace RPVoiceChat.Gui
             currentVoiceLevel = microphoneManager.GetVoiceLevel();
 
             microphoneManager.VoiceLevelUpdated += OnVoiceLevelUpdated;
-            ModConfig.ConfigUpdated += bindToMainThread(OnConfigUpdate);
+            capi.Event.RegisterEventBusListener(OnHudUpdate, 0.5, "rpvoicechat:hudUpdate");
         }
 
         public override void OnOwnPlayerDataReceived()
@@ -51,14 +51,14 @@ namespace RPVoiceChat.Gui
             bindToMainThread(SetupIcon)();
         }
 
-        private void OnConfigUpdate()
+        private void OnHudUpdate(string _, ref EnumHandling __, object ___)
         {
-            SetupIcon();
+            bindToMainThread(SetupIcon)();
         }
 
         private void UpdateDisplay()
         {
-            bool shouldDisplay = ModConfig.Config.IsHUDShown;
+            bool shouldDisplay = ClientSettings.ShowHud;
             bool successful = shouldDisplay ? TryOpen() : TryClose();
 
             if (!successful) bindToMainThread(UpdateDisplay)();

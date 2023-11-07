@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Server;
 
 namespace RPVoiceChat
 {
@@ -16,6 +18,7 @@ namespace RPVoiceChat
 
         public static void Init(ICoreAPI api)
         {
+            if (api is ICoreClientAPI && WorldConfig.api is ICoreServerAPI) return;
             WorldConfig.api = api;
         }
 

@@ -31,7 +31,7 @@ namespace RPVoiceChat.Audio
 
         private ICoreClientAPI capi;
         private IPlayer player;
-        private ClientSettingsRepository clientSettings;
+        private ClientSettingsRepository clientSettingsRepo;
 
         public bool IsLocational { get; set; } = true;
         public VoiceLevel voiceLevel { get; private set; } = VoiceLevel.Talking;
@@ -44,12 +44,12 @@ namespace RPVoiceChat.Audio
         private Vec3f lastSpeakerCoords;
         private DateTime? lastSpeakerUpdate;
 
-        public PlayerAudioSource(IPlayer player, ICoreClientAPI capi, ClientSettingsRepository clientSettings, EffectsExtension effectsExtension)
+        public PlayerAudioSource(IPlayer player, ICoreClientAPI capi, ClientSettingsRepository clientSettingsRepo, EffectsExtension effectsExtension)
         {
             this.effectsExtension = effectsExtension;
             this.player = player;
             this.capi = capi;
-            this.clientSettings = clientSettings;
+            this.clientSettingsRepo = clientSettingsRepo;
 
             lastSpeakerCoords = player.Entity?.SidedPos?.XYZFloat;
             lastSpeakerUpdate = DateTime.Now;
@@ -98,7 +98,7 @@ namespace RPVoiceChat.Audio
                 return;
 
             // If the player is on the other side of something to the listener, then the player's voice should be muffled
-            bool mufflingEnabled = ClientSettings.GetBool("muffling", true);
+            bool mufflingEnabled = ClientSettings.Muffling;
             float wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
             if (capi.World.Player.Entity.Swimming)
                 wallThickness += 1.0f;
@@ -157,7 +157,7 @@ namespace RPVoiceChat.Audio
         private float GetFinalGain()
         {
             var globalGain = Math.Min(PlayerListener.gain, 1);
-            var sourceGain = clientSettings.GetPlayerGain(player.PlayerUID);
+            var sourceGain = clientSettingsRepo.GetPlayerGain(player.PlayerUID);
             var finalGain = GameMath.Clamp(globalGain * sourceGain, 0, 1);
 
             return finalGain;
@@ -244,6 +244,10 @@ namespace RPVoiceChat.Audio
                 }
 
                 if (codec != null) audio.data = codec.Decode(audio.data);
+
+                int maxFadeDuration = 2 * audio.frequency / 1000; // 2ms
+                AudioUtils.FadeEdges(audio.data, maxFadeDuration);
+
                 buffer.QueueAudio(audio.data, audio.format, audio.frequency);
 
                 // The source can stop playing if it finishes everything in queue

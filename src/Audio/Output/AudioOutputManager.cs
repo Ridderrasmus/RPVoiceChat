@@ -13,7 +13,6 @@ namespace RPVoiceChat.Audio
     public class AudioOutputManager : IDisposable
     {
         ICoreClientAPI capi;
-        RPVoiceChatConfig _config;
         private bool isLoopbackEnabled;
         public bool IsLoopbackEnabled
         {
@@ -39,15 +38,14 @@ namespace RPVoiceChat.Audio
         private EffectsExtension effectsExtension;
         private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
         private PlayerAudioSource localPlayerAudioSource;
-        private ClientSettingsRepository clientSettings;
+        private ClientSettingsRepository clientSettingsRepo;
 
         public AudioOutputManager(ICoreClientAPI api, ClientSettingsRepository settingsRepository)
         {
-            _config = ModConfig.Config;
-            IsLoopbackEnabled = _config.IsLoopbackEnabled;
+            IsLoopbackEnabled = ClientSettings.Loopback;
             capi = api;
             effectsExtension = new EffectsExtension();
-            clientSettings = settingsRepository;
+            clientSettingsRepo = settingsRepository;
         }
 
         public void Launch()
@@ -100,7 +98,7 @@ namespace RPVoiceChat.Audio
 
         private void ClientLoaded()
         {
-            localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, capi, clientSettings, effectsExtension)
+            localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, capi, clientSettingsRepo, effectsExtension)
             {
                 IsLocational = false,
             };
@@ -123,7 +121,7 @@ namespace RPVoiceChat.Audio
 
         private PlayerAudioSource CreatePlayerSource(IPlayer player)
         {
-            var source = new PlayerAudioSource(player, capi, clientSettings, effectsExtension);
+            var source = new PlayerAudioSource(player, capi, clientSettingsRepo, effectsExtension);
             playerSources.AddOrUpdate(player.PlayerUID, source, (_, __) => source);
             source.StartPlaying();
 
