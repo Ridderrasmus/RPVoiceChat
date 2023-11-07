@@ -1,7 +1,12 @@
+using System;
+using Vintagestory.API.Common;
+
 namespace RPVoiceChat
 {
     public class RPVoiceChatConfig
     {
+        private const string _version = "v1";
+        public string Version;
 
         // --- Shared Config ---
         // These are meant to be set by anyone and
@@ -18,26 +23,21 @@ namespace RPVoiceChat
         // --- Client Settings ---
         // These are meant to be set by the client, but are
         // stored here for persistence across sessions
+        [Obsolete("This setting was moved into ClientSettings and only kept here for backwards compatibility. It will soon be removed.")]
         public bool PushToTalkEnabled = false;
-        public bool IsLoopbackEnabled = false;
-        public bool IsDenoisingEnabled = false;
-        public bool IsHUDShown = true;
+        [Obsolete("This setting was moved into ClientSettings and only kept here for backwards compatibility. It will soon be removed.")]
         public bool IsMuted = false;
-        public int OutputGain = 100;
-        public int InputGain = 100;
+        [Obsolete("This setting was moved into ClientSettings and only kept here for backwards compatibility. It will soon be removed.")]
         public int InputThreshold = 20;
-        public int BackgroungNoiseThreshold = 50;
-        public int VoiceDenoisingStrength = 80;
+        [Obsolete("This setting was moved into ClientSettings and only kept here for backwards compatibility. It will soon be removed.")]
         public string CurrentInputDevice;
-        public double MaxInputThreshold = 0.24;
 
-        public RPVoiceChatConfig()
+        public RPVoiceChatConfig() { }
+
+#pragma warning disable CS0618 // Type or member is obsolete
+        public RPVoiceChatConfig(EnumAppSide side, RPVoiceChatConfig previousConfig)
         {
-
-        }
-
-        public RPVoiceChatConfig(RPVoiceChatConfig previousConfig)
-        {
+            Version = previousConfig.Version;
             ManualPortForwarding = previousConfig.ManualPortForwarding;
 
             ServerPort = previousConfig.ServerPort;
@@ -45,18 +45,24 @@ namespace RPVoiceChat
             AdditionalContent = previousConfig.AdditionalContent;
 
             PushToTalkEnabled = previousConfig.PushToTalkEnabled;
-            IsLoopbackEnabled = previousConfig.IsLoopbackEnabled;
-            IsDenoisingEnabled = previousConfig.IsDenoisingEnabled;
-            IsHUDShown = previousConfig.IsHUDShown;
             IsMuted = previousConfig.IsMuted;
-            OutputGain = previousConfig.OutputGain;
-            InputGain = previousConfig.InputGain;
             InputThreshold = previousConfig.InputThreshold;
             CurrentInputDevice = previousConfig.CurrentInputDevice;
-            BackgroungNoiseThreshold = previousConfig.BackgroungNoiseThreshold;
-            VoiceDenoisingStrength = previousConfig.VoiceDenoisingStrength;
-            MaxInputThreshold = previousConfig.MaxInputThreshold;
+
+            if (Version != _version)
+                UpdateConfigVersion(side);
         }
 
+        public void UpdateConfigVersion(EnumAppSide side)
+        {
+            if (side == EnumAppSide.Server) return;
+            ClientSettings.PushToTalkEnabled = PushToTalkEnabled;
+            ClientSettings.IsMuted = IsMuted;
+            ClientSettings.InputThreshold = (float)InputThreshold / 100;
+            ClientSettings.CurrentInputDevice = CurrentInputDevice;
+            ClientSettings.Save();
+            Version = _version;
+        }
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 }

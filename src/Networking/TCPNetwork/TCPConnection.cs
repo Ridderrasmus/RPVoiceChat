@@ -21,6 +21,8 @@ namespace RPVoiceChat.Networking
         private CancellationTokenSource _listeningCTS;
         private bool isDisposed = false;
         private byte[] receiveBuffer;
+        private byte[] fragmentBuffer = new byte[100*1024];
+        private int fragmentedBytes = 0;
 
         public TCPConnection(Logger logger, Socket existingSocket = null)
         {
@@ -146,7 +148,11 @@ namespace RPVoiceChat.Networking
         private List<byte[]> ParseMessages(byte[] data, int length)
         {
             var messages = new List<byte[]>();
-            var stream = new MemoryStream(data, 0, length);
+            var stream = new MemoryStream(length + fragmentedBytes);
+            stream.Write(fragmentBuffer, 0, fragmentedBytes);
+            stream.Write(data, 0, length);
+            fragmentedBytes = 0;
+            stream.Position = 0;
             using var reader = new BinaryReader(stream);
 
             try
@@ -155,17 +161,29 @@ namespace RPVoiceChat.Networking
                 while (bytesLeft > 4)
                 {
                     int messageLength = reader.ReadInt32();
-                    bytesLeft -= 4;
-                    if (messageLength > bytesLeft || messageLength < 1) break;
+                    if (messageLength > bytesLeft - 4 || messageLength < 1) break;
                     byte[] message = reader.ReadBytes(messageLength);
                     messages.Add(message);
                     bytesLeft = stream.Length - stream.Position;
                 }
-                if (bytesLeft != 0) logger.Warning($"Found fragmented packet in message buffer of {remoteEndpoint}. Proceeding to drop it. (Message queue at {length}/{receiveBuffer.Length})");
+                if (bytesLeft != 0)
+                {
+                    var remainingData = stream.ToArray();
+                    Buffer.BlockCopy(remainingData, (int)(remainingData.Length - bytesLeft), fragmentBuffer, fragmentedBytes, (int)bytesLeft);
+                    fragmentedBytes += (int)bytesLeft;
+                    if (fragmentedBytes > 30 * 1024)
+                        logger.Warning($"Buffer of packet fragments from {remoteEndpoint} is abnormally full. (Message queue at {length}/{receiveBuffer.Length}, fragmented buffer at {fragmentedBytes}/{fragmentBuffer.Length})");
+                    if (fragmentedBytes > 64 * 1024)
+                    {
+                        logger.Error($"Buffer of packet fragments from {remoteEndpoint} exceeded impossible value, discarding data. (Message queue at {length}/{receiveBuffer.Length}, fragmented buffer at {fragmentedBytes}/{fragmentBuffer.Length})");
+                        ClearNetworkStream();
+                    }
+                }
             }
             catch (Exception e)
             {
                 logger.Error($"Couldn't parse TCP messages:\n{e}");
+                ClearNetworkStream();
             }
 
             return messages;
@@ -179,6 +197,7 @@ namespace RPVoiceChat.Networking
             {
                 bytesRead = socket.Receive(receiveBuffer);
             } while (bytesRead == receiveBuffer.Length);
+            fragmentedBytes = 0;
         }
 
         public void Disconnect(bool isGraceful = true, bool isHalfClosed = false)
@@ -187,7 +206,8 @@ namespace RPVoiceChat.Networking
             {
                 socket?.Shutdown(SocketShutdown.Both);
                 socket?.Disconnect(true);
-            } catch { }
+            }
+            catch { }
             OnDisconnected?.Invoke(isGraceful, isHalfClosed, this);
         }
 

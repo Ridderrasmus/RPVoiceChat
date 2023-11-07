@@ -14,7 +14,7 @@ namespace RPVoiceChat.Client
 
         private ICoreClientAPI api;
         private List<INetworkClient> _initialTransports;
-        private List<INetworkClient> activeTransports;
+        private List<INetworkClient> activeTransports = new List<INetworkClient>();
         private IClientNetworkChannel handshakeChannel;
         private ConnectionInfo[] serverConnections;
         private bool isConnected = false;

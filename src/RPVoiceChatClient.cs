@@ -21,7 +21,7 @@ namespace RPVoiceChat
 
         protected ICoreClientAPI capi;
 
-        private ModMenuDialog configGui;
+        private ModMenuDialog modMenuDialog;
 
         private bool isReady = false;
         private bool mutePressed = false;
@@ -36,7 +36,6 @@ namespace RPVoiceChat
         public override void StartClientSide(ICoreClientAPI api)
         {
             capi = api;
-            ClientSettings.Init(capi);
 
             // Sneak in native dlls
             EmbeddedDllClass.ExtractEmbeddedDlls();
@@ -62,7 +61,7 @@ namespace RPVoiceChat
             client = new PlayerNetworkClient(capi, networkTransports);
 
             // Initialize gui
-            configGui = new ModMenuDialog(capi, micManager, audioOutputManager, clientSettingsRepository);
+            modMenuDialog = new ModMenuDialog(capi, micManager, audioOutputManager, clientSettingsRepository);
             capi.Gui.RegisterDialog(new SpeechIndicator(capi, micManager));
             capi.Gui.RegisterDialog(new VoiceLevelIcon(capi, micManager));
             new PlayerNameTagRenderer(capi, audioOutputManager);
@@ -82,7 +81,7 @@ namespace RPVoiceChat
 
                 voiceMenuPressed = true;
 
-                configGui.Toggle();
+                modMenuDialog.Toggle();
                 return true;
             });
 
@@ -104,8 +103,9 @@ namespace RPVoiceChat
 
                 mutePressed = true;
 
-                config.IsMuted = !config.IsMuted;
-                ModConfig.Save(capi);
+                ClientSettings.IsMuted = !ClientSettings.IsMuted;
+                capi.Event.PushEvent("rpvoicechat:hudUpdate");
+                ClientSettings.Save();
                 return true;
             });
 
@@ -152,11 +152,12 @@ namespace RPVoiceChat
 
         public override void Dispose()
         {
+            ClientSettings.Save();
             micManager?.Dispose();
             audioOutputManager?.Dispose();
             patchManager?.Dispose();
             client?.Dispose();
-            configGui?.Dispose();
+            modMenuDialog?.Dispose();
             clientSettingsRepository?.Dispose();
         }
     }
