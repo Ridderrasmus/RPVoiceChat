@@ -63,7 +63,7 @@ namespace RPVoiceChat.Audio.Effects
                         float VAD = RNNoise.DenoiseFrame(handle, outPtr, inPtr);
                         bool isVoice = VAD > sensitivity;
                         if (isVoice)
-                            for (var i = 0; i < denoisedAudio.Length; i++)
+                            for (var i = 0; i < frameLength; i++)
                                 denoisedAudio[i] = denoisedAudio[i] * strength + rawAudio[offset + i] * (1 - strength);
 
                         Array.Copy(denoisedAudio, 0, rawAudio, offset, frameLength);

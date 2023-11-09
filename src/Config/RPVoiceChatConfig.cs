@@ -60,6 +60,7 @@ namespace RPVoiceChat
             ClientSettings.IsMuted = IsMuted;
             ClientSettings.InputThreshold = (float)InputThreshold / 100;
             ClientSettings.CurrentInputDevice = CurrentInputDevice;
+            ClientSettings.Save();
             Version = _version;
         }
 #pragma warning restore CS0618 // Type or member is obsolete

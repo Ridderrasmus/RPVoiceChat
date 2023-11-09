@@ -242,6 +242,10 @@ namespace RPVoiceChat.Audio
                 }
 
                 if (codec != null) audio.data = codec.Decode(audio.data);
+
+                int maxFadeDuration = 2 * audio.frequency / 1000; // 2ms
+                AudioUtils.FadeEdges(audio.data, maxFadeDuration);
+
                 buffer.QueueAudio(audio.data, audio.format, audio.frequency);
 
                 // The source can stop playing if it finishes everything in queue

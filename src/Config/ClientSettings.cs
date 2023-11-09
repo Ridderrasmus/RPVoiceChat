@@ -29,6 +29,11 @@ namespace RPVoiceChat
                 ClientSettings.capi = capi;
         }
 
+        public static void Save()
+        {
+            ((Vintagestory.Client.NoObf.ClientSettings)capi?.Settings)?.Save();
+        }
+
         public static void Set(string key, int value)
         {
             capi.Settings.Int[Key(key)] = value;
