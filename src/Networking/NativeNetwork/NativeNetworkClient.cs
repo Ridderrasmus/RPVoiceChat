@@ -39,7 +39,7 @@ namespace RPVoiceChat.Networking
             OnAudioReceived?.Invoke(packet);
         }
 
-        public override void Dispose()
+        public void Dispose()
         {
             SystemNetworkProcessPatch.OnProcessInBackground -= ProcessInBackground;
         }

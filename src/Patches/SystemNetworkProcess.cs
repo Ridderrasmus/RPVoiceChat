@@ -1,5 +1,6 @@
 using HarmonyLib;
 using System;
+using System.Reflection;
 using Vintagestory.Client.NoObf;
 
 namespace RPVoiceChat
@@ -17,13 +18,17 @@ namespace RPVoiceChat
             harmony.Patch(OriginalMethod, postfix: new HarmonyMethod(PostfixMethod));
         }
 
+        private static FieldInfo packetIdField = AccessTools.Field(typeof(Packet_Server), "Id");
+        private static FieldInfo customPacketField = AccessTools.Field(typeof(Packet_Server), "CustomPacket");
+        private static FieldInfo channelIdField = AccessTools.Field(typeof(Packet_CustomPacket), "ChannelId");
+
         public static void ProcessInBackground(ref bool __result, Packet_Server packet)
         {
-            var id = (int)AccessTools.Field(typeof(Packet_Server), "Id").GetValue(packet);
+            var id = (int)packetIdField.GetValue(packet);
             if (id != _customPacketId) return;
 
-            var customPacket = (Packet_CustomPacket)AccessTools.Field(typeof(Packet_Server), "CustomPacket").GetValue(packet);
-            var channelId = (int)AccessTools.Field(typeof(Packet_CustomPacket), "ChannelId").GetValue(customPacket);
+            var customPacket = (Packet_CustomPacket)customPacketField.GetValue(packet);
+            var channelId = (int)channelIdField.GetValue(customPacket);
             bool processed = OnProcessInBackground?.Invoke(channelId, customPacket) ?? false;
             if (processed) __result = true;
         }

@@ -16,7 +16,5 @@ namespace RPVoiceChat.Networking
         {
             return _transportID;
         }
-
-        public virtual void Dispose() { }
     }
 }
