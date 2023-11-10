@@ -9,7 +9,7 @@ using Vintagestory.Server;
 
 namespace RPVoiceChat.Networking
 {
-    public class ServerSystemNetworkProcess: IDisposable
+    public class ServerSystemNetworkProcess : IDisposable
     {
         public event Func<int, Packet_CustomPacket, IServerPlayer, bool> OnProcessInBackground;
 

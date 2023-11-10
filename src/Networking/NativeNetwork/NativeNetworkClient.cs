@@ -1,6 +1,6 @@
 using HarmonyLib;
-using RPVoiceChat.Utils;
 using System;
+using System.Reflection;
 using Vintagestory.API.Client;
 using Vintagestory.Client.NoObf;
 
@@ -23,11 +23,13 @@ namespace RPVoiceChat.Networking
             return true;
         }
 
+        private static FieldInfo channelIdField = AccessTools.Field(typeof(NetworkChannel), "channelId");
+
         private bool ProcessInBackground(int channelId, Packet_CustomPacket customPacket)
         {
             if (channel is not NetworkChannel nativeChannel) return false;
 
-            var expectedChannelId = (int)AccessTools.Field(typeof(NetworkChannel), "channelId").GetValue(channel);
+            var expectedChannelId = (int)channelIdField.GetValue(channel);
             if (channelId != expectedChannelId) return false;
 
             nativeChannel.OnPacket(customPacket);
