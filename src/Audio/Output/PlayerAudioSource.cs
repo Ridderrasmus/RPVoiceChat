@@ -209,11 +209,7 @@ namespace RPVoiceChat.Audio
         {
             lock (ordering_queue_lock)
             {
-                if (orderingQueue.ContainsKey(sequenceNumber))
-                {
-                    Logger.client.VerboseDebug($"Audio sequence {sequenceNumber} already received, skipping enqueueing");
-                    return;
-                }
+                if (orderingQueue.ContainsKey(sequenceNumber)) return;
 
                 if (lastAudioSequenceNumber >= sequenceNumber)
                 {
