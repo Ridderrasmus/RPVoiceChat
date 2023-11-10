@@ -89,9 +89,7 @@ namespace RPVoiceChat.Server
         {
             var transportID = server.GetTransportID();
             Logger.server.Notification($"Launching {transportID} server");
-            if (server is IExtendedNetworkServer extendedServer)
-                extendedServer?.Launch();
-
+            server.Launch();
             activeServers.Add(server);
             serverByTransportID.Add(transportID, server);
             Logger.server.Notification($"{transportID} server started");
