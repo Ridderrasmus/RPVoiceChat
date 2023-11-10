@@ -8,6 +8,9 @@ using Vintagestory.Server;
 
 namespace RPVoiceChat
 {
+    /// <summary>
+    /// Copies TCP messages received by server into own message queue for further processing from separate thread
+    /// </summary>
     static class TcpNetServerPatch
     {
         private static readonly CodeInstruction anchor = new CodeInstruction(

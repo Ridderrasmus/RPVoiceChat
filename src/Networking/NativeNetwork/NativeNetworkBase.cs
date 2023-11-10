@@ -5,6 +5,7 @@ namespace RPVoiceChat.Networking
     public abstract class NativeNetworkBase
     {
         protected const string ChannelName = "RPAudioChannel";
+        protected const string SPChannelName = $"{ChannelName}_SP";
         protected const string _transportID = "NativeTCP";
 
         public NativeNetworkBase(ICoreAPI api)

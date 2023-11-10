@@ -5,6 +5,9 @@ using Vintagestory.Client.NoObf;
 
 namespace RPVoiceChat
 {
+    /// <summary>
+    /// Allows TCP messages from custom channels received by client to be processed in separate thread
+    /// </summary>
     static class SystemNetworkProcessPatch
     {
         public static event Func<int, Packet_CustomPacket, bool> OnProcessInBackground;

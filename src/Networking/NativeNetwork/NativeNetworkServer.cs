@@ -17,6 +17,12 @@ namespace RPVoiceChat.Networking
         {
             api = sapi;
             channel = api.Network.GetChannel(ChannelName).SetMessageHandler<AudioPacket>(ReceivedAudioPacketFromClient);
+            if (api.Server.IsDedicated == false)
+                api.Network.RegisterChannel(SPChannelName)
+                    .RegisterMessageType<AudioPacket>()
+                    .SetMessageHandler<AudioPacket>(ReceivedAudioPacketFromClient);
+
+            NetworkAPIPatch.OnHandleCustomPacket += ShouldProcessInBackground;
         }
 
         public void Launch()
@@ -39,21 +45,21 @@ namespace RPVoiceChat.Networking
             return true;
         }
 
-        private static FieldInfo channelIdField = AccessTools.Field(typeof(NetworkChannel), "channelId");
-
         private bool ProcessInBackground(int channelId, Packet_CustomPacket customPacket, IServerPlayer sender)
         {
-            if (channel is not NetworkChannel nativeChannel) return false;
+            if (ShouldProcessInBackground(channelId) == false) return false;
 
-            var expectedChannelId = (int)channelIdField.GetValue(channel);
-            if (channelId != expectedChannelId) return false;
-
-            // Since we don't remove custom packets from original queue, all of them will be duplicated.
-            // In case of AudioPackets this isn't an issue but if this behavior is undesired - change SetMessageHandler
-            // To an empty function and copy handler delegate code from Vintagestory.Server.NetworkChannel.SetMessageHandler
-            // - Dmitry221060, 10.11.2023
-            nativeChannel.OnPacket(customPacket, sender);
+            ((NetworkChannel)channel).OnPacket(customPacket, sender);
             return true;
+        }
+
+        private static FieldInfo channelIdField = AccessTools.Field(typeof(NetworkChannel), "channelId");
+
+        private bool ShouldProcessInBackground(int channelId)
+        {
+            if (channel is not NetworkChannel) return false;
+            var expectedChannelId = (int)channelIdField.GetValue(channel);
+            return channelId == expectedChannelId;
         }
 
         private void ReceivedAudioPacketFromClient(IServerPlayer player, AudioPacket packet)
@@ -63,6 +69,7 @@ namespace RPVoiceChat.Networking
 
         public void Dispose()
         {
+            NetworkAPIPatch.OnHandleCustomPacket -= ShouldProcessInBackground;
             networkProcess?.Dispose();
         }
     }

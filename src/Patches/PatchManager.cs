@@ -30,6 +30,7 @@ namespace RPVoiceChat
 
         private void PatchServer()
         {
+            NetworkAPIPatch.Patch(harmony);
             TcpNetServerPatch.Patch(harmony);
         }
 
