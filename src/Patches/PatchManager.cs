@@ -1,5 +1,6 @@
 using HarmonyLib;
 using System;
+using Vintagestory.API.Common;
 
 namespace RPVoiceChat
 {
@@ -12,13 +13,24 @@ namespace RPVoiceChat
             harmony = new Harmony(harmonyId);
         }
 
-        public void Patch()
+        public void Patch(ICoreAPI api)
+        {
+            if ((api.Side & EnumAppSide.Client) != 0) PatchClient();
+            if ((api.Side & EnumAppSide.Server) != 0) PatchServer();
+        }
+
+        private void PatchClient()
         {
             EntityNameTagRendererRegistryPatch.Patch(harmony);
             GuiDialogCreateCharacterPatch.Patch(harmony);
             GuiElementSliderPatch.Patch(harmony);
             LoadedSoundNativePatch.Patch(harmony);
             SystemNetworkProcessPatch.Patch(harmony);
+        }
+
+        private void PatchServer()
+        {
+            TcpNetServerPatch.Patch(harmony);
         }
 
         public void Unpatch()
