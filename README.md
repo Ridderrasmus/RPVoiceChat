@@ -45,6 +45,7 @@ The settings relevant to server owners are:
 - `ServerPort` - The port to use for the voice networking. The default value is `52525`.
 - `ServerIP` - The ip for clients to connect to. Leave it as is unless you are playing through LAN, in which case set it to address of your private network(e.g. `"25.95.127.13"`). The default value is `null`.
 - `AdditionalContent` - Whether additional modded content(bells, horns, etc) should be enabled. The default value is `true`.
+- `UseCustomNetworkServers` - Can be used to enable UDP and CustomTCP transports. As of v2.3.4 NativeTCP is unaffected by lag so there is little to no benefits from running custom servers. The default value is `false`.
 
 You can also use `/rpvc [command]` to access world-specific settings:
 - `shout` - Sets the shout distance in blocks. The default value is `25`.
