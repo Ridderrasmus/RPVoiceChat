@@ -9,6 +9,7 @@ namespace RPVoiceChat.Utils
         {
             int channels = format switch {
                 ALFormat.Mono16 => 1,
+                ALFormat.Stereo16 => 2,
                 ALFormat.MultiQuad16Ext => 4,
                 _ => throw new NotSupportedException($"Format {format} is not supported for capture")
             };

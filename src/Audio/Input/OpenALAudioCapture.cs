@@ -31,7 +31,7 @@ namespace RPVoiceChat.Audio
             BufferSize = bufferSize;
 
             string[] deviceNames = new string[] { deviceName, null, DefaultDevice };
-            ALFormat[] formats = new ALFormat[] { captureFormat, ALFormat.Mono16 };
+            ALFormat[] formats = new ALFormat[] { captureFormat, ALFormat.Stereo16, ALFormat.Mono16 };
 
             foreach (var device in deviceNames)
                 foreach (var format in formats)
