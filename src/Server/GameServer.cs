@@ -14,7 +14,6 @@ namespace RPVoiceChat.Server
         private IServerNetworkChannel handshakeChannel;
         private Dictionary<string, INetworkServer> serverByTransportID = new Dictionary<string, INetworkServer>();
         private ConnectionRequest connectionRequest;
-        private bool ToggledOff = false;
 
         public GameServer(ICoreServerAPI sapi, List<INetworkServer> serverTransports)
         {
@@ -52,8 +51,6 @@ namespace RPVoiceChat.Server
 
         public void SendAudioToAllClientsInRange(AudioPacket packet)
         {
-            if (ToggledOff) return;
-
             var transmittingPlayer = api.World.PlayerByUid(packet.PlayerId);
             int distance = WorldConfig.GetInt(packet.VoiceLevel);
             int squareDistance = distance * distance;
@@ -92,9 +89,7 @@ namespace RPVoiceChat.Server
         {
             var transportID = server.GetTransportID();
             Logger.server.Notification($"Launching {transportID} server");
-            if (server is IExtendedNetworkServer extendedServer)
-                extendedServer?.Launch();
-
+            server.Launch();
             activeServers.Add(server);
             serverByTransportID.Add(transportID, server);
             Logger.server.Notification($"{transportID} server started");
@@ -158,17 +153,6 @@ namespace RPVoiceChat.Server
             connectionRequest = new ConnectionRequest(serverConnectionInfos);
 
             return connectionRequest;
-        }
-
-        public bool ServerToggle(bool b)
-        {
-            if (b != ToggledOff)
-            {
-                ToggledOff = b;
-                return true;
-            }
-
-            return false;
         }
 
         public void Dispose()

@@ -6,7 +6,7 @@ namespace RPVoiceChat.Networking
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     public class ConnectionRequest : NetworkPacket
     {
-        public ConnectionInfo[] SupportedTransports { get; set; }
+        public ConnectionInfo[] SupportedTransports { get; }
         protected override PacketType Code { get => PacketType.ConnectionRequest; }
 
         public ConnectionRequest() { }

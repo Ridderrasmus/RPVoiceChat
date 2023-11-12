@@ -6,26 +6,24 @@ namespace RPVoiceChat.Audio.Effects
     {
         private int effect;
         private int slot;
-        private EffectsExtension efx;
-        public ReverbEffect(EffectsExtension efx, int source)
+
+        public ReverbEffect(int source)
         {
+            effect = ALC.EFX.GenEffect();
+            slot = ALC.EFX.GenAuxiliaryEffectSlot();
 
-            this.efx = efx;
-            effect = efx.GenEffect();
-            slot = efx.GenAuxiliaryEffectSlot();
+            ALC.EFX.Effect(effect, EffectInteger.EffectType, (int)EffectType.Reverb);
+            ALC.EFX.Effect(effect, EffectFloat.ReverbDecayTime, 3.0f);
+            ALC.EFX.Effect(effect, EffectFloat.ReverbDecayHFRatio, 0.91f);
+            ALC.EFX.Effect(effect, EffectFloat.ReverbDensity, 0.7f);
+            ALC.EFX.Effect(effect, EffectFloat.ReverbDiffusion, 0.9f);
+            ALC.EFX.Effect(effect, EffectFloat.ReverbRoomRolloffFactor, 3.1f);
+            ALC.EFX.Effect(effect, EffectFloat.ReverbReflectionsGain, 0.723f);
+            ALC.EFX.Effect(effect, EffectFloat.ReverbReflectionsDelay, 0.03f);
+            ALC.EFX.Effect(effect, EffectFloat.ReverbGain, 0.23f);
 
-            efx.BindEffect(effect, EfxEffectType.Reverb);
-            efx.Effect(effect, EfxEffectf.ReverbDecayTime, 3.0f);
-            efx.Effect(effect, EfxEffectf.ReverbDecayHFRatio, 0.91f);
-            efx.Effect(effect, EfxEffectf.ReverbDensity, 0.7f);
-            efx.Effect(effect, EfxEffectf.ReverbDiffusion, 0.9f);
-            efx.Effect(effect, EfxEffectf.ReverbRoomRolloffFactor, 3.1f);
-            efx.Effect(effect, EfxEffectf.ReverbReflectionsGain, 0.723f);
-            efx.Effect(effect, EfxEffectf.ReverbReflectionsDelay, 0.03f);
-            efx.Effect(effect, EfxEffectf.ReverbGain, 0.23f);
-
-            efx.AuxiliaryEffectSlot(slot, EfxAuxiliaryi.EffectslotEffect, effect);
-            efx.BindSourceToAuxiliarySlot(source, slot, 0, 0);
+            ALC.EFX.AuxiliaryEffectSlot(slot, EffectSlotInteger.Effect, effect);
+            ALC.EFX.Source(source, EFXSourceInteger3.AuxiliarySendFilter, slot, 0, 0);
         }
     }
 }

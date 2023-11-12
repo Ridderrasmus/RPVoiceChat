@@ -19,10 +19,13 @@ namespace RPVoiceChat
             bool forwardPorts = !config.ManualPortForwarding;
             var networkTransports = new List<INetworkServer>()
             {
-                new UDPNetworkServer(config.ServerPort, config.ServerIP, forwardPorts),
-                new TCPNetworkServer(config.ServerPort, config.ServerIP, forwardPorts),
                 new NativeNetworkServer(api)
             };
+            if (config.UseCustomNetworkServers)
+            {
+                networkTransports.Insert(0, new UDPNetworkServer(config.ServerPort, config.ServerIP, forwardPorts));
+                networkTransports.Insert(1, new TCPNetworkServer(config.ServerPort, config.ServerIP, forwardPorts));
+            }
 
             server = new GameServer(sapi, networkTransports);
             server.Launch();
@@ -90,16 +93,6 @@ namespace RPVoiceChat
                     .WithDesc(UIUtils.I18n("Command.Reset.Desc"))
                     .HandleWith(ResetDistanceHandler)
                 .EndSub()
-                .BeginSub("voiptoggle")
-                    .WithDesc("Toggles voip functionality on the server")
-                    .WithArgs(parsers.Bool("toggle"))
-                    .HandleWith(ToggleVoip)
-                .EndSub()
-                .BeginSub("encodingtoggle")
-                    .WithDesc("Toggles audio encoding on the server")
-                    .WithArgs(parsers.Bool("toggle"))
-                    .HandleWith(ToggleEncoding)
-                .EndSub()
                 .BeginSub("forcenametags")
                     .WithDesc(UIUtils.I18n("Command.ForceNameTags.Desc"))
                     .WithAdditionalInformation(UIUtils.I18n("Command.ForceNameTags.Help"))
@@ -134,25 +127,6 @@ namespace RPVoiceChat
 
             string stateAsText = state ? "Enabled" : "Disabled";
             return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
-        }
-
-        private TextCommandResult ToggleEncoding(TextCommandCallingArgs args) {
-            bool state = (bool)args[0];
-
-            WorldConfig.Set("encode-audio", state);
-
-            string stateAsText = state ? "Enabled" : "Disabled";
-            return TextCommandResult.Success($"Encoding set to {stateAsText}");
-        }
-
-        private TextCommandResult ToggleVoip(TextCommandCallingArgs args)
-        {
-            bool toggle = (bool)args[0];
-
-            if (server.ServerToggle(toggle))
-                return TextCommandResult.Success("Voip toggled " + (toggle ? "on" : "off"));
-            else
-                return TextCommandResult.Error("Voip is already " + (toggle ? "on" : "off") + "!");
         }
 
         private TextCommandResult ResetDistanceHandler(TextCommandCallingArgs args)

@@ -16,7 +16,6 @@ namespace RPVoiceChat
         private ClientSettingsRepository clientSettingsRepository;
         private MicrophoneManager micManager;
         private AudioOutputManager audioOutputManager;
-        private PatchManager patchManager;
         private PlayerNetworkClient client;
 
         protected ICoreClientAPI capi;
@@ -44,11 +43,9 @@ namespace RPVoiceChat
             // Init data repositories
             clientSettingsRepository = new ClientSettingsRepository(capi.Logger);
 
-            // Init microphone, audio output and harmony patch managers
+            // Init microphone and audio output managers
             micManager = new MicrophoneManager(capi);
             audioOutputManager = new AudioOutputManager(capi, clientSettingsRepository);
-            patchManager = new PatchManager(modID);
-            patchManager.Patch();
 
             // Init voice chat client
             bool forwardPorts = !config.ManualPortForwarding;
@@ -155,7 +152,6 @@ namespace RPVoiceChat
             ClientSettings.Save();
             micManager?.Dispose();
             audioOutputManager?.Dispose();
-            patchManager?.Dispose();
             client?.Dispose();
             modMenuDialog?.Dispose();
             clientSettingsRepository?.Dispose();

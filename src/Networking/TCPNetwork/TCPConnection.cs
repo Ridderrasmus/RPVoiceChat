@@ -21,7 +21,7 @@ namespace RPVoiceChat.Networking
         private CancellationTokenSource _listeningCTS;
         private bool isDisposed = false;
         private byte[] receiveBuffer;
-        private byte[] fragmentBuffer = new byte[100*1024];
+        private byte[] fragmentBuffer = new byte[100 * 1024];
         private int fragmentedBytes = 0;
 
         public TCPConnection(Logger logger, Socket existingSocket = null)
@@ -46,7 +46,7 @@ namespace RPVoiceChat.Networking
 
         public Task ConnectAsync(IPEndPoint endPoint)
         {
-            return Task.Run(() => socket.Connect(endPoint)).ContinueWith(_ =>
+            return socket.ConnectAsync(endPoint).ContinueWith(_ =>
             {
                 remoteEndpoint = (IPEndPoint)socket.RemoteEndPoint;
                 port = ((IPEndPoint)socket.LocalEndPoint).Port;
@@ -74,12 +74,12 @@ namespace RPVoiceChat.Networking
             }
         }
 
-        public void SendAsync(byte[] data, CancellationToken ct = default)
+        public ValueTask<int> SendAsync(byte[] data, CancellationToken ct = default)
         {
             if (socket == null) throw new Exception("Socket already disposed.");
 
             var tcpMessage = PackMessage(data);
-            Task.Run(() => socket.Send(tcpMessage));
+            return socket.SendAsync(tcpMessage, ct);
         }
 
         public void StartListening()
@@ -96,7 +96,7 @@ namespace RPVoiceChat.Networking
             {
                 try
                 {
-                    var streamLength = await Task.Run(() => socket.Receive(receiveBuffer));
+                    var streamLength = await socket.ReceiveAsync(receiveBuffer);
                     ct.ThrowIfCancellationRequested();
                     if (streamLength == 0) throw new SocketException((int)SocketError.ConnectionReset);
 

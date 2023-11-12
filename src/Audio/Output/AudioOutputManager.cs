@@ -1,4 +1,3 @@
-using OpenTK.Audio.OpenAL;
 using RPVoiceChat.DB;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
@@ -35,7 +34,6 @@ namespace RPVoiceChat.Audio
             }
         }
 
-        private EffectsExtension effectsExtension;
         private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
         private PlayerAudioSource localPlayerAudioSource;
         private ClientSettingsRepository clientSettingsRepo;
@@ -44,7 +42,6 @@ namespace RPVoiceChat.Audio
         {
             IsLoopbackEnabled = ClientSettings.Loopback;
             capi = api;
-            effectsExtension = new EffectsExtension();
             clientSettingsRepo = settingsRepository;
         }
 
@@ -98,7 +95,7 @@ namespace RPVoiceChat.Audio
 
         private void ClientLoaded()
         {
-            localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, capi, clientSettingsRepo, effectsExtension)
+            localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, capi, clientSettingsRepo)
             {
                 IsLocational = false,
             };
@@ -121,7 +118,7 @@ namespace RPVoiceChat.Audio
 
         private PlayerAudioSource CreatePlayerSource(IPlayer player)
         {
-            var source = new PlayerAudioSource(player, capi, clientSettingsRepo, effectsExtension);
+            var source = new PlayerAudioSource(player, capi, clientSettingsRepo);
             playerSources.AddOrUpdate(player.PlayerUID, source, (_, __) => source);
             source.StartPlaying();
 
