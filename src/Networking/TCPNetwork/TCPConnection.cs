@@ -21,7 +21,7 @@ namespace RPVoiceChat.Networking
         private CancellationTokenSource _listeningCTS;
         private bool isDisposed = false;
         private byte[] receiveBuffer;
-        private byte[] fragmentBuffer = new byte[100*1024];
+        private byte[] fragmentBuffer = new byte[100 * 1024];
         private int fragmentedBytes = 0;
 
         public TCPConnection(Logger logger, Socket existingSocket = null)

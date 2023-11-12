@@ -5,8 +5,9 @@ namespace RPVoiceChat
 {
     public abstract class RPVoiceChatMod : ModSystem
     {
-        protected RPVoiceChatConfig config;
         public static readonly string modID = "rpvoicechat";
+        protected RPVoiceChatConfig config;
+        private PatchManager patchManager;
 
         public override void StartPre(ICoreAPI api)
         {
@@ -19,8 +20,16 @@ namespace RPVoiceChat
 
         public override void Start(ICoreAPI api)
         {
+            patchManager = new PatchManager(modID);
+            patchManager.Patch(api);
+
             ItemRegistry.RegisterItems(api);
             BlockRegistry.RegisterBlocks(api);
+        }
+
+        public override void Dispose()
+        {
+            patchManager?.Dispose();
         }
     }
 }

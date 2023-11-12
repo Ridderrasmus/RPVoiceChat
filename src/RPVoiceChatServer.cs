@@ -19,10 +19,13 @@ namespace RPVoiceChat
             bool forwardPorts = !config.ManualPortForwarding;
             var networkTransports = new List<INetworkServer>()
             {
-                new UDPNetworkServer(config.ServerPort, config.ServerIP, forwardPorts),
-                new TCPNetworkServer(config.ServerPort, config.ServerIP, forwardPorts),
                 new NativeNetworkServer(api)
             };
+            if (config.UseCustomNetworkServers)
+            {
+                networkTransports.Insert(0, new UDPNetworkServer(config.ServerPort, config.ServerIP, forwardPorts));
+                networkTransports.Insert(1, new TCPNetworkServer(config.ServerPort, config.ServerIP, forwardPorts));
+            }
 
             server = new GameServer(sapi, networkTransports);
             server.Launch();
