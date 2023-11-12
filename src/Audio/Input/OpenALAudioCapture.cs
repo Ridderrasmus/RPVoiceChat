@@ -15,50 +15,30 @@ namespace RPVoiceChat.Audio
                 return result;
             }
         }
-        public string CurrentDevice { get; }
+        public string CurrentDevice { get; private set; }
         public int Frequency { get; }
-        public ALFormat SampleFormat { get; }
+        public ALFormat SampleFormat { get; private set; }
         public int BufferSize { get; }
         public static string DefaultDevice = ALC.GetString(ALDevice.Null, AlcGetString.CaptureDefaultDeviceSpecifier);
         private ALCaptureDevice _captureDevice;
         private bool IsDisposed = false;
         private bool IsRunning = false;
 
-        public OpenALAudioCapture(string deviceName, int frequency, ALFormat format, int bufferSize)
+        public OpenALAudioCapture(string deviceName, int frequency, ALFormat captureFormat, int bufferSize)
         {
-            CurrentDevice = deviceName == "Default" ? null : deviceName;
+            if (deviceName == "Default") deviceName = null;
             Frequency = frequency;
-            SampleFormat = format;
             BufferSize = bufferSize;
 
-            _captureDevice = ALC.CaptureOpenDevice(CurrentDevice, Frequency, SampleFormat, BufferSize);
-            LogError();
+            string[] deviceNames = new string[] { deviceName, null, DefaultDevice };
+            ALFormat[] formats = new ALFormat[] { captureFormat, ALFormat.Stereo16, ALFormat.Mono16 };
+
+            foreach (var device in deviceNames)
+                foreach (var format in formats)
+                    if (TryOpenDevice(device, format)) break;
 
             if (_captureDevice == IntPtr.Zero)
-            {
-                CurrentDevice = null;
-                _captureDevice = ALC.CaptureOpenDevice(CurrentDevice, Frequency, SampleFormat, BufferSize);
-                LogError();
-            }
-
-            if (_captureDevice == IntPtr.Zero)
-            {
-                CurrentDevice = DefaultDevice;
-                _captureDevice = ALC.CaptureOpenDevice(CurrentDevice, Frequency, SampleFormat, BufferSize);
-                LogError();
-            }
-
-            if (_captureDevice == IntPtr.Zero)
-            {
-                SampleFormat = ALFormat.Mono16;
-                _captureDevice = ALC.CaptureOpenDevice(CurrentDevice, Frequency, ALFormat.Mono16, BufferSize);
-                LogError();
-            }
-
-            if (_captureDevice == IntPtr.Zero)
-            {
                 throw new Exception("All attempts to open capture devices returned IntPtr.Zero");
-            }
 
             if (CheckError(_captureDevice))
                 throw new Exception("Capture device returned an exception");
@@ -88,6 +68,15 @@ namespace RPVoiceChat.Audio
             return devices;
         }
 
+        private bool TryOpenDevice(string deviceName, ALFormat format)
+        {
+            CurrentDevice = deviceName;
+            SampleFormat = format;
+            _captureDevice = ALC.CaptureOpenDevice(deviceName, Frequency, format, BufferSize);
+            LogError();
+            return _captureDevice != IntPtr.Zero;
+        }
+
         private void LogError()
         {
             CheckError(ALCaptureDevice.Null);
@@ -98,7 +87,7 @@ namespace RPVoiceChat.Audio
             var ALCError = ALC.GetError(new ALDevice(device));
             if (ALCError == AlcError.NoError) return false;
 
-            Logger.client.VerboseDebug($"[Internal] Failed to open capture device: {ALCError}, {CurrentDevice}, {Frequency}, {SampleFormat}, {BufferSize}");
+            Logger.client.VerboseDebug($"[Internal] Failed to open capture device: {ALCError}, {CurrentDevice ?? "Default"}, {Frequency}, {SampleFormat}, {BufferSize}");
             return true;
         }
 

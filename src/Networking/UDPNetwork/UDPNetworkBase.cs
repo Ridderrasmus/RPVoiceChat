@@ -96,27 +96,24 @@ namespace RPVoiceChat.Networking
             CancellationToken ct = (CancellationToken)cancellationToken;
             while (_listeningThread.IsAlive && !ct.IsCancellationRequested)
             {
+                IPEndPoint sender = null;
                 try
                 {
-                    IPEndPoint sender = null;
                     byte[] msg = UdpClient.Receive(ref sender);
+                    if (msg.Length < 4) continue;
 
                     OnMessageReceived?.Invoke(msg, sender);
                 }
-                catch (SocketException e)
+                catch (Exception e)
                 {
+                    var se = e as SocketException;
                     // Windows will notify us here when destination of *sent* message is unreachable. We don't care.
-                    if (e.SocketErrorCode == SocketError.ConnectionReset) continue;
-                    if (e.SocketErrorCode == SocketError.Interrupted ||
+                    if (se?.SocketErrorCode == SocketError.ConnectionReset) continue;
+                    if (se?.SocketErrorCode == SocketError.Interrupted ||
                         ct.IsCancellationRequested) return;
 
-                    if (!isReady)
-                    {
-                        logger.Warning($"Caught unexpected error, but proceeding to ignore it because transport isn't ready yet:\n{e}");
-                        return;
-                    }
-
-                    throw e;
+                    logger.Error($"Datagram from {sender?.Address} caused an exception:\n{e}");
+                    continue;
                 }
             }
         }
