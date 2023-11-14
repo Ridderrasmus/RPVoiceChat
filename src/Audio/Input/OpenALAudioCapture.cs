@@ -32,10 +32,7 @@ namespace RPVoiceChat.Audio
 
             string[] deviceNames = new string[] { deviceName, null, DefaultDevice };
             ALFormat[] formats = new ALFormat[] { captureFormat, ALFormat.Stereo16, ALFormat.Mono16 };
-
-            foreach (var device in deviceNames)
-                foreach (var format in formats)
-                    if (TryOpenDevice(device, format)) break;
+            TryOpenDevice(deviceNames, formats);
 
             if (_captureDevice == IntPtr.Zero)
                 throw new Exception("All attempts to open capture devices returned IntPtr.Zero");
@@ -66,6 +63,13 @@ namespace RPVoiceChat.Audio
             var devices = ALC.GetString(ALDevice.Null, AlcGetStringList.CaptureDeviceSpecifier);
 
             return devices;
+        }
+
+        private void TryOpenDevice(string[] deviceNames, ALFormat[] formats)
+        {
+            foreach (var device in deviceNames)
+                foreach (var format in formats)
+                    if (TryOpenDevice(device, format)) return;
         }
 
         private bool TryOpenDevice(string deviceName, ALFormat format)

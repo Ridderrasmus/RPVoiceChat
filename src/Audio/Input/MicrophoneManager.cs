@@ -250,6 +250,7 @@ namespace RPVoiceChat.Audio
             {
                 newCapture = new OpenALAudioCapture(deviceName, Frequency, format, BufferSize);
                 format = newCapture?.SampleFormat ?? format;
+                deviceName = newCapture?.CurrentDevice ?? deviceName;
                 Logger.client.Debug($"Succesfully created an audio capture device with arguments: {deviceName}, {Frequency}, {format}, {BufferSize}");
             }
             catch (Exception e)
