@@ -77,7 +77,6 @@ namespace RPVoiceChat.Client
             }
             isConnected = true;
 
-            if (activeTransports[0] is NativeNetworkClient) api.Event.EnqueueMainThreadTask(() => api.ShowChatMessage($"<strong>[RPVoiceChat]: Failed to connect with custom network clients, audio stability will be degraded</strong>"), "rpvoicechat:PlayerNetworkClient");
             if (activeTransports.Count > 0) return;
             IEnumerable<string> serverTransportIDs = serverConnections.Select(e => e.Transport);
             throw new Exception($"Failed to connect to the server. Supported transports: {string.Join(", ", serverTransportIDs)}");
@@ -123,7 +122,6 @@ namespace RPVoiceChat.Client
             if (isShutdown) return;
             activeTransports.Remove(transport);
             transport.Dispose();
-            api.Event.EnqueueMainThreadTask(() => api.ShowChatMessage($"<strong>[RPVoiceChat]: Failed to reconnect with {transportID} client, audio stability will be degraded</strong>"), "rpvoicechat:PlayerNetworkClient");
         }
 
         private bool Reconnect(IExtendedNetworkClient transport)

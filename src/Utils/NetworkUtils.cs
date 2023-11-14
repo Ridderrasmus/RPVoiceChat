@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 
 namespace RPVoiceChat.Utils
 {
@@ -71,7 +72,7 @@ namespace RPVoiceChat.Utils
 
         public static string GetPublicIP()
         {
-            string publicIPString = new WebClient().DownloadString("https://ipinfo.io/ip");
+            string publicIPString = new HttpClient().GetStringAsync("https://ipinfo.io/ip").GetAwaiter().GetResult();
 
             return publicIPString;
         }

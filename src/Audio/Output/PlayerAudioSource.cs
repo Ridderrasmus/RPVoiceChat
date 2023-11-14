@@ -27,7 +27,6 @@ namespace RPVoiceChat.Audio
         private long lastAudioSequenceNumber = -1;
         private IAudioCodec codec;
         private FilterLowpass lowpassFilter;
-        private EffectsExtension effectsExtension;
 
         private ICoreClientAPI capi;
         private IPlayer player;
@@ -44,9 +43,8 @@ namespace RPVoiceChat.Audio
         private Vec3f lastSpeakerCoords;
         private DateTime? lastSpeakerUpdate;
 
-        public PlayerAudioSource(IPlayer player, ICoreClientAPI capi, ClientSettingsRepository clientSettingsRepo, EffectsExtension effectsExtension)
+        public PlayerAudioSource(IPlayer player, ICoreClientAPI capi, ClientSettingsRepository clientSettingsRepo)
         {
-            this.effectsExtension = effectsExtension;
             this.player = player;
             this.capi = capi;
             this.clientSettingsRepo = clientSettingsRepo;
@@ -106,7 +104,7 @@ namespace RPVoiceChat.Audio
             lowpassFilter?.Stop();
             if (mufflingEnabled && wallThickness != 0)
             {
-                lowpassFilter = lowpassFilter ?? new FilterLowpass(effectsExtension, source);
+                lowpassFilter = lowpassFilter ?? new FilterLowpass(source);
                 lowpassFilter.Start();
                 lowpassFilter.SetHFGain(Math.Max(1.0f - (wallThickness / 2), 0.1f));
             }
@@ -211,11 +209,7 @@ namespace RPVoiceChat.Audio
         {
             lock (ordering_queue_lock)
             {
-                if (orderingQueue.ContainsKey(sequenceNumber))
-                {
-                    Logger.client.VerboseDebug($"Audio sequence {sequenceNumber} already received, skipping enqueueing");
-                    return;
-                }
+                if (orderingQueue.ContainsKey(sequenceNumber)) return;
 
                 if (lastAudioSequenceNumber >= sequenceNumber)
                 {

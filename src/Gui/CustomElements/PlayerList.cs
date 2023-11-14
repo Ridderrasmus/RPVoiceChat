@@ -113,7 +113,7 @@ namespace RPVoiceChat.Gui
 
         private bool SlidePlayerVolume(int gain, string sliderKey)
         {
-            string playerId = sliderKey.Split('_')[0];
+            string playerId = sliderKey.Split("_")[0];
             settingsRepository.SetPlayerGain(playerId, gain);
 
             return true;

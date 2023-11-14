@@ -31,8 +31,6 @@ namespace RPVoiceChat.Gui
             Bounds = bounds.FlatCopy().WithFixedWidth(audioMeterWidth);
         }
 
-        public void OnAdd(GuiComposer composer) { }
-
         private void SetCoefficient()
         {
             coefficient = 100;

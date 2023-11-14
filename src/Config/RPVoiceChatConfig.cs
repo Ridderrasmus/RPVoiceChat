@@ -19,6 +19,7 @@ namespace RPVoiceChat
         public int ServerPort = 52525;
         public string ServerIP = null;
         public bool AdditionalContent = true;
+        public bool UseCustomNetworkServers = false;
 
         // --- Client Settings ---
         // These are meant to be set by the client, but are
@@ -43,6 +44,7 @@ namespace RPVoiceChat
             ServerPort = previousConfig.ServerPort;
             ServerIP = previousConfig.ServerIP;
             AdditionalContent = previousConfig.AdditionalContent;
+            UseCustomNetworkServers = previousConfig.UseCustomNetworkServers;
 
             PushToTalkEnabled = previousConfig.PushToTalkEnabled;
             IsMuted = previousConfig.IsMuted;
