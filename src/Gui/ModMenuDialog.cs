@@ -425,6 +425,7 @@ namespace RPVoiceChat.Gui
         private void OnChangeInputDevice(string value, bool selected)
         {
             audioInputManager.SetInputDevice(value);
+            SetValue("inputDevice", ClientSettings.CurrentInputDevice ?? "Default");
         }
 
         private void OnTogglePushToTalk(bool enabled)
