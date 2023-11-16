@@ -1,5 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>net7.0</TargetFramework>
 		<LangVersion>11</LangVersion>
@@ -35,11 +34,11 @@
 			<Private>False</Private>
 		</Reference>
 		<Reference Include="OpenAL">
-			<HintPath>Lib/OpenTK.Audio.OpenAL.dll</HintPath>
+			<HintPath>$(VINTAGE_STORY)/Lib/OpenTK.Audio.OpenAL.dll</HintPath>
 			<Private>True</Private>
 		</Reference>
 		<Reference Include="OpenTK.Mathematics">
-			<HintPath>Lib/OpenTK.Mathematics.dll</HintPath>
+			<HintPath>$(VINTAGE_STORY)/Lib/OpenTK.Mathematics.dll</HintPath>
 			<Private>True</Private>
 		</Reference>
 		<Reference Include="Newtonsoft.Json">
