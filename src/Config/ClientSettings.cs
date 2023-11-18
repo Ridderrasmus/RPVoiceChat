@@ -10,6 +10,7 @@ namespace RPVoiceChat
         public static float InputThreshold { get => GetFloat("inputThreshold", 0.2f); set => Set("inputThreshold", value); }
         public static float BackgroundNoiseThreshold { get => GetFloat("denoisingSensitivity", 0.5f); set => Set("denoisingSensitivity", value); }
         public static float VoiceDenoisingStrength { get => GetFloat("denoisingStrength", 0.1f); set => Set("denoisingStrength", value); }
+        public static bool ModUsedFirstTime { get => GetBool("firstTimeUse", true); set => Set("firstTimeUse", value); }
         public static bool PushToTalkEnabled { get => GetBool("ptt", false); set => Set("ptt", value); }
         public static bool IsMuted { get => GetBool("muteMic", false); set => Set("muteMic", value); }
         public static bool Loopback { get => GetBool("loopback", false); set => Set("loopback", value); }
