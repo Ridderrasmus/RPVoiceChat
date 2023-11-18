@@ -73,33 +73,27 @@ namespace RPVoiceChat
             capi.Event.KeyUp += Event_KeyUp;
 
             // Set up keybind event handlers
-            capi.Input.SetHotKeyHandler("voicechatMenu", (t1) =>
+            capi.Input.SetHotKeyHandler("voicechatMenu", _ =>
             {
-                if (voiceMenuPressed)
-                    return true;
-
+                if (voiceMenuPressed) return true;
                 voiceMenuPressed = true;
 
                 modMenuDialog.Toggle();
                 return true;
             });
 
-            capi.Input.SetHotKeyHandler("voicechatVoiceLevel", (t1) =>
+            capi.Input.SetHotKeyHandler("voicechatVoiceLevel", _ =>
             {
-                if (voiceLevelPressed)
-                    return true;
-
+                if (voiceLevelPressed) return true;
                 voiceLevelPressed = true;
 
                 micManager.CycleVoiceLevel();
                 return true;
             });
 
-            capi.Input.SetHotKeyHandler("voicechatMute", (t1) =>
+            capi.Input.SetHotKeyHandler("voicechatMute", _ =>
             {
-                if (mutePressed)
-                    return true;
-
+                if (mutePressed) return true;
                 mutePressed = true;
 
                 ClientSettings.IsMuted = !ClientSettings.IsMuted;
@@ -123,14 +117,11 @@ namespace RPVoiceChat
 
         private void Event_KeyUp(KeyEvent e)
         {
+            int HotkeyCode(string hotkeyName) => capi.Input.HotKeys[hotkeyName].CurrentMapping.KeyCode;
 
-            if (e.KeyCode == capi.Input.HotKeys["voicechatMenu"].CurrentMapping.KeyCode)
-                voiceMenuPressed = false;
-            else if (e.KeyCode == capi.Input.HotKeys["voicechatVoiceLevel"].CurrentMapping.KeyCode)
-                voiceLevelPressed = false;
-            else if (e.KeyCode == capi.Input.HotKeys["voicechatMute"].CurrentMapping.KeyCode)
-                mutePressed = false;
-
+            if (e.KeyCode == HotkeyCode("voicechatMenu")) voiceMenuPressed = false;
+            if (e.KeyCode == HotkeyCode("voicechatVoiceLevel")) voiceLevelPressed = false;
+            if (e.KeyCode == HotkeyCode("voicechatMute")) mutePressed = false;
         }
 
         private void OnAudioReceived(AudioPacket packet)
