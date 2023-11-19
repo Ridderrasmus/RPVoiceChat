@@ -15,8 +15,12 @@ namespace RPVoiceChat.Gui
         private const int buttonHeight = 30;
         private const int buttonXPadding = 10;
         private const int buttonYPadding = 2;
+        private GuiManager guiManager;
 
-        public FirstLaunchDialog(ICoreClientAPI capi) : base(capi) { }
+        public FirstLaunchDialog(ICoreClientAPI capi, GuiManager guiManager) : base(capi)
+        {
+            this.guiManager = guiManager;
+        }
 
         public void ShowIfNecessary()
         {
@@ -62,9 +66,7 @@ namespace RPVoiceChat.Gui
         private bool OnSureButtonClick()
         {
             TryClose();
-
-            //TODO: Open config wizard dialog
-
+            guiManager.audioWizardDialog.TryOpen();
             return true;
         }
 

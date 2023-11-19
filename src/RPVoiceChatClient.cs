@@ -13,16 +13,12 @@ namespace RPVoiceChat
 {
     public class RPVoiceChatClient : RPVoiceChatMod
     {
+        private ICoreClientAPI capi;
         private ClientSettingsRepository clientSettingsRepository;
         private MicrophoneManager micManager;
         private AudioOutputManager audioOutputManager;
         private PlayerNetworkClient client;
-
-        protected ICoreClientAPI capi;
-
-        private FirstLaunchDialog firstLaunchDialog;
-        private GuiDialog modMenuDialog;
-
+        private GuiManager guiManager;
         private bool isReady = false;
         private bool mutePressed = false;
         private bool voiceMenuPressed = false;
@@ -59,11 +55,7 @@ namespace RPVoiceChat
             client = new PlayerNetworkClient(capi, networkTransports);
 
             // Initialize gui
-            firstLaunchDialog = new FirstLaunchDialog(capi);
-            modMenuDialog = new ModMenuDialog(capi, micManager, audioOutputManager, clientSettingsRepository);
-            capi.Gui.RegisterDialog(new SpeechIndicator(capi, micManager));
-            capi.Gui.RegisterDialog(new VoiceLevelIcon(capi, micManager));
-            new PlayerNameTagRenderer(capi, audioOutputManager);
+            guiManager = new GuiManager(capi, micManager, audioOutputManager, clientSettingsRepository);
 
             // Set up keybinds
             capi.Input.RegisterHotKey("voicechatMenu", UIUtils.I18n("Hotkey.ModMenu"), GlKeys.P, HotkeyType.GUIOrOtherControls);
@@ -78,7 +70,7 @@ namespace RPVoiceChat
                 if (voiceMenuPressed) return true;
                 voiceMenuPressed = true;
 
-                modMenuDialog.Toggle();
+                guiManager.modMenuDialog.Toggle();
                 return true;
             });
 
@@ -111,7 +103,7 @@ namespace RPVoiceChat
             micManager.OnBufferRecorded += OnBufferRecorded;
             micManager.Launch();
             audioOutputManager.Launch();
-            firstLaunchDialog.ShowIfNecessary();
+            guiManager.firstLaunchDialog.ShowIfNecessary();
             isReady = true;
         }
 
@@ -147,8 +139,7 @@ namespace RPVoiceChat
             micManager?.Dispose();
             audioOutputManager?.Dispose();
             client?.Dispose();
-            firstLaunchDialog?.Dispose();
-            modMenuDialog?.Dispose();
+            guiManager?.Dispose();
             clientSettingsRepository?.Dispose();
         }
     }
