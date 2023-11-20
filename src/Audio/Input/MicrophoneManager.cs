@@ -33,7 +33,7 @@ namespace RPVoiceChat.Audio
         private ALFormat OutputFormat;
         private int OutputChannelCount;
         private float gain;
-        private const double _maxVolume = 0.7;
+        private const double _maxVolume = 0.8;
         private const short maxSampleValue = (short)(_maxVolume * short.MaxValue);
         private List<float> recentGainLimits = new List<float>();
         private ConcurrentQueue<float> recentGainLimitsQueue = new ConcurrentQueue<float>();
