@@ -200,11 +200,13 @@ namespace RPVoiceChat.Gui
     {
         private MicrophoneManager audioInputManager;
         private AudioOutputManager audioOutputManager;
+        private GuiManager guiManager;
 
-        public ModMenuDialog(ICoreClientAPI capi, MicrophoneManager _audioInputManager, AudioOutputManager _audioOutputManager, ClientSettingsRepository settingsRepository) : base(capi)
+        public ModMenuDialog(ICoreClientAPI capi, MicrophoneManager _audioInputManager, AudioOutputManager _audioOutputManager, ClientSettingsRepository settingsRepository, GuiManager guiManager) : base(capi)
         {
             audioInputManager = _audioInputManager;
             audioOutputManager = _audioOutputManager;
+            this.guiManager = guiManager;
 
             var audioInputTab = new ConfigTab("AudioInput");
             var audioOutputTab = new ConfigTab("AudioOutput");
@@ -372,6 +374,21 @@ namespace RPVoiceChat.Gui
                 Tab = advancedTab,
                 ToggleAction = OnToggleChannelGuessing
             });
+        }
+
+        public override bool TryOpen()
+        {
+            bool otherDialogActive = audioInputManager.AudioWizardActive || guiManager.firstLaunchDialog.IsOpened();
+            if (otherDialogActive) return true;
+
+            return base.TryOpen();
+        }
+
+        public override bool TryClose()
+        {
+            if (audioInputManager.AudioWizardActive) return true;
+
+            return base.TryClose();
         }
 
         protected override void RefreshValues()

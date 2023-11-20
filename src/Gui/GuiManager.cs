@@ -13,9 +13,9 @@ namespace RPVoiceChat.Gui
 
         public GuiManager(ICoreClientAPI capi, MicrophoneManager audioInputManager, AudioOutputManager audioOutputManager, ClientSettingsRepository settingsRepository)
         {
-            audioWizardDialog = new AudioWizardDialog(capi, audioInputManager, audioOutputManager, this);
+            audioWizardDialog = new AudioWizardDialog(capi, audioInputManager, audioOutputManager);
             firstLaunchDialog = new FirstLaunchDialog(capi, this);
-            modMenuDialog = new ModMenuDialog(capi, audioInputManager, audioOutputManager, settingsRepository);
+            modMenuDialog = new ModMenuDialog(capi, audioInputManager, audioOutputManager, settingsRepository, this);
             capi.Gui.RegisterDialog(new SpeechIndicator(capi, audioInputManager));
             capi.Gui.RegisterDialog(new VoiceLevelIcon(capi, audioInputManager));
             new PlayerNameTagRenderer(capi, audioOutputManager);

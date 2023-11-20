@@ -130,6 +130,8 @@ namespace RPVoiceChat
             var sequenceNumber = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             AudioPacket packet = new AudioPacket(sender, audioData, sequenceNumber);
             audioOutputManager.HandleLoopback(packet);
+
+            if (micManager.AudioWizardActive) return;
             client.SendAudioToServer(packet);
         }
 
