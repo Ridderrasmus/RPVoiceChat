@@ -13,6 +13,7 @@ namespace RPVoiceChat.Gui
     public abstract class ConfigDialog : GuiDialog
     {
         protected const string i18nPrefix = "Gui.ModMenu";
+        private const string composerName = "RPVC_ModMenu";
         private const int tabsHeight = 300;
         private const int tabsTopPadding = 5;
         private const int textLeftPadding = 20;
@@ -26,6 +27,7 @@ namespace RPVoiceChat.Gui
         private bool isSetup;
         private List<ConfigOption> ConfigOptions = new List<ConfigOption>();
         private List<ConfigTab> ConfigTabs = new List<ConfigTab>();
+        private List<GuiElementHoverText> hoverTextElements = new List<GuiElementHoverText>();
 
         protected class ConfigTab : GuiTab
         {
@@ -59,9 +61,11 @@ namespace RPVoiceChat.Gui
             public string[] DropdownValues { get; internal set; }
             public string[] DropdownNames { get; internal set; }
             public SelectionChangedDelegate DropdownSelect { get; internal set; }
+            public ActionConsumable ButtonAction;
             public CairoFont Font = CairoFont.WhiteSmallText();
             public string Text { get => UIUtils.I18n($"{i18nPrefix}.{Key}.Label"); }
             public string TooltipText { get => UIUtils.I18n($"{i18nPrefix}.{Key}.Tooltip"); }
+            public string ButtonText { get => UIUtils.I18n($"{i18nPrefix}.{Key}.ButtonText"); }
             public double TextWidth { get => _TextWidth(); }
 
             private double _TextWidth()
@@ -76,6 +80,7 @@ namespace RPVoiceChat.Gui
             Slider,
             Switch,
             Dropdown,
+            Button,
             Custom
         }
 
@@ -95,6 +100,7 @@ namespace RPVoiceChat.Gui
         protected void SetupDialog()
         {
             isSetup = true;
+            hoverTextElements = new List<GuiElementHoverText>();
 
             var activeTab = ConfigTabs[ClientSettings.ActiveConfigTab];
             var displayedOptions = ConfigOptions.FindAll(e => e.Tab == activeTab && e.Enabled);
@@ -104,11 +110,9 @@ namespace RPVoiceChat.Gui
             var tabsBounds = ElementBounds.Fixed(0, GuiStyle.TitleBarHeight + tabsTopPadding, maxTabWidth, tabsHeight).WithAlignment(EnumDialogArea.LeftTop);
             var textBounds = ElementBounds.Fixed(tabsBounds.fixedWidth + textLeftPadding, GuiStyle.TitleBarHeight, maxTextWidth, settingHeight);
             var settingBounds = ElementBounds.Fixed(textBounds.fixedWidth + textBounds.fixedX + settingsLeftPadding, GuiStyle.TitleBarHeight, 0, settingHeight);
-            var dialogBounds = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.CenterMiddle);
-            var bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
-            bgBounds.BothSizing = ElementSizing.FitToChildren;
+            var bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding).WithSizing(ElementSizing.FitToChildren);
 
-            var composer = capi.Gui.CreateCompo("rpvcconfigmenu", dialogBounds)
+            var composer = capi.Gui.CreateCompo(composerName, ElementStdBounds.AutosizedMainDialog)
                 .AddShadedDialogBG(bgBounds)
                 .AddDialogTitleBar(UIUtils.I18n($"{i18nPrefix}.TitleBar"), OnTitleBarCloseClicked)
                 .BeginChildElements(bgBounds)
@@ -119,7 +123,11 @@ namespace RPVoiceChat.Gui
                 var wideSettingBounds = settingBounds.FlatCopy().WithFixedWidth(sliderWidth);
 
                 if (option.Label) composer.AddStaticText(option.Text, option.Font, textBounds);
-                if (option.Tooltip) composer.AddHoverText(option.TooltipText, option.Font, tooltipWidth, textBounds);
+                if (option.Tooltip)
+                {
+                    composer.AddHoverText(option.TooltipText, option.Font, tooltipWidth, textBounds);
+                    hoverTextElements.Add(composer.LastAddedElement as GuiElementHoverText);
+                }
 
                 switch (option.Type)
                 {
@@ -144,6 +152,10 @@ namespace RPVoiceChat.Gui
                         );
                         break;
 
+                    case ElementType.Button:
+                        composer.AddSmallButton(option.ButtonText, option.ButtonAction, wideSettingBounds);
+                        break;
+
                     case ElementType.Custom:
                         IExtendedGuiElement element = option.CustomElement;
                         var bounds = option.Label ? settingBounds : textBounds;
@@ -165,12 +177,10 @@ namespace RPVoiceChat.Gui
 
         public override bool TryOpen()
         {
-            if (!isSetup)
-                SetupDialog();
+            if (!isSetup) SetupDialog();
 
             var success = base.TryOpen();
-            if (!success)
-                return false;
+            if (!success) return false;
 
             RefreshValues();
             return true;
@@ -180,6 +190,18 @@ namespace RPVoiceChat.Gui
         {
             ClientSettings.Save();
             return base.TryClose();
+        }
+
+        protected void DisableHoverText()
+        {
+            foreach (var element in hoverTextElements)
+                element.SetAutoDisplay(false);
+        }
+
+        protected void EnableHoverText()
+        {
+            foreach (var element in hoverTextElements)
+                element.SetAutoDisplay(true);
         }
 
         private void OnTitleBarCloseClicked()
@@ -203,11 +225,14 @@ namespace RPVoiceChat.Gui
     {
         private MicrophoneManager audioInputManager;
         private AudioOutputManager audioOutputManager;
+        private GuiManager guiManager;
 
-        public ModMenuDialog(ICoreClientAPI capi, MicrophoneManager _audioInputManager, AudioOutputManager _audioOutputManager, ClientSettingsRepository settingsRepository) : base(capi)
+        public ModMenuDialog(ICoreClientAPI capi, MicrophoneManager _audioInputManager, AudioOutputManager _audioOutputManager, ClientSettingsRepository settingsRepository, GuiManager guiManager) : base(capi)
         {
             audioInputManager = _audioInputManager;
             audioOutputManager = _audioOutputManager;
+            this.guiManager = guiManager;
+            guiManager.audioWizardDialog.GainCalibrationDone += OnAudioWizardClosed;
 
             var audioInputTab = new ConfigTab("AudioInput");
             var audioOutputTab = new ConfigTab("AudioOutput");
@@ -307,6 +332,16 @@ namespace RPVoiceChat.Gui
 
             RegisterOption(new ConfigOption
             {
+                Key = "audioWizard",
+                Type = ElementType.Button,
+                Label = true,
+                Tooltip = true,
+                Tab = audioInputTab,
+                ButtonAction = OpenAudioWizard
+            });
+
+            RegisterOption(new ConfigOption
+            {
                 Key = "toggleHUD",
                 Type = ElementType.Switch,
                 Label = true,
@@ -377,6 +412,21 @@ namespace RPVoiceChat.Gui
             });
         }
 
+        public override bool TryOpen()
+        {
+            bool otherDialogActive = audioInputManager.AudioWizardActive || guiManager.firstLaunchDialog.IsOpened();
+            if (otherDialogActive) return true;
+
+            return base.TryOpen();
+        }
+
+        public override bool TryClose()
+        {
+            if (audioInputManager.AudioWizardActive) return true;
+
+            return base.TryClose();
+        }
+
         protected override void RefreshValues()
         {
             if (!IsOpened())
@@ -402,6 +452,8 @@ namespace RPVoiceChat.Gui
             SetValue("denoisingStrength", new dynamic[] { denoisingStrength, 0, 100, 1, "%" });
             SetValue("playerList", null);
             SetValue("toggleChannelGuessing", ClientSettings.ChannelGuessing);
+
+            if (audioInputManager.AudioWizardActive) DisableHoverText();
         }
 
         private void SetValue(string key, dynamic value)
@@ -420,6 +472,12 @@ namespace RPVoiceChat.Gui
             else if (element is GuiElementVerticalTabs verticalTabs) verticalTabs.activeElement = value;
             else if (element is PlayerList playerList) playerList.SetupElement();
             else throw new Exception("Unknown element type");
+        }
+
+        private void OnAudioWizardClosed()
+        {
+            EnableHoverText();
+            RefreshValues();
         }
 
         private void OnChangeInputDevice(string value, bool selected)
@@ -485,6 +543,15 @@ namespace RPVoiceChat.Gui
             float threshold = (float)intThreshold / 100;
             ClientSettings.InputThreshold = threshold;
             audioInputManager.SetThreshold(threshold);
+
+            return true;
+        }
+
+        private bool OpenAudioWizard()
+        {
+            if (guiManager.audioWizardDialog.IsOpened()) return true;
+            DisableHoverText();
+            guiManager.audioWizardDialog.TryOpen();
 
             return true;
         }

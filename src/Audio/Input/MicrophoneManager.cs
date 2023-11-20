@@ -2,6 +2,7 @@ using OpenTK.Audio.OpenAL;
 using RPVoiceChat.Audio.Effects;
 using RPVoiceChat.Utils;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -17,7 +18,7 @@ namespace RPVoiceChat.Audio
         public event Action TransmissionStateChanged;
 
         // TODO: split MicrophoneManager into 3 classes
-        // Audio cature
+        // Audio capture
         public static int Frequency = 48000;
         private IAudioCapture capture;
         private Thread audioCaptureThread;
@@ -32,14 +33,16 @@ namespace RPVoiceChat.Audio
         private ALFormat OutputFormat;
         private int OutputChannelCount;
         private float gain;
-        private const double _maxVolume = 0.7;
+        private const double _maxVolume = 0.8;
         private const short maxSampleValue = (short)(_maxVolume * short.MaxValue);
         private List<float> recentGainLimits = new List<float>();
+        private ConcurrentQueue<float> recentGainLimitsQueue = new ConcurrentQueue<float>();
 
         // Aplication interface/audio management
         public double Amplitude { get; private set; }
         public bool IsDenoisingAvailable = false;
         public bool Transmitting = false;
+        public bool AudioWizardActive = false;
         private const int deactivationWindow = 4;
         private int stepsSinceLastTransmission = deactivationWindow;
         private bool transmittingOnPreviousStep = false;
@@ -98,6 +101,18 @@ namespace RPVoiceChat.Audio
             denoiser?.SetVoiceDenoisingStrength(strength);
         }
 
+        public List<float> GetRecentGainLimits()
+        {
+            var recentGainLimits = new List<float>();
+
+            float gainLimit;
+            while (recentGainLimitsQueue.Count > 0)
+                if (recentGainLimitsQueue.TryDequeue(out gainLimit))
+                    recentGainLimits.Add(gainLimit);
+
+            return recentGainLimits;
+        }
+
         private void CaptureAudio(object cancellationToken)
         {
             CancellationToken ct = (CancellationToken)cancellationToken;
@@ -130,7 +145,9 @@ namespace RPVoiceChat.Audio
 
             bool isMuted = ClientSettings.IsMuted;
             bool isSleeping = clientEntity.AnimManager.IsAnimationActive("sleep");
-            if (isMuted || isSleeping || !clientEntity.Alive)
+            bool canSkipProcessing = isMuted || isSleeping || !clientEntity.Alive;
+            bool forceProcessing = AudioWizardActive;
+            if (canSkipProcessing && !forceProcessing)
             {
                 if (recentAmplitudes.Count == 0) return;
                 recentAmplitudes.Clear();
@@ -181,6 +198,8 @@ namespace RPVoiceChat.Audio
             float maxSafeGain = Math.Min(gain, (float)(maxSampleValue / peakPcmValue));
             recentGainLimits.Add(maxSafeGain);
             if (recentGainLimits.Count > 10) recentGainLimits.RemoveAt(0);
+            recentGainLimitsQueue.Enqueue(maxSafeGain);
+            if (recentGainLimitsQueue.Count > 10) recentGainLimitsQueue.TryDequeue(out _);
             float volumeAmplification = Math.Min(maxSafeGain, recentGainLimits.Average());
 
             // Denoise audio if applicable
@@ -233,7 +252,7 @@ namespace RPVoiceChat.Audio
             transmittingOnPreviousStep = Transmitting;
 
             // Transmit
-            if (Transmitting) OnBufferRecorded?.Invoke(data);
+            if (Transmitting || AudioWizardActive) OnBufferRecorded?.Invoke(data);
         }
 
         private IAudioCapture CreateNewCapture(string deviceName, ALFormat? captureFormat = null)

@@ -13,15 +13,12 @@ namespace RPVoiceChat
 {
     public class RPVoiceChatClient : RPVoiceChatMod
     {
+        private ICoreClientAPI capi;
         private ClientSettingsRepository clientSettingsRepository;
         private MicrophoneManager micManager;
         private AudioOutputManager audioOutputManager;
         private PlayerNetworkClient client;
-
-        protected ICoreClientAPI capi;
-
-        private ModMenuDialog modMenuDialog;
-
+        private GuiManager guiManager;
         private bool isReady = false;
         private bool mutePressed = false;
         private bool voiceMenuPressed = false;
@@ -58,10 +55,7 @@ namespace RPVoiceChat
             client = new PlayerNetworkClient(capi, networkTransports);
 
             // Initialize gui
-            modMenuDialog = new ModMenuDialog(capi, micManager, audioOutputManager, clientSettingsRepository);
-            capi.Gui.RegisterDialog(new SpeechIndicator(capi, micManager));
-            capi.Gui.RegisterDialog(new VoiceLevelIcon(capi, micManager));
-            new PlayerNameTagRenderer(capi, audioOutputManager);
+            guiManager = new GuiManager(capi, micManager, audioOutputManager, clientSettingsRepository);
 
             // Set up keybinds
             capi.Input.RegisterHotKey("voicechatMenu", UIUtils.I18n("Hotkey.ModMenu"), GlKeys.P, HotkeyType.GUIOrOtherControls);
@@ -71,33 +65,27 @@ namespace RPVoiceChat
             capi.Event.KeyUp += Event_KeyUp;
 
             // Set up keybind event handlers
-            capi.Input.SetHotKeyHandler("voicechatMenu", (t1) =>
+            capi.Input.SetHotKeyHandler("voicechatMenu", _ =>
             {
-                if (voiceMenuPressed)
-                    return true;
-
+                if (voiceMenuPressed) return true;
                 voiceMenuPressed = true;
 
-                modMenuDialog.Toggle();
+                guiManager.modMenuDialog.Toggle();
                 return true;
             });
 
-            capi.Input.SetHotKeyHandler("voicechatVoiceLevel", (t1) =>
+            capi.Input.SetHotKeyHandler("voicechatVoiceLevel", _ =>
             {
-                if (voiceLevelPressed)
-                    return true;
-
+                if (voiceLevelPressed) return true;
                 voiceLevelPressed = true;
 
                 micManager.CycleVoiceLevel();
                 return true;
             });
 
-            capi.Input.SetHotKeyHandler("voicechatMute", (t1) =>
+            capi.Input.SetHotKeyHandler("voicechatMute", _ =>
             {
-                if (mutePressed)
-                    return true;
-
+                if (mutePressed) return true;
                 mutePressed = true;
 
                 ClientSettings.IsMuted = !ClientSettings.IsMuted;
@@ -115,19 +103,17 @@ namespace RPVoiceChat
             micManager.OnBufferRecorded += OnBufferRecorded;
             micManager.Launch();
             audioOutputManager.Launch();
+            guiManager.firstLaunchDialog.ShowIfNecessary();
             isReady = true;
         }
 
         private void Event_KeyUp(KeyEvent e)
         {
+            int HotkeyCode(string hotkeyName) => capi.Input.HotKeys[hotkeyName].CurrentMapping.KeyCode;
 
-            if (e.KeyCode == capi.Input.HotKeys["voicechatMenu"].CurrentMapping.KeyCode)
-                voiceMenuPressed = false;
-            else if (e.KeyCode == capi.Input.HotKeys["voicechatVoiceLevel"].CurrentMapping.KeyCode)
-                voiceLevelPressed = false;
-            else if (e.KeyCode == capi.Input.HotKeys["voicechatMute"].CurrentMapping.KeyCode)
-                mutePressed = false;
-
+            if (e.KeyCode == HotkeyCode("voicechatMenu")) voiceMenuPressed = false;
+            if (e.KeyCode == HotkeyCode("voicechatVoiceLevel")) voiceLevelPressed = false;
+            if (e.KeyCode == HotkeyCode("voicechatMute")) mutePressed = false;
         }
 
         private void OnAudioReceived(AudioPacket packet)
@@ -144,6 +130,8 @@ namespace RPVoiceChat
             var sequenceNumber = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             AudioPacket packet = new AudioPacket(sender, audioData, sequenceNumber);
             audioOutputManager.HandleLoopback(packet);
+
+            if (micManager.AudioWizardActive) return;
             client.SendAudioToServer(packet);
         }
 
@@ -153,7 +141,7 @@ namespace RPVoiceChat
             micManager?.Dispose();
             audioOutputManager?.Dispose();
             client?.Dispose();
-            modMenuDialog?.Dispose();
+            guiManager?.Dispose();
             clientSettingsRepository?.Dispose();
         }
     }
