@@ -60,9 +60,11 @@ namespace RPVoiceChat.Gui
             public string[] DropdownValues { get; internal set; }
             public string[] DropdownNames { get; internal set; }
             public SelectionChangedDelegate DropdownSelect { get; internal set; }
+            public ActionConsumable ButtonAction;
             public CairoFont Font = CairoFont.WhiteSmallText();
             public string Text { get => UIUtils.I18n($"{i18nPrefix}.{Key}.Label"); }
             public string TooltipText { get => UIUtils.I18n($"{i18nPrefix}.{Key}.Tooltip"); }
+            public string ButtonText { get => UIUtils.I18n($"{i18nPrefix}.{Key}.ButtonText"); }
             public double TextWidth { get => _TextWidth(); }
 
             private double _TextWidth()
@@ -77,6 +79,7 @@ namespace RPVoiceChat.Gui
             Slider,
             Switch,
             Dropdown,
+            Button,
             Custom
         }
 
@@ -143,6 +146,10 @@ namespace RPVoiceChat.Gui
                         );
                         break;
 
+                    case ElementType.Button:
+                        composer.AddSmallButton(option.ButtonText, option.ButtonAction, wideSettingBounds);
+                        break;
+
                     case ElementType.Custom:
                         IExtendedGuiElement element = option.CustomElement;
                         var bounds = option.Label ? settingBounds : textBounds;
@@ -207,6 +214,7 @@ namespace RPVoiceChat.Gui
             audioInputManager = _audioInputManager;
             audioOutputManager = _audioOutputManager;
             this.guiManager = guiManager;
+            guiManager.audioWizardDialog.GainCalibrationDone += OnAudioWizardClosed;
 
             var audioInputTab = new ConfigTab("AudioInput");
             var audioOutputTab = new ConfigTab("AudioOutput");
@@ -302,6 +310,16 @@ namespace RPVoiceChat.Gui
                 Tooltip = true,
                 Tab = audioInputTab,
                 CustomElement = new AudioMeter(capi, audioInputManager, this)
+            });
+
+            RegisterOption(new ConfigOption
+            {
+                Key = "audioWizard",
+                Type = ElementType.Button,
+                Label = true,
+                Tooltip = true,
+                Tab = audioInputTab,
+                ButtonAction = OpenAudioWizard
             });
 
             RegisterOption(new ConfigOption
@@ -436,6 +454,11 @@ namespace RPVoiceChat.Gui
             else throw new Exception("Unknown element type");
         }
 
+        private void OnAudioWizardClosed()
+        {
+            RefreshValues();
+        }
+
         private void OnChangeInputDevice(string value, bool selected)
         {
             audioInputManager.SetInputDevice(value);
@@ -499,6 +522,14 @@ namespace RPVoiceChat.Gui
             float threshold = (float)intThreshold / 100;
             ClientSettings.InputThreshold = threshold;
             audioInputManager.SetThreshold(threshold);
+
+            return true;
+        }
+
+        private bool OpenAudioWizard()
+        {
+            if (guiManager.audioWizardDialog.IsOpened()) return true;
+            guiManager.audioWizardDialog.TryOpen();
 
             return true;
         }
