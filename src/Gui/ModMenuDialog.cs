@@ -27,6 +27,7 @@ namespace RPVoiceChat.Gui
         private bool isSetup;
         private List<ConfigOption> ConfigOptions = new List<ConfigOption>();
         private List<ConfigTab> ConfigTabs = new List<ConfigTab>();
+        private List<GuiElementHoverText> hoverTextElements = new List<GuiElementHoverText>();
 
         protected class ConfigTab : GuiTab
         {
@@ -99,6 +100,7 @@ namespace RPVoiceChat.Gui
         protected void SetupDialog()
         {
             isSetup = true;
+            hoverTextElements = new List<GuiElementHoverText>();
 
             var activeTab = ConfigTabs[ClientSettings.ActiveConfigTab];
             var displayedOptions = ConfigOptions.FindAll(e => e.Tab == activeTab && e.Enabled);
@@ -121,7 +123,11 @@ namespace RPVoiceChat.Gui
                 var wideSettingBounds = settingBounds.FlatCopy().WithFixedWidth(sliderWidth);
 
                 if (option.Label) composer.AddStaticText(option.Text, option.Font, textBounds);
-                if (option.Tooltip) composer.AddHoverText(option.TooltipText, option.Font, tooltipWidth, textBounds);
+                if (option.Tooltip)
+                {
+                    composer.AddHoverText(option.TooltipText, option.Font, tooltipWidth, textBounds);
+                    hoverTextElements.Add(composer.LastAddedElement as GuiElementHoverText);
+                }
 
                 switch (option.Type)
                 {
@@ -184,6 +190,18 @@ namespace RPVoiceChat.Gui
         {
             ClientSettings.Save();
             return base.TryClose();
+        }
+
+        protected void DisableHoverText()
+        {
+            foreach (var element in hoverTextElements)
+                element.SetAutoDisplay(false);
+        }
+
+        protected void EnableHoverText()
+        {
+            foreach (var element in hoverTextElements)
+                element.SetAutoDisplay(true);
         }
 
         private void OnTitleBarCloseClicked()
@@ -434,6 +452,8 @@ namespace RPVoiceChat.Gui
             SetValue("denoisingStrength", new dynamic[] { denoisingStrength, 0, 100, 1, "%" });
             SetValue("playerList", null);
             SetValue("toggleChannelGuessing", ClientSettings.ChannelGuessing);
+
+            if (audioInputManager.AudioWizardActive) DisableHoverText();
         }
 
         private void SetValue(string key, dynamic value)
@@ -456,6 +476,7 @@ namespace RPVoiceChat.Gui
 
         private void OnAudioWizardClosed()
         {
+            EnableHoverText();
             RefreshValues();
         }
 
@@ -529,6 +550,7 @@ namespace RPVoiceChat.Gui
         private bool OpenAudioWizard()
         {
             if (guiManager.audioWizardDialog.IsOpened()) return true;
+            DisableHoverText();
             guiManager.audioWizardDialog.TryOpen();
 
             return true;
