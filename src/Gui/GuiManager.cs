@@ -23,6 +23,7 @@ namespace RPVoiceChat.Gui
 
         public void Dispose()
         {
+            audioWizardDialog?.Dispose();
             firstLaunchDialog?.Dispose();
             modMenuDialog?.Dispose();
         }

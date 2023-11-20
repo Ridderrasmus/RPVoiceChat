@@ -164,6 +164,12 @@ namespace RPVoiceChat.Gui
 
         public override string ToggleKeyCombinationCode => null;
 
+        public override void Dispose()
+        {
+            doneDialog?.Dispose();
+            base.Dispose();
+        }
+
         private class AudioWizardDoneDialog : GuiDialog
         {
             public override double DrawOrder => 0.11;
