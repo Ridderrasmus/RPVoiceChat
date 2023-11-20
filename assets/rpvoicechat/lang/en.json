@@ -37,7 +37,7 @@
     "Hotkey.Mute": "RPVoice: Toggle mute",
     "Gui.AudioWizardDialog.TitleBar": "Audio Wizard",
     "Gui.AudioWizardDialog.FirstParagraph": "Welcome to audio configuration wizard, it will help you configure your input device. You should be able to hear yourself right now, if that's not the case make sure that this is your device:",
-    "Gui.AudioWizardDialog.SecondParagraph": "Let's configure your recording volume. Press the button bellow and start talking like you normally would. Keep talking until the progress bar is filled. Other players can't hear you right now so don't worry about them.",
+    "Gui.AudioWizardDialog.SecondParagraph": "Let's configure your recording volume. Press the button below and start talking like you normally would. Keep talking until the progress bar is filled. Other players can't hear you right now so don't worry about them.",
     "Gui.AudioWizardDialog.Done": "All done! Your recording volume was automatically calibrated, enjoy playing~",
     "Gui.Button.NotNow": "Not now",
     "Gui.Button.Sure": "Sure",
