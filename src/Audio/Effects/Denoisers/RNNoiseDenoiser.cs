@@ -42,6 +42,7 @@ namespace RPVoiceChat.Audio.Effects
             float[] rawAudio = Array.ConvertAll(_pcms, e => (float)e);
             using (var pcmBuffer = new PointerSource(rawAudio))
             {
+                float? lastDenoisingStrength = null;
                 for (var offset = 0; offset < rawAudio.Length; offset += FRAME_SIZE)
                 {
                     var remainingDataLength = rawAudio.Length - offset;
@@ -62,9 +63,22 @@ namespace RPVoiceChat.Audio.Effects
 
                         float VAD = RNNoise.DenoiseFrame(handle, outPtr, inPtr);
                         bool isVoice = VAD > sensitivity;
-                        if (isVoice)
-                            for (var i = 0; i < frameLength; i++)
-                                denoisedAudio[i] = denoisedAudio[i] * strength + rawAudio[offset + i] * (1 - strength);
+
+                        // Apply different levels of denoising based on audio type and crossfade between them
+                        int crossfadeSteps = Math.Min(30, frameLength);
+                        float targetDenoisingStrength = isVoice ? strength : 1;
+                        float denoisingStrength = lastDenoisingStrength ?? targetDenoisingStrength;
+                        float strengthDeltaPerStep = (targetDenoisingStrength - denoisingStrength) / crossfadeSteps;
+                        for (var i = 0; i < frameLength; i++)
+                        {
+                            if (i < crossfadeSteps)
+                            {
+                                denoisingStrength = (float)Math.Round(denoisingStrength + strengthDeltaPerStep, 3);
+                                denoisingStrength = GameMath.Clamp(denoisingStrength, 0, 1);
+                            }
+                            denoisedAudio[i] = denoisedAudio[i] * denoisingStrength + rawAudio[offset + i] * (1 - denoisingStrength);
+                        }
+                        lastDenoisingStrength = targetDenoisingStrength;
 
                         Array.Copy(denoisedAudio, 0, rawAudio, offset, frameLength);
                     }
