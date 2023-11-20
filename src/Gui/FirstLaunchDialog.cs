@@ -5,7 +5,7 @@ namespace RPVoiceChat.Gui
 {
     public class FirstLaunchDialog : GuiDialog
     {
-        public override double DrawOrder => 0.09f;
+        public override double DrawOrder => 0.09;
         private const string i18nPrefix = "Gui.FirstLaunchDialog";
         private const string composerName = "RPVC_FirstLaunchDialog";
         private const int textYOffset = 10;

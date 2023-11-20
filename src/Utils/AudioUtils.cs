@@ -7,7 +7,8 @@ namespace RPVoiceChat.Utils
     {
         public static int ChannelsPerFormat(ALFormat format)
         {
-            int channels = format switch {
+            int channels = format switch
+            {
                 ALFormat.Mono16 => 1,
                 ALFormat.Stereo16 => 2,
                 ALFormat.MultiQuad16Ext => 4,

@@ -18,7 +18,7 @@ namespace RPVoiceChat.Audio
         public event Action TransmissionStateChanged;
 
         // TODO: split MicrophoneManager into 3 classes
-        // Audio cature
+        // Audio capture
         public static int Frequency = 48000;
         private IAudioCapture capture;
         private Thread audioCaptureThread;
