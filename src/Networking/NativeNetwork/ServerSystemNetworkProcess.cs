@@ -40,17 +40,24 @@ namespace RPVoiceChat.Networking
             var ct = (CancellationToken)cancellationToken;
             while (packetProcessingThread.IsAlive && !ct.IsCancellationRequested)
             {
-                NetIncomingMessage msg;
-                while ((msg = TcpNetServerPatch.ReadMessage()) != null)
+                try
                 {
-                    var connection = (NetConnection)senderConnectionField.GetValue(msg);
-                    var player = ResolveServerPlayer(connection);
-                    if (player == null) continue;
-                    var data = (byte[])messageField.GetValue(msg);
-                    var length = (int)messageLengthField.GetValue(msg);
-                    TryReadPacket(data, length, player);
+                    NetIncomingMessage msg;
+                    while ((msg = TcpNetServerPatch.ReadMessage()) != null)
+                    {
+                        var connection = (NetConnection)senderConnectionField.GetValue(msg);
+                        var player = ResolveServerPlayer(connection);
+                        if (player == null) continue;
+                        var data = (byte[])messageField.GetValue(msg);
+                        var length = (int)messageLengthField.GetValue(msg);
+                        TryReadPacket(data, length, player);
+                    }
+                    Thread.Sleep(1);
                 }
-                Thread.Sleep(1);
+                catch(Exception e)
+                {
+                    Logger.server.Error($"Caught exception outside of main thread! Proceeding to ignore it to avoid server crash:\n{e}");
+                }
             }
         }
 
