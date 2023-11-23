@@ -1,6 +1,7 @@
 using HarmonyLib;
+using RPVoiceChat.Utils;
 using System;
-using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 using Vintagestory.API.Server;
@@ -82,13 +83,24 @@ namespace RPVoiceChat.Networking
 
         private IServerPlayer ResolveServerPlayer(NetConnection connection)
         {
-            foreach (KeyValuePair<int, ConnectedClient> val in ((ServerMain)api.World).Clients)
+            try
             {
-                var connectedClient = val.Value;
-                var server = (NetServer)FromSocketListenerField.GetValue(connectedClient);
-                var serverConnection = (NetConnection)SocketField.GetValue(connectedClient);
-                if (server is TcpNetServer && serverConnection.EqualsConnection(connection))
-                    return (IServerPlayer)PlayerField.GetValue(connectedClient);
+                foreach (ConnectedClient connectedClient in ((ServerMain)api.World).Clients.Values.ToList())
+                {
+                    var server = (NetServer)FromSocketListenerField.GetValue(connectedClient);
+                    var serverConnection = (NetConnection)SocketField.GetValue(connectedClient);
+                    if (server is TcpNetServer && serverConnection.EqualsConnection(connection))
+                        return (IServerPlayer)PlayerField.GetValue(connectedClient);
+                }
+            }
+            catch(Exception e)
+            {
+                // ServerMain.Clients is a regular Dictionary that can get modified from the main thread, causing "Collection was modified" exception
+                // It is a public object with no mechanisms for synchronization so there is nothing we can really do from our side to prevent this.
+                // Luckily, this collection doesn't get modified often so just retrying should be safe enough.
+                // - Dmitry221060, 23.11.2023
+                if (e is InvalidOperationException) return ResolveServerPlayer(connection);
+                Logger.server.Warning($"Unable to resolve IServerPlayer from NetConnection, packet will be dropped:\n{e}");
             }
             return null;
         }
