@@ -54,7 +54,7 @@ namespace RPVoiceChat.Networking
                     }
                     Thread.Sleep(1);
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     Logger.server.Error($"Caught exception outside of main thread! Proceeding to ignore it to avoid server crash:\n{e}");
                 }
@@ -100,7 +100,7 @@ namespace RPVoiceChat.Networking
                         return (IServerPlayer)PlayerField.GetValue(connectedClient);
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 // ServerMain.Clients is a regular Dictionary that can get modified from the main thread, causing "Collection was modified" exception
                 // It is a public object with no mechanisms for synchronization so there is nothing we can really do from our side to prevent this.
