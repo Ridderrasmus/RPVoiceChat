@@ -102,13 +102,14 @@ namespace RPVoiceChat.Networking
 
                     ConnectionAccepted(connectionSocket);
                 }
-                catch (SocketException e)
+                catch (Exception e)
                 {
-                    if (e.SocketErrorCode == SocketError.Interrupted ||
-                        e.SocketErrorCode == SocketError.OperationAborted ||
+                    if (e is SocketException se &&
+                        (se.SocketErrorCode == SocketError.Interrupted ||
+                        se.SocketErrorCode == SocketError.OperationAborted) ||
                         ct.IsCancellationRequested) return;
 
-                    throw;
+                    logger.Error($"Caught exception outside of main thread! Proceeding to ignore it to avoid server crash:\n{e}");
                 }
             }
         }

@@ -1,6 +1,7 @@
 using HarmonyLib;
+using RPVoiceChat.Utils;
 using System;
-using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 using Vintagestory.API.Server;
@@ -39,17 +40,24 @@ namespace RPVoiceChat.Networking
             var ct = (CancellationToken)cancellationToken;
             while (packetProcessingThread.IsAlive && !ct.IsCancellationRequested)
             {
-                NetIncomingMessage msg;
-                while ((msg = TcpNetServerPatch.ReadMessage()) != null)
+                try
                 {
-                    var connection = (NetConnection)senderConnectionField.GetValue(msg);
-                    var player = ResolveServerPlayer(connection);
-                    if (player == null) continue;
-                    var data = (byte[])messageField.GetValue(msg);
-                    var length = (int)messageLengthField.GetValue(msg);
-                    TryReadPacket(data, length, player);
+                    NetIncomingMessage msg;
+                    while ((msg = TcpNetServerPatch.ReadMessage()) != null)
+                    {
+                        var connection = (NetConnection)senderConnectionField.GetValue(msg);
+                        var player = ResolveServerPlayer(connection);
+                        if (player == null) continue;
+                        var data = (byte[])messageField.GetValue(msg);
+                        var length = (int)messageLengthField.GetValue(msg);
+                        TryReadPacket(data, length, player);
+                    }
+                    Thread.Sleep(1);
                 }
-                Thread.Sleep(1);
+                catch (Exception e)
+                {
+                    Logger.server.Error($"Caught exception outside of main thread! Proceeding to ignore it to avoid server crash:\n{e}");
+                }
             }
         }
 
@@ -82,13 +90,24 @@ namespace RPVoiceChat.Networking
 
         private IServerPlayer ResolveServerPlayer(NetConnection connection)
         {
-            foreach (KeyValuePair<int, ConnectedClient> val in ((ServerMain)api.World).Clients)
+            try
             {
-                var connectedClient = val.Value;
-                var server = (NetServer)FromSocketListenerField.GetValue(connectedClient);
-                var serverConnection = (NetConnection)SocketField.GetValue(connectedClient);
-                if (server is TcpNetServer && serverConnection.EqualsConnection(connection))
-                    return (IServerPlayer)PlayerField.GetValue(connectedClient);
+                foreach (ConnectedClient connectedClient in ((ServerMain)api.World).Clients.Values.ToList())
+                {
+                    var server = (NetServer)FromSocketListenerField.GetValue(connectedClient);
+                    var serverConnection = (NetConnection)SocketField.GetValue(connectedClient);
+                    if (server is TcpNetServer && serverConnection.EqualsConnection(connection))
+                        return (IServerPlayer)PlayerField.GetValue(connectedClient);
+                }
+            }
+            catch (Exception e)
+            {
+                // ServerMain.Clients is a regular Dictionary that can get modified from the main thread, causing "Collection was modified" exception
+                // It is a public object with no mechanisms for synchronization so there is nothing we can really do from our side to prevent this.
+                // Luckily, this collection doesn't get modified often so just retrying should be safe enough.
+                // - Dmitry221060, 23.11.2023
+                if (e is InvalidOperationException) return ResolveServerPlayer(connection);
+                Logger.server.Warning($"Unable to resolve IServerPlayer from NetConnection, packet will be dropped:\n{e}");
             }
             return null;
         }
