@@ -1,15 +1,14 @@
 {
-  "code": "bellpartmold",
-  "enabled": false,
+  "code": "toolmold",
   "classByType": {
-    "bellpartmold-raw-*": "Block",
-    "bellpartmold-burned-*": "BlockToolMold"
+    "toolmold-raw-*": "Block",
+    "toolmold-burned-*": "BlockToolMold"
   },
-  "behavioursByType": {
+  "behaviorsByType": {
     "*-raw-*": [
       {
         "name": "GroundStorable",
-        "properties": { "layout": "SingleCenter" }
+        "properties": { "layout": "Halves" }
       },
       {
         "name": "Unplaceable",
@@ -26,18 +25,22 @@
     },
     {
       "code": "tooltype",
-      "states": [ "bellparts" ]
+      "states": [
+        "smallbellparts"
+      ]
     }
   ],
   "attributesByType": {
-    "toolmold-burned-bellparts": {
-      "requiredUnits": 200,
-      "fillHeight": 1,
-      "moldrackable": true,
-      "onmoldrackTransform": { "rotation": { "z": 90 } },
+    "toolmold-burned-smallbellparts": {
+      "requiredUnits": 50,
+      "fillHeight": 2,
+      "fillQuadsByLevel": [
+				{ x1: 6, z1: 4, x2: 10, z2: 12 }
+			],
+      "moldrackable": false,
       "drop": {
         "type": "item",
-        "code": "game:{tooltype}-{metal}",
+        "code": "smallbellparts-{metal}",
         "quantity": 1
       }
     }
@@ -70,12 +73,11 @@
   "texturesByType": {
     "toolmold-raw-*": { "all": { "base": "game:block/clay/blueclay" } },
     "toolmold-burned-*": {
-      "floor": { "base": "game:block/clay/ceramic-dark" },
-      "other": { "base": "game:block/clay/ceramic" }
+      "all": { "base": "game:block/clay/ceramic" }
     }
   },
   "shape": {
-    "base": "block/clay/mold/{tooltype}"
+    "base": "block/clay/mold/smallbellpartsmold"
   },
   "sounds": {
     "walk": "walk/stone"
@@ -192,6 +194,6 @@
       "y": 0,
       "z": 0.5
     },
-    "scale": 2.2
+    "scale": 1
   }
 }
