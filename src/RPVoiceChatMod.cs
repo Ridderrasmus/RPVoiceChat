@@ -1,31 +1,35 @@
-﻿using RPVoiceChat.BlockEntities;
-using RPVoiceChat.Blocks;
-using RPVoiceChat.Items;
 using RPVoiceChat.Utils;
 using Vintagestory.API.Common;
-using static OpenTK.Graphics.OpenGL.GL;
 
 namespace RPVoiceChat
 {
     public abstract class RPVoiceChatMod : ModSystem
     {
+        public static readonly string modID = "rpvoicechat";
         protected RPVoiceChatConfig config;
-        protected const string modID = "rpvoicechat";
-        protected RecipeHandler RecipeHandler;
+        private PatchManager patchManager;
 
         public override void StartPre(ICoreAPI api)
         {
+            ClientSettings.Init(api);
             ModConfig.ReadConfig(api);
             config = ModConfig.Config;
+            WorldConfig.Init(api);
             new Logger(api);
-            RecipeHandler = new RecipeHandler(api);
         }
 
         public override void Start(ICoreAPI api)
         {
+            patchManager = new PatchManager(modID);
+            patchManager.Patch(api);
+
             ItemRegistry.RegisterItems(api);
             BlockRegistry.RegisterBlocks(api);
-            BlockEntityRegistry.RegisterBlockEntities(api);
+        }
+
+        public override void Dispose()
+        {
+            patchManager?.Dispose();
         }
     }
 }

@@ -1,46 +1,80 @@
-﻿using System;
+using RPVoiceChat.Utils;
+using System;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace RPVoiceChat.Networking
 {
     public class UDPNetworkClient : UDPNetworkBase, IExtendedNetworkClient
     {
         public event Action<AudioPacket> OnAudioReceived;
+        public event Action<bool, IExtendedNetworkClient> OnConnectionLost = delegate { }; //UDP is connectionless, event should never fire
 
         private IPEndPoint serverEndpoint;
 
-        public UDPNetworkClient()
+        public UDPNetworkClient(bool forwardPorts) : base(Logger.client, forwardPorts)
         {
-            logger = Utils.Logger.client;
-
             OnMessageReceived += MessageReceived;
         }
 
         public ConnectionInfo Connect(ConnectionInfo serverConnection)
         {
-            serverEndpoint = GetEndPoint(serverConnection);
+            serverEndpoint = NetworkUtils.GetEndPoint(serverConnection);
             port = OpenUDPClient();
 
-            if (!IsInternalNetwork(serverConnection.Address))
+            if (!NetworkUtils.IsInternalNetwork(serverConnection.Address))
                 SetupUpnp(port);
-            StartListening(serverEndpoint);
+            StartListening();
+            VerifyClientReadiness();
 
-            var clientConnection = GetConnection();
-            return clientConnection;
+            return new ConnectionInfo(port);
         }
 
-        public void SendAudioToServer(AudioPacket packet)
+        public bool SendAudioToServer(AudioPacket packet)
         {
-            if (UdpClient == null || serverEndpoint == null) throw new Exception("Udp client or server endpoint has not been initialized.");
+            if (UdpClient == null || serverEndpoint == null)
+            {
+                logger.Warning($"{_transportID} client or server endpoint have not been initialized.");
+                return false;
+            }
 
             var data = packet.ToBytes();
             UdpClient.Send(data, data.Length, serverEndpoint);
+            return true;
         }
 
-        private void MessageReceived(byte[] msg)
+        private void MessageReceived(byte[] msg, IPEndPoint sender)
         {
-            AudioPacket packet = AudioPacket.FromBytes(msg);
-            OnAudioReceived?.Invoke(packet);
+            PacketType code = (PacketType)BitConverter.ToInt32(msg, 0);
+            switch (code)
+            {
+                case PacketType.Pong:
+                    isReady = true;
+                    _readinessProbeCTS.Cancel();
+                    break;
+                case PacketType.Audio:
+                    AudioPacket packet = NetworkPacket.FromBytes<AudioPacket>(msg);
+                    OnAudioReceived?.Invoke(packet);
+                    break;
+                default:
+                    logger.Error($"Received unsupported packet type: {code}, proceeding to ignore it");
+                    return;
+            }
+        }
+
+        private void VerifyClientReadiness()
+        {
+            var pingPacket = BitConverter.GetBytes((int)PacketType.Ping);
+
+            try
+            {
+                UdpClient.Send(pingPacket, pingPacket.Length, serverEndpoint);
+                Task.Delay(3000, _readinessProbeCTS.Token).GetAwaiter().GetResult();
+            }
+            catch (TaskCanceledException) { }
+
+            if (isReady) return;
+            throw new HealthCheckException(NetworkSide.Client);
         }
     }
 }

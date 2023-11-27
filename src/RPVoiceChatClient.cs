@@ -1,7 +1,11 @@
 using RPVoiceChat.Audio;
 using RPVoiceChat.Client;
+using RPVoiceChat.DB;
+using RPVoiceChat.Gui;
 using RPVoiceChat.Networking;
+using RPVoiceChat.Utils;
 using System;
+using System.Collections.Generic;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
@@ -9,15 +13,13 @@ namespace RPVoiceChat
 {
     public class RPVoiceChatClient : RPVoiceChatMod
     {
+        private ICoreClientAPI capi;
+        private ClientSettingsRepository clientSettingsRepository;
         private MicrophoneManager micManager;
         private AudioOutputManager audioOutputManager;
-        private PatchManager patchManager;
         private PlayerNetworkClient client;
-
-        protected ICoreClientAPI capi;
-
-        private MainConfig configGui;
-
+        private GuiManager guiManager;
+        private bool isReady = false;
         private bool mutePressed = false;
         private bool voiceMenuPressed = false;
         private bool voiceLevelPressed = false;
@@ -31,92 +33,92 @@ namespace RPVoiceChat
         {
             capi = api;
 
-            // Init audio context, microphone, audio output and harmony patch managers
-            OALW.InitContext();
+            // Sneak in native dlls
+            EmbeddedDllClass.ExtractEmbeddedDlls();
+            EmbeddedDllClass.LoadDll("RNNoise.dll");
+
+            // Init data repositories
+            clientSettingsRepository = new ClientSettingsRepository(capi.Logger);
+
+            // Init microphone and audio output managers
             micManager = new MicrophoneManager(capi);
-            audioOutputManager = new AudioOutputManager(capi);
-            patchManager = new PatchManager(modID);
-            patchManager.Patch();
+            audioOutputManager = new AudioOutputManager(capi, clientSettingsRepository);
 
             // Init voice chat client
-            var mainClient = new UDPNetworkClient();
-            if (ModConfig.Config.ManualPortForwarding) mainClient.TogglePortForwarding(false);
-            var backupClient = new NativeNetworkClient(capi);
-            client = new PlayerNetworkClient(capi, mainClient, backupClient);
+            bool forwardPorts = !config.ManualPortForwarding;
+            var networkTransports = new List<INetworkClient>()
+            {
+                new UDPNetworkClient(forwardPorts),
+                new TCPNetworkClient(),
+                new NativeNetworkClient(capi)
+            };
+            client = new PlayerNetworkClient(capi, networkTransports);
 
             // Initialize gui
-            configGui = new MainConfig(capi, micManager, audioOutputManager);
-            capi.Gui.RegisterDialog(new SpeechIndicator(capi, micManager));
-            capi.Gui.RegisterDialog(new VoiceLevelIcon(capi, micManager));
+            guiManager = new GuiManager(capi, micManager, audioOutputManager, clientSettingsRepository);
 
             // Set up keybinds
-            capi.Input.RegisterHotKey("voicechatMenu", "RPVoice: Config menu", GlKeys.P, HotkeyType.GUIOrOtherControls);
-            capi.Input.RegisterHotKey("voicechatVoiceLevel", "RPVoice: Change speech volume", GlKeys.Tab, HotkeyType.GUIOrOtherControls, false, false, true);
-            capi.Input.RegisterHotKey("voicechatPTT", "RPVoice: Push to talk", GlKeys.CapsLock, HotkeyType.GUIOrOtherControls);
-            capi.Input.RegisterHotKey("voicechatMute", "RPVoice: Toggle mute", GlKeys.N, HotkeyType.GUIOrOtherControls);
+            capi.Input.RegisterHotKey("voicechatMenu", UIUtils.I18n("Hotkey.ModMenu"), GlKeys.P, HotkeyType.GUIOrOtherControls);
+            capi.Input.RegisterHotKey("voicechatVoiceLevel", UIUtils.I18n("Hotkey.VoiceLevel"), GlKeys.Tab, HotkeyType.GUIOrOtherControls, false, false, true);
+            capi.Input.RegisterHotKey("voicechatPTT", UIUtils.I18n("Hotkey.PTT"), GlKeys.CapsLock, HotkeyType.GUIOrOtherControls);
+            capi.Input.RegisterHotKey("voicechatMute", UIUtils.I18n("Hotkey.Mute"), GlKeys.N, HotkeyType.GUIOrOtherControls);
             capi.Event.KeyUp += Event_KeyUp;
 
             // Set up keybind event handlers
-            capi.Input.SetHotKeyHandler("voicechatMenu", (t1) =>
+            capi.Input.SetHotKeyHandler("voicechatMenu", _ =>
             {
-                if (voiceMenuPressed)
-                    return true;
-
+                if (voiceMenuPressed) return true;
                 voiceMenuPressed = true;
 
-                configGui.Toggle();
+                guiManager.modMenuDialog.Toggle();
                 return true;
             });
 
-            capi.Input.SetHotKeyHandler("voicechatVoiceLevel", (t1) =>
+            capi.Input.SetHotKeyHandler("voicechatVoiceLevel", _ =>
             {
-                if (voiceLevelPressed)
-                    return true;
-
+                if (voiceLevelPressed) return true;
                 voiceLevelPressed = true;
 
                 micManager.CycleVoiceLevel();
                 return true;
             });
 
-            capi.Input.SetHotKeyHandler("voicechatMute", (t1) =>
+            capi.Input.SetHotKeyHandler("voicechatMute", _ =>
             {
-                if (mutePressed)
-                    return true;
-
+                if (mutePressed) return true;
                 mutePressed = true;
 
-                config.IsMuted = !config.IsMuted;
-                ModConfig.Save(capi);
+                ClientSettings.IsMuted = !ClientSettings.IsMuted;
+                capi.Event.PushEvent("rpvoicechat:hudUpdate");
+                ClientSettings.Save();
                 return true;
             });
 
-
-            client.OnAudioReceived += OnAudioReceived;
-            micManager.OnBufferRecorded += OnBufferRecorded;
             capi.Event.LevelFinalize += OnLoad;
         }
 
         private void OnLoad()
         {
+            client.OnAudioReceived += OnAudioReceived;
+            micManager.OnBufferRecorded += OnBufferRecorded;
             micManager.Launch();
             audioOutputManager.Launch();
+            guiManager.firstLaunchDialog.ShowIfNecessary();
+            isReady = true;
         }
 
         private void Event_KeyUp(KeyEvent e)
         {
+            int HotkeyCode(string hotkeyName) => capi.Input.HotKeys[hotkeyName].CurrentMapping.KeyCode;
 
-            if (e.KeyCode == capi.Input.HotKeys["voicechatMenu"].CurrentMapping.KeyCode)
-                voiceMenuPressed = false;
-            else if (e.KeyCode == capi.Input.HotKeys["voicechatVoiceLevel"].CurrentMapping.KeyCode)
-                voiceLevelPressed = false;
-            else if (e.KeyCode == capi.Input.HotKeys["voicechatMute"].CurrentMapping.KeyCode)
-                mutePressed = false;
-
+            if (e.KeyCode == HotkeyCode("voicechatMenu")) voiceMenuPressed = false;
+            if (e.KeyCode == HotkeyCode("voicechatVoiceLevel")) voiceLevelPressed = false;
+            if (e.KeyCode == HotkeyCode("voicechatMute")) mutePressed = false;
         }
 
         private void OnAudioReceived(AudioPacket packet)
         {
+            if (!isReady) return;
             audioOutputManager.HandleAudioPacket(packet);
         }
 
@@ -128,16 +130,19 @@ namespace RPVoiceChat
             var sequenceNumber = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             AudioPacket packet = new AudioPacket(sender, audioData, sequenceNumber);
             audioOutputManager.HandleLoopback(packet);
+
+            if (micManager.AudioWizardActive) return;
             client.SendAudioToServer(packet);
         }
 
         public override void Dispose()
         {
+            ClientSettings.Save();
             micManager?.Dispose();
-            patchManager?.Dispose();
+            audioOutputManager?.Dispose();
             client?.Dispose();
-            configGui.Dispose();
-            //client = null;
+            guiManager?.Dispose();
+            clientSettingsRepository?.Dispose();
         }
     }
 }

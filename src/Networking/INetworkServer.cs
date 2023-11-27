@@ -1,13 +1,14 @@
-﻿using System;
+using System;
 
 namespace RPVoiceChat.Networking
 {
-    public interface INetworkServer
+    public interface INetworkServer : IDisposable
     {
-        public event Action<AudioPacket> OnReceivedPacket;
+        public event Action<AudioPacket> AudioPacketReceived;
 
-        public ConnectionInfo GetConnection();
+        public void Launch();
+        public ConnectionInfo GetConnectionInfo();
         public string GetTransportID();
-        public void SendPacket(INetworkPacket packet, string playerId);
+        public bool SendPacket(NetworkPacket packet, string playerId);
     }
 }

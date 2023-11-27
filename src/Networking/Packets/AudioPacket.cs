@@ -1,12 +1,11 @@
-﻿using OpenTK.Audio.OpenAL;
+using OpenTK.Audio.OpenAL;
 using ProtoBuf;
 using RPVoiceChat.Audio;
-using System.IO;
 
 namespace RPVoiceChat.Networking
 {
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
-    public class AudioPacket: INetworkPacket
+    public class AudioPacket : NetworkPacket
     {
         public string PlayerId { get; set; }
         public byte[] AudioData { get; set; }
@@ -15,6 +14,8 @@ namespace RPVoiceChat.Networking
         public int Frequency { get; set; }
         public ALFormat Format { get; set; }
         public long SequenceNumber { get; set; }
+        public string Codec { get; set; }
+        protected override PacketType Code { get => PacketType.Audio; }
 
         public AudioPacket() { }
 
@@ -27,24 +28,7 @@ namespace RPVoiceChat.Networking
             Frequency = audioData.frequency;
             Format = audioData.format;
             SequenceNumber = sequenceNumber;
-        }
-
-        public byte[] ToBytes()
-        {
-            var stream = new MemoryStream();
-            Serializer.Serialize(stream, this);
-            return stream.ToArray();
-        }
-
-        INetworkPacket INetworkPacket.FromBytes(byte[] data)
-        {
-            return FromBytes(data);
-        }
-
-        public static AudioPacket FromBytes(byte[] data)
-        {
-            var packet = Serializer.Deserialize<AudioPacket>(new MemoryStream(data));
-            return packet;
+            Codec = audioData.codec;
         }
     }
 }

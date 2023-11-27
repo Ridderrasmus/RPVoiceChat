@@ -1,31 +1,21 @@
-﻿using ProtoBuf;
-using System.IO;
+using ProtoBuf;
 
 namespace RPVoiceChat.Networking
 {
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
-    public class ConnectionInfo : INetworkPacket
+    public class ConnectionInfo : NetworkPacket
     {
         public string Address { get; set; }
         public int Port { get; set; }
-        public string[] SupportedTransports { get; set; }
+        public string Transport { get; set; }
+        protected override PacketType Code { get => PacketType.ConnectionInfo; }
 
-        public byte[] ToBytes()
-        {
-            var stream = new MemoryStream();
-            Serializer.Serialize(stream, this);
-            return stream.ToArray();
-        }
+        public ConnectionInfo() { }
 
-        INetworkPacket INetworkPacket.FromBytes(byte[] data)
+        public ConnectionInfo(int port, string address = null)
         {
-            return FromBytes(data);
-        }
-
-        public static ConnectionInfo FromBytes(byte[] data)
-        {
-            var packet = Serializer.Deserialize<ConnectionInfo>(new MemoryStream(data));
-            return packet;
+            Port = port;
+            Address = address;
         }
     }
 }
