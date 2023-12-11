@@ -1,3 +1,4 @@
+using RPVoiceChat.GameContent.BlockEntities;
 using RPVoiceChat.GameContent.Blocks;
 using RPVoiceChat.GameContent.Items;
 using RPVoiceChat.Utils;
@@ -27,6 +28,8 @@ namespace RPVoiceChat
 
             ItemRegistry.RegisterItems(api);
             BlockRegistry.RegisterBlocks(api);
+            BlockEntityRegistry.RegisterBlockEntities(api);
+            
         }
 
         public override void Dispose()
