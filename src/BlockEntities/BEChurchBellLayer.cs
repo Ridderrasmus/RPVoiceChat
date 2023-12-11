@@ -1,4 +1,5 @@
 ﻿using RPVoiceChat.GameContent.BlockEntityRenderers;
+using RPVoiceChat.Utils;
 using System;
 using System.Linq;
 using System.Text;
@@ -12,6 +13,8 @@ namespace RPVoiceChat.GameContent.BlockEntities
 {
     public class BlockEntityChurchBellLayer : BlockEntityContainer
     {
+        private string i18nPrefix = "Welding";
+
         private string[] bellLayerNames = new string[] { "churchbell-layer-bottom", "churchbell-layer-middle", "churchbell-layer-top", "churchbell-layer-topmost" };
         private float[] bellLayerHeights = new float[] { 0f, 0.375f, 0.6665f, 0.9375f };
         private int neededFlux = 3;
@@ -178,7 +181,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 {
                     if (triggerMessage && Api is ICoreClientAPI capi)
                     {
-                        capi.TriggerIngameError(capi.World.Player, "missingparts", "You need to add all the parts to the weld");
+                        capi.TriggerIngameError(capi.World.Player, "missingparts", UIUtils.I18n($"{i18nPrefix}.MissingParts")); //"You need to add all the parts to the weld"
                     }
                     return false;
                 }
@@ -187,7 +190,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 {
                     if (triggerMessage && Api is ICoreClientAPI capi)
                     {
-                        capi.TriggerIngameError(capi.World.Player, "toocold", "Some of the parts are too cold to weld");
+                        capi.TriggerIngameError(capi.World.Player, "toocold", UIUtils.I18n($"{i18nPrefix}.TooCold")); //"Some of the parts are too cold to weld"
                     }
                     return false;
                 }
@@ -197,7 +200,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
             {
                 if (triggerMessage && Api is ICoreClientAPI capi)
                 {
-                    capi.TriggerIngameError(capi.World.Player, "missingflux", "You need to add powdered borax to the weld as flux");
+                    capi.TriggerIngameError(capi.World.Player, "missingflux", UIUtils.I18n($"{i18nPrefix}.MissingFlux")); //"You need to add enough powdered borax to the weld as flux"
                 }
                 return false;
             }
@@ -235,7 +238,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
                     return true;
                 } else
                 {
-                    capi?.TriggerIngameError(capi.World.Player, "toomuchborax", "This doesn't need more borax");
+                    capi?.TriggerIngameError(capi.World.Player, "toomuchflux", UIUtils.I18n($"{i18nPrefix}.TooMuchFlux")); //"This doesn't need more borax"
                     return false;
                 }
             }
@@ -307,21 +310,21 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 if (slot.Empty) continue;
                 string temp = slot.Itemstack.Collectible.GetTemperature(Api.World, slot.Itemstack).ToString();
 
-                dsc.AppendLine(slot.Itemstack.GetName() + " - " + temp + "°C");
+                dsc.AppendLine($"{slot.Itemstack.GetName()} - {temp}°C");
             }
 
             if (!FluxSlot.Empty)
             {
-                dsc.AppendLine(FluxSlot.Itemstack.StackSize + " " + FluxSlot.Itemstack.GetName());
+                dsc.AppendLine($"{FluxSlot.Itemstack.StackSize} {FluxSlot.Itemstack.GetName()}");
             }
 
             if (TestReadyToMerge(false))
             {
-                dsc.AppendLine("Ready to weld");
+                dsc.AppendLine(UIUtils.I18n($"{i18nPrefix}.WeldReady")); //"Ready to weld"
             }
             else
             {
-                dsc.AppendLine("Not ready to weld");
+                dsc.AppendLine(UIUtils.I18n($"{i18nPrefix}.WeldNotReady")); //"Not ready to weld"
             }
         }
 
