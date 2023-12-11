@@ -1,5 +1,5 @@
 ﻿using HarmonyLib;
-using RPVoiceChat.BlockEntities;
+using RPVoiceChat.GameContent.BlockEntities;
 using System;
 using System.Reflection;
 using Vintagestory.API.Common;

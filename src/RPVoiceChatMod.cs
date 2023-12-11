@@ -1,3 +1,5 @@
+using RPVoiceChat.GameContent.Blocks;
+using RPVoiceChat.GameContent.Items;
 using RPVoiceChat.Utils;
 using Vintagestory.API.Common;
 

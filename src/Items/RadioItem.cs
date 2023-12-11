@@ -1,6 +1,6 @@
 using Vintagestory.API.Common;
 
-namespace RPVoiceChat.Items
+namespace RPVoiceChat.GameContent.Items
 {
     public class RadioItem : Item
     {

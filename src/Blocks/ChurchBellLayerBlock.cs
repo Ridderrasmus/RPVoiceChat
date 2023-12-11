@@ -1,8 +1,8 @@
-﻿using RPVoiceChat.BlockEntities;
+﻿using RPVoiceChat.GameContent.BlockEntities;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 
-namespace RPVoiceChat.Blocks
+namespace RPVoiceChat.GameContent.Blocks
 {
     public class ChurchBellLayerBlock : Block
     {

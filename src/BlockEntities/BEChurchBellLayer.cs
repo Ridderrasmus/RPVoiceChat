@@ -1,4 +1,4 @@
-﻿using RPVoiceChat.BlockEntityRenderers;
+﻿using RPVoiceChat.GameContent.BlockEntityRenderers;
 using System;
 using System.Linq;
 using System.Text;
@@ -8,7 +8,7 @@ using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
 
-namespace RPVoiceChat.BlockEntities
+namespace RPVoiceChat.GameContent.BlockEntities
 {
     public class BlockEntityChurchBellLayer : BlockEntityContainer
     {

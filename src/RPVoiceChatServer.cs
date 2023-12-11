@@ -54,14 +54,6 @@ namespace RPVoiceChat
             return forSide == EnumAppSide.Server;
         }
 
-        public override void AssetsLoaded(ICoreAPI api)
-        {
-            if (config.AdditionalContent) return;
-
-            RecipeHandler recipeHandler = new RecipeHandler(api, modID);
-            recipeHandler.DisableRecipes();
-        }
-
         private void registerCommands()
         {
             var parsers = sapi.ChatCommands.Parsers;
