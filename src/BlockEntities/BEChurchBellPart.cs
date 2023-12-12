@@ -10,46 +10,33 @@ using Vintagestory.GameContent;
 
 namespace RPVoiceChat.GameContent.BlockEntities
 {
-    public class BlockEntityChurchBellPart : BlockEntityContainer
+    public class BlockEntityChurchBellPart : BEWeldable
     {
-        private string i18nPrefix = "Welding";
-
         public MeshRef[] BellPartMeshRef = new MeshRef[4];
         public MeshRef[] FluxMeshRef = new MeshRef[4];
 
-        // The inveotry slot for the church bell parts
-        InventoryGeneric inv;
-
         // The slot for the flux is the first slot in the inventory
-        public ItemSlot FluxSlot => inv[0];
+        public ItemSlot FluxSlot => Inv[0];
 
         // The slots for the big bell parts are the second, third, fourth, and fifth slots in the inventory
-        public ItemSlot[] BellPartSlots => new ItemSlot[] { inv[1], inv[2], inv[3], inv[4] };
-
-
-        // Stuff that should be defined in JSON
-        public int neededFlux = 4;
-        public int FluxShapePath;
-
-        public int hammerHits;
+        public ItemSlot[] BellPartSlots => new ItemSlot[] { Inv[1], Inv[2], Inv[3], Inv[4] };
 
 
         ChurchBellPartRenderer renderer;
 
-        MeshData defMesh;
         Shape FluxShape;
 
         public SimpleParticleProperties particleProperties;
 
-        public override InventoryBase Inventory => inv;
+        public override InventoryBase Inventory => Inv;
 
         public override string InventoryClassName => "churchbellpart";
 
         public BlockEntityChurchBellPart()
         {
-            inv = new InventoryGeneric(5, null, null);
+            Inv = new InventoryGeneric(5, null, null);
 
-
+            NeededFlux = 4;
         }
 
         public override void Initialize(ICoreAPI api)
@@ -60,15 +47,9 @@ namespace RPVoiceChat.GameContent.BlockEntities
             {
                 renderer = new ChurchBellPartRenderer(capi, this);
 
-                particleProperties = BlockEntityAnvil.bigMetalSparks;
-
-                defMesh = capi.TesselatorManager.GetDefaultBlockMesh(Block).Clone();
-
-                capi.TesselatorManager.GetDefaultBlockMesh(Block).Clear();
 
                 var assetLoc = new AssetLocation("rpvoicechat", $"shapes/{Block.Shape.Base.Path}-flux.json");
                 FluxShape = Shape.TryGet(api, assetLoc);
-
 
                 updateMeshRefs();
             }
@@ -98,7 +79,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
             {
                 if (BellPartSlots[i].Empty) break;
 
-                MeshData meshdata = defMesh;
+                MeshData meshdata = capi.TesselatorManager.GetDefaultBlockMesh(Block);
                 meshdata = meshdata.Rotate(new Vec3f(0.5f, 0f, 0.5f), 0, 1.57079633f * (i), 0f);
                 BellPartMeshRef[i] = capi.Render.UploadMesh(meshdata);
             }
@@ -115,16 +96,15 @@ namespace RPVoiceChat.GameContent.BlockEntities
             }
         }
 
-        public void OnHammerHitOver(IPlayer byPlayer, Vec3d hitPosition)
+        public override void OnHammerHitOver(IPlayer byPlayer, Vec3d hitPosition)
         {
-            Api.Logger.Debug("Hammer hit over");
 
             foreach (ItemSlot slot in BellPartSlots)
                 if (slot.Empty) return;
 
             if (!TestReadyToMerge(false)) return;
 
-            hammerHits++;
+            HammerHits++;
 
             float temp = 1500;
             foreach (ItemSlot slot in BellPartSlots)
@@ -146,7 +126,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 }
             }
 
-            if (hammerHits > 11)
+            if (HammerHits > 11)
             {
                 var newBlock = Api.World.GetBlock(new AssetLocation(Block.Code.ToString().Replace("part", "layer")));
                 ItemStack newStack = new ItemStack(newBlock);
@@ -154,13 +134,13 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
                 Api.World.BlockAccessor.SetBlock(0, Pos, new ItemStack());
 
-                inv.Clear();
+                Inv.Clear();
 
                 Api.World.BlockAccessor.SetBlock(newBlock.Id, Pos, newStack);
             }
         }
 
-        public bool TestReadyToMerge(bool triggerMessage = true)
+        public override bool TestReadyToMerge(bool triggerMessage = true)
         {
 
             foreach (ItemSlot slot in BellPartSlots)
@@ -184,7 +164,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 }
             }
 
-            if (FluxSlot.Empty || FluxSlot.Itemstack.StackSize < neededFlux)
+            if (FluxSlot.Empty || FluxSlot.Itemstack.StackSize < NeededFlux)
             {
                 if (triggerMessage && Api is ICoreClientAPI capi)
                 {

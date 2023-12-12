@@ -1,9 +1,6 @@
 ﻿using HarmonyLib;
 using RPVoiceChat.GameContent.BlockEntities;
-using System;
-using System.Reflection;
 using Vintagestory.API.Common;
-using Vintagestory.API.Common.Entities;
 using Vintagestory.GameContent;
 
 namespace RPVoiceChat
@@ -30,32 +27,13 @@ namespace RPVoiceChat
             if (blockSel == null) return;
 
             BlockEntity be = byEntity.World.BlockAccessor.GetBlockEntity(blockSel.Position);
-            if (be is BlockEntityChurchBellLayer becp)
+            if (be is BEWeldable bew)
             {
                 handling = EnumHandHandling.PreventDefault;
 
                 IPlayer byPlayer = (byEntity as EntityPlayer)?.Player;
 
-                if (becp.TestReadyToMerge())
-                {
-                    byEntity.World.RegisterCallback((dt) =>
-                    {
-                        if (byEntity.Controls.HandUse == EnumHandInteract.HeldItemAttack)
-                        {
-                            byPlayer.Entity.World.PlaySoundAt(new AssetLocation("sounds/effect/anvilmergehit"), byPlayer, byPlayer);
-                        }
-                    }, 464);
-                    return;
-                }
-
-                return;
-            } else if (be is BlockEntityChurchBellPart becl)
-            {
-                handling = EnumHandHandling.PreventDefault;
-
-                IPlayer byPlayer = (byEntity as EntityPlayer)?.Player;
-
-                if (becl.TestReadyToMerge())
+                if (bew.TestReadyToMerge())
                 {
                     byEntity.World.RegisterCallback((dt) =>
                     {
@@ -76,11 +54,7 @@ namespace RPVoiceChat
             if (blockSelection == null) return false;
 
             BlockEntity be = byEntity.World.BlockAccessor.GetBlockEntity(blockSelection.Position);
-            if (be is BlockEntityChurchBellLayer becp && !becp.TestReadyToMerge())
-            {
-                return false;
-            }
-            else if (be is BlockEntityChurchBellPart becl && !becl.TestReadyToMerge())
+            if (be is BEWeldable bew && !bew.TestReadyToMerge())
             {
                 return false;
             }
@@ -94,14 +68,10 @@ namespace RPVoiceChat
             if (blockSel == null || secondsPassed < 0.4f) return;
 
             BlockEntity be = byEntity.World.BlockAccessor.GetBlockEntity(blockSel.Position);
-            if (be is BlockEntityChurchBellLayer becp)
+            if (be is BEWeldable bew)
             {
                 IPlayer byPlayer = (byEntity as EntityPlayer)?.Player;
-                becp.OnHammerHitOver(byPlayer, blockSel.HitPosition);
-            } else if (be is BlockEntityChurchBellPart becl)
-            {
-                IPlayer byPlayer = (byEntity as EntityPlayer)?.Player;
-                becl.OnHammerHitOver(byPlayer, blockSel.HitPosition);
+                bew.OnHammerHitOver(byPlayer, blockSel.HitPosition);
             }
         }
     }

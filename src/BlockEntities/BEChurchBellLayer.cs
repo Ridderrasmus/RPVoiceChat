@@ -11,38 +11,28 @@ using Vintagestory.GameContent;
 
 namespace RPVoiceChat.GameContent.BlockEntities
 {
-    public class BlockEntityChurchBellLayer : BlockEntityContainer
+    public class BlockEntityChurchBellLayer : BEWeldable
     {
-        private string i18nPrefix = "Welding";
 
         private string[] bellLayerNames = new string[] { "churchbell-layer-bottom", "churchbell-layer-middle", "churchbell-layer-top", "churchbell-layer-topmost" };
         private float[] bellLayerHeights = new float[] { 0f, 0.375f, 0.6665f, 0.9375f };
-        private int neededFlux = 3;
-
+        
 
         public MeshRef[] BellLayerMeshRef = new MeshRef[4];
         public MeshRef[] FluxMeshRef = new MeshRef[3];
 
-        // The inventory slot for the church bell parts
-        InventoryGeneric inv;
 
         // The slot for the flux
-        public ItemSlot FluxSlot => inv[0];
+        public ItemSlot FluxSlot => Inv[0];
 
         // The slots for the big bell parts are the second, third, fourth, and fifth slots in the inventory
-        public ItemSlot[] BellLayerSlots => new ItemSlot[] { inv[1], inv[2], inv[3], inv[4] };
-
-
-        // Stuff that should be defined in JSON
-        public int FluxShapePath;
-        public int hammerHits;
+        public ItemSlot[] BellLayerSlots => new ItemSlot[] { Inv[1], Inv[2], Inv[3], Inv[4] };
 
 
         ChurchBellLayerRenderer renderer;
 
-        MeshData defMesh;
 
-        public override InventoryBase Inventory => inv;
+        public override InventoryBase Inventory => Inv;
 
         public override string InventoryClassName => "churchbelllayer";
 
@@ -50,8 +40,8 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
         public BlockEntityChurchBellLayer()
         {
-            inv = new InventoryGeneric(5, null, null);
-
+            Inv = new InventoryGeneric(5, null, null);
+            NeededFlux = 3;
 
         }
 
@@ -135,7 +125,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
             }
         }
 
-        public void OnHammerHitOver(IPlayer byPlayer, Vec3d hitPosition)
+        public override void OnHammerHitOver(IPlayer byPlayer, Vec3d hitPosition)
         {
 
 
@@ -144,7 +134,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
             if (!TestReadyToMerge(true)) return;
 
-            hammerHits++;
+            HammerHits++;
 
             float temp = 1500;
             foreach (ItemSlot slot in BellLayerSlots)
@@ -165,14 +155,14 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 }
             }
 
-            if (hammerHits > 11)
+            if (HammerHits > 11)
             {
                 Block churchbellBlock = Api.World.GetBlock(new AssetLocation("rpvoicechat", "churchbell"));
                 Api.World.BlockAccessor.SetBlock(churchbellBlock.Id, Pos, new ItemStack(churchbellBlock));
             }
         }
 
-        public bool TestReadyToMerge(bool triggerMessage = true)
+        public override bool TestReadyToMerge(bool triggerMessage = true)
         {
 
             foreach (ItemSlot slot in BellLayerSlots)
@@ -196,7 +186,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 }
             }
 
-            if (FluxSlot.Empty || FluxSlot.Itemstack.StackSize < neededFlux)
+            if (FluxSlot.Empty || FluxSlot.Itemstack.StackSize < NeededFlux)
             {
                 if (triggerMessage && Api is ICoreClientAPI capi)
                 {
