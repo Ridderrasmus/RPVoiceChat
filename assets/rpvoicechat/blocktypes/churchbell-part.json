@@ -6,6 +6,15 @@
     { "name": "UnstableFalling" }
   ],
   "attributes": {
+    "handbook": {
+      "groupBy": [ "churchbell-part-*" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Welding.Churchbell-Part.Title",
+          "content": "rpvoicechat:Handbook.Welding.Churchbell-Part.Text"
+        }
+      ]
+    },
     "forgable": true,
     "inForgeTransform": {
       "scale": 0.65,

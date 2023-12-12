@@ -25,6 +25,18 @@
     }
   ],
   "attributes": {
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Welding.Churchbell.Title",
+          "content": "rpvoicechat:Handbook.Welding.Churchbell.Text"
+        },
+        {
+          "title": "rpvoicechat:Handbook.Usage.Churchbell.Title",
+          "content": "rpvoicechat:Handbook.Usage.Churchbell.Text"
+        }
+      ]
+    },
     "soundAudibleDistance": 832,
     "soundVolume": 0.6,
     "cooldownTime": 6,

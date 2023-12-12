@@ -107,5 +107,15 @@
   "Gui.ModMenu.inputSensitivity.Label": "Max input threshold",
   "Gui.ModMenu.inputSensitivity.Tooltip": "Used to scope input threshold to a shorter interval, which allows for finer control of voice activation. Decrease it if you have to set input threshold very low. Increase if Audio Meter on the audio input tab easily gets filled. <strong>Has no effect on the actual volume</strong>",
   "Gui.ModMenu.unscaledAudioMeter.Label": "Unscaled Audio Meter",
-  "Gui.ModMenu.unscaledAudioMeter.Tooltip": "Shows your audio amplitude on the actual full scale, before applying max input threshold. Use it as a reference for setting max input threshold(segment to the left from the slider handle will be displayed in audio input tab)"
+  "Gui.ModMenu.unscaledAudioMeter.Tooltip": "Shows your audio amplitude on the actual full scale, before applying max input threshold. Use it as a reference for setting max input threshold(segment to the left from the slider handle will be displayed in audio input tab)",
+
+
+  "rpvoicechat:Handbook.Welding.Churchbell-Part.Title": "Welding Process: Part",
+  "rpvoicechat:Handbook.Welding.Churchbell-Part.Text": "How to make this",
+  "rpvoicechat:Handbook.Welding.Churchbell-Layer.Title": "Welding Process: Layer",
+  "rpvoicechat:Handbook.Welding.Churchbell-Layer.Text": "How to make this",
+  "rpvoicechat:Handbook.Welding.Churchbell.Title": "Welding Process: Full Bell",
+  "rpvoicechat:Handbook.Welding.Churchbell.Text": "How to make this",
+  "rpvoicechat:Handbook.Usage.Churchbell.Title": "Usage",
+  "rpvoicechat:Handbook.Usage.Churchbell.Text": "This is a massive 2x2x5 size churchbell that when right clicked rings and can be clearly heard out to a distance of 832 blocks away.",
 }
