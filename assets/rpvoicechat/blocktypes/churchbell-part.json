@@ -10,8 +10,8 @@
       "groupBy": [ "churchbell-part-*" ],
       "extraSections": [
         {
-          "title": "rpvoicechat:Handbook.Welding.Churchbell-Part.Title",
-          "content": "rpvoicechat:Handbook.Welding.Churchbell-Part.Text"
+          "title": "rpvoicechat:Handbook.Welding.block-churchbell-part.Title",
+          "text": "rpvoicechat:Handbook.Welding.block-churchbell-part.Text"
         }
       ]
     },

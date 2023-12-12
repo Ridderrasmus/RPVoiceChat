@@ -10,8 +10,8 @@
       "groupBy": ["churchbell-layer-*"],
       "extraSections": [
         {
-          "title": "rpvoicechat:Handbook.Welding.Churchbell-Layer.Title",
-          "content": "rpvoicechat:Handbook.Welding.Churchbell-Layer.Text"
+          "title": "rpvoicechat:Handbook.Welding.block-churchbell-layer.Title",
+          "text": "rpvoicechat:Handbook.Welding.block-churchbell-layer.Text"
         }
       ]
     },

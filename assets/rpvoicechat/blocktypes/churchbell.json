@@ -28,12 +28,12 @@
     "handbook": {
       "extraSections": [
         {
-          "title": "rpvoicechat:Handbook.Welding.Churchbell.Title",
-          "content": "rpvoicechat:Handbook.Welding.Churchbell.Text"
+          "title": "rpvoicechat:Handbook.Welding.block-churchbell.Title",
+          "text": "rpvoicechat:Handbook.Welding.block-churchbell.Text"
         },
         {
-          "title": "rpvoicechat:Handbook.Usage.Churchbell.Title",
-          "content": "rpvoicechat:Handbook.Usage.Churchbell.Text"
+          "title": "rpvoicechat:Handbook.Usage.block-churchbell.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-churchbell.Text"
         }
       ]
     },

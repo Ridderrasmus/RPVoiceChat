@@ -110,12 +110,12 @@
   "Gui.ModMenu.unscaledAudioMeter.Tooltip": "Shows your audio amplitude on the actual full scale, before applying max input threshold. Use it as a reference for setting max input threshold(segment to the left from the slider handle will be displayed in audio input tab)",
 
 
-  "rpvoicechat:Handbook.Welding.Churchbell-Part.Title": "Welding Process: Part",
-  "rpvoicechat:Handbook.Welding.Churchbell-Part.Text": "How to make this",
-  "rpvoicechat:Handbook.Welding.Churchbell-Layer.Title": "Welding Process: Layer",
-  "rpvoicechat:Handbook.Welding.Churchbell-Layer.Text": "How to make this",
-  "rpvoicechat:Handbook.Welding.Churchbell.Title": "Welding Process: Full Bell",
-  "rpvoicechat:Handbook.Welding.Churchbell.Text": "How to make this",
-  "rpvoicechat:Handbook.Usage.Churchbell.Title": "Usage",
-  "rpvoicechat:Handbook.Usage.Churchbell.Text": "This is a massive 2x2x5 size churchbell that when right clicked rings and can be clearly heard out to a distance of 832 blocks away.",
+  "Handbook.Welding.block-churchbell-part.Title": "Welding Process: Part",
+  "Handbook.Welding.block-churchbell-part.Text": "How to make this",
+  "Handbook.Welding.block-churchbell-layer.Title": "Welding Process: Layer",
+  "Handbook.Welding.block-churchbell-layer.Text": "How to make this",
+  "Handbook.Welding.block-churchbell.Title": "Welding Process: Full Bell",
+  "Handbook.Welding.block-churchbell.Text": "How to make this",
+  "Handbook.Usage.block-churchbell.Title": "Usage",
+  "Handbook.Usage.block-churchbell.Text": "This is a massive 3x3x4 size churchbell that when right clicked rings and can be clearly heard out to a distance of 832 blocks away."
 }
