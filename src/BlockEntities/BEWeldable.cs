@@ -156,6 +156,38 @@ namespace RPVoiceChat.GameContent.BlockEntities
             }
         }
 
+        public override void OnBlockRemoved()
+        {
+            base.OnBlockRemoved();
 
+            Renderer?.Dispose();
+
+            foreach (MeshRef meshRef in FluxMeshRefs)
+            {
+                meshRef?.Dispose();
+            }
+
+            foreach (MeshRef meshRef in PartMeshRefs)
+            {
+                meshRef?.Dispose();
+            }
+        }
+
+        public override void OnBlockUnloaded()
+        {
+            base.OnBlockUnloaded();
+
+            Renderer?.Dispose();
+            
+            foreach (MeshRef meshRef in FluxMeshRefs)
+            {
+                meshRef?.Dispose();
+            }
+
+            foreach (MeshRef meshRef in PartMeshRefs)
+            {
+                meshRef?.Dispose();
+            }
+        }
     }
 }
