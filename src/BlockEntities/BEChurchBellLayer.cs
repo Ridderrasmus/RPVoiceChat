@@ -19,7 +19,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
 
         private string[] bellLayerNames = new string[] { "churchbell-layer-bottom", "churchbell-layer-middle", "churchbell-layer-top", "churchbell-layer-topmost" };
-        private float[] bellLayerHeights = new float[] { 0f, 0.375f, 0.6665f, 0.9375f };
+        private float[] bellLayerHeights = new float[] { 0f, 0.750f, 1.25f, 1.75f };
         
 
 
@@ -104,7 +104,9 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
             for (int j = 0; j < numFlux; j++)
                 if (!BellLayerSlots[j].Empty)
-                    meshdata = meshdata.Translate(0, bellLayerHeights[j], 0);
+                {
+                    meshdata = meshdata.Translate(0, bellLayerHeights[j+1], 0);
+                }
             return meshdata;
         }
 
