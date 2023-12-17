@@ -63,6 +63,7 @@
 		<Content Include="assets\**">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
+		<None Remove="assets\rpvoicechat\blocktypes\claymold\bellpartmold.json" />
 		<Content Include="modinfo.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>

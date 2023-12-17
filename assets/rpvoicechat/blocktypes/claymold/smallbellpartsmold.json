@@ -1,14 +1,14 @@
 {
-  "code": "bellmold",
+  "code": "toolmold",
   "classByType": {
-    "bellmold-raw-*": "Block",
-    "bellmold-burned-*": "BlockToolMold"
+    "toolmold-raw-*": "Block",
+    "toolmold-burned-*": "BlockToolMold"
   },
   "behaviorsByType": {
     "*-raw-*": [
       {
         "name": "GroundStorable",
-        "properties": { "layout": "SingleCenter" }
+        "properties": { "layout": "Halves" }
       },
       {
         "name": "Unplaceable",
@@ -24,42 +24,39 @@
       "states": [ "raw", "burned" ]
     },
     {
-      "code": "layer",
-      "states": [ "part-bottom", "part-middle", "part-top","layer-topmost" ]
+      "code": "tooltype",
+      "states": [
+        "smallbellparts"
+      ]
     }
   ],
   "attributesByType": {
-    "bellmold-burned-": {
+    "toolmold-burned-smallbellparts": {
       "requiredUnits": 50,
       "fillHeight": 2,
       "fillQuadsByLevel": [
-        {
-          "x1": 6,
-          "z1": 4,
-          "x2": 10,
-          "z2": 12
-        }
-      ],
+				{ x1: 6, z1: 4, x2: 10, z2: 12 }
+			],
       "moldrackable": false,
       "drop": {
-        "type": "Block",
-        "code": "churchbell-{layer}",
+        "type": "item",
+        "code": "smallbellpart-silver",
         "quantity": 1
       }
     }
   },
   "entityClassByType": {
-    "bellmold-burned-*": "ToolMold"
+    "toolmold-burned-*": "ToolMold"
   },
   "combustiblePropsByType": {
-    "bellmold-raw-*": {
+    "toolmold-raw-*": {
       "meltingPoint": 650,
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
       "smeltedStack": {
         "type": "block",
-        "code": "bellmold-burned-{layer}"
+        "code": "toolmold-burned-{tooltype}"
       },
       "requiresContainer": false
     }
@@ -74,17 +71,13 @@
   "maxStackSize": 8,
   "lightAbsorption": 0,
   "texturesByType": {
-    "bellmold-raw-*": { "all": { "base": "game:block/clay/blueclay" } },
-    "bellmold-burned-*": {
+    "toolmold-raw-*": { "all": { "base": "game:block/clay/blueclay" } },
+    "toolmold-burned-*": {
       "all": { "base": "game:block/clay/ceramic" }
     }
   },
-  "shapeByType": {
-
-    "bellmold-*-part-bottom": { "base": "block/clay/mold/bellmold-part-bottom" },
-    "bellmold-*-part-middle": { "base": "block/clay/mold/bellmold-part-middle" },
-    "bellmold-*-part-top": { "base": "block/clay/mold/bellmold-part-top" },
-    "bellmold-*-layer-topmost": { "base": "block/clay/mold/bellmold-layer-topmost" }
+  "shape": {
+    "base": "block/clay/mold/smallbellpartsmold"
   },
   "sounds": {
     "walk": "walk/stone"
