@@ -33,13 +33,6 @@
     },
     "scale": 3.55
   },
-  "rotation": {
-    "x": -225,
-    "y": 0,
-    "z": 0
-  },
-  "scale": 3
-},
   "fpHandTransform": {
     "translation": {
       "x": 0,
