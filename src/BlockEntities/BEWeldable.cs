@@ -10,7 +10,7 @@ using Vintagestory.GameContent;
 
 namespace RPVoiceChat.GameContent.BlockEntities
 {
-    public class BEWeldable : BlockEntityContainer
+    public abstract class BEWeldable : BlockEntityContainer
     {
         protected string i18nPrefix = "Welding";
         protected int WeldingMinTemp = 550;
@@ -21,6 +21,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
         public InventoryGeneric Inv;
         public MeshRef[] FluxMeshRefs;
         public MeshRef[] PartMeshRefs;
+        protected string ResultingBlockCode;
 
         protected ItemSlot FluxSlot => Inv[0];
 
@@ -100,19 +101,49 @@ namespace RPVoiceChat.GameContent.BlockEntities
             }
         }
 
-        protected virtual MeshData RenderPart(int numPart)
-        {
-            throw new Exception("BEWeldable is meant to be inherited but wasn't!");
-        }
+        protected abstract MeshData RenderPart(int numPart);
 
-        protected virtual MeshData RenderFlux(int numFlux)
-        {
-            throw new Exception("BEWeldable is meant to be inherited but wasn't!");
-        }
+        protected abstract MeshData RenderFlux(int numFlux);
 
         public virtual void OnHammerHitOver(IPlayer byPlayer, Vec3d hitPosition)
         {
-            throw new Exception("BEWeldable is meant to be inherited but wasn't!");
+            {
+                if (!TestReadyToMerge(true)) return;
+
+
+                float temp = 1500;
+                for (int i = 1; i < Inv.Count; i++)
+                {
+                    ItemSlot slot = Inv[i];
+                    if (slot.Empty) return;
+
+                    temp = Math.Min(temp, slot.Itemstack.Collectible.GetTemperature(Api.World, slot.Itemstack));
+                }
+
+                HammerHits++;
+
+                if (temp > 800)
+                {
+                    if (Api.Side == EnumAppSide.Client)
+                    {
+                        BlockEntityAnvil.bigMetalSparks.MinPos = Pos.ToVec3d().Add(hitPosition.X, hitPosition.Y, hitPosition.Z);
+                        BlockEntityAnvil.bigMetalSparks.VertexFlags = (byte)GameMath.Clamp((int)(temp - 700) / 2, 32, 128);
+                        Api.World.SpawnParticles(BlockEntityAnvil.bigMetalSparks, byPlayer);
+
+                        BlockEntityAnvil.smallMetalSparks.MinPos = Pos.ToVec3d().Add(hitPosition.X, hitPosition.Y, hitPosition.Z);
+                        BlockEntityAnvil.smallMetalSparks.VertexFlags = (byte)GameMath.Clamp((int)(temp - 770) / 3, 32, 128);
+                        Api.World.SpawnParticles(BlockEntityAnvil.smallMetalSparks, byPlayer);
+                    }
+                }
+
+                if (HammerHits > 11)
+                {
+                    Block ResultingBlock = Api.World.GetBlock(new AssetLocation(RPVoiceChatMod.modID, ResultingBlockCode));
+                    ItemStack ResultingBlockStack = new ItemStack(ResultingBlock);
+                    ResultingBlockStack.Collectible.SetTemperature(Api.World, ResultingBlockStack, temp);
+                    Api.World.BlockAccessor.SetBlock(ResultingBlock.Id, Pos, new ItemStack(ResultingBlock));
+                }
+            }
         }
 
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)

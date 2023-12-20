@@ -24,11 +24,14 @@ namespace RPVoiceChat.GameContent.BlockEntities
         public BlockEntityChurchBellPart() : base(4)
         {
             FluxNeeded = 4;
+            
         }
 
         public override void Initialize(ICoreAPI api)
         {
             base.Initialize(api);
+
+            ResultingBlockCode = Block.Code.Path.Replace("part", "layer");
 
             if (api is ICoreClientAPI capi)
             {
