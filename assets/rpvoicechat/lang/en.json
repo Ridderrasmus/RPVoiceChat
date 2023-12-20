@@ -6,12 +6,21 @@
   "item-handheldradio": "Handheld Radio",
   "item-telegraphwire": "Telegraph Wire",
   "item-radiocase": "Radio Case",
+  "item-smallbellparts-silver": "Small Bell Parts",
 
   "itemdesc-handbell": "A small handbell. The silver of the bell seems to have a weird purplep shimmer to it...",
+  "itemdesc-smallbellparts-silver": "The more intricate parts of a small bell",
 
-
-  "block-callbell": "Call Bell",
-  "block-churchbell": "Church Bell",
+  "block-bellmold-raw-part-bottom": "Raw Bottom Churchbell Part Mold",
+  "block-bellmold-raw-part-middle": "Raw Middle Churchbell Part Mold",
+  "block-bellmold-raw-part-top": "Raw Top Churchbell Part Mold",
+  "block-bellmold-raw-layer-topmost": "Raw Bottom Churchbell Layer Mold",
+  "block-toolmold-raw-smallbellparts": "Raw Small Bell Parts Mold",
+  "block-bellmold-burned-part-bottom": "Bottom Churchbell Part Mold",
+  "block-bellmold-burned-part-middle": "Middle Churchbell Part Mold",
+  "block-bellmold-burned-part-top": "Top Churchbell Part Mold",
+  "block-bellmold-burned-layer-topmost": "Bottom Churchbell Layer Mold",
+  "block-toolmold-burned-smallbellparts": "Small Bell Parts Mold",
   "block-churchbell-part-bottom": "Bottom Churchbell Part",
   "block-churchbell-part-middle": "Middle Churchbell Part",
   "block-churchbell-part-top": "Top Churchbell Part",
@@ -19,6 +28,8 @@
   "block-churchbell-layer-middle": "Middle Churchbell Layer",
   "block-churchbell-layer-top": "Top Churchbell Layer",
   "block-churchbell-layer-topmost": "Topmost Churchbell Layer",
+  "block-churchbell": "Church Bell",
+  "block-callbell": "Call Bell",
 
   "blockdesc-callbell": "A small bell that can be rung to call someone.",
 
