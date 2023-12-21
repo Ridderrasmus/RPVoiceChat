@@ -30,7 +30,7 @@
   ],
   "attributesByType": {
     "bellmold-burned-": {
-      "requiredUnits": 50,
+      "requiredUnits": 300,
       "fillHeight": 2,
       "fillQuadsByLevel": [
         {
@@ -40,7 +40,8 @@
           "z2": 12
         }
       ],
-      "moldrackable": false,
+      "moldrackable": true,
+      "onmoldrackTransform": { "rotation": { "z": 90 } },
       "drop": {
         "type": "Block",
         "code": "churchbell-{layer}",
