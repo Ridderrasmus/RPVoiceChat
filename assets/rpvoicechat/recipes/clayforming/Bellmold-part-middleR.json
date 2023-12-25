@@ -42,6 +42,6 @@
   "name": "Bellmold Middle Part",
   "output": {
     "type": "block",
-    "code": "bellmold-raw-part-middle"
+    "code": "bellmold-raw-part-brass-middle"
   }
 }

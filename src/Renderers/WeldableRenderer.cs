@@ -1,5 +1,6 @@
 ﻿using RPVoiceChat.GameContent.BlockEntities;
 using System;
+using System.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.MathTools;
 
@@ -33,13 +34,16 @@ namespace RPVoiceChat.GameContent.Renderers
 
         public virtual void OnRenderFrame(float deltaTime, EnumRenderStage stage)
         {
-            if (BEWeldable.PartMeshRefs[0] == null) return;
+            // If any all PartMeshRefs are null, then we don't want to render anything
+            if (BEWeldable.PartMeshRefs.All(x => x == null)) return;
 
+            // Get index of first variable in list PartMeshRefs that isn't null
+            int firstNonNull = Array.FindIndex(BEWeldable.PartMeshRefs, x => x != null);
 
             IRenderAPI rpi = capi.Render;
             Vec3d camPos = capi.World.Player.Entity.CameraPos;
-
-            int temp = (int)BEWeldable.Inv[1].Itemstack.Collectible.GetTemperature(capi.World, BEWeldable.Inv[1].Itemstack);
+            
+            int temp = (int)BEWeldable.Inv[firstNonNull + 1].Itemstack.Collectible.GetTemperature(capi.World, BEWeldable.Inv[firstNonNull + 1].Itemstack);
             Vec4f lightrgbs = capi.World.BlockAccessor.GetLightRGBs(BEWeldable.Pos.X, BEWeldable.Pos.Y, BEWeldable.Pos.Z);
             float[] glowColor = ColorUtil.GetIncandescenceColorAsColor4f(temp);
             int extraGlow = GameMath.Clamp((temp - 550) / 2, 0, 255);
@@ -65,7 +69,7 @@ namespace RPVoiceChat.GameContent.Renderers
 
             for (int i = 0; i < BEWeldable.PartMeshRefs.Length; i++)
             {
-                if (BEWeldable.PartMeshRefs[i] == null || BEWeldable.PartMeshRefs[i].Disposed) break;
+                if (BEWeldable.PartMeshRefs[i] == null || BEWeldable.PartMeshRefs[i].Disposed) continue;
 
                 temp = (int)BEWeldable.Inv[i+1].Itemstack.Collectible.GetTemperature(capi.World, BEWeldable.Inv[i+1].Itemstack);
                 lightrgbs = capi.World.BlockAccessor.GetLightRGBs(BEWeldable.Pos.X, BEWeldable.Pos.Y, BEWeldable.Pos.Z);
@@ -80,7 +84,7 @@ namespace RPVoiceChat.GameContent.Renderers
 
             for (int i = 0; i < BEWeldable.FluxMeshRefs.Length; i++)
             {
-                if (BEWeldable.FluxMeshRefs[i] == null || BEWeldable.FluxMeshRefs[i].Disposed) break;
+                if (BEWeldable.FluxMeshRefs[i] == null || BEWeldable.FluxMeshRefs[i].Disposed) continue;
 
                 prog.ExtraGlow = 0;
                 rpi.RenderMesh(BEWeldable.FluxMeshRefs[i]);

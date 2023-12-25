@@ -54,6 +54,6 @@
   "name": "Bellmold Top Part",
   "output": {
     "type": "block",
-    "code": "bellmold-raw-part-top"
+    "code": "bellmold-raw-part-brass-top"
   }
 }

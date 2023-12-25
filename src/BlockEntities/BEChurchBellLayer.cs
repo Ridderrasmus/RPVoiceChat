@@ -33,14 +33,13 @@ namespace RPVoiceChat.GameContent.BlockEntities
         public BlockEntityChurchBellLayer() : base(4)
         {
             FluxNeeded = 3;
-            ResultingBlockCode = "churchbell";
         }
 
         public override void Initialize(ICoreAPI api)
         {
             base.Initialize(api);
 
-            ResultingBlockCode = Block.Code.Path.Replace("part", "layer");
+            ResultingBlockCode = "churchbell";
 
             if (api is ICoreClientAPI capi)
             {
@@ -58,25 +57,27 @@ namespace RPVoiceChat.GameContent.BlockEntities
             ICoreClientAPI capi = Api as ICoreClientAPI;
 
             // If the inventory contains the big bell parts, then we want to render the big bell part mesh
-            for (int i = 0; i < BellLayerSlots.Length; i++)
+            for (int i = 0; i < 4; i++)
             {
                 if (BellLayerSlots[i].Empty) continue;
 
                 MeshData meshdata = RenderPart(i);
 
                 PartMeshRefs[i] = capi.Render.UploadMesh(meshdata);
+                meshdata.Clear();
             }
 
             // If the inventory contains flux AND two big bell layers then we want to render the flux mesh between the two big bell layers
             // The fitting flux mesh is derived from the lower big bell layer
             for (int i = 0; i < FluxNeeded; i++)
             {
-                if (BellLayerSlots[i].Empty && BellLayerSlots[i+1].Empty) break;
+                if (BellLayerSlots[i].Empty && BellLayerSlots[i+1].Empty) continue;
 
-                if (FluxSlot.Empty || FluxSlot.StackSize < i+1) break;
+                if (FluxSlot.Empty || FluxSlot.StackSize < i+1) continue;
 
                 MeshData meshdata = RenderFlux(i);
                 FluxMeshRefs[i] = capi.Render.UploadMesh(meshdata);
+                meshdata.Clear();
             }
 
         }
@@ -84,7 +85,10 @@ namespace RPVoiceChat.GameContent.BlockEntities
         protected override MeshData RenderPart(int numPart)
         {
             ICoreClientAPI capi = Api as ICoreClientAPI;
-            MeshData meshdata = capi.TesselatorManager.GetDefaultBlockMesh(BellLayerSlots[numPart].Itemstack.Block).Clone();
+
+            Shape shape = Shape.TryGet(Api, new AssetLocation("rpvoicechat", $"shapes/{BellLayerSlots[numPart].Itemstack.Block.Shape.Base.Path}.json"));
+            MeshData meshdata = new MeshData();
+            capi.Tesselator.TesselateShape(Block, shape, out meshdata);
 
             for (int j = 0; j <= numPart; j++)
             {
@@ -99,8 +103,6 @@ namespace RPVoiceChat.GameContent.BlockEntities
         protected override MeshData RenderFlux(int numFlux)
         {
             ICoreClientAPI capi = Api as ICoreClientAPI;
-            string shapePath = BellLayerSlots[numFlux].Itemstack.Block.Shape.Base.Path;
-            capi.Logger.Debug(shapePath);
             var fluxShape = Shape.TryGet(Api, new AssetLocation("rpvoicechat", $"shapes/block/churchbell/{bellLayerNames[numFlux]}-flux.json"));
             if (fluxShape == null)
                 throw new Exception($"Layer flux shape is null for: {bellLayerNames[numFlux]}");
@@ -132,8 +134,8 @@ namespace RPVoiceChat.GameContent.BlockEntities
                     }
                 }
 
-                UpdateMeshRefs();
             }
+            UpdateMeshRefs();
         }
 
 
@@ -172,15 +174,14 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 }
             }
 
-
-
-            if (bellLayerNames.Contains(hotbarslot.Itemstack.Collectible.Code.Path))
+            string[] layerNames = new string[] { "churchbell-layer-brass-bottom", "churchbell-layer-brass-middle", "churchbell-layer-brass-top", "churchbell-layer-brass-topmost" };
+            if (layerNames.Contains(hotbarslot.Itemstack.Collectible.Code.Path))
             {
                 for (int i = 0; i < 4; i++)
                 {
 
                     // If current container slot is empty or the item in the hotbar doesn't fit to the current container slot, continue
-                    if (!BellLayerSlots[i].Empty || hotbarslot.Itemstack.Collectible.Code.Path != BellLayerName[i]) continue;
+                    if (!BellLayerSlots[i].Empty || hotbarslot.Itemstack.Collectible.Code.Path != layerNames[i]) continue;
 
                     BellLayerSlots[i].Itemstack = hotbarslot.TakeOut(1);
                     UpdateMeshRefs();

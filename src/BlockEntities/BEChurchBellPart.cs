@@ -1,12 +1,8 @@
 ﻿using RPVoiceChat.GameContent.Renderers;
 using RPVoiceChat.Utils;
-using System;
-using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
-using Vintagestory.GameContent;
 
 namespace RPVoiceChat.GameContent.BlockEntities
 {
@@ -48,7 +44,9 @@ namespace RPVoiceChat.GameContent.BlockEntities
         protected override MeshData RenderPart(int numPart)
         {
             ICoreClientAPI capi = Api as ICoreClientAPI;
-            MeshData meshdata = capi.TesselatorManager.GetDefaultBlockMesh(Block).Clone();
+            Shape shape = Shape.TryGet(Api, new AssetLocation("rpvoicechat", $"shapes/{Block.Shape.Base.Path}.json"));
+            MeshData meshdata = new MeshData();
+            capi.Tesselator.TesselateShape(Block, shape, out meshdata);
             return meshdata.Rotate(new Vec3f(0.5f, 0f, 0.5f), 0, 1.57079633f * (numPart), 0f);
 
         }

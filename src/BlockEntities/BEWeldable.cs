@@ -37,6 +37,16 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
         public override string InventoryClassName => throw new Exception("BEWeldable is meant to be inherited but wasn't!");
 
+        public override void Initialize(ICoreAPI api)
+        {
+            base.Initialize(api);
+
+            if (api is ICoreClientAPI capi)
+            {
+                capi.TesselatorManager.GetDefaultBlockMesh(Block).Clear();
+            }
+        }
+
         public virtual bool TestReadyToMerge(bool triggerMessage = true)
         {
             for (int i = 1; i < Inv.Count; i++)
@@ -141,7 +151,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
                     Block ResultingBlock = Api.World.GetBlock(new AssetLocation(RPVoiceChatMod.modID, ResultingBlockCode));
                     ItemStack ResultingBlockStack = new ItemStack(ResultingBlock);
                     ResultingBlockStack.Collectible.SetTemperature(Api.World, ResultingBlockStack, temp);
-                    Api.World.BlockAccessor.SetBlock(ResultingBlock.Id, Pos, new ItemStack(ResultingBlock));
+                    Api.World.BlockAccessor.SetBlock(ResultingBlock.Id, Pos, ResultingBlockStack);
                 }
             }
         }

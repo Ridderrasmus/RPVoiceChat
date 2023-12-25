@@ -45,6 +45,6 @@
   "name": "Bellmold Topmost Part",
   "output": {
     "type": "block",
-    "code": "bellmold-raw-layer-topmost"
+    "code": "bellmold-raw-layer-brass-topmost"
   }
 }
