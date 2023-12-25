@@ -90,14 +90,12 @@ namespace RPVoiceChat.GameContent.BlockEntities
             MeshData meshdata = new MeshData();
             capi.Tesselator.TesselateShape(Block, shape, out meshdata);
 
-            for (int j = 0; j <= numPart; j++)
-            {
+            float vertOffset = 0;
+            for (int j = 0; j < numPart; j++)
                 if (!BellLayerSlots[j].Empty)
-                {
-                    meshdata = meshdata.Translate(0, bellLayerHeights[j], 0);
-                }
-            }
-            return meshdata;
+                    vertOffset += bellLayerHeights[j+1];
+                
+            return meshdata.Translate(0, vertOffset, 0);
         }
 
         protected override MeshData RenderFlux(int numFlux)
@@ -109,12 +107,12 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
             capi.Tesselator.TesselateShape(Block, fluxShape, out MeshData meshdata);
 
+            float vertOffset = 0;
             for (int j = 0; j < numFlux; j++)
                 if (!BellLayerSlots[j].Empty)
-                {
-                    meshdata = meshdata.Translate(0, bellLayerHeights[j+1], 0);
-                }
-            return meshdata;
+                    vertOffset += bellLayerHeights[j + 1];
+                
+            return meshdata.Translate(0, vertOffset, 0);
         }
 
         public override void OnBlockPlaced(ItemStack byItemStack = null)
