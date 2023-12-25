@@ -84,13 +84,14 @@ namespace RPVoiceChat.GameContent.BlockEntities
         protected override MeshData RenderPart(int numPart)
         {
             ICoreClientAPI capi = Api as ICoreClientAPI;
-
             MeshData meshdata = capi.TesselatorManager.GetDefaultBlockMesh(BellLayerSlots[numPart].Itemstack.Block).Clone();
 
             for (int j = 0; j <= numPart; j++)
             {
                 if (!BellLayerSlots[j].Empty)
+                {
                     meshdata = meshdata.Translate(0, bellLayerHeights[j], 0);
+                }
             }
             return meshdata;
         }
@@ -98,7 +99,8 @@ namespace RPVoiceChat.GameContent.BlockEntities
         protected override MeshData RenderFlux(int numFlux)
         {
             ICoreClientAPI capi = Api as ICoreClientAPI;
-
+            string shapePath = BellLayerSlots[numFlux].Itemstack.Block.Shape.Base.Path;
+            capi.Logger.Debug(shapePath);
             var fluxShape = Shape.TryGet(Api, new AssetLocation("rpvoicechat", $"shapes/block/churchbell/{bellLayerNames[numFlux]}-flux.json"));
             if (fluxShape == null)
                 throw new Exception($"Layer flux shape is null for: {bellLayerNames[numFlux]}");
@@ -119,7 +121,10 @@ namespace RPVoiceChat.GameContent.BlockEntities
             {
                 for (int i = 0; i < 4; i++)
                 {
-                    if (byItemStack.Collectible.Code.Path == BellLayerName[i])
+                    // I know, this is messy but I just want this done
+                    string[] split = BellLayerName[i].Split("-");
+                    string layerName = $"{split[0]}-{split[1]}-brass-{split[2]}";
+                    if (byItemStack.Collectible.Code.Path == layerName)
                     {
                         BellLayerSlots[i].Itemstack = byItemStack.Clone();
                         BellLayerSlots[i].Itemstack.StackSize = 1;
