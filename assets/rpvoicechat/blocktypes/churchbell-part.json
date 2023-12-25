@@ -24,22 +24,26 @@
       }
     }
   },
+  "variantgroups": [
+    {
+      "code": "material",
+      "states": [ "brass" ]
+    },
+    {
+      "code": "layer",
+      "states": [ "bottom", "middle", "top" ]
+    }
+  ],
   "entityClass": "ChurchBellPart",
   "drops": [],
   "creativeinventory": {
     "general": [ "*" ]
   },
   "blockmaterial": "Metal",
-  "variantgroups": [
-    {
-      "code": "layer",
-      "states": [ "bottom", "middle", "top" ]
-    }
-  ],
   "shapeByType": {
-    "churchbell-part-bottom": { "base": "block/churchbell/churchbell-part-bottom" },
-    "churchbell-part-middle": { "base": "block/churchbell/churchbell-part-middle" },
-    "churchbell-part-top": { "base": "block/churchbell/churchbell-part-top" }
+    "churchbell-part-brass-bottom": { "base": "block/churchbell/churchbell-part-bottom" },
+    "churchbell-part-brass-middle": { "base": "block/churchbell/churchbell-part-middle" },
+    "churchbell-part-brass-top": { "base": "block/churchbell/churchbell-part-top" }
   },
   "textures": {
     "chalk2": { "base": "game:block/stone/rock/chalk2" },

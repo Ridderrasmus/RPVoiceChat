@@ -40,7 +40,7 @@
       "moldrackable": false,
       "drop": {
         "type": "item",
-        "code": "smallbellpart-silver",
+        "code": "smallbellparts-silver",
         "quantity": 1
       }
     }

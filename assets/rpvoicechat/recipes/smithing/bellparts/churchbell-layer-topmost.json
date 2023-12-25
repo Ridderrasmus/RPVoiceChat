@@ -42,6 +42,6 @@
   "name": "Bell Top Most",
   "output": {
     "type": "block",
-    "code": "churchbell-layer-topmost"
+    "code": "churchbell-layer-brass-topmost"
   }
 }

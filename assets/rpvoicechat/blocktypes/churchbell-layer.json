@@ -26,6 +26,10 @@
   },
   "variantgroups": [
     {
+      "code": "material",
+      "states": [ "brass" ]
+    },
+    {
       "code": "layer",
       "states": [ "bottom", "middle", "top", "topmost" ]
     }
@@ -37,10 +41,10 @@
   },
   "blockmaterial": "Metal",
   "shapeByType": {
-    "churchbell-layer-bottom": { "base": "block/churchbell/churchbell-layer-bottom" },
-    "churchbell-layer-middle": { "base": "block/churchbell/churchbell-layer-middle" },
-    "churchbell-layer-top": { "base": "block/churchbell/churchbell-layer-top" },
-    "churchbell-layer-topmost": { "base": "block/churchbell/churchbell-layer-topmost" }
+    "churchbell-layer-brass-bottom": { "base": "block/churchbell/churchbell-layer-bottom" },
+    "churchbell-layer-brass-middle": { "base": "block/churchbell/churchbell-layer-middle" },
+    "churchbell-layer-brass-top": { "base": "block/churchbell/churchbell-layer-top" },
+    "churchbell-layer-brass-topmost": { "base": "block/churchbell/churchbell-layer-topmost" }
   },
   "textures": {
     "chalk2": { "base": "game:block/stone/rock/chalk2" },
