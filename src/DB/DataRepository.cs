@@ -1,5 +1,5 @@
+using Microsoft.Data.Sqlite;
 using System;
-using System.Data.SQLite;
 using System.IO;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -8,7 +8,7 @@ namespace RPVoiceChat.DB
 {
     public abstract class DataRepository : IDisposable
     {
-        protected SQLiteConnection connection { get; }
+        protected SqliteConnection connection { get; }
         private SQLiteDB _db;
 
         public DataRepository(ILogger logger, string dbName)
@@ -24,7 +24,7 @@ namespace RPVoiceChat.DB
             DefineCommands();
         }
 
-        protected abstract void CreateTablesIfNotExists(SQLiteConnection connection);
+        protected abstract void CreateTablesIfNotExists(SqliteConnection connection);
         protected abstract void DefineCommands();
 
         public virtual void Dispose()
