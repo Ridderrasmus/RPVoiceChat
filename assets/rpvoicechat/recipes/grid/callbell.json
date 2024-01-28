@@ -1,24 +1,19 @@
 {
-  "ingredientPattern": "PH,B_",
+  "name": "callbell",
+  "ingredientPattern": "P,B",
   "ingredients": {
     "P": {
       "type": "item",
-      "code": "game:metalplate-silver",
+      "code": "smallbellparts-silver",
       "quantity": 1
-    },
-    "H": {
-      "type": "item",
-      "code": "game:hammer-*",
-      "isTool": true,
-      "toolDurabilityCost": 2
     },
     "B": {
       "type": "item",
-      "code": "game:metalbit-silver",
+      "code": "game:metalplate-lead",
       "quantity": 1
     }
   },
-  "width": 2,
+  "width": 1,
   "height": 2,
   "output": {
     "type": "block",

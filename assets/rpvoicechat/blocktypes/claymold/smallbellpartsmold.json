@@ -1,0 +1,199 @@
+{
+  "code": "toolmold",
+  "classByType": {
+    "toolmold-raw-*": "Block",
+    "toolmold-burned-*": "BlockToolMold"
+  },
+  "behaviorsByType": {
+    "*-raw-*": [
+      {
+        "name": "GroundStorable",
+        "properties": { "layout": "Halves" }
+      },
+      {
+        "name": "Unplaceable",
+        "__comment": "The ground storable obsoletes this being a block. Should be an item, but is kept a block for backwards compatibility"
+      },
+      { "name": "RightClickPickup" }
+    ],
+    "*": [ { "name": "UnstableFalling" } ]
+  },
+  "variantgroups": [
+    {
+      "code": "materialtype",
+      "states": [ "raw", "burned" ]
+    },
+    {
+      "code": "tooltype",
+      "states": [
+        "smallbellparts"
+      ]
+    }
+  ],
+  "attributesByType": {
+    "toolmold-burned-smallbellparts": {
+      "requiredUnits": 50,
+      "fillHeight": 2,
+      "fillQuadsByLevel": [
+				{ x1: 6, z1: 4, x2: 10, z2: 12 }
+			],
+      "moldrackable": false,
+      "drop": {
+        "type": "item",
+        "code": "smallbellparts-silver",
+        "quantity": 1
+      }
+    }
+  },
+  "entityClassByType": {
+    "toolmold-burned-*": "ToolMold"
+  },
+  "combustiblePropsByType": {
+    "toolmold-raw-*": {
+      "meltingPoint": 650,
+      "meltingDuration": 45,
+      "smeltedRatio": 1,
+      "smeltingType": "fire",
+      "smeltedStack": {
+        "type": "block",
+        "code": "toolmold-burned-{tooltype}"
+      },
+      "requiresContainer": false
+    }
+  },
+  "blockmaterial": "Ceramic",
+  "creativeinventory": {
+    "general": [ "*" ],
+    "construction": [ "*" ]
+  },
+  "replaceable": 700,
+  "resistance": 1.5,
+  "maxStackSize": 8,
+  "lightAbsorption": 0,
+  "texturesByType": {
+    "toolmold-raw-*": { "all": { "base": "game:block/clay/blueclay" } },
+    "toolmold-burned-*": {
+      "all": { "base": "game:block/clay/ceramic" }
+    }
+  },
+  "shape": {
+    "base": "block/clay/mold/smallbellpartsmold"
+  },
+  "sounds": {
+    "walk": "walk/stone"
+  },
+  "collisionboxByType": {
+    "*-anvil": {
+      "x1": 0.0625,
+      "y1": 0,
+      "z1": 0.0625,
+      "x2": 0.9375,
+      "y2": 0.6875,
+      "z2": 0.9375
+    },
+    "*": {
+      "x1": 0,
+      "y1": 0,
+      "z1": 0,
+      "x2": 1,
+      "y2": 0.1875,
+      "z2": 1
+    }
+  },
+  "selectionboxByType": {
+    "*-anvil": {
+      "x1": 0,
+      "y1": 0,
+      "z1": 0,
+      "x2": 1,
+      "y2": 0.6875,
+      "z2": 1
+    },
+    "*": {
+      "x1": 0,
+      "y1": 0,
+      "z1": 0,
+      "x2": 1,
+      "y2": 0.1875,
+      "z2": 1
+    }
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "sidesolid": {
+    "all": false
+  },
+  "guiTransformByType": {
+    "*": {
+      "translation": {
+        "x": 0,
+        "y": 3,
+        "z": 0
+      },
+      "origin": {
+        "x": 0.5,
+        "y": 0.0625,
+        "z": 0.5
+      },
+      "scale": 1.33
+    }
+  },
+  "tpHandTransformByType": {
+    "*": {
+      "translation": {
+        "x": -1,
+        "y": 0.2,
+        "z": -0.9
+      },
+      "rotation": {
+        "x": -87,
+        "y": 9,
+        "z": 4
+      },
+      "origin": {
+        "x": 0.5,
+        "y": 0.125,
+        "z": 0.5
+      },
+      "scale": 0.5
+    }
+  },
+  "fpHandTransformByType": {
+    "*": {
+      "translation": {
+        "x": -0.3,
+        "y": 0,
+        "z": 0.5
+      },
+      "rotation": {
+        "x": 16,
+        "y": -51,
+        "z": 91
+      },
+      "origin": {
+        "x": 0.5,
+        "y": 0.125,
+        "z": 0.5
+      }
+    }
+  },
+  "groundTransform": {
+    "translation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "rotation": {
+      "x": 0,
+      "y": -45,
+      "z": 0
+    },
+    "origin": {
+      "x": 0.5,
+      "y": 0,
+      "z": 0.5
+    },
+    "scale": 1
+  }
+}

@@ -1,4 +1,4 @@
-﻿using ProtoBuf;
+using ProtoBuf;
 using System;
 using System.IO;
 
@@ -11,12 +11,12 @@ namespace RPVoiceChat.Networking
         public byte[] ToBytes()
         {
             var stream = new MemoryStream();
-            stream.Write(BitConverter.GetBytes((int)Code), 0, 4);
+            stream.Write(BitConverter.GetBytes((int)Code));
             Serializer.Serialize(stream, this);
             return stream.ToArray();
         }
 
-        public static T FromBytes<T>(byte[] data) where T: NetworkPacket
+        public static T FromBytes<T>(byte[] data) where T : NetworkPacket
         {
             var stream = new MemoryStream(data);
             PacketType code = (PacketType)BitConverter.ToInt32(data, 0);

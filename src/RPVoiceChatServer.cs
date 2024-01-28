@@ -1,6 +1,7 @@
-﻿using RPVoiceChat.Networking;
+using RPVoiceChat.Networking;
 using RPVoiceChat.Server;
 using RPVoiceChat.Utils;
+using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;
 using Vintagestory.API.Server;
@@ -15,10 +16,18 @@ namespace RPVoiceChat
         {
             sapi = api;
 
-            var mainServer = new UDPNetworkServer(config.ServerPort, config.ServerIP);
-            if (config.ManualPortForwarding) mainServer.TogglePortForwarding(false);
-            var backupServer = new NativeNetworkServer(api);
-            server = new GameServer(sapi, mainServer, backupServer);
+            bool forwardPorts = !config.ManualPortForwarding;
+            var networkTransports = new List<INetworkServer>()
+            {
+                new NativeNetworkServer(api)
+            };
+            if (config.UseCustomNetworkServers)
+            {
+                networkTransports.Insert(0, new UDPNetworkServer(config.ServerPort, config.ServerIP, forwardPorts));
+                networkTransports.Insert(1, new TCPNetworkServer(config.ServerPort, config.ServerIP, forwardPorts));
+            }
+
+            server = new GameServer(sapi, networkTransports);
             server.Launch();
 
             // Register/load world config
@@ -26,6 +35,7 @@ namespace RPVoiceChat
             WorldConfig.Set(VoiceLevel.Talking, WorldConfig.GetInt(VoiceLevel.Talking));
             WorldConfig.Set(VoiceLevel.Shouting, WorldConfig.GetInt(VoiceLevel.Shouting));
             WorldConfig.Set("force-render-name-tags", WorldConfig.GetBool("force-render-name-tags", true));
+            WorldConfig.Set("encode-audio", WorldConfig.GetBool("encode-audio", true));
 
             // Register commands
             registerCommands();
@@ -42,14 +52,6 @@ namespace RPVoiceChat
         public override bool ShouldLoad(EnumAppSide forSide)
         {
             return forSide == EnumAppSide.Server;
-        }
-
-        public override void AssetsLoaded(ICoreAPI api)
-        {
-            if (config.AdditionalContent) return;
-
-            RecipeHandler recipeHandler = new RecipeHandler(api, modID);
-            recipeHandler.DisableRecipes();
         }
 
         private void registerCommands()
@@ -83,17 +85,29 @@ namespace RPVoiceChat
                     .WithDesc(UIUtils.I18n("Command.Reset.Desc"))
                     .HandleWith(ResetDistanceHandler)
                 .EndSub()
-                .BeginSub("voiptoggle")
-                    .WithDesc("Toggles voip functionality on the server")
-                    .WithArgs(parsers.Bool("toggle"))
-                    .HandleWith(ToggleVoip)
-                .EndSub()
                 .BeginSub("forcenametags")
                     .WithDesc(UIUtils.I18n("Command.ForceNameTags.Desc"))
                     .WithAdditionalInformation(UIUtils.I18n("Command.ForceNameTags.Help"))
                     .WithArgs(parsers.Bool("state"))
                     .HandleWith(ToggleForceNameTags)
+                .EndSub()
+                .BeginSub("encodeaudio")
+                    .WithDesc(UIUtils.I18n("Command.EncodeAudio.Desc"))
+                    .WithAdditionalInformation(UIUtils.I18n("Command.EncodeAudio.Help"))
+                    .WithArgs(parsers.Bool("state"))
+                    .HandleWith(ToggleAudioEncoding)
                 .EndSub();
+        }
+
+        private TextCommandResult ToggleAudioEncoding(TextCommandCallingArgs args)
+        {
+            const string i18nPrefix = "Command.EncodeAudio.Success";
+            bool state = (bool)args[0];
+
+            WorldConfig.Set("encode-audio", state);
+
+            string stateAsText = state ? "Enabled" : "Disabled";
+            return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
         }
 
         private TextCommandResult ToggleForceNameTags(TextCommandCallingArgs args)
@@ -105,16 +119,6 @@ namespace RPVoiceChat
 
             string stateAsText = state ? "Enabled" : "Disabled";
             return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
-        }
-
-        private TextCommandResult ToggleVoip(TextCommandCallingArgs args)
-        {
-            bool toggle = (bool)args[0];
-
-            if (server.ServerToggle(toggle))
-                return TextCommandResult.Success("Voip toggled " + (toggle ? "on" : "off"));
-            else
-                return TextCommandResult.Error("Voip is already " + (toggle ? "on" : "off") + "!");
         }
 
         private TextCommandResult ResetDistanceHandler(TextCommandCallingArgs args)
@@ -131,8 +135,10 @@ namespace RPVoiceChat
             int whisper = WorldConfig.GetInt(VoiceLevel.Whispering);
             int talk = WorldConfig.GetInt(VoiceLevel.Talking);
             int shout = WorldConfig.GetInt(VoiceLevel.Shouting);
+            bool forceNameTags = WorldConfig.GetBool("force-render-name-tags");
+            bool encoding = WorldConfig.GetBool("encode-audio");
 
-            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout));
+            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceNameTags, encoding));
         }
 
         private TextCommandResult SetWhisperHandler(TextCommandCallingArgs args)
@@ -165,7 +171,6 @@ namespace RPVoiceChat
         public override void Dispose()
         {
             server?.Dispose();
-            base.Dispose();
         }
     }
 }

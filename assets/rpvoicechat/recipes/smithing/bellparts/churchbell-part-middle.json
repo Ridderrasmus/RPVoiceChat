@@ -1,0 +1,26 @@
+﻿{
+  "enabled": false,
+  "ingredient": {
+    "type": "item",
+    "code": "game:ingot-brass"
+  },
+  "pattern": [
+    [
+      "____######____",
+      "_############_",
+      "_############_",
+      "_############_"
+    ],
+    [
+      "____######____",
+      "_############_",
+      "_############_",
+      "_############_"
+    ]
+  ],
+  "name": "Bell Middle Part",
+  "output": {
+    "type": "block",
+    "code": "churchbell-part-middle"
+  }
+}

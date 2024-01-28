@@ -1,4 +1,3 @@
-﻿using OpenTK.Audio.OpenAL;
 using RPVoiceChat.DB;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
@@ -13,7 +12,6 @@ namespace RPVoiceChat.Audio
     public class AudioOutputManager : IDisposable
     {
         ICoreClientAPI capi;
-        RPVoiceChatConfig _config;
         private bool isLoopbackEnabled;
         public bool IsLoopbackEnabled
         {
@@ -36,18 +34,15 @@ namespace RPVoiceChat.Audio
             }
         }
 
-        private EffectsExtension effectsExtension;
         private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
         private PlayerAudioSource localPlayerAudioSource;
-        private ClientSettingsRepository clientSettings;
+        private ClientSettingsRepository clientSettingsRepo;
 
         public AudioOutputManager(ICoreClientAPI api, ClientSettingsRepository settingsRepository)
         {
-            _config = ModConfig.Config;
-            IsLoopbackEnabled = _config.IsLoopbackEnabled;
+            IsLoopbackEnabled = ClientSettings.Loopback;
             capi = api;
-            effectsExtension = new EffectsExtension();
-            clientSettings = settingsRepository;
+            clientSettingsRepo = settingsRepository;
         }
 
         public void Launch()
@@ -67,19 +62,11 @@ namespace RPVoiceChat.Audio
                 return;
             }
 
-            PlayerAudioSource source;
-            string playerId = packet.PlayerId;
-
-            if (!playerSources.TryGetValue(playerId, out source) || source.IsDisposed)
+            PlayerAudioSource source = GetOrCreatePlayerSource(packet.PlayerId);
+            if (source == null)
             {
-                var player = capi.World.PlayerByUid(playerId);
-                if (player == null)
-                {
-                    Logger.client.Error($"Could not find player for playerId {playerId}");
-                    return;
-                }
-
-                source = CreatePlayerSource(player);
+                Logger.client.Debug("Unable to resolve player ID into player source, dropping packet");
+                return;
             }
 
             HandleAudioPacket(packet, source);
@@ -87,16 +74,15 @@ namespace RPVoiceChat.Audio
 
         public void HandleAudioPacket(AudioPacket packet, PlayerAudioSource source)
         {
+            string codec = packet.Codec;
             int frequency = packet.Frequency;
             int channels = AudioUtils.ChannelsPerFormat(packet.Format);
+            AudioData audioData = AudioData.FromPacket(packet);
 
-            IAudioCodec codec = source.GetOrCreateAudioCodec(frequency, channels);
-            AudioData audioData = AudioData.FromPacket(packet, codec);
-
-            // Update the voice level if it has changed
             if (source.voiceLevel != packet.VoiceLevel)
                 source.UpdateVoiceLevel(packet.VoiceLevel);
             source.UpdatePlayer();
+            source.UpdateAudioFormat(codec, frequency, channels);
             source.EnqueueAudio(audioData, packet.SequenceNumber);
         }
 
@@ -109,7 +95,7 @@ namespace RPVoiceChat.Audio
 
         private void ClientLoaded()
         {
-            localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, capi, clientSettings, effectsExtension)
+            localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, capi, clientSettingsRepo)
             {
                 IsLocational = false,
             };
@@ -118,9 +104,21 @@ namespace RPVoiceChat.Audio
             localPlayerAudioSource.StartPlaying();
         }
 
+        private PlayerAudioSource GetOrCreatePlayerSource(string playerId)
+        {
+            PlayerAudioSource source;
+            if (playerSources.TryGetValue(playerId, out source) && !source.IsDisposed)
+                return source;
+
+            var player = capi.World.PlayerByUid(playerId);
+            if (player == null) return null;
+
+            return CreatePlayerSource(player);
+        }
+
         private PlayerAudioSource CreatePlayerSource(IPlayer player)
         {
-            var source = new PlayerAudioSource(player, capi, clientSettings, effectsExtension);
+            var source = new PlayerAudioSource(player, capi, clientSettingsRepo);
             playerSources.AddOrUpdate(player.PlayerUID, source, (_, __) => source);
             source.StartPlaying();
 

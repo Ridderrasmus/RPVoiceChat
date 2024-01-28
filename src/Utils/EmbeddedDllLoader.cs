@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -42,7 +42,7 @@ namespace RPVoiceChat.Utils
             string dirName = Path.Combine(Path.GetTempPath(), tempFolder);
             if (!Directory.Exists(dirName)) Directory.CreateDirectory(dirName);
 
-            string[] resourceNameParts = resourceName.Split('.');
+            string[] resourceNameParts = resourceName.Split(".");
             string dllName = $"{resourceNameParts[resourceNameParts.Length - 2]}.{resourceNameParts[resourceNameParts.Length - 1]}";
             string dllPath = Path.Combine(dirName, dllName);
             bool alreadyExtracted = false;

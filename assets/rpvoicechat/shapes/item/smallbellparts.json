@@ -1,0 +1,214 @@
+{
+	"editor": {
+		"allAngles": false,
+		"entityTextureMode": false
+	},
+	"textureWidth": 16,
+	"textureHeight": 16,
+	"textureSizes": {
+	},
+	"textures": {
+		"silversolder": "game:block/metal/ingot/silversolder",
+		"plain2": "game:block/stone/quartz/full/plain2"
+	},
+	"elements": [
+		{
+			"name": "Button",
+			"from": [ 7.64, 0.4, 7.84 ],
+			"to": [ 7.96, 0.6, 8.16 ],
+			"rotationOrigin": [ 7.8, 0.4, 8.0 ],
+			"rotationX": -45.0,
+			"rotationY": -22.5,
+			"rotationZ": -45.0,
+			"faces": {
+				"north": { "texture": "#silversolder", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"east": { "texture": "#silversolder", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"south": { "texture": "#silversolder", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"west": { "texture": "#silversolder", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"up": { "texture": "#silversolder", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"down": { "texture": "#silversolder", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false }
+			},
+			"children": [
+				{
+					"name": "Button1",
+					"from": [ -0.08, 0.2, -0.08 ],
+					"to": [ 0.4, 0.4, 0.4 ],
+					"rotationOrigin": [ 0.16, 0.0, 0.16 ],
+					"faces": {
+						"north": { "texture": "#silversolder", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+						"east": { "texture": "#silversolder", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+						"south": { "texture": "#silversolder", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+						"west": { "texture": "#silversolder", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+						"up": { "texture": "#silversolder", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+						"down": { "texture": "#silversolder", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false }
+					}
+				}
+			]
+		},
+		{
+			"name": "Bell",
+			"from": [ 6.7, 0.3, 6.6 ],
+			"to": [ 9.5, 0.4, 9.4 ],
+			"rotationOrigin": [ 8.1, 0.5, 8.0 ],
+			"rotationY": -45.0,
+			"faces": {
+				"north": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 0.5 ], "autoUv": false },
+				"east": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 0.5 ], "autoUv": false },
+				"south": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 0.5 ], "autoUv": false },
+				"west": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 0.5 ], "autoUv": false },
+				"up": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"down": { "texture": "#plain2", "uv": [ 7.0, 3.0, 8.0, 3.5 ], "autoUv": false }
+			}
+		},
+		{
+			"name": "Bellside5",
+			"from": [ 7.3558, -0.15, 5.7267 ],
+			"to": [ 8.5558, 0.15, 7.8267 ],
+			"rotationOrigin": [ 8.5558, 0.15, 6.7767 ],
+			"rotationX": -15.712,
+			"rotationY": -2.181,
+			"rotationZ": 173.212,
+			"faces": {
+				"north": { "texture": "#plain2", "uv": [ 3.5, 5.0, 4.5, 6.0 ], "autoUv": false },
+				"east": { "texture": "#plain2", "uv": [ 3.5, 5.0, 4.5, 6.0 ], "autoUv": false },
+				"south": { "texture": "#plain2", "uv": [ 3.5, 5.0, 4.5, 6.0 ], "autoUv": false },
+				"west": { "texture": "#plain2", "uv": [ 3.5, 3.0, 4.5, 4.0 ], "autoUv": false },
+				"up": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"down": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false }
+			}
+		},
+		{
+			"name": "Bellside1",
+			"from": [ 7.4, 0.0, 6.2 ],
+			"to": [ 9.0, 0.4, 9.0 ],
+			"rotationOrigin": [ 9.0, 0.4, 7.6 ],
+			"rotationX": 0.0,
+			"rotationY": 22.5,
+			"rotationZ": 157.5,
+			"faces": {
+				"north": { "texture": "#plain2", "uv": [ 3.5, 5.0, 4.5, 6.0 ], "autoUv": false },
+				"east": { "texture": "#plain2", "uv": [ 3.5, 5.0, 4.5, 6.0 ], "autoUv": false },
+				"south": { "texture": "#plain2", "uv": [ 3.5, 5.0, 4.5, 6.0 ], "autoUv": false },
+				"west": { "texture": "#plain2", "uv": [ 3.5, 3.0, 4.5, 4.0 ], "autoUv": false },
+				"up": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"down": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false }
+			}
+		},
+		{
+			"name": "Bellside2",
+			"from": [ 5.2571, 0.3904, 7.0 ],
+			"to": [ 6.8571, 0.7904, 9.8 ],
+			"rotationOrigin": [ 6.3571, 0.4904, 8.4 ],
+			"rotationX": 20.941,
+			"rotationY": 8.421,
+			"rotationZ": -1.559,
+			"faces": {
+				"north": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"east": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"south": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"west": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"up": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"down": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false }
+			}
+		},
+		{
+			"name": "Bellside4",
+			"from": [ 6.43, 0.25, 5.2 ],
+			"to": [ 8.03, 0.65, 8.0 ],
+			"rotationOrigin": [ 7.5299, 0.1545, 6.6 ],
+			"rotationY": -67.5,
+			"rotationZ": 22.5,
+			"faces": {
+				"north": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"east": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"south": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"west": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"up": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"down": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false }
+			}
+		},
+		{
+			"name": "Bellside3",
+			"from": [ 7.07, 0.36, 7.9 ],
+			"to": [ 8.67, 0.76, 10.7 ],
+			"rotationOrigin": [ 8.6675, 0.7527, 9.3 ],
+			"rotationX": 9.007,
+			"rotationY": 67.5,
+			"rotationZ": 9.007,
+			"faces": {
+				"north": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"east": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"south": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"west": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"up": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"down": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false }
+			}
+		},
+		{
+			"name": "Bellside9",
+			"from": [ 4.0324, -0.35, 6.3681 ],
+			"to": [ 5.2324, -0.05, 8.4681 ],
+			"rotationOrigin": [ 5.2324, -0.05, 7.4131 ],
+			"rotationX": -9.209,
+			"rotationY": -23.783,
+			"rotationZ": -162.8,
+			"faces": {
+				"north": { "texture": "#plain2", "uv": [ 3.5, 5.0, 4.5, 6.0 ], "autoUv": false },
+				"east": { "texture": "#plain2", "uv": [ 3.5, 5.0, 4.5, 6.0 ], "autoUv": false },
+				"south": { "texture": "#plain2", "uv": [ 3.5, 5.0, 4.5, 6.0 ], "autoUv": false },
+				"west": { "texture": "#plain2", "uv": [ 3.5, 3.0, 4.5, 4.0 ], "autoUv": false },
+				"up": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"down": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false }
+			}
+		},
+		{
+			"name": "Bellside6",
+			"from": [ 6.5414, 0.2928, 8.0829 ],
+			"to": [ 7.7414, 0.5928, 10.1829 ],
+			"rotationOrigin": [ 7.3664, 0.3678, 9.1329 ],
+			"rotationX": 32.747,
+			"rotationY": 49.186,
+			"rotationZ": -24.306,
+			"faces": {
+				"north": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"east": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"south": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"west": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"up": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"down": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false }
+			}
+		},
+		{
+			"name": "Bellside7",
+			"from": [ 6.2088, 0.3408, 6.5063 ],
+			"to": [ 7.4088, 0.6408, 8.6063 ],
+			"rotationOrigin": [ 7.0337, 0.2658, 7.5564 ],
+			"rotationY": -22.5,
+			"rotationZ": 22.5,
+			"faces": {
+				"north": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"east": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"south": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"west": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"up": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"down": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false }
+			}
+		},
+		{
+			"name": "Bellside8",
+			"from": [ 8.1903, 0.1921, 7.6531 ],
+			"to": [ 9.3903, 0.4921, 9.7531 ],
+			"rotationOrigin": [ 9.3871, 0.4895, 8.7031 ],
+			"rotationX": 123.442,
+			"rotationY": 82.871,
+			"rotationZ": -107.86,
+			"faces": {
+				"north": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"east": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"south": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"west": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"up": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false },
+				"down": { "texture": "#plain2", "uv": [ 0.0, 0.0, 1.0, 1.0 ], "autoUv": false }
+			}
+		}
+	]}

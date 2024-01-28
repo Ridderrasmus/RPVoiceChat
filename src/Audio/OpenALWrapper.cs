@@ -1,4 +1,4 @@
-﻿using OpenTK.Audio.OpenAL;
+using OpenTK.Audio.OpenAL;
 using RPVoiceChat.Utils;
 
 namespace RPVoiceChat.Audio
@@ -92,7 +92,7 @@ namespace RPVoiceChat.Audio
 
         public static void BufferData(int currentBuffer, ALFormat format, byte[] audio, int frequency)
         {
-            AL.BufferData(currentBuffer, format, audio, audio.Length, frequency);
+            AL.BufferData(currentBuffer, format, audio, frequency);
             CheckError("Error buffer data");
         }
 

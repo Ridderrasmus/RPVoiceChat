@@ -1,10 +1,11 @@
-﻿using Vintagestory.API.Common;
+using Vintagestory.API.Common;
 
 namespace RPVoiceChat.Networking
 {
     public abstract class NativeNetworkBase
     {
         protected const string ChannelName = "RPAudioChannel";
+        protected const string SPChannelName = $"{ChannelName}_SP";
         protected const string _transportID = "NativeTCP";
 
         public NativeNetworkBase(ICoreAPI api)
@@ -15,11 +16,6 @@ namespace RPVoiceChat.Networking
         public string GetTransportID()
         {
             return _transportID;
-        }
-
-        public void Dispose()
-        {
-            // Game handles disposal for us
         }
     }
 }

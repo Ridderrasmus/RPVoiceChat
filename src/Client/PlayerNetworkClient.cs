@@ -1,9 +1,10 @@
-﻿using Open.Nat;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Vintagestory.API.Client;
+using Vintagestory.Client.NoObf;
 
 namespace RPVoiceChat.Client
 {
@@ -12,74 +13,97 @@ namespace RPVoiceChat.Client
         public event Action<AudioPacket> OnAudioReceived;
 
         private ICoreClientAPI api;
-        private INetworkClient networkClient;
-        private INetworkClient reserveClient;
-        private bool isConnected = false;
+        private List<INetworkClient> _initialTransports;
+        private List<INetworkClient> activeTransports = new List<INetworkClient>();
         private IClientNetworkChannel handshakeChannel;
+        private ConnectionInfo[] serverConnections;
+        private bool isConnected = false;
+        private bool isDisposed = false;
+        private bool isShutdown { get => isDisposed || (api as ClientCoreAPI)?.disposed == true; }
 
-        public PlayerNetworkClient(ICoreClientAPI capi, INetworkClient client, INetworkClient _reserveClient = null)
+        public PlayerNetworkClient(ICoreClientAPI capi, List<INetworkClient> clientTransports)
         {
             api = capi;
-            networkClient = client;
-            reserveClient = _reserveClient;
+            _initialTransports = clientTransports;
             handshakeChannel = capi.Network
                 .RegisterChannel("RPVCHandshake")
+                .RegisterMessageType<ConnectionRequest>()
                 .RegisterMessageType<ConnectionInfo>()
-                .SetMessageHandler<ConnectionInfo>(OnHandshakeRequest);
+                .SetMessageHandler<ConnectionRequest>(OnConnectionRequest);
 
-            networkClient.OnAudioReceived += AudioPacketReceived;
-            if (reserveClient == null) return;
-            reserveClient.OnAudioReceived += AudioPacketReceived;
-
-            if (reserveClient is IExtendedNetworkClient)
-                throw new NotSupportedException("Reserve client requiring handshake is not supported");
+            foreach (var transport in _initialTransports)
+                transport.OnAudioReceived += AudioPacketReceived;
         }
 
         public void SendAudioToServer(AudioPacket packet)
         {
-            if (!isConnected) return;
-            networkClient.SendAudioToServer(packet);
+            if (isShutdown || !isConnected) return;
+
+            foreach (var transport in activeTransports)
+            {
+                try
+                {
+                    bool success = transport.SendAudioToServer(packet);
+                    if (success) return;
+                }
+                catch (Exception e)
+                {
+                    Logger.client.Warning($"Couldn't use {transport.GetTransportID()} client to send audio packet to server: {e.Message}");
+                }
+            }
+            Logger.client.Warning("Failed to send audio packet to server: All active network clients reported a failure");
         }
 
-        private void OnHandshakeRequest(ConnectionInfo serverConnection)
+        private void OnConnectionRequest(ConnectionRequest connectionRequest)
         {
-            var clientTransportID = networkClient.GetTransportID();
-            try
-            {
-                if (!serverConnection.SupportedTransports.Contains(clientTransportID))
-                    throw new Exception("Server doesn't support client's transport");
+            serverConnections = connectionRequest.SupportedTransports;
+            Connect();
+        }
 
-                var extendedClient = networkClient as IExtendedNetworkClient;
-                ConnectionInfo clientConnection = extendedClient?.Connect(serverConnection) ?? new ConnectionInfo();
-                clientConnection.SupportedTransports = new string[] { clientTransportID };
-                handshakeChannel.SendPacket(clientConnection);
-                isConnected = true;
-                Logger.client.Notification($"Successfully connected with the {clientTransportID} client");
+        private void Connect()
+        {
+            activeTransports = new List<INetworkClient>();
+            foreach (var transport in _initialTransports)
+            {
+                try
+                {
+                    ConnectWith(transport);
+                }
+                catch (Exception e)
+                {
+                    Logger.client.Warning($"Failed to connect with the {transport.GetTransportID()} client: {e.Message}");
+                    transport.Dispose();
+                }
+            }
+            isConnected = true;
+
+            if (activeTransports.Count > 0) return;
+            IEnumerable<string> serverTransportIDs = serverConnections.Select(e => e.Transport);
+            throw new Exception($"Failed to connect to the server. Supported transports: {string.Join(", ", serverTransportIDs)}");
+        }
+
+        private void ConnectWith(INetworkClient transport)
+        {
+            var transportID = transport.GetTransportID();
+            Logger.client.Notification($"Attempting to connect with {transportID} client");
+            var serverConnection = serverConnections.FirstOrDefault(e => e.Transport == transportID);
+            if (serverConnection == null)
+            {
+                Logger.client.Notification($"Server doesn't support {transportID} transport, aborting");
                 return;
             }
-            catch (NatDeviceNotFoundException)
+
+            ConnectionInfo clientConnection = new ConnectionInfo();
+            if (transport is IExtendedNetworkClient extendedTransport)
             {
-                Logger.client.Warning($"Failed to connect with the {clientTransportID} client: Unable to port forward with UPnP. " +
-                    $"Make sure your IP is public and UPnP is enabled if you want to connect with {clientTransportID} client.");
+                clientConnection = extendedTransport?.Connect(serverConnection);
+                extendedTransport.OnConnectionLost += ConnectionLost;
             }
-            catch (Exception e)
-            {
-                Logger.client.Warning($"Failed to connect with the {clientTransportID} client: {e.Message}");
-            }
+            clientConnection.Transport = transportID;
+            handshakeChannel.SendPacket(clientConnection);
 
-            if (reserveClient == null)
-                throw new Exception($"Failed to connect to the server. Required transport: {serverConnection.SupportedTransports}");
-
-            SwapActiveClient(reserveClient);
-            reserveClient = null;
-            OnHandshakeRequest(serverConnection);
-        }
-
-        private void SwapActiveClient(INetworkClient newClient)
-        {
-            Logger.client.Notification($"Using {newClient.GetTransportID()} client from now on");
-            networkClient.Dispose();
-            networkClient = newClient;
+            activeTransports.Add(transport);
+            Logger.client.Notification($"Successfully connected with the {transportID} client");
         }
 
         private void AudioPacketReceived(AudioPacket packet)
@@ -87,12 +111,45 @@ namespace RPVoiceChat.Client
             OnAudioReceived?.Invoke(packet);
         }
 
+        private void ConnectionLost(bool canReconnect, IExtendedNetworkClient transport)
+        {
+            var transportID = transport.GetTransportID();
+            Logger.client.Notification($"{transportID} transport reported connection loss");
+            transport.OnConnectionLost -= ConnectionLost;
+
+            if (isShutdown) return;
+            if (canReconnect && Reconnect(transport)) return;
+            if (isShutdown) return;
+            activeTransports.Remove(transport);
+            transport.Dispose();
+        }
+
+        private bool Reconnect(IExtendedNetworkClient transport)
+        {
+            Logger.client.Notification($"Reconnecting...");
+            try
+            {
+                ConnectWith(transport);
+                return true;
+            }
+            catch (Exception e)
+            {
+                if (isShutdown)
+                {
+                    Logger.client.Notification("Aborting due to mod unloading.");
+                    return false;
+                }
+                Logger.client.Warning($"Unable to reconnect to {transport.GetTransportID()} server:\n{e}");
+            }
+            return false;
+        }
+
         public void Dispose()
         {
-            var disposableClient = networkClient as IDisposable;
-            var disposableReserveClient = reserveClient as IDisposable;
-            disposableClient?.Dispose();
-            disposableReserveClient?.Dispose();
+            if (isDisposed) return;
+            isDisposed = true;
+            foreach (var transport in activeTransports)
+                transport.Dispose();
         }
     }
 }

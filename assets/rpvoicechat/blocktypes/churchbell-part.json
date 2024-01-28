@@ -1,0 +1,99 @@
+{
+  "code": "churchbell-part",
+  "enabled": true,
+  "class": "churchbellpart",
+  "behaviors": [
+    { "name": "UnstableFalling" }
+  ],
+  "attributes": {
+    "handbook": {
+      "groupBy": [ "churchbell-part-*" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Welding.block-churchbell-part.Title",
+          "text": "rpvoicechat:Handbook.Welding.block-churchbell-part.Text"
+        }
+      ]
+    },
+    "forgable": true,
+    "inForgeTransform": {
+      "scale": 0.65,
+      "translation": {
+        "x": 0.06,
+        "y": -0.1875
+      }
+    }
+  },
+  "variantgroups": [
+    {
+      "code": "material",
+      "states": [ "brass" ]
+    },
+    {
+      "code": "layer",
+      "states": [ "bottom", "middle", "top" ]
+    }
+  ],
+  "entityClass": "ChurchBellPart",
+  "drops": [],
+  "creativeinventory": {
+    "general": [ "*" ]
+  },
+  "blockmaterial": "Metal",
+  "shapeByType": {
+    "churchbell-part-brass-bottom": { "base": "block/churchbell/churchbell-part-bottom" },
+    "churchbell-part-brass-middle": { "base": "block/churchbell/churchbell-part-middle" },
+    "churchbell-part-brass-top": { "base": "block/churchbell/churchbell-part-top" }
+  },
+  "textures": {
+    "chalk2": { "base": "game:block/stone/rock/chalk2" },
+    "brass": { "base": "game:block/metal/ingot/brass" },
+    "steel": { "base": "game:block/metal/ingot/steel" },
+    "tin": { "base": "game:block/metal/ingot/tin" }
+  },
+  "rainPermeable": true,
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "lightAbsorption": 0,
+  "collisionbox": {
+    "x1": 0,
+    "y1": 0,
+    "z1": 0,
+    "x2": 1,
+    "y2": 1,
+    "z2": 1
+  },
+  "selectionbox": {
+    "x1": 0,
+    "y1": 0,
+    "z1": 0,
+    "x2": 1,
+    "y2": 1,
+    "z2": 1
+  },
+  "resistance": 1,
+  "sounds": {
+    "place": "game:block/anvil",
+    "walk": "game:walk/stone"
+  },
+  "guiTransform": {
+    "origin": {
+      "x": 0.1,
+      "y": 0.75,
+      "z": 1.5
+    },
+    "scale": 0.66
+  },
+  "fpHandTransform": {
+    "translation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scale": 0.9
+  }
+}

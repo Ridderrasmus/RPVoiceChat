@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace RPVoiceChat.Networking
 {
@@ -6,7 +6,8 @@ namespace RPVoiceChat.Networking
     {
         public event Action<AudioPacket> AudioPacketReceived;
 
-        public ConnectionInfo GetConnection();
+        public void Launch();
+        public ConnectionInfo GetConnectionInfo();
         public string GetTransportID();
         public bool SendPacket(NetworkPacket packet, string playerId);
     }

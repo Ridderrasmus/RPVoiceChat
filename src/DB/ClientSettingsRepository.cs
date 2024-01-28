@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Data;
-using System.Data.SQLite;
+using System.Data.Common;
+using System.Data.SqlTypes;
+using Microsoft.Data.Sqlite;
 using Vintagestory.API.Common;
 
 namespace RPVoiceChat.DB
@@ -9,8 +11,8 @@ namespace RPVoiceChat.DB
     {
         private const string dbName = "client.db";
         private const string tableName = "settings";
-        private SQLiteCommand getSettingsCmd;
-        private SQLiteCommand setSettingCmd;
+        private SqliteCommand getSettingsCmd;
+        private SqliteCommand setSettingCmd;
         private Dictionary<string, float> cache;
 
         public ClientSettingsRepository(ILogger logger) : base(logger, dbName)
@@ -34,10 +36,11 @@ namespace RPVoiceChat.DB
 
         public void Save()
         {
-            using (SQLiteTransaction transaction = connection.BeginTransaction())
+            using (SqliteTransaction transaction = connection.BeginTransaction())
             {
                 foreach (var entry in cache)
                 {
+                    setSettingCmd.Transaction = transaction;
                     setSettingCmd.Parameters["@playerId"].Value = entry.Key;
                     setSettingCmd.Parameters["@gain"].Value = entry.Value;
                     setSettingCmd.ExecuteNonQuery();
@@ -47,9 +50,9 @@ namespace RPVoiceChat.DB
             }
         }
 
-        protected override void CreateTablesIfNotExists(SQLiteConnection connection)
+        protected override void CreateTablesIfNotExists(SqliteConnection connection)
         {
-            using (SQLiteCommand command = connection.CreateCommand())
+            using (SqliteCommand command = connection.CreateCommand())
             {
                 command.CommandText = $"CREATE TABLE IF NOT EXISTS {tableName} (playerId TEXT PRIMARY KEY, gain REAL);";
                 command.ExecuteNonQuery();
@@ -64,8 +67,8 @@ namespace RPVoiceChat.DB
 
             setSettingCmd = connection.CreateCommand();
             setSettingCmd.CommandText = $"INSERT OR REPLACE INTO {tableName} (playerId, gain) VALUES (@playerId, @gain)";
-            setSettingCmd.Parameters.Add("@playerId", DbType.String, 64);
-            setSettingCmd.Parameters.Add("@gain", DbType.Single);
+            setSettingCmd.Parameters.Add("@playerId", SqliteType.Text, 64);
+            setSettingCmd.Parameters.Add("@gain", SqliteType.Real);
             setSettingCmd.Prepare();
         }
 
@@ -73,7 +76,7 @@ namespace RPVoiceChat.DB
         {
             var entries = new Dictionary<string, float>();
 
-            using (SQLiteDataReader datareader = getSettingsCmd.ExecuteReader())
+            using (SqliteDataReader datareader = getSettingsCmd.ExecuteReader())
             {
                 while (datareader.Read())
                 {

@@ -1,4 +1,3 @@
-﻿using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -19,6 +18,7 @@ namespace RPVoiceChat
 
         public static void Init(ICoreAPI api)
         {
+            if (api is ICoreClientAPI && WorldConfig.api is ICoreServerAPI) return;
             WorldConfig.api = api;
         }
 
@@ -82,11 +82,6 @@ namespace RPVoiceChat
         private static string Key(string key)
         {
             return $"{modPrefix}:{key}";
-        }
-
-        public static void Dispose()
-        {
-            api = null;
         }
     }
 }

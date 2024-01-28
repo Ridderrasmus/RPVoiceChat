@@ -1,4 +1,4 @@
-﻿using OpenTK.Audio.OpenAL;
+using OpenTK.Audio.OpenAL;
 using RPVoiceChat.Audio.Effects;
 using RPVoiceChat.Utils;
 using System;
@@ -13,78 +13,67 @@ namespace RPVoiceChat.Audio
 {
     public class MicrophoneManager : IDisposable
     {
-        public static int Frequency = 48000;
-        public ALFormat InputFormat { get; private set; }
-        private ALFormat OutputFormat;
-        private int BufferSize = (int)(Frequency * 0.5);
-        private float gain;
-        private int InputChannelCount;
-        private int OutputChannelCount;
-        private const byte SampleToByte = 2;
-        private double MaxInputThreshold;
-        readonly ICoreClientAPI capi;
-
-        private IAudioCapture capture;
-        private IAudioCodec codec;
-        private IDenoiser denoiser;
-        private RPVoiceChatConfig config;
-        private ConcurrentQueue<AudioData> audioDataQueue = new ConcurrentQueue<AudioData>();
-        private Thread audioProcessingThread;
-        private CancellationTokenSource audioProcessingCTS;
-
-        private VoiceLevel voiceLevel = VoiceLevel.Talking;
-        public bool canSwitchDevice = true;
-        public bool Transmitting = false;
-        public bool TransmittingOnPreviousStep = false;
-        public bool IsDenoisingAvailable = false;
-
-        private long gameTickId = 0;
-
-        private bool isRecording = false;
-        private double inputThreshold;
-
-        public double Amplitude { get; set; }
-        public double AmplitudeAverage { get; set; }
-
         public event Action<AudioData> OnBufferRecorded;
         public event Action<VoiceLevel> VoiceLevelUpdated;
-        public event Action ClientStartTalking;
-        public event Action ClientStopTalking;
+        public event Action TransmissionStateChanged;
 
+        // TODO: split MicrophoneManager into 3 classes
+        // Audio capture
+        public static int Frequency = 48000;
+        private IAudioCapture capture;
+        private Thread audioCaptureThread;
+        private CancellationTokenSource audioCaptureCTS;
+        private int BufferSize = (int)(Frequency * 0.5);
+        private int InputChannelCount;
+        private const byte SampleSize = sizeof(short);
+
+        // Audio processing
+        private IAudioCodec codec;
+        private IDenoiser denoiser;
+        private ALFormat OutputFormat;
+        private int OutputChannelCount;
+        private float gain;
+        private const double _maxVolume = 0.8;
+        private const short maxSampleValue = (short)(_maxVolume * short.MaxValue);
+        private List<float> recentGainLimits = new List<float>();
+        private ConcurrentQueue<float> recentGainLimitsQueue = new ConcurrentQueue<float>();
+
+        // Aplication interface/audio management
+        public double Amplitude { get; private set; }
+        public bool IsDenoisingAvailable = false;
+        public bool Transmitting = false;
+        public bool AudioWizardActive = false;
+        private const int deactivationWindow = 4;
+        private int stepsSinceLastTransmission = deactivationWindow;
+        private bool transmittingOnPreviousStep = false;
+        private ICoreClientAPI capi;
+        private VoiceLevel voiceLevel = VoiceLevel.Talking;
+        private double inputThreshold;
+        private double maxInputThreshold = _maxVolume / 2;
         private List<double> recentAmplitudes = new List<double>();
 
         public MicrophoneManager(ICoreClientAPI capi)
         {
-            audioProcessingThread = new Thread(ProcessAudio);
-            audioProcessingCTS = new CancellationTokenSource();
+            audioCaptureThread = new Thread(CaptureAudio);
+            audioCaptureCTS = new CancellationTokenSource();
             this.capi = capi;
-            config = ModConfig.Config;
-            MaxInputThreshold = config.MaxInputThreshold;
-            SetThreshold(config.InputThreshold);
-            SetGain(config.InputGain);
-
-            capture = CreateNewCapture(config.CurrentInputDevice);
-            codec = CreateNewCodec(ALFormat.Mono16);
+            SetThreshold(ClientSettings.InputThreshold);
+            SetGain(ClientSettings.InputGain);
+            SetOutputFormat(ALFormat.Mono16);
+            SetCodec(OpusCodec._Name);
+            capture = CreateNewCapture(ClientSettings.CurrentInputDevice);
             denoiser = TryLoadDenoiser();
         }
 
         public void Launch()
         {
-            audioProcessingThread.Start(audioProcessingCTS.Token);
-            gameTickId = capi.Event.RegisterGameTickListener(UpdateCaptureAudioSamples, 100);
+            audioCaptureThread.Start(audioCaptureCTS.Token);
             capture?.Start();
         }
 
         public double GetMaxInputThreshold()
         {
-            return MaxInputThreshold;
-        }
-
-        public void SetMaxInputThreshold(double maxInputThreshold)
-        {
-            int inputThreshold = (int)(GetInputThreshold() / MaxInputThreshold * 100);
-            MaxInputThreshold = maxInputThreshold / 100;
-            SetThreshold(inputThreshold);
+            return maxInputThreshold;
         }
 
         public double GetInputThreshold()
@@ -92,168 +81,178 @@ namespace RPVoiceChat.Audio
             return inputThreshold;
         }
 
-        public void SetThreshold(int threshold)
+        public void SetThreshold(float threshold)
         {
-            inputThreshold = (threshold / 100.0) * MaxInputThreshold;
+            inputThreshold = threshold * maxInputThreshold;
         }
 
-        public void SetGain(int newGain)
+        public void SetGain(float newGain)
         {
-            gain = newGain / 100f;
+            gain = newGain;
         }
 
-        public void SetDenoisingSensitivity(int sensitivity)
+        public void SetDenoisingSensitivity(float sensitivity)
         {
-            denoiser?.SetBackgroundNoiseThreshold(sensitivity / 100f);
+            denoiser?.SetBackgroundNoiseThreshold(sensitivity);
         }
 
-        public void SetDenoisingStrength(int strength)
+        public void SetDenoisingStrength(float strength)
         {
-            denoiser?.SetVoiceDenoisingStrength(strength / 100f);
+            denoiser?.SetVoiceDenoisingStrength(strength);
         }
 
-        public void UpdateCaptureAudioSamples(float deltaTime)
+        public List<float> GetRecentGainLimits()
         {
-            bool isMuted = config.IsMuted;
-            var clientEntity = capi.World.Player?.Entity;
+            var recentGainLimits = new List<float>();
 
-            if (isMuted || clientEntity == null || capture == null || !clientEntity.Alive || clientEntity.AnimManager.IsAnimationActive("sleep"))
-                return;
+            float gainLimit;
+            while (recentGainLimitsQueue.Count > 0)
+                if (recentGainLimitsQueue.TryDequeue(out gainLimit))
+                    recentGainLimits.Add(gainLimit);
 
-            int samplesAvailable = capture.AvailableSamples;
-            int frameSize = codec.GetFrameSize();
-            int samplesToRead = samplesAvailable - samplesAvailable % frameSize;
+            return recentGainLimits;
+        }
 
-            int bufferLength = samplesToRead * SampleToByte * InputChannelCount;
-            if (samplesToRead <= 0) return;
-
-            var sampleBuffer = new byte[bufferLength];
-            capture.ReadSamples(sampleBuffer, samplesToRead);
-
-            AudioData data = PreprocessRawAudio(sampleBuffer);
-            audioDataQueue.Enqueue(data);
+        private void CaptureAudio(object cancellationToken)
+        {
+            CancellationToken ct = (CancellationToken)cancellationToken;
+            while (audioCaptureThread.IsAlive && !ct.IsCancellationRequested)
+            {
+                Thread.Sleep(100);
+                UpdateCaptureAudioSamples();
+            }
         }
 
         /// <summary>
-        /// Converts audio to Mono16, applies gain, applies denoising, calculates amplitude and applies encoding
+        /// Reads captured audio as frames, processes captured frames and transmits them
         /// </summary>
-        private AudioData PreprocessRawAudio(byte[] rawSamples)
+        private void UpdateCaptureAudioSamples()
         {
-            var rawSampleSize = SampleToByte * InputChannelCount;
+            var clientEntity = capi.World.Player?.Entity;
+            if (clientEntity == null || capture == null) return;
+
+            bool shouldEncode = WorldConfig.GetBool("encode-audio");
+            var targetCodec = shouldEncode ? OpusCodec._Name : DummyCodec._Name;
+            SetCodec(targetCodec);
+
+            int samplesAvailable = capture.AvailableSamples;
+            int frameSize = codec.FrameSize;
+            int samplesToRead = samplesAvailable - samplesAvailable % frameSize;
+            if (samplesToRead <= 0) return;
+            int bufferLength = samplesToRead * SampleSize * InputChannelCount;
+            var sampleBuffer = new byte[bufferLength];
+            capture.ReadSamples(sampleBuffer, samplesToRead);
+
+            bool isMuted = ClientSettings.IsMuted;
+            bool isSleeping = clientEntity.AnimManager.IsAnimationActive("sleep");
+            bool canSkipProcessing = isMuted || isSleeping || !clientEntity.Alive;
+            bool forceProcessing = AudioWizardActive;
+            if (canSkipProcessing && !forceProcessing)
+            {
+                if (recentAmplitudes.Count == 0) return;
+                recentAmplitudes.Clear();
+                Amplitude = 0;
+                Transmitting = false;
+                TransmissionStateChanged?.Invoke();
+                transmittingOnPreviousStep = Transmitting;
+                stepsSinceLastTransmission = deactivationWindow;
+                return;
+            }
+
+            AudioData data = ProcessAudio(sampleBuffer);
+            TransmitAudio(data);
+        }
+
+        /// <summary>
+        /// Converts audio to Mono16, applies denoising, applies gain, calculates amplitude and encodes the result
+        /// </summary>
+        private AudioData ProcessAudio(byte[] rawSamples)
+        {
+            var rawSampleSize = SampleSize * InputChannelCount;
             var pcmCount = rawSamples.Length / rawSampleSize;
             short[] pcms = new short[pcmCount];
             int[] usedChannels = DetectAudioChannels(rawSamples);
+            double peakPcmValue = 1;
 
+            // Convert audio to mono, find peaks
             for (var rawSampleIndex = 0; rawSampleIndex < rawSamples.Length; rawSampleIndex += rawSampleSize)
             {
                 double pcm = 0;
-
                 for (var channelIndex = 0; channelIndex < InputChannelCount; channelIndex++)
                 {
                     if (!usedChannels.Contains(channelIndex)) continue;
-                    var sampleIndex = rawSampleIndex + channelIndex * SampleToByte;
+                    var sampleIndex = rawSampleIndex + channelIndex * SampleSize;
                     var sample = BitConverter.ToInt16(rawSamples, sampleIndex);
                     pcm += sample;
                 }
-                pcm = pcm / Math.Max(usedChannels.Length, 1);
-                pcm = pcm * gain;
+                pcm /= Math.Max(usedChannels.Length, 1);
+
+                var abs = Math.Abs(pcm);
+                if (abs > peakPcmValue) peakPcmValue = abs;
 
                 var pcmIndex = rawSampleIndex / rawSampleSize;
-                pcms[pcmIndex] = (short)GameMath.Clamp(pcm, short.MinValue, short.MaxValue);
+                pcms[pcmIndex] = (short)pcm;
             }
 
-            if (config.IsDenoisingEnabled && denoiser != null && denoiser.SupportsFormat(Frequency, OutputChannelCount, SampleToByte * 8))
+            // Calculate volume amplification
+            float maxSafeGain = Math.Min(gain, (float)(maxSampleValue / peakPcmValue));
+            recentGainLimits.Add(maxSafeGain);
+            if (recentGainLimits.Count > 10) recentGainLimits.RemoveAt(0);
+            recentGainLimitsQueue.Enqueue(maxSafeGain);
+            if (recentGainLimitsQueue.Count > 10) recentGainLimitsQueue.TryDequeue(out _);
+            float volumeAmplification = Math.Min(maxSafeGain, recentGainLimits.Average());
+
+            // Denoise audio if applicable
+            if (ClientSettings.Denoising && denoiser?.SupportsFormat(Frequency, OutputChannelCount, SampleSize * 8) == true)
                 denoiser.Denoise(ref pcms);
 
+            // Amplify volume and calculate amplitude
             double sampleSquareSum = 0;
             for (var i = 0; i < pcms.Length; i++)
+            {
+                pcms[i] = (short)GameMath.Clamp(pcms[i] * volumeAmplification, short.MinValue, short.MaxValue);
                 sampleSquareSum += Math.Pow((float)pcms[i] / short.MaxValue, 2);
-
+            }
             var amplitude = Math.Sqrt(sampleSquareSum / pcmCount);
 
-            byte[] opusEncodedAudio = codec.Encode(pcms);
+            // Encode audio
+            byte[] encodedAudio = codec.Encode(pcms);
 
             return new AudioData()
             {
-                data = opusEncodedAudio,
+                data = encodedAudio,
                 frequency = Frequency,
                 format = OutputFormat,
                 amplitude = amplitude,
                 voiceLevel = voiceLevel,
+                codec = codec.Name,
             };
         }
 
-        private void ProcessAudio(object cancellationToken)
+        private void TransmitAudio(AudioData data)
         {
-            CancellationToken ct = (CancellationToken)cancellationToken;
-            while (audioProcessingThread.IsAlive && !ct.IsCancellationRequested)
-            {
-                if (!audioDataQueue.TryDequeue(out var data))
-                {
-                    Thread.Sleep(30);
-                    continue;
-                }
+            // Smooth out amplitude changes
+            recentAmplitudes.Add(data.amplitude);
+            if (recentAmplitudes.Count > 3) recentAmplitudes.RemoveAt(0);
+            Amplitude = Math.Max(data.amplitude, recentAmplitudes.Average());
 
-                Amplitude = data.amplitude;
-                recentAmplitudes.Add(Amplitude);
+            // Check if activation conditions are met
+            bool isPTTKeyPressed = capi.Input.KeyboardKeyState[capi.Input.GetHotKeyByCode("voicechatPTT").CurrentMapping.KeyCode];
+            bool isAboveInputThreshold = Amplitude >= inputThreshold;
+            Transmitting = ClientSettings.PushToTalkEnabled ? isPTTKeyPressed : isAboveInputThreshold;
 
-                if (recentAmplitudes.Count > 3)
-                {
-                    recentAmplitudes.RemoveAt(0);
+            // Apply deactivation timeout
+            stepsSinceLastTransmission++;
+            if (Transmitting) stepsSinceLastTransmission = 0;
+            Transmitting = stepsSinceLastTransmission < deactivationWindow;
 
-                    AmplitudeAverage = recentAmplitudes.Average();
-                }
+            // Trigger notifcation when start/stop transmitting
+            if (Transmitting != transmittingOnPreviousStep)
+                TransmissionStateChanged?.Invoke();
+            transmittingOnPreviousStep = Transmitting;
 
-                // Handle Push to Talk
-                if (config.PushToTalkEnabled)
-                {
-                    Transmitting = capi.Input.KeyboardKeyState[capi.Input.GetHotKeyByCode("voicechatPTT").CurrentMapping.KeyCode];
-                }
-                else
-                {
-                    Transmitting = Amplitude >= inputThreshold || AmplitudeAverage >= inputThreshold;
-                }
-
-                if (Transmitting)
-                {
-                    if (!TransmittingOnPreviousStep) ClientStartTalking?.Invoke();
-                    OnBufferRecorded?.Invoke(data);
-                }
-                else if (TransmittingOnPreviousStep)
-                {
-                    ClientStopTalking?.Invoke();
-                }
-
-                TransmittingOnPreviousStep = Transmitting;
-            }
-        }
-
-        // Returns the success of the method
-        public bool ToggleRecording()
-        {
-            return (ToggleRecording(!isRecording) == !isRecording);
-        }
-
-        // Returns the recording status
-        public bool ToggleRecording(bool mode)
-        {
-            if (!canSwitchDevice) return isRecording;
-            canSwitchDevice = false;
-            if (isRecording == mode) return mode;
-
-            if (mode)
-            {
-                capture.Start();
-            }
-            else
-            {
-                capture.Stop();
-            }
-
-            isRecording = mode;
-
-            canSwitchDevice = true;
-            return isRecording;
+            // Transmit
+            if (Transmitting || AudioWizardActive) OnBufferRecorded?.Invoke(data);
         }
 
         private IAudioCapture CreateNewCapture(string deviceName, ALFormat? captureFormat = null)
@@ -270,6 +269,7 @@ namespace RPVoiceChat.Audio
             {
                 newCapture = new OpenALAudioCapture(deviceName, Frequency, format, BufferSize);
                 format = newCapture?.SampleFormat ?? format;
+                deviceName = newCapture?.CurrentDevice ?? deviceName;
                 Logger.client.Debug($"Succesfully created an audio capture device with arguments: {deviceName}, {Frequency}, {format}, {BufferSize}");
             }
             catch (Exception e)
@@ -277,19 +277,21 @@ namespace RPVoiceChat.Audio
                 Logger.client.Error($"Could not create audio capture device {deviceName} in {format} format:\n{e}");
             }
             SetInputFormat(format);
-            config.CurrentInputDevice = deviceName ?? "Default";
-            ModConfig.Save(capi);
+            ClientSettings.CurrentInputDevice = deviceName ?? "Default";
 
             return newCapture;
         }
 
-        private IAudioCodec CreateNewCodec(ALFormat outputFormat)
+        private void SetCodec(string codecName)
         {
-            SetOutputFormat(outputFormat);
+            if (codec?.Name == codecName && codec?.Channels == OutputChannelCount) return;
 
-            var codec = new OpusCodec(Frequency, OutputChannelCount);
-
-            return codec;
+            codec = codecName switch
+            {
+                OpusCodec._Name => new OpusCodec(Frequency, OutputChannelCount),
+                DummyCodec._Name => new DummyCodec(Frequency, OutputChannelCount),
+                _ => throw new ArgumentException($"{codecName} is not a valid codec name")
+            };
         }
 
         private IDenoiser TryLoadDenoiser()
@@ -297,7 +299,7 @@ namespace RPVoiceChat.Audio
             IDenoiser denoiser = null;
             try
             {
-                denoiser = new RNNoiseDenoiser(config.BackgroungNoiseThreshold, config.VoiceDenoisingStrength);
+                denoiser = new RNNoiseDenoiser(ClientSettings.BackgroundNoiseThreshold, ClientSettings.VoiceDenoisingStrength);
                 IsDenoisingAvailable = true;
             }
             catch (DllNotFoundException)
@@ -321,7 +323,6 @@ namespace RPVoiceChat.Audio
 
         private void SetInputFormat(ALFormat format)
         {
-            InputFormat = format;
             InputChannelCount = AudioUtils.ChannelsPerFormat(format);
         }
 
@@ -343,8 +344,8 @@ namespace RPVoiceChat.Audio
             List<int> usedChannels = new List<int>();
             var sampleSums = new int[InputChannelCount];
 
-            var rawSampleSize = SampleToByte * InputChannelCount;
-            int monoSampleSize = SampleToByte;
+            var rawSampleSize = SampleSize * InputChannelCount;
+            int monoSampleSize = SampleSize;
 
             for (var rawSampleIndex = 0; rawSampleIndex < rawSampleSize * depth; rawSampleIndex += rawSampleSize)
             {
@@ -356,7 +357,7 @@ namespace RPVoiceChat.Audio
                 }
             }
 
-            bool guessUsedChannels = ClientSettings.GetBool("channelGuessing", true);
+            bool guessUsedChannels = ClientSettings.ChannelGuessing;
             for (var channelIndex = 0; channelIndex < InputChannelCount; channelIndex++)
             {
                 var averageSampleValue = sampleSums[channelIndex] / depth;
@@ -406,10 +407,8 @@ namespace RPVoiceChat.Audio
 
         public void Dispose()
         {
-            capi.Event.UnregisterGameTickListener(gameTickId);
-            gameTickId = 0;
-            audioProcessingCTS?.Cancel();
-            audioProcessingCTS?.Dispose();
+            audioCaptureCTS?.Cancel();
+            audioCaptureCTS?.Dispose();
             capture?.Stop();
             capture?.Dispose();
             denoiser?.Dispose();

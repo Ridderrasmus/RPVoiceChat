@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using Vintagestory.API.MathTools;
 
@@ -42,10 +42,12 @@ namespace RPVoiceChat.Audio.Effects
             float[] rawAudio = Array.ConvertAll(_pcms, e => (float)e);
             using (var pcmBuffer = new PointerSource(rawAudio))
             {
+                float? lastDenoisingStrength = null;
                 for (var offset = 0; offset < rawAudio.Length; offset += FRAME_SIZE)
                 {
                     var remainingDataLength = rawAudio.Length - offset;
                     var denoisedAudio = new float[FRAME_SIZE];
+                    var frameLength = FRAME_SIZE;
                     using (var denoisedBuffer = new PointerSource(denoisedAudio))
                     {
                         var inPtr = pcmBuffer.ptr + offset * sizeof(float);
@@ -54,17 +56,31 @@ namespace RPVoiceChat.Audio.Effects
                         // If last frame is too small right pad it with zeros
                         if (remainingDataLength < FRAME_SIZE)
                         {
-                            Array.Copy(rawAudio, offset, denoisedAudio, 0, remainingDataLength);
+                            frameLength = remainingDataLength;
+                            Array.Copy(rawAudio, offset, denoisedAudio, 0, frameLength);
                             inPtr = outPtr;
                         }
 
                         float VAD = RNNoise.DenoiseFrame(handle, outPtr, inPtr);
                         bool isVoice = VAD > sensitivity;
-                        if (isVoice)
-                            for (var i = 0; i < denoisedAudio.Length; i++)
-                                denoisedAudio[i] = denoisedAudio[i] * strength + rawAudio[offset + i] * (1 - strength);
 
-                        denoisedAudio.CopyTo(rawAudio, offset);
+                        // Apply different levels of denoising based on audio type and crossfade between them
+                        int crossfadeSteps = Math.Min(30, frameLength);
+                        float targetDenoisingStrength = isVoice ? strength : 1;
+                        float denoisingStrength = lastDenoisingStrength ?? targetDenoisingStrength;
+                        float strengthDeltaPerStep = (targetDenoisingStrength - denoisingStrength) / crossfadeSteps;
+                        for (var i = 0; i < frameLength; i++)
+                        {
+                            if (i < crossfadeSteps)
+                            {
+                                denoisingStrength = (float)Math.Round(denoisingStrength + strengthDeltaPerStep, 3);
+                                denoisingStrength = GameMath.Clamp(denoisingStrength, 0, 1);
+                            }
+                            denoisedAudio[i] = denoisedAudio[i] * denoisingStrength + rawAudio[offset + i] * (1 - denoisingStrength);
+                        }
+                        lastDenoisingStrength = targetDenoisingStrength;
+
+                        Array.Copy(denoisedAudio, 0, rawAudio, offset, frameLength);
                     }
                 }
             }

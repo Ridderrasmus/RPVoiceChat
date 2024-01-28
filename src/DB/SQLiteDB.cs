@@ -1,13 +1,14 @@
-﻿using System;
-using System.Data.SQLite;
+using System;
+using Microsoft.Data.Sqlite;
 using Vintagestory.API.Common;
 
 namespace RPVoiceChat.DB
 {
     internal sealed class SQLiteDB : SQLiteDBConnection
     {
-        public SQLiteConnection connection { get => sqliteConn; }
-        public event Action<SQLiteConnection> OnCreateTables;
+
+        public SqliteConnection connection { get => sqliteConn; }
+        public event Action<SqliteConnection> OnCreateTables;
 
         public SQLiteDB(ILogger logger) : base(logger) { }
 
@@ -18,7 +19,7 @@ namespace RPVoiceChat.DB
             if (!success) throw new Exception($"Failed to create data repository: {error}");
         }
 
-        protected override void CreateTablesIfNotExists(SQLiteConnection connection)
+        protected override void CreateTablesIfNotExists(SqliteConnection connection)
         {
             OnCreateTables?.Invoke(connection);
         }

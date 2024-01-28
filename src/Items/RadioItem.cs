@@ -1,6 +1,6 @@
-﻿using Vintagestory.API.Common;
+using Vintagestory.API.Common;
 
-namespace RPVoiceChat
+namespace RPVoiceChat.GameContent.Items
 {
     public class RadioItem : Item
     {
