@@ -1,0 +1,115 @@
+{
+  "code": "churchbell-layer",
+  "enabled": true,
+  "class": "churchbelllayer",
+  "behaviors": [
+    { "name": "UnstableFalling" }
+  ],
+  "attributes": {
+    "handbook": {
+      "groupBy": ["churchbell-layer-*"],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Welding.block-churchbell-layer.Title",
+          "text": "rpvoicechat:Handbook.Welding.block-churchbell-layer.Text"
+        }
+      ]
+    },
+    "forgable": true,
+    "inForgeTransform": {
+      "scale": 0.65,
+      "translation": {
+        "x": 0.06,
+        "y": -0.1875
+      }
+    }
+  },
+  "variantgroups": [
+    {
+      "code": "material",
+      "states": [ "brass" ]
+    },
+    {
+      "code": "layer",
+      "states": [ "bottom", "middle", "top", "topmost" ]
+    }
+  ],
+  "entityClass": "ChurchBellLayer",
+  "drops": [],
+  "creativeinventory": {
+    "general": [ "*" ]
+  },
+  "blockmaterial": "Metal",
+  "shapeByType": {
+    "churchbell-layer-brass-bottom": { "base": "block/churchbell/churchbell-layer-bottom" },
+    "churchbell-layer-brass-middle": { "base": "block/churchbell/churchbell-layer-middle" },
+    "churchbell-layer-brass-top": { "base": "block/churchbell/churchbell-layer-top" },
+    "churchbell-layer-brass-topmost": { "base": "block/churchbell/churchbell-layer-topmost" }
+  },
+  "textures": {
+    "chalk2": { "base": "game:block/stone/rock/chalk2" },
+    "brass": { "base": "game:block/metal/ingot/brass" },
+    "steel": { "base": "game:block/metal/ingot/steel" },
+    "tin": { "base": "game:block/metal/ingot/tin" }
+  },
+  "rainPermeable": true,
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "lightAbsorption": 0,
+  "collisionbox": {
+    "x1": 0,
+    "y1": 0,
+    "z1": 0,
+    "x2": 1,
+    "y2": 1,
+    "z2": 1
+  },
+  "selectionbox": {
+    "x1": 0,
+    "y1": 0,
+    "z1": 0,
+    "x2": 1,
+    "y2": 1,
+    "z2": 1
+  },
+  "resistance": 1,
+  "sounds": {
+    "place": "game:block/anvil",
+    "walk": "game:walk/stone"
+  },
+  "guiTransform": {
+    "rotation": {
+      "x": -36,
+      "y": -139,
+      "z": 0
+    },
+    "origin": {
+      "x": 0.5,
+      "y": 0.5,
+      "z": 1.5
+    },
+    "scale": 0.53
+  },
+  "fpHandTransform": {
+    "translation": {
+      "x": 0.5,
+      "y": 0,
+      "z": 0
+    },
+    "rotation": {
+      "x": 0,
+      "y": -126,
+      "z": 0
+    },
+    "origin": {
+      "x": 1,
+      "y": 0.5,
+      "z": 0.5
+    },
+    "scale": 0.75
+  }
+}

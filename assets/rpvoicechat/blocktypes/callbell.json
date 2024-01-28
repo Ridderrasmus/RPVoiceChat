@@ -49,19 +49,37 @@
     "walk": "game:walk/stone"
   },
   "guiTransform": {
-    "translation": {
-      "x": 0,
-      "y": -30,
-      "z": 0
+    "origin": {
+      "x": 0.5,
+      "y": 0.05,
+      "z": 0.5
     },
-    "scale": 4
+    "scale": 6
   },
   "fpHandTransform": {
+    "translation": {
+      "x": 0,
+      "y": 1.8,
+      "z": 1
+    },
+    "scale": 4.02
+  },
+  "groundTransform": {
     "translation": {
       "x": 0,
       "y": 0,
       "z": 0
     },
-    "scale": 4
+    "rotation": {
+      "x": 0,
+      "y": -45,
+      "z": 0
+    },
+    "origin": {
+      "x": 0.5,
+      "y": 0,
+      "z": 0.5
+    },
+    "scale": 5.45
   }
 }

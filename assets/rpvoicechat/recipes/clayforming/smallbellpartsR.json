@@ -1,0 +1,38 @@
+﻿{
+  "enabled": true,
+  "ingredient": {
+    "type": "item",
+    "code": "game:clay-*",
+    "name": "type",
+    "allowedVariants": [ "blue", "fire" ]
+  },
+  "pattern": [
+    [
+      "#########",
+      "#########",
+      "#########",
+      "#########",
+      "#########"
+    ],
+    [
+      "#########",
+      "#__#__#_#",
+      "#_#_##__#",
+      "##___##_#",
+      "#########"
+    ],
+    [
+      "#########",
+      "#__#__#_#",
+      "#_#_##__#",
+      "##___##_#",
+      "#########"
+    ]
+
+  ],
+  "name": "Small bell parts mold",
+  "output": {
+    "type": "block",
+    "code": "toolmold-raw-smallbellparts"
+  }
+}

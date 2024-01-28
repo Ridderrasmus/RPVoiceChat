@@ -1,14 +1,14 @@
 {
-  "code": "bellmold",
+  "code": "toolmold",
   "classByType": {
-    "bellmold-raw-*": "Block",
-    "bellmold-burned-*": "BlockToolMold"
+    "toolmold-raw-*": "Block",
+    "toolmold-burned-*": "BlockToolMold"
   },
   "behaviorsByType": {
     "*-raw-*": [
       {
         "name": "GroundStorable",
-        "properties": { "layout": "SingleCenter" }
+        "properties": { "layout": "Halves" }
       },
       {
         "name": "Unplaceable",
@@ -24,100 +24,39 @@
       "states": [ "raw", "burned" ]
     },
     {
-      "code": "layer",
-      "states": [ "part-brass-bottom", "part-brass-middle", "part-brass-top", "layer-brass-topmost" ]
+      "code": "tooltype",
+      "states": [
+        "smallbellparts"
+      ]
     }
   ],
   "attributesByType": {
-    "bellmold-burned-part-brass-bottom": {
-      "requiredUnits": 300,
+    "toolmold-burned-smallbellparts": {
+      "requiredUnits": 50,
       "fillHeight": 2,
       "fillQuadsByLevel": [
-        {
-          "x1": 2,
-          "z1": 2,
-          "x2": 14,
-          "z2": 8
-        }
-      ],
-      "moldrackable": true,
-      "onmoldrackTransform": { "rotation": { "z": 90 } },
+				{ x1: 6, z1: 4, x2: 10, z2: 12 }
+			],
+      "moldrackable": false,
       "drop": {
-        "type": "Block",
-        "code": "churchbell-{layer}",
-        "quantity": 1
-      }
-    },
-    "bellmold-burned-part-brass-middle": {
-      "requiredUnits": 300,
-      "fillHeight": 2,
-      "fillQuadsByLevel": [
-        {
-          "x1": 2,
-          "z1": 2,
-          "x2": 14,
-          "z2": 10
-        }
-      ],
-      "moldrackable": true,
-      "onmoldrackTransform": { "rotation": { "z": 90 } },
-      "drop": {
-        "type": "Block",
-        "code": "churchbell-{layer}",
-        "quantity": 1
-      }
-    },
-    "bellmold-burned-part-brass-top": {
-      "requiredUnits": 300,
-      "fillHeight": 2,
-      "fillQuadsByLevel": [
-        {
-          "x1": 3,
-          "z1": 2,
-          "x2": 12,
-          "z2": 14
-        }
-      ],
-      "moldrackable": true,
-      "onmoldrackTransform": { "rotation": { "z": 90 } },
-      "drop": {
-        "type": "Block",
-        "code": "churchbell-{layer}",
-        "quantity": 1
-      }
-    },
-    "bellmold-burned-layer-brass-topmost": {
-      "requiredUnits": 300,
-      "fillHeight": 2,
-      "fillQuadsByLevel": [
-        {
-          "x1": 4,
-          "z1": 4,
-          "x2": 13,
-          "z2": 12
-        }
-      ],
-      "moldrackable": true,
-      "onmoldrackTransform": { "rotation": { "z": 90 } },
-      "drop": {
-        "type": "Block",
-        "code": "churchbell-{layer}",
+        "type": "item",
+        "code": "smallbellparts-silver",
         "quantity": 1
       }
     }
   },
   "entityClassByType": {
-    "bellmold-burned-*": "ToolMold"
+    "toolmold-burned-*": "ToolMold"
   },
   "combustiblePropsByType": {
-    "bellmold-raw-*": {
+    "toolmold-raw-*": {
       "meltingPoint": 650,
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
       "smeltedStack": {
         "type": "block",
-        "code": "bellmold-burned-{layer}"
+        "code": "toolmold-burned-{tooltype}"
       },
       "requiresContainer": false
     }
@@ -132,20 +71,16 @@
   "maxStackSize": 8,
   "lightAbsorption": 0,
   "texturesByType": {
-    "bellmold-raw-*": { "all": { "base": "game:block/clay/blueclay" } },
-    "bellmold-burned-*": {
+    "toolmold-raw-*": { "all": { "base": "game:block/clay/blueclay" } },
+    "toolmold-burned-*": {
       "all": { "base": "game:block/clay/ceramic" }
     }
   },
-  "shapeByType": {
-
-    "bellmold-*-part-*-bottom": { "base": "block/clay/mold/bellmold-part-bottom" },
-    "bellmold-*-part-*-middle": { "base": "block/clay/mold/bellmold-part-middle" },
-    "bellmold-*-part-*-top": { "base": "block/clay/mold/bellmold-part-top" },
-    "bellmold-*-layer-*-topmost": { "base": "block/clay/mold/bellmold-layer-topmost" }
+  "shape": {
+    "base": "block/clay/mold/smallbellpartsmold"
   },
   "sounds": {
-    "walk": "game:walk/stone"
+    "walk": "walk/stone"
   },
   "collisionboxByType": {
     "*-anvil": {

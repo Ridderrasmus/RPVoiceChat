@@ -1,13 +1,14 @@
-using Vintagestory.API.Common;
+﻿using Vintagestory.API.Common;
 
-namespace RPVoiceChat
+namespace RPVoiceChat.GameContent.Blocks
 {
     public class BlockRegistry
     {
         public static void RegisterBlocks(ICoreAPI api)
         {
-            if (WorldConfig.GetBool("extra-content") == false) return;
             api.RegisterBlockClass("soundemittingblock", typeof(SoundEmittingBlock));
+            api.RegisterBlockClass("churchbellpart", typeof(ChurchBellPartBlock));
+            api.RegisterBlockClass("churchbelllayer", typeof(ChurchBellLayerBlock));
         }
     }
 }

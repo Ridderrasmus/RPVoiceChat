@@ -1,4 +1,5 @@
 {
+  "name": "callbell",
   "ingredientPattern": "PH,B_",
   "ingredients": {
     "P": {

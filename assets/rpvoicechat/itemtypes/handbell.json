@@ -31,5 +31,31 @@
       "item/handbell/handbell_hit_2",
       "item/handbell/handbell_hit_3"
     ]
+  },
+  "guiTransform": {
+    "translation": {
+      "x": 6,
+      "y": -3,
+      "z": 0
+    },
+    "rotation": {
+      "x": 6,
+      "y": -11,
+      "z": -144
+    },
+    "scale": 1.9
+  },
+  "fpHandTransform": {
+    "translation": {
+      "x": 0.05,
+      "y": -0.15,
+      "z": 0
+    },
+    "rotation": {
+      "x": 130,
+      "y": 92,
+      "z": -30
+    },
+    "scale": 1.85
   }
 }

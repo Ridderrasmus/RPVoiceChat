@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using Vintagestory.API.Common;
 
-namespace RPVoiceChat
+namespace RPVoiceChat.GameContent.Blocks
 {
     public class SoundEmittingBlock : Block
     {
@@ -19,7 +19,7 @@ namespace RPVoiceChat
         public override void OnLoaded(ICoreAPI api)
         {
             base.OnLoaded(api);
-
+            
             AudibleDistance = (int)(Attributes?["soundAudibleDistance"].AsInt(AudibleDistance));
             Volume = (float)(Attributes?["soundVolume"].AsFloat(Volume));
             CooldownTime = (int)(Attributes?["cooldownTime"].AsInt(CooldownTime));
@@ -66,7 +66,7 @@ namespace RPVoiceChat
 
             string sound = soundList[Random.Next(soundList.Length)];
 
-            if (player == null)
+            if(player == null)
                 api.World.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/" + sound + ".ogg"), x, y, z, null, false, AudibleDistance, Volume);
             else
                 api.World.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/" + sound + ".ogg"), x, y, z, player, false, AudibleDistance, Volume);
