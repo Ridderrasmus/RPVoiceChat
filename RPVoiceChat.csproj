@@ -54,7 +54,7 @@
 			<Private>False</Private>
 		</Reference>
 		<Reference Include="SQLite">
-			<HintPath>$(VINTAGE_STORY)/Lib/System.Data.SQLite.dll</HintPath>
+			<HintPath>$(VINTAGE_STORY)/Lib/Microsoft.Data.Sqlite.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
 	</ItemGroup>
