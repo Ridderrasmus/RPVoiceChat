@@ -117,6 +117,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
         public virtual void OnHammerHitOver(IPlayer byPlayer, Vec3d hitPosition)
         {
+
             {
                 if (!TestReadyToMerge(true)) return;
 
@@ -130,7 +131,11 @@ namespace RPVoiceChat.GameContent.BlockEntities
                     temp = Math.Min(temp, slot.Itemstack.Collectible.GetTemperature(Api.World, slot.Itemstack));
                 }
 
-                HammerHits++;
+                
+                if (Api.Side == EnumAppSide.Server)
+                {
+                    HammerHits++;
+                }
 
                 if (temp > 800)
                 {
