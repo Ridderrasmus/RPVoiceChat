@@ -54,7 +54,7 @@
 			<Private>False</Private>
 		</Reference>
 		<Reference Include="SQLite">
-			<HintPath>$(VINTAGE_STORY)/Lib/System.Data.SQLite.dll</HintPath>
+			<HintPath>$(VINTAGE_STORY)/Lib/Microsoft.Data.Sqlite.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
 	</ItemGroup>
@@ -63,6 +63,11 @@
 		<Content Include="assets\**">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
+		<None Remove="assets\rpvoicechat\blocktypes\claymold\bellpartmold.json" />
+		<None Remove="assets\rpvoicechat\recipes\clayforming\Bellmold-layer-topmostR.json" />
+		<None Remove="assets\rpvoicechat\recipes\clayforming\Bellmold-part-bottomR.json" />
+		<None Remove="assets\rpvoicechat\recipes\clayforming\Bellmold-part-middleR.json" />
+		<None Remove="assets\rpvoicechat\recipes\clayforming\Bellmold-part-topR.json" />
 		<None Remove="assets\rpvoicechat\blocktypes\connnector.json" />
 		<None Remove="assets\rpvoicechat\blocktypes\telegraph.json" />
 		<Content Include="modinfo.json">
@@ -81,5 +86,9 @@
 	<ItemGroup>
 		<PackageReference Include="Concentus" Version="1.1.7" />
 		<PackageReference Include="NETStandard.Library" Version="2.0.3" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="assets\rpvoicechat\config\handbook\" />
 	</ItemGroup>
 </Project>

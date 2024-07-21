@@ -172,6 +172,10 @@ namespace RPVoiceChat.Gui
                 settingBounds = settingBounds.BelowCopy(fixedDeltaY: settingDeltaY);
             }
 
+            foreach (var tab in ConfigTabs)
+                if (tab != activeTab)
+                    tab.Active = false;
+
             SingleComposer = composer.EndChildElements().Compose();
         }
 
@@ -438,6 +442,7 @@ namespace RPVoiceChat.Gui
             var denoisingSensitivity = ClientSettings.BackgroundNoiseThreshold * 100;
             var denoisingStrength = ClientSettings.VoiceDenoisingStrength * 100;
             SetValue("configTabs", ClientSettings.ActiveConfigTab);
+            capi.Logger.Debug($"ActiveConfigTab: {ClientSettings.ActiveConfigTab}");
             SetValue("inputDevice", ClientSettings.CurrentInputDevice ?? "Default");
             SetValue("togglePushToTalk", ClientSettings.PushToTalkEnabled);
             SetValue("muteMicrophone", ClientSettings.IsMuted);
@@ -469,7 +474,7 @@ namespace RPVoiceChat.Gui
                 if (value.Length < 6) return;
                 slider.SetAlarmValue(value[5]);
             }
-            else if (element is GuiElementVerticalTabs verticalTabs) verticalTabs.activeElement = value;
+            else if (element is GuiElementVerticalTabs verticalTabs) verticalTabs.ActiveElement = value;
             else if (element is PlayerList playerList) playerList.SetupElement();
             else throw new Exception("Unknown element type");
         }

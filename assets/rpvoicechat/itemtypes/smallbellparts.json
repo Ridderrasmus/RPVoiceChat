@@ -17,16 +17,21 @@
   },
   "guiTransform": {
     "translation": {
-      "x": 9,
-      "y": -20,
-      "z": 0
-    },
-    "rotation": {
-      "x": -225,
+      "x": 0,
       "y": 0,
       "z": 0
     },
-    "scale": 3
+    "rotation": {
+      "x": -38,
+      "y": 47,
+      "z": -140
+    },
+    "origin": {
+      "x": 0,
+      "y": 0,
+      "z": 0.12
+    },
+    "scale": 3.55
   },
   "fpHandTransform": {
     "translation": {

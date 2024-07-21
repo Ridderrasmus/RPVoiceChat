@@ -26,6 +26,7 @@ namespace RPVoiceChat
             GuiElementSliderPatch.Patch(harmony);
             LoadedSoundNativePatch.Patch(harmony);
             SystemNetworkProcessPatch.Patch(harmony);
+            HammerWeldingPatch.Patch(harmony);
         }
 
         private void PatchServer()

@@ -2,7 +2,7 @@
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 
-namespace RPVoiceChat.Items
+namespace RPVoiceChat.GameContent.Items
 {
     public class SoundEmittingItem : Item
     {

@@ -1,6 +1,6 @@
 ﻿using Vintagestory.API.Common;
 
-namespace RPVoiceChat.BlockEntities
+namespace RPVoiceChat.GameContent.BlockEntities
 {
     public class BlockEntityRegistry
     {
