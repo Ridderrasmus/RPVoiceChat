@@ -101,11 +101,13 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
         protected virtual void UpdateMeshRefs()
         {
+            var capi = Api as ICoreClientAPI;
+
 
             if (Api.Side == EnumAppSide.Server) return;
 
+            capi.SendChatMessage("Updating mesh refs");
 
-            var capi = Api as ICoreClientAPI;
 
             // If the inventory contains flux, then we want to render the flux mesh for as many times flux there is
             // unless there is more flux than there are church bell parts

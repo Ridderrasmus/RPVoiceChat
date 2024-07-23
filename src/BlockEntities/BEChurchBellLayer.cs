@@ -53,9 +53,12 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
         protected override void UpdateMeshRefs()
         {
+            ICoreClientAPI capi = Api as ICoreClientAPI;
+            
+
             if (Api.Side == EnumAppSide.Server) return;
 
-            ICoreClientAPI capi = Api as ICoreClientAPI;
+            capi.SendChatMessage("Updating mesh refs");
 
             // If the inventory contains the big bell parts, then we want to render the big bell part mesh
             for (int i = 0; i < 4; i++)
