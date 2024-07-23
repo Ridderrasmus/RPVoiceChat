@@ -85,6 +85,12 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
         protected virtual void UpdateMeshRefs()
         {
+            foreach (ItemSlot slot in Inv)
+            {
+                slot.MarkDirty();
+            }
+
+
             if (Api.Side == EnumAppSide.Server) return;
 
             var capi = Api as ICoreClientAPI;
