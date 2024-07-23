@@ -2,6 +2,7 @@
 using RPVoiceChat.Utils;
 using System;
 using System.Text;
+using System.Transactions;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
@@ -31,6 +32,11 @@ namespace RPVoiceChat.GameContent.BlockEntities
             Renderer = new WeldableRenderer(Api as ICoreClientAPI, this);
             FluxMeshRefs = new MeshRef[numParts];
             PartMeshRefs = new MeshRef[numParts];
+
+            Inv.SlotModified += (i) =>
+            {
+                UpdateMeshRefs();
+            };
         }
 
         public override InventoryBase Inventory => Inv;
@@ -44,6 +50,16 @@ namespace RPVoiceChat.GameContent.BlockEntities
             if (api is ICoreClientAPI capi)
             {
                 capi.TesselatorManager.GetDefaultBlockMesh(Block).Clear();
+            }
+        }
+
+        public void InventoryModified()
+        {
+            if (Api.Side != EnumAppSide.Server) return;
+
+            foreach (ItemSlot slot in Inv)
+            {
+                slot.MarkDirty();
             }
         }
 
@@ -85,13 +101,9 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
         protected virtual void UpdateMeshRefs()
         {
-            foreach (ItemSlot slot in Inv)
-            {
-                slot.MarkDirty();
-            }
-
 
             if (Api.Side == EnumAppSide.Server) return;
+
 
             var capi = Api as ICoreClientAPI;
 

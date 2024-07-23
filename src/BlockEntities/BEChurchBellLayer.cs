@@ -47,6 +47,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
 
                 UpdateMeshRefs();
+                InventoryModified();
             }
         }
 
@@ -134,6 +135,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
             }
             UpdateMeshRefs();
+            InventoryModified();
         }
 
 
@@ -158,12 +160,14 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 {
                     FluxSlot.Itemstack = hotbarslot.TakeOut(1);
                     UpdateMeshRefs();
+                    InventoryModified();
                     return true;
                 } else if (!FluxSlot.Empty && FluxSlot.Itemstack.StackSize < filledLayerSlots - 1)
                 {
                     FluxSlot.Itemstack.StackSize++;
                     hotbarslot.TakeOut(1);
                     UpdateMeshRefs();
+                    InventoryModified();
                     return true;
                 } else
                 {
@@ -183,6 +187,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
                     BellLayerSlots[i].Itemstack = hotbarslot.TakeOut(1);
                     UpdateMeshRefs();
+                    InventoryModified();
                     return true;
                 }
             }

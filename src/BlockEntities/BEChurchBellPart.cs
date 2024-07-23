@@ -39,6 +39,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 FluxShape = Shape.TryGet(api, assetLoc);
 
                 UpdateMeshRefs();
+                InventoryModified();
             }
         }
 
@@ -67,6 +68,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 Inv[1].Itemstack.StackSize = 1;
 
                 UpdateMeshRefs();
+                InventoryModified();
             }
         }
 
@@ -89,6 +91,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
                     else
                         FluxSlot.Itemstack.StackSize++;
                     UpdateMeshRefs();
+                    InventoryModified();
                     return true;
                 } 
                 else
@@ -106,6 +109,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
                     Inv[i + 1].Itemstack = hotbarslot.TakeOut(1);
                     UpdateMeshRefs();
+                    InventoryModified();
                     return true;
                 }
 
