@@ -1,6 +1,7 @@
 ﻿using RPVoiceChat.Gui;
 using RPVoiceChat.Systems;
 using System.Threading;
+using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
@@ -8,41 +9,38 @@ using Vintagestory.GameContent;
 
 namespace RPVoiceChat.Blocks
 {
-    public class TelegraphBlock : WireNode
+    public class TelegraphBlockEntity : WireNode
     {
         TelegraphMenuDialog dialog;
 
         public bool IsPlaying { get; private set; }
-        private BlockPos pos;
+        public int Volume { get; set; } = 8;
 
-        public override void OnLoaded(ICoreAPI api)
+        public override void Initialize(ICoreAPI api)
         {
-            base.OnLoaded(api);
+            base.Initialize(api);
+
             IsPlaying = false;
 
             if (api.Side == EnumAppSide.Client)
                 dialog = new TelegraphMenuDialog((ICoreClientAPI)api, this);
         }
 
-        public override void OnBlockPlaced(IWorldAccessor world, BlockPos blockPos, ItemStack byItemStack = null)
-        {
-            base.OnBlockPlaced(world, blockPos, byItemStack);
-            pos = blockPos;
-        }
 
-        public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
+
+        public bool OnInteract()
         {
-            if (api.Side == EnumAppSide.Server) 
+            if (Api.Side == EnumAppSide.Server)
                 return true;
-            
+
             dialog.TryOpen();
             return true;
         }
 
         public void SendSignal(int KeyCode)
         {
-            PlayMorse(ConvertKeyCodeToMorse(KeyCode));
-            if (api.Side == EnumAppSide.Server)
+            Task.Run(() => PlayMorseAsync(ConvertKeyCodeToMorse(KeyCode)));
+            if (Api.Side == EnumAppSide.Server)
             {
                 WireNetwork network = WireNetworkHandler.GetNetwork(NetworkUID);
                 if (network != null)
@@ -52,29 +50,33 @@ namespace RPVoiceChat.Blocks
 
         public void OnRecievedSignal(int KeyCode)
         {
-            if (api.Side == EnumAppSide.Client)
+            if (Api.Side == EnumAppSide.Client)
             {
-                ICoreClientAPI capi = (ICoreClientAPI)api;
+                ICoreClientAPI capi = (ICoreClientAPI)Api;
 
-                PlayMorse(ConvertKeyCodeToMorse(KeyCode));
+                Task.Run(() => PlayMorseAsync(ConvertKeyCodeToMorse(KeyCode)));
             }
         }
 
-        private void PlayMorse(string morse)
+        private async Task PlayMorseAsync(string morse)
         {
-            if (api.Side == EnumAppSide.Server && !IsPlaying)
+            if (Api.Side == EnumAppSide.Server && !IsPlaying)
                 return;
 
-            ICoreClientAPI capi = (ICoreClientAPI)api;
+            ICoreClientAPI capi = (ICoreClientAPI)Api;
 
             IsPlaying = true;
+
+            capi.SendChatMessage($"Transmitting: {morse}");
 
             foreach (char c in (string)morse)
             {
                 if (c == '.')
-                    capi.World.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/morse/dot"), pos.X, pos.Y, pos.Z, randomizePitch: false, range: 16);
+                    capi.Event.EnqueueMainThreadTask(async () => capi.World.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/morse/dot"), Pos.X, Pos.Y, Pos.Z, randomizePitch: false, range: Volume), "PlayMorse");
                 else if (c == '-')
-                    capi.World.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/morse/dash"), pos.X, pos.Y, pos.Z, randomizePitch: false, range: 16);
+                    capi.Event.EnqueueMainThreadTask(async () => capi.World.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/morse/dash"), Pos.X, Pos.Y, Pos.Z, randomizePitch: false, range: Volume), "PlayMorse");
+
+                await Task.Delay(500);
             }
 
             IsPlaying = false;
@@ -82,6 +84,8 @@ namespace RPVoiceChat.Blocks
 
         private string ConvertKeyCodeToMorse(int KeyCode)
         {
+            Api.Logger.Debug($"Converting {KeyCode} to morse");
+            Api.Logger.Debug($"Key: {(GlKeys)KeyCode}");
             switch ((GlKeys)KeyCode)
             {
                 case GlKeys.A:
@@ -182,6 +186,17 @@ namespace RPVoiceChat.Blocks
                     return "";
             }
 
+        }
+    }
+
+    public class TelegraphBlock : Block 
+    {
+        public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
+        {
+            TelegraphBlockEntity telegraph = world.BlockAccessor.GetBlockEntity(blockSel.Position) as TelegraphBlockEntity;
+            telegraph?.OnInteract();
+
+            return true;
         }
     }
 }

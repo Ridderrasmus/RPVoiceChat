@@ -6,15 +6,15 @@ using Vintagestory.API.MathTools;
 
 namespace RPVoiceChat.Blocks
 {
-    public class WireNode : Block
+    public class WireNode : BlockEntity
     {
+
         public int NetworkUID { get; set; } = 0;
         public long NodeUID { get; set; }
 
-        public override void OnBlockPlaced(IWorldAccessor world, BlockPos blockPos, ItemStack byItemStack = null)
+        public override void OnBlockPlaced(ItemStack byItemStack = null)
         {
-            base.OnBlockPlaced(world, blockPos, byItemStack);
-            NodeUID = blockPos.AsLong;
+            base.OnBlockPlaced(byItemStack);
             WireNetworkHandler.AddNewNetwork(this);
         }
 

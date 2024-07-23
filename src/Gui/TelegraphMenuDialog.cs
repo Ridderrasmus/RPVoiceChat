@@ -10,7 +10,7 @@ namespace RPVoiceChat.Gui
     public class TelegraphMenuDialog : GuiDialog
     {
         // Block that this menu is for
-        private TelegraphBlock telegraphBlock;
+        private TelegraphBlockEntity telegraphBlock;
         
         // List of keys that can be pressed
         private static readonly GlKeys[] keys = new GlKeys[] 
@@ -20,7 +20,7 @@ namespace RPVoiceChat.Gui
             GlKeys.W, GlKeys.X, GlKeys.Y, GlKeys.Z
         };
 
-        public TelegraphMenuDialog(ICoreClientAPI capi, TelegraphBlock telegraphBlock) : base(capi)
+        public TelegraphMenuDialog(ICoreClientAPI capi, TelegraphBlockEntity telegraphBlock) : base(capi)
         {
             this.telegraphBlock = telegraphBlock;
         }

@@ -1,6 +1,7 @@
 {
   "code": "telegraph",
   "class": "telegraphblock",
+  "entityClass": "TelegraphBlockEntity",
   "creativeinventory": {
     "general": [ "*" ]
   },
