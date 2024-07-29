@@ -35,7 +35,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
             Inv.SlotModified += (i) =>
             {
-                UpdateMeshRefs();
+                MarkDirty(true);
             };
         }
 
@@ -53,15 +53,6 @@ namespace RPVoiceChat.GameContent.BlockEntities
             }
         }
 
-        public void InventoryModified()
-        {
-            if (Api.Side != EnumAppSide.Server) return;
-
-            foreach (ItemSlot slot in Inv)
-            {
-                slot.MarkDirty();
-            }
-        }
 
         public virtual bool TestReadyToMerge(bool triggerMessage = true)
         {
@@ -105,8 +96,6 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
 
             if (Api.Side == EnumAppSide.Server) return;
-
-            capi.SendChatMessage("Updating mesh refs");
 
 
             // If the inventory contains flux, then we want to render the flux mesh for as many times flux there is
@@ -184,6 +173,9 @@ namespace RPVoiceChat.GameContent.BlockEntities
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
         {
             base.FromTreeAttributes(tree, worldForResolving);
+
+            if (Api != null)
+                UpdateMeshRefs();
         }
 
         public override void ToTreeAttributes(ITreeAttribute tree)
@@ -219,6 +211,16 @@ namespace RPVoiceChat.GameContent.BlockEntities
             else
             {
                 dsc.AppendLine(UIUtils.I18n($"{i18nPrefix}.WeldNotReady")); //"Not ready to weld"
+            }
+        }
+
+        public override void MarkDirty(bool redrawOnClient = false, IPlayer skipPlayer = null)
+        {
+            base.MarkDirty(redrawOnClient, skipPlayer);
+
+            if (Api.Side == EnumAppSide.Client)
+            {
+                UpdateMeshRefs();
             }
         }
 

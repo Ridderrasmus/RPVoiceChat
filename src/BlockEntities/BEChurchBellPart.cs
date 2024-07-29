@@ -38,9 +38,14 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 var assetLoc = new AssetLocation("rpvoicechat", $"shapes/{Block.Shape.Base.Path}-flux.json");
                 FluxShape = Shape.TryGet(api, assetLoc);
 
-                UpdateMeshRefs();
-                InventoryModified();
+
+                Inv.SlotModified += (i) =>
+                {
+                    UpdateMeshRefs();
+                };
             }
+            
+            UpdateMeshRefs();
         }
 
         protected override MeshData RenderPart(int numPart)
@@ -66,9 +71,9 @@ namespace RPVoiceChat.GameContent.BlockEntities
             {
                 Inv[1].Itemstack = byItemStack.Clone();
                 Inv[1].Itemstack.StackSize = 1;
+                MarkDirty(true);
 
                 UpdateMeshRefs();
-                InventoryModified();
             }
         }
 
@@ -90,8 +95,8 @@ namespace RPVoiceChat.GameContent.BlockEntities
                         FluxSlot.Itemstack = itemStack;
                     else
                         FluxSlot.Itemstack.StackSize++;
+                    MarkDirty(true);
                     UpdateMeshRefs();
-                    InventoryModified();
                     return true;
                 } 
                 else
@@ -108,8 +113,8 @@ namespace RPVoiceChat.GameContent.BlockEntities
                     if (!Inv[i+1].Empty) continue;
 
                     Inv[i + 1].Itemstack = hotbarslot.TakeOut(1);
+                    MarkDirty(true);
                     UpdateMeshRefs();
-                    InventoryModified();
                     return true;
                 }
 

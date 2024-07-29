@@ -2,11 +2,14 @@
 using RPVoiceChat.Utils;
 using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
+using Vintagestory.API.Server;
+using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 
 namespace RPVoiceChat.GameContent.BlockEntities
@@ -46,19 +49,21 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 Renderer = new WeldableRenderer(capi, this);
 
 
-                UpdateMeshRefs();
-                InventoryModified();
+
+                Inv.SlotModified += (i) =>
+                {
+                    UpdateMeshRefs();
+                };
             }
+
+            UpdateMeshRefs();
         }
 
         protected override void UpdateMeshRefs()
         {
-            ICoreClientAPI capi = Api as ICoreClientAPI;
-            
-
             if (Api.Side == EnumAppSide.Server) return;
-
-            capi.SendChatMessage("Updating mesh refs");
+            
+            ICoreClientAPI capi = Api as ICoreClientAPI;
 
             // If the inventory contains the big bell parts, then we want to render the big bell part mesh
             for (int i = 0; i < 4; i++)
@@ -121,6 +126,8 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
         public override void OnBlockPlaced(ItemStack byItemStack = null)
         {
+            if (Api.Side == EnumAppSide.Client) return;
+
             if (byItemStack != null)
             {
                 for (int i = 0; i < 4; i++)
@@ -132,15 +139,15 @@ namespace RPVoiceChat.GameContent.BlockEntities
                     {
                         BellLayerSlots[i].Itemstack = byItemStack.Clone();
                         BellLayerSlots[i].Itemstack.StackSize = 1;
+                        MarkDirty(true);
                         break;
                     }
                 }
 
             }
             UpdateMeshRefs();
-            InventoryModified();
-        }
 
+        }
 
         public bool OnInteract(IPlayer byPlayer)
         {
@@ -162,15 +169,15 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 if (FluxSlot.Empty && 1 < filledLayerSlots)
                 {
                     FluxSlot.Itemstack = hotbarslot.TakeOut(1);
+                    MarkDirty(true);
                     UpdateMeshRefs();
-                    InventoryModified();
                     return true;
                 } else if (!FluxSlot.Empty && FluxSlot.Itemstack.StackSize < filledLayerSlots - 1)
                 {
                     FluxSlot.Itemstack.StackSize++;
+                    MarkDirty(true);
                     hotbarslot.TakeOut(1);
                     UpdateMeshRefs();
-                    InventoryModified();
                     return true;
                 } else
                 {
@@ -189,13 +196,24 @@ namespace RPVoiceChat.GameContent.BlockEntities
                     if (!BellLayerSlots[i].Empty || hotbarslot.Itemstack.Collectible.Code.Path != layerNames[i]) continue;
 
                     BellLayerSlots[i].Itemstack = hotbarslot.TakeOut(1);
+                    MarkDirty(true);
                     UpdateMeshRefs();
-                    InventoryModified();
                     return true;
                 }
             }
 
+
             return true;
         }
+
+
+        public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
+        {
+            base.FromTreeAttributes(tree, worldForResolving);
+
+            if (Api != null)
+                UpdateMeshRefs();
+        }
+
     }
 }
