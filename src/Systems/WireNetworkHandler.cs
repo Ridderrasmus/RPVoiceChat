@@ -2,12 +2,38 @@
 using System.Collections.Generic;
 using System.Linq;
 using RPVoiceChat.Blocks;
+using Vintagestory.API.Client;
+using Vintagestory.API.Server;
 
 namespace RPVoiceChat.Systems
 {
     public static class WireNetworkHandler
     {
-        public static List<WireNetwork> networks = new List<WireNetwork>();
+        public static List<WireNetwork> networks = new List<WireNetwork>() { new WireNetwork() { networkID = 0 } };
+
+        public static void RegisterClientside(ICoreClientAPI api)
+        {
+            api.Network.RegisterChannel("rpvc:wire-network")
+                .RegisterMessageType(typeof(string))
+                .SetMessageHandler<string>(OnRecievedMessage_Client);
+        }
+
+        public static void RegisterServerside(ICoreServerAPI api)
+        {
+            api.Network.RegisterChannel("rpvc:wire-network")
+                .RegisterMessageType(typeof(string))
+                .SetMessageHandler<string>(OnRecievedMessage_Server);
+        }
+
+        private static void OnRecievedMessage_Client(string packet)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static void OnRecievedMessage_Server(IServerPlayer fromPlayer, string packet)
+        {
+            throw new NotImplementedException();
+        }
 
         public static WireNetwork AddNewNetwork(WireNode wireNode)
         {

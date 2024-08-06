@@ -21,9 +21,14 @@ namespace RPVoiceChat.Blocks
             base.Initialize(api);
 
             IsPlaying = false;
+            
+            OnRecievedSignalEvent += (sender, message) => OnRecievedSignal(int.Parse(message));
 
             if (api.Side == EnumAppSide.Client)
+            {
                 dialog = new TelegraphMenuDialog((ICoreClientAPI)api, this);
+
+            }
         }
 
 
@@ -39,23 +44,19 @@ namespace RPVoiceChat.Blocks
 
         public void SendSignal(int KeyCode)
         {
-            Task.Run(() => PlayMorseAsync(ConvertKeyCodeToMorse(KeyCode)));
-            if (Api.Side == EnumAppSide.Server)
+            WireNetwork network = WireNetworkHandler.GetNetwork(NetworkUID);
+            if (network != null)
             {
-                WireNetwork network = WireNetworkHandler.GetNetwork(NetworkUID);
-                if (network != null)
-                    network.SendSignal(this, $"{KeyCode}");
+
+                network.SendSignal(this, $"{KeyCode}");
             }
         }
 
         public void OnRecievedSignal(int KeyCode)
         {
-            if (Api.Side == EnumAppSide.Client)
-            {
-                ICoreClientAPI capi = (ICoreClientAPI)Api;
+            Api.Logger.Debug($"Recieved signal: {KeyCode}");
 
-                Task.Run(() => PlayMorseAsync(ConvertKeyCodeToMorse(KeyCode)));
-            }
+            Task.Run(() => PlayMorseAsync(ConvertKeyCodeToMorse(KeyCode)));
         }
 
         private async Task PlayMorseAsync(string morse)
