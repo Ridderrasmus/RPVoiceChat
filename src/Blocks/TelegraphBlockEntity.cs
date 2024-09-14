@@ -1,4 +1,5 @@
 ﻿using RPVoiceChat.Gui;
+using RPVoiceChat.src.Systems;
 using RPVoiceChat.Systems;
 using System.Threading;
 using System.Threading.Tasks;
@@ -44,7 +45,15 @@ namespace RPVoiceChat.Blocks
 
         public void SendSignal(int KeyCode)
         {
+            if (Api.Side == EnumAppSide.Server)
+                return;
+
+            (Api as ICoreClientAPI).Network.GetChannel(WireNetworkHandler.NetworkChannel).SendPacket(new WireNetworkMessage() { NetworkUID = NetworkUID, Message = $"{KeyCode}", SenderPos = Pos });
+
+            return;
+
             WireNetwork network = WireNetworkHandler.GetNetwork(NetworkUID);
+
             if (network != null)
             {
 
@@ -61,7 +70,7 @@ namespace RPVoiceChat.Blocks
 
         private async Task PlayMorseAsync(string morse)
         {
-            if (Api.Side == EnumAppSide.Server && !IsPlaying)
+            if (Api.Side == EnumAppSide.Server || IsPlaying)
                 return;
 
             ICoreClientAPI capi = (ICoreClientAPI)Api;

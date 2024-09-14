@@ -1,5 +1,6 @@
 using RPVoiceChat.Networking;
 using RPVoiceChat.Server;
+using RPVoiceChat.Systems;
 using RPVoiceChat.Utils;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
@@ -15,6 +16,8 @@ namespace RPVoiceChat
         public override void StartServerSide(ICoreServerAPI api)
         {
             sapi = api;
+
+            WireNetworkHandler.RegisterServerside(api);
 
             bool forwardPorts = !config.ManualPortForwarding;
             var networkTransports = new List<INetworkServer>()
