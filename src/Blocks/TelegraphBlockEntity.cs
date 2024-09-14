@@ -22,8 +22,8 @@ namespace RPVoiceChat.Blocks
             base.Initialize(api);
 
             IsPlaying = false;
-            
-            OnRecievedSignalEvent += (sender, message) => OnRecievedSignal(int.Parse(message));
+
+            OnRecievedSignalEvent += (sender, message) => OnRecievedSignal(message[0]);
 
             if (api.Side == EnumAppSide.Client)
             {
@@ -43,12 +43,12 @@ namespace RPVoiceChat.Blocks
             return true;
         }
 
-        public void SendSignal(int KeyCode)
+        public void SendSignal(char KeyChar)
         {
             if (Api.Side == EnumAppSide.Server)
                 return;
 
-            (Api as ICoreClientAPI).Network.GetChannel(WireNetworkHandler.NetworkChannel).SendPacket(new WireNetworkMessage() { NetworkUID = NetworkUID, Message = $"{KeyCode}", SenderPos = Pos });
+            (Api as ICoreClientAPI).Network.GetChannel(WireNetworkHandler.NetworkChannel).SendPacket(new WireNetworkMessage() { NetworkUID = NetworkUID, Message = $"{KeyChar}", SenderPos = Pos });
 
             return;
 
@@ -57,15 +57,15 @@ namespace RPVoiceChat.Blocks
             if (network != null)
             {
 
-                network.SendSignal(this, $"{KeyCode}");
+                network.SendSignal(this, $"{KeyChar}");
             }
         }
 
-        public void OnRecievedSignal(int KeyCode)
+        public void OnRecievedSignal(char KeyChar)
         {
-            Api.Logger.Debug($"Recieved signal: {KeyCode}");
+            Api.Logger.Debug($"Recieved signal: {KeyChar}");
 
-            Task.Run(() => PlayMorseAsync(ConvertKeyCodeToMorse(KeyCode)));
+            Task.Run(() => PlayMorseAsync(ConvertKeyCodeToMorse(KeyChar)));
         }
 
         private async Task PlayMorseAsync(string morse)
@@ -92,105 +92,85 @@ namespace RPVoiceChat.Blocks
             IsPlaying = false;
         }
 
-        private string ConvertKeyCodeToMorse(int KeyCode)
+        private string ConvertKeyCodeToMorse(char KeyChar)
         {
-            Api.Logger.Debug($"Converting {KeyCode} to morse");
-            Api.Logger.Debug($"Key: {(GlKeys)KeyCode}");
-            switch ((GlKeys)KeyCode)
+            Api.Logger.Debug($"Converting {KeyChar} to morse");
+            Api.Logger.Debug($"Key: {KeyChar}");
+            switch (char.ToUpper(KeyChar))
             {
-                case GlKeys.A:
+                case 'A':
                     return ".-";
-                case GlKeys.B:
+                case 'B':
                     return "-...";
-                case GlKeys.C:
+                case 'C':
                     return "-.-.";
-                case GlKeys.D:
+                case 'D':
                     return "-..";
-                case GlKeys.E:
+                case 'E':
                     return ".";
-                case GlKeys.F:
+                case 'F':
                     return "..-.";
-                case GlKeys.G:
+                case 'G':
                     return "--.";
-                case GlKeys.H:
+                case 'H':
                     return "....";
-                case GlKeys.I:
+                case 'I':
                     return "..";
-                case GlKeys.J:
+                case 'J':
                     return ".---";
-                case GlKeys.K:
+                case 'K':
                     return "-.-";
-                case GlKeys.L:
+                case 'L':
                     return ".-..";
-                case GlKeys.M:
+                case 'M':
                     return "--";
-                case GlKeys.N:
+                case 'N':
                     return "-.";
-                case GlKeys.O:
+                case 'O':
                     return "---";
-                case GlKeys.P:
+                case 'P':
                     return ".--.";
-                case GlKeys.Q:
+                case 'Q':
                     return "--.-";
-                case GlKeys.R:
+                case 'R':
                     return ".-.";
-                case GlKeys.S:
+                case 'S':
                     return "...";
-                case GlKeys.T:
+                case 'T':
                     return "-";
-                case GlKeys.U:
+                case 'U':
                     return "..-";
-                case GlKeys.V:
+                case 'V':
                     return "...-";
-                case GlKeys.W:
+                case 'W':
                     return ".--";
-                case GlKeys.X:
+                case 'X':
                     return "-..-";
-                case GlKeys.Y:
+                case 'Y':
                     return "-.--";
-                case GlKeys.Z:
+                case 'Z':
                     return "--..";
-                case GlKeys.Number0:
+                case '0':
                     return "-----";
-                case GlKeys.Number1:
+                case '1':
                     return ".----";
-                case GlKeys.Number2:
+                case '2':
                     return "..---";
-                case GlKeys.Number3:
+                case '3':
                     return "...--";
-                case GlKeys.Number4:
+                case '4':
                     return "....-";
-                case GlKeys.Number5:
+                case '5':
                     return ".....";
-                case GlKeys.Number6:
+                case '6':
                     return "-....";
-                case GlKeys.Number7:
+                case '7':
                     return "--...";
-                case GlKeys.Number8:
+                case '8':
                     return "---..";
-                case GlKeys.Number9:
+                case '9':
                     return "----.";
-                case GlKeys.Keypad0:
-                    return "-----";
-                case GlKeys.Keypad1:
-                    return ".----";
-                case GlKeys.Keypad2:
-                    return "..---";
-                case GlKeys.Keypad3:
-                    return "...--";
-                case GlKeys.Keypad4:
-                    return "....-";
-                case GlKeys.Keypad5:
-                    return ".....";
-                case GlKeys.Keypad6:
-                    return "-....";
-                case GlKeys.Keypad7:
-                    return "--...";
-                case GlKeys.Keypad8:
-                    return "---..";
-                case GlKeys.Keypad9:
-                    return "----.";
-                case GlKeys.Period:
+                case '.':
                     return ".-.-.-";
                 default:
                     return "";
