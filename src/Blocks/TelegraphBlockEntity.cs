@@ -9,7 +9,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
 
-namespace RPVoiceChat.Blocks
+namespace RPVoiceChat.GameContent.Blocks
 {
     public class TelegraphBlockEntity : WireNode
     {
