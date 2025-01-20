@@ -84,7 +84,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
             if (hotbarslot.Empty) return true;
 
-            if (hotbarslot.Itemstack.Collectible.Code.Path == "powderedborax")
+            if (hotbarslot.Itemstack.Collectible.Code.Path == "powder-borax")
             {
                 if (FluxSlot.Empty || FluxSlot.Itemstack.StackSize < 4)
                 {

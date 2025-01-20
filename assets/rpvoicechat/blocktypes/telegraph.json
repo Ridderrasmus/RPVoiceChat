@@ -1,5 +1,6 @@
 {
   "code": "telegraph",
+  "enabled": false,
   "class": "telegraphblock",
   "entityClass": "TelegraphBlockEntity",
   "creativeinventory": {

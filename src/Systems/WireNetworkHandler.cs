@@ -74,7 +74,7 @@ namespace RPVoiceChat.Systems
 
         public static WireNetwork GetNetwork(WireNode node)
         {
-            return Networks.Values.FirstOrDefault(network => network.nodes.Contains(node));
+            return Networks.Values.FirstOrDefault(network => network.Nodes.Contains(node));
         }
 
         public static WireNetwork MergeNetworks(List<WireNetwork> networksToMerge)
@@ -82,7 +82,7 @@ namespace RPVoiceChat.Systems
             WireNetwork newNetwork = new WireNetwork();
             foreach (WireNetwork network in networksToMerge)
             {
-                foreach (WireNode node in network.nodes)
+                foreach (WireNode node in network.Nodes)
                 {
                     newNetwork.AddNode(node);
                 }
@@ -92,34 +92,6 @@ namespace RPVoiceChat.Systems
 
             AddNetwork(newNetwork);
             return newNetwork;
-        }
-    }
-
-    public class WireNetwork
-    {
-        public long networkID;
-        public List<WireNode> nodes = new List<WireNode>();
-        public event Action<WireNode, string> OnRecievedSignal;
-
-        public WireNetwork()
-        {
-        }
-
-        public void AddNode(WireNode node)
-        {
-            nodes.Add(node);
-            node.NetworkUID = networkID;
-        }
-
-        public void RemoveNode(WireNode node)
-        {
-            nodes.Remove(node);
-            node.NetworkUID = 0;
-        }
-
-        public void SendSignal(WireNode sender, string message)
-        {
-            OnRecievedSignal?.Invoke(sender, message);
         }
     }
 }

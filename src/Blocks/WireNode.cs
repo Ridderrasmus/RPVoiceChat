@@ -1,6 +1,9 @@
-﻿using RPVoiceChat.src.Systems;
+﻿using ProtoBuf;
+using RPVoiceChat.src.Systems;
 using RPVoiceChat.Systems;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Vintagestory.API.Client;
@@ -15,6 +18,8 @@ namespace RPVoiceChat.Blocks
 
         public long NetworkUID { get; set; } = 0;
         public string NodeUID => Pos.ToString();
+        private int MaxConnections = 4;
+        private List<WireConnection> Connections = new List<WireConnection>();
 
         protected EventHandler<string> OnRecievedSignalEvent { get; set; }
 
@@ -37,6 +42,21 @@ namespace RPVoiceChat.Blocks
                 WireNetworkHandler.GetNetwork(NetworkUID).AddNode(this);
             }
 
+        }
+
+        public void Connect(WireConnection connection)
+        {
+            if (Connections.Count >= MaxConnections)
+                return;
+
+            if (Connections.Contains(connection))
+                return;
+
+            if (connection.Node1 == null || connection.Node2 == null)
+                return;
+
+            connection.Node1.Connections.Add(connection);
+            connection.Node2.Connections.Add(connection);
         }
 
         private void OnRecievedMessage(object sender, WireNetworkMessage e)
@@ -77,11 +97,13 @@ namespace RPVoiceChat.Blocks
         {
             base.FromTreeAttributes(tree, worldAccessForResolve);
             NetworkUID = tree.GetInt("rpvc:networkUID");
+
         }
 
         public override void ToTreeAttributes(ITreeAttribute tree)
         {
             base.ToTreeAttributes(tree);
+
             tree.SetLong("rpvc:networkUID", NetworkUID);
         }
 
@@ -92,9 +114,18 @@ namespace RPVoiceChat.Blocks
             dsc.AppendLine($"NodeUID: {NodeUID}");
 
             dsc.AppendLine("Nodes in network:");
-            foreach (WireNode node in WireNetworkHandler.GetNetwork(NetworkUID).nodes)
+            foreach (WireNode node in WireNetworkHandler.GetNetwork(NetworkUID).Nodes)
             {
                 dsc.AppendLine($"Node: {node.NodeUID}");
+            }
+
+            dsc.AppendLine("Connections:");
+            foreach (WireConnection connection in Connections)
+            {
+                dsc.AppendLine("Connection");
+                dsc.AppendLine($"Node1 - {((connection.Node1 != null) ? connection.Node1.Pos : "null")}");
+                dsc.AppendLine($"Node2 - {((connection.Node2 != null) ? connection.Node2.Pos : "null")}");
+                dsc.AppendLine();
             }
         }
 

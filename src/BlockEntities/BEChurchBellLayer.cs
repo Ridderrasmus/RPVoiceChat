@@ -156,7 +156,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
             if (hotbarslot.Empty) return true;
 
-            if (hotbarslot.Itemstack.Collectible.Code.Path == "powderedborax")
+            if (hotbarslot.Itemstack.Collectible.Code.Path == "powder-borax")
             {
 
                 // Right clicks with powdered borax

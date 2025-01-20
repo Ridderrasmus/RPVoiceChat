@@ -1,6 +1,7 @@
 ﻿using RPVoiceChat.Gui;
 using RPVoiceChat.src.Systems;
 using RPVoiceChat.Systems;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
@@ -183,6 +184,9 @@ namespace RPVoiceChat.Blocks
     {
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
+            if (byPlayer.InventoryManager.ActiveHotbarSlot?.Itemstack?.Collectible.Code.ToShortString() == "rpvoicechat:telegraphwire")
+                return false; // Don't open the menu if the player is holding a telegraph wire
+
             TelegraphBlockEntity telegraph = world.BlockAccessor.GetBlockEntity(blockSel.Position) as TelegraphBlockEntity;
             telegraph?.OnInteract();
 
