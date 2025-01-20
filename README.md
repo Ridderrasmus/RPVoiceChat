@@ -18,6 +18,11 @@ Not only does the mod allow players to talk to each other in-game, but it also a
 2. Place the downloaded file in the `Mods` folder of your Vintage Story installation.
 3. Start the game and enjoy!
 4. (Optional): Double check your keybinds in the settings menu. All keybinds start with `RPVoice` and are located in the hud and interface category.
+
+## Server Setup
+1. Start your server.
+2. Done!
+3. (Optional): If you're experiencing exceptional slowdown you may wanna try the advanced setup guide. (Not currently written but if you know what you are doing see comment on [this issue.](https://github.com/Ridderrasmus/RPVoiceChat/issues/131#issuecomment-2253090923))
  
 ## Usage
 ### Talking

@@ -78,7 +78,11 @@ namespace RPVoiceChat.Audio
 
         public static void DeleteSource(int source)
         {
-            AL.DeleteSource(source);
+            try
+            {
+                AL.DeleteSource(source);
+            }
+            catch { }
             CheckError("Error deleting source");
         }
 

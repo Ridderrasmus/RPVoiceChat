@@ -12,8 +12,11 @@ namespace RPVoiceChat.Networking
         private IClientNetworkChannel channel;
         private IClientNetworkChannel singleplayerChannel;
 
+        private ICoreClientAPI capi;
+
         public NativeNetworkClient(ICoreClientAPI api) : base(api)
         {
+            capi = api;
             channel = api.Network.GetChannel(ChannelName).SetMessageHandler<AudioPacket>(HandleAudioPacket);
             if (api.IsSinglePlayer)
                 singleplayerChannel = api.Network.RegisterChannel(SPChannelName).RegisterMessageType<AudioPacket>();
@@ -31,12 +34,20 @@ namespace RPVoiceChat.Networking
 
         private bool ProcessInBackground(int channelId, Packet_CustomPacket customPacket)
         {
+
+
             if (channel is not NetworkChannel nativeChannel) return false;
 
             var expectedChannelId = (int)channelIdField.GetValue(channel);
             if (channelId != expectedChannelId) return false;
-
-            nativeChannel.OnPacket(customPacket);
+            try
+            {
+                nativeChannel.OnPacket(customPacket);
+            }
+            catch (Exception e)
+            {
+                capi.Logger.Error("Error while processing packet: " + e);
+            }
             return true;
         }
 

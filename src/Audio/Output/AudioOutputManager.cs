@@ -160,6 +160,9 @@ namespace RPVoiceChat.Audio
 
         public void Dispose()
         {
+            capi.Event.PlayerEntitySpawn -= PlayerSpawned;
+            capi.Event.PlayerEntityDespawn -= PlayerDespawned;
+
             PlayerListener.Dispose();
             localPlayerAudioSource?.Dispose();
             foreach (var source in playerSources.Values)

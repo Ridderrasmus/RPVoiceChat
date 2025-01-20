@@ -1,4 +1,5 @@
-﻿using Vintagestory.API.Common;
+﻿using RPVoiceChat.Blocks;
+using Vintagestory.API.Common;
 
 namespace RPVoiceChat.GameContent.Blocks
 {
@@ -9,6 +10,8 @@ namespace RPVoiceChat.GameContent.Blocks
             api.RegisterBlockClass("soundemittingblock", typeof(SoundEmittingBlock));
             api.RegisterBlockClass("churchbellpart", typeof(ChurchBellPartBlock));
             api.RegisterBlockClass("churchbelllayer", typeof(ChurchBellLayerBlock));
+            api.RegisterBlockClass("telegraphblock", typeof(TelegraphBlock));
+            api.RegisterBlockClass("connectorblock", typeof(ConnectorBlock));
         }
     }
 }

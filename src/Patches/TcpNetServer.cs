@@ -27,7 +27,7 @@ namespace RPVoiceChat
 
         public static void Patch(Harmony harmony)
         {
-            var OriginalMethod = AccessTools.Method(typeof(TcpNetServer), "server_ReceivedMessage");
+            var OriginalMethod = AccessTools.Method(typeof(TcpNetServer), "ServerReceivedMessage");
             var TranspilerMethod = AccessTools.Method(typeof(TcpNetServerPatch), nameof(server_ReceivedMessage_Transpiler));
             harmony.Patch(OriginalMethod, transpiler: new HarmonyMethod(TranspilerMethod));
         }

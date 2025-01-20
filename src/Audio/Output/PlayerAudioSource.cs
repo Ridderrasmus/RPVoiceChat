@@ -274,6 +274,7 @@ namespace RPVoiceChat.Audio
 
             OALW.SourceStop(source);
             OALW.DeleteSource(source);
+            buffer.OnEmptyingQueue -= OnSourceStop;
             buffer?.Dispose();
 
             IsDisposed = true;

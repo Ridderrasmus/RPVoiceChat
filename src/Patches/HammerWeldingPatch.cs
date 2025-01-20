@@ -16,10 +16,6 @@ namespace RPVoiceChat
             var OriginalMethod2 = AccessTools.Method(typeof(ItemHammer), nameof(ItemHammer.OnHeldAttackStep));
             var PrefixMethod2 = AccessTools.Method(typeof(HammerWeldingPatch), nameof(OnHeldAttackStep));
             harmony.Patch(OriginalMethod2, prefix: new HarmonyMethod(PrefixMethod2));
-
-            var OriginalMethod3 = AccessTools.Method(typeof(ItemHammer), nameof(ItemHammer.OnHeldAttackStop));
-            var PrefixMethod3 = AccessTools.Method(typeof(HammerWeldingPatch), nameof(OnHeldAttackStop));
-            harmony.Patch(OriginalMethod3, prefix: new HarmonyMethod(PrefixMethod3));
         }
 
         public static void OnHeldAttackStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, ref EnumHandHandling handling)
@@ -32,6 +28,7 @@ namespace RPVoiceChat
                 handling = EnumHandHandling.PreventDefault;
 
                 IPlayer byPlayer = (byEntity as EntityPlayer)?.Player;
+                bew.OnHammerHitOver(byPlayer, blockSel.HitPosition);
 
                 if (bew.TestReadyToMerge())
                 {
@@ -61,18 +58,6 @@ namespace RPVoiceChat
 
             return true;
 
-        }
-
-        public static void OnHeldAttackStop(float secondsPassed, ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel)
-        {
-            if (blockSel == null || secondsPassed < 0.4f) return;
-
-            BlockEntity be = byEntity.World.BlockAccessor.GetBlockEntity(blockSel.Position);
-            if (be is BEWeldable bew)
-            {
-                IPlayer byPlayer = (byEntity as EntityPlayer)?.Player;
-                bew.OnHammerHitOver(byPlayer, blockSel.HitPosition);
-            }
         }
     }
 }

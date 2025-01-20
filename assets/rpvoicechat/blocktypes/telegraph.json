@@ -1,0 +1,19 @@
+{
+  "code": "telegraph",
+  "enabled": false,
+  "class": "telegraphblock",
+  "entityClass": "TelegraphBlockEntity",
+  "creativeinventory": {
+    "general": [ "*" ]
+  },
+  "blockmaterial": "Metal",
+  "resistance": 1,
+  "sounds": {
+    "place": "game:block/anvil",
+    "walk": "game:block/anvil"
+  },
+  "drawtype": "Cube",
+  "textures": {
+    "all": { "base": "game:block/wood-generic" }
+  }
+}

@@ -3,6 +3,7 @@ using RPVoiceChat.Client;
 using RPVoiceChat.DB;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Networking;
+using RPVoiceChat.Systems;
 using RPVoiceChat.Utils;
 using System;
 using System.Collections.Generic;
@@ -33,6 +34,8 @@ namespace RPVoiceChat
         {
             capi = api;
 
+            WireNetworkHandler.RegisterClientside(api);
+
             // Sneak in native dlls
             EmbeddedDllClass.ExtractEmbeddedDlls();
             EmbeddedDllClass.LoadDll("RNNoise.dll");
@@ -62,7 +65,7 @@ namespace RPVoiceChat
             capi.Input.RegisterHotKey("voicechatVoiceLevel", UIUtils.I18n("Hotkey.VoiceLevel"), GlKeys.Tab, HotkeyType.GUIOrOtherControls, false, false, true);
             capi.Input.RegisterHotKey("voicechatPTT", UIUtils.I18n("Hotkey.PTT"), GlKeys.CapsLock, HotkeyType.GUIOrOtherControls);
             capi.Input.RegisterHotKey("voicechatMute", UIUtils.I18n("Hotkey.Mute"), GlKeys.N, HotkeyType.GUIOrOtherControls);
-            capi.Event.KeyUp += Event_KeyUp;
+            capi.Event.KeyUp += this.Event_KeyUp;
 
             // Set up keybind event handlers
             capi.Input.SetHotKeyHandler("voicechatMenu", _ =>
@@ -143,6 +146,9 @@ namespace RPVoiceChat
             client?.Dispose();
             guiManager?.Dispose();
             clientSettingsRepository?.Dispose();
+
+            capi.Event.KeyUp -= this.Event_KeyUp;
+            capi.Event.LevelFinalize -= OnLoad;
         }
     }
 }
