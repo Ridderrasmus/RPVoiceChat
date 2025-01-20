@@ -3,6 +3,7 @@ using RPVoiceChat.Client;
 using RPVoiceChat.DB;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Networking;
+using RPVoiceChat.Systems;
 using RPVoiceChat.Utils;
 using System;
 using System.Collections.Generic;
@@ -32,6 +33,8 @@ namespace RPVoiceChat
         public override void StartClientSide(ICoreClientAPI api)
         {
             capi = api;
+
+            WireNetworkHandler.RegisterClientside(api);
 
             // Sneak in native dlls
             EmbeddedDllClass.ExtractEmbeddedDlls();

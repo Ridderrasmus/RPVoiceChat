@@ -2,7 +2,9 @@
 
 namespace RPVoiceChat.Blocks
 {
-    public class ConnectorBlock : WireNode
+    public class ConnectorBlock : Block
     {
+
+
     }
 }

@@ -3,6 +3,7 @@ using RPVoiceChat.Utils;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
+using Vintagestory.API.Server;
 
 namespace RPVoiceChat.GameContent.BlockEntities
 {
@@ -37,8 +38,14 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 var assetLoc = new AssetLocation("rpvoicechat", $"shapes/{Block.Shape.Base.Path}-flux.json");
                 FluxShape = Shape.TryGet(api, assetLoc);
 
-                UpdateMeshRefs();
+
+                Inv.SlotModified += (i) =>
+                {
+                    UpdateMeshRefs();
+                };
             }
+            
+            UpdateMeshRefs();
         }
 
         protected override MeshData RenderPart(int numPart)
@@ -64,6 +71,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
             {
                 Inv[1].Itemstack = byItemStack.Clone();
                 Inv[1].Itemstack.StackSize = 1;
+                MarkDirty(true);
 
                 UpdateMeshRefs();
             }
@@ -76,7 +84,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
             if (hotbarslot.Empty) return true;
 
-            if (hotbarslot.Itemstack.Collectible.Code.Path == "powderedborax")
+            if (hotbarslot.Itemstack.Collectible.Code.Path == "powder-borax")
             {
                 if (FluxSlot.Empty || FluxSlot.Itemstack.StackSize < 4)
                 {
@@ -87,6 +95,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
                         FluxSlot.Itemstack = itemStack;
                     else
                         FluxSlot.Itemstack.StackSize++;
+                    MarkDirty(true);
                     UpdateMeshRefs();
                     return true;
                 } 
@@ -104,6 +113,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
                     if (!Inv[i+1].Empty) continue;
 
                     Inv[i + 1].Itemstack = hotbarslot.TakeOut(1);
+                    MarkDirty(true);
                     UpdateMeshRefs();
                     return true;
                 }

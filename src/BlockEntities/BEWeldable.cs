@@ -2,6 +2,7 @@
 using RPVoiceChat.Utils;
 using System;
 using System.Text;
+using System.Transactions;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
@@ -31,6 +32,11 @@ namespace RPVoiceChat.GameContent.BlockEntities
             Renderer = new WeldableRenderer(Api as ICoreClientAPI, this);
             FluxMeshRefs = new MeshRef[numParts];
             PartMeshRefs = new MeshRef[numParts];
+
+            Inv.SlotModified += (i) =>
+            {
+                MarkDirty(true);
+            };
         }
 
         public override InventoryBase Inventory => Inv;
@@ -46,6 +52,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 capi.TesselatorManager.GetDefaultBlockMesh(Block).Clear();
             }
         }
+
 
         public virtual bool TestReadyToMerge(bool triggerMessage = true)
         {
@@ -85,9 +92,11 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
         protected virtual void UpdateMeshRefs()
         {
+            var capi = Api as ICoreClientAPI;
+
+
             if (Api.Side == EnumAppSide.Server) return;
 
-            var capi = Api as ICoreClientAPI;
 
             // If the inventory contains flux, then we want to render the flux mesh for as many times flux there is
             // unless there is more flux than there are church bell parts
@@ -164,6 +173,9 @@ namespace RPVoiceChat.GameContent.BlockEntities
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
         {
             base.FromTreeAttributes(tree, worldForResolving);
+
+            if (Api != null)
+                UpdateMeshRefs();
         }
 
         public override void ToTreeAttributes(ITreeAttribute tree)
@@ -199,6 +211,16 @@ namespace RPVoiceChat.GameContent.BlockEntities
             else
             {
                 dsc.AppendLine(UIUtils.I18n($"{i18nPrefix}.WeldNotReady")); //"Not ready to weld"
+            }
+        }
+
+        public override void MarkDirty(bool redrawOnClient = false, IPlayer skipPlayer = null)
+        {
+            base.MarkDirty(redrawOnClient, skipPlayer);
+
+            if (Api.Side == EnumAppSide.Client)
+            {
+                UpdateMeshRefs();
             }
         }
 

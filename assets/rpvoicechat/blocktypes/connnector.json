@@ -1,5 +1,6 @@
 {
   "code": "connector",
+  "enabled": false,
   "class": "connectorblock",
   "creativeinventory": {
     "general": [ "*" ]
