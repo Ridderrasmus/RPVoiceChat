@@ -1,4 +1,4 @@
-﻿using RPVoiceChat.Blocks;
+﻿using RPVoiceChat.GameContent.Blocks;
 using Vintagestory.API.MathTools;
 
 namespace RPVoiceChat.src.Systems

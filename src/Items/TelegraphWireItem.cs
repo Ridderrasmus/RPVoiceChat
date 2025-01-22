@@ -1,4 +1,4 @@
-using RPVoiceChat.Blocks;
+using RPVoiceChat.GameContent.Blocks;
 using RPVoiceChat.src.Systems;
 using System.Text;
 using Vintagestory.API.Common;
