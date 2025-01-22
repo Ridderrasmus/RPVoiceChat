@@ -84,7 +84,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Concentus" Version="2.2.2" />
+		<PackageReference Include="Concentus" Version="1.1.7" />
 		<PackageReference Include="NETStandard.Library" Version="2.0.3" />
 	</ItemGroup>
 

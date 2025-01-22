@@ -66,7 +66,7 @@ namespace RPVoiceChat.Utils
         public static Vec3f GetRelativeSpeakerLocation(Vec3f speakerPos, EntityPos listenerPos)
         {
             var relativeSpeakerCoords = speakerPos - listenerPos.XYZFloat;
-            var listenerHeadAngle = listenerPos.Yaw + listenerPos.HeadYaw;
+            var listenerHeadAngle = listenerPos.Yaw + listenerPos.HeadYaw - Math.PI;
             var cs = Math.Cos(listenerHeadAngle);
             var sn = Math.Sin(listenerHeadAngle);
             var rotatedVector = new Vec3d(
