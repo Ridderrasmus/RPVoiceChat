@@ -1,4 +1,4 @@
-﻿using RPVoiceChat.Blocks;
+﻿using RPVoiceChat.GameContent.Blocks;
 using System.Collections.Generic;
 using System;
 using System.Linq;
