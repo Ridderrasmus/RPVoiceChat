@@ -11,7 +11,7 @@ namespace RPVoiceChat.GameContent.Items
 
         public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handling)
         {
-            WireNode? node = blockSel.Block?.GetBlockEntity<WireNode>(blockSel);
+            WireNode node = blockSel.Block?.GetBlockEntity<WireNode>(blockSel);
 
             if (node == null)
             {

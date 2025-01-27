@@ -66,6 +66,7 @@ namespace RPVoiceChat.Utils
         public static Vec3f GetRelativeSpeakerLocation(Vec3f speakerPos, EntityPos listenerPos)
         {
             var relativeSpeakerCoords = speakerPos - listenerPos.XYZFloat;
+            //  After 1.20, the game measures Yaw from the South. Due to that being, "mathematical north"(Z+) and the Z axis being inverted.
             var listenerHeadAngle = listenerPos.Yaw + listenerPos.HeadYaw - Math.PI;
             var cs = Math.Cos(listenerHeadAngle);
             var sn = Math.Sin(listenerHeadAngle);
