@@ -65,7 +65,7 @@ namespace RPVoiceChat.Gui
             IAsset asset = capi.Assets.TryGet(voiceIcon, false);
             if (asset == null) 
             {
-                // Display an icon per default if voiceType not exists. Typically, with custom voice mods.
+                // Display an icon by default if voiceType not exists. Typically, with custom voice mods.
                 voiceIcon = new AssetLocation("rpvoicechat", "textures/gui/megaphone.png");
             }
 

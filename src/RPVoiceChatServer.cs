@@ -39,6 +39,7 @@ namespace RPVoiceChat
             WorldConfig.Set(VoiceLevel.Shouting, WorldConfig.GetInt(VoiceLevel.Shouting));
             WorldConfig.Set("force-render-name-tags", WorldConfig.GetBool("force-render-name-tags", true));
             WorldConfig.Set("encode-audio", WorldConfig.GetBool("encode-audio", true));
+            WorldConfig.Set("wall-thickness-weighting", WorldConfig.GetFloat("wall-thickness-weighting", 1.5f));
 
             // Register commands
             registerCommands();
@@ -99,6 +100,12 @@ namespace RPVoiceChat
                     .WithAdditionalInformation(UIUtils.I18n("Command.EncodeAudio.Help"))
                     .WithArgs(parsers.Bool("state"))
                     .HandleWith(ToggleAudioEncoding)
+                .EndSub()
+                .BeginSub("wallthicknessweighting")
+                    .WithDesc(UIUtils.I18n("Command.WallThicknessWeighting.Desc"))
+                    .WithAdditionalInformation(UIUtils.I18n("Command.WallThicknessWeighting.Help"))
+                    .WithArgs(parsers.Float("weighting"))
+                    .HandleWith(SetWallThicknessWeighting)
                 .EndSub();
         }
 
@@ -140,8 +147,9 @@ namespace RPVoiceChat
             int shout = WorldConfig.GetInt(VoiceLevel.Shouting);
             bool forceNameTags = WorldConfig.GetBool("force-render-name-tags");
             bool encoding = WorldConfig.GetBool("encode-audio");
+            float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");
 
-            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceNameTags, encoding));
+            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceNameTags, encoding, wallThicknessWeighting));
         }
 
         private TextCommandResult SetWhisperHandler(TextCommandCallingArgs args)
@@ -169,6 +177,15 @@ namespace RPVoiceChat
             WorldConfig.Set(VoiceLevel.Shouting, distance);
 
             return TextCommandResult.Success(UIUtils.I18n($"Command.Shout.Success", distance));
+        }
+
+        private TextCommandResult SetWallThicknessWeighting(TextCommandCallingArgs args)
+        {
+            float weighting = (float)args[0];
+
+            WorldConfig.Set("wall-thickness-weighting", weighting);
+
+            return TextCommandResult.Success(UIUtils.I18n("Command.WallThicknessWeighting.Success", weighting));
         }
 
         public override void Dispose()
