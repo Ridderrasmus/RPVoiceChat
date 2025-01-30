@@ -2,12 +2,11 @@ using OpenTK.Audio.OpenAL;
 
 namespace RPVoiceChat.Audio.Effects
 {
-    public class ReverbEffect
+    public class ReverbEffect : SoundEffect
     {
-        private int effect;
-        private int slot;
+        public ReverbEffect(int source) : base(source) {}
 
-        public ReverbEffect(int source)
+        protected override void GenerateEffect()
         {
             effect = ALC.EFX.GenEffect();
             slot = ALC.EFX.GenAuxiliaryEffectSlot();
@@ -23,7 +22,6 @@ namespace RPVoiceChat.Audio.Effects
             ALC.EFX.Effect(effect, EffectFloat.ReverbGain, 0.23f);
 
             ALC.EFX.AuxiliaryEffectSlot(slot, EffectSlotInteger.Effect, effect);
-            ALC.EFX.Source(source, EFXSourceInteger3.AuxiliarySendFilter, slot, 0, 0);
         }
     }
 }

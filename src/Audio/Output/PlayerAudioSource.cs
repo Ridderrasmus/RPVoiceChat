@@ -2,6 +2,7 @@ using OpenTK.Audio.OpenAL;
 using RPVoiceChat.Audio.Effects;
 using RPVoiceChat.DB;
 using RPVoiceChat.Gui;
+using RPVoiceChat.src.Audio.Effects;
 using RPVoiceChat.Utils;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
+using Vintagestory.GameContent;
 
 namespace RPVoiceChat.Audio
 {
@@ -26,7 +28,10 @@ namespace RPVoiceChat.Audio
         private int orderingDelay = 100;
         private long lastAudioSequenceNumber = -1;
         private IAudioCodec codec;
-        private FilterLowpass lowpassFilter;
+        private LowpassFilter lowpassFilter;
+        private ReverbEffect reverbEffect;
+        private IntoxicatedEffect intoxicatedEffect;
+        private UnstableEffect unstableEffect;
 
         private ICoreClientAPI capi;
         private IPlayer player;
@@ -105,32 +110,50 @@ namespace RPVoiceChat.Audio
             lowpassFilter?.Stop();
             if (mufflingEnabled && wallThickness != 0)
             {
-                lowpassFilter = lowpassFilter ?? new FilterLowpass(source);
+                lowpassFilter = lowpassFilter ?? new LowpassFilter(source);
                 lowpassFilter.Start();
                 lowpassFilter.SetHFGain(Math.Max(1.0f - (wallThickness / wallThicknessWeighting), 0.1f));
             }
 
+            bool toBeImplementedToggle = false;
+            // DEACTIVATED : TO BE IMPLEMENTED
             // If the player is in a reverberated area, then the player's voice should be reverberated
-            bool isReverberated = false;
-            if (isReverberated)
+            reverbEffect?.Stop();
+            if (toBeImplementedToggle)
             {
-
+                BlockPos plrpos = new BlockPos();
+                plrpos.Set((int)speakerPos.X, (int)speakerPos.Y, (int)speakerPos.Z);
+                Room room = capi.ModLoader.GetModSystem<RoomRegistry>().GetRoomForPosition(plrpos);
+                // Check whether it is a proper room, or something like a room i.e. with a roof, for example a natural cave
+                bool inEnclosedRoom = room.ExitCount == 0 || room.SkylightCount < room.NonSkylightCount;
+                if (inEnclosedRoom) 
+                {
+                    reverbEffect = reverbEffect ?? new ReverbEffect(source);
+                    reverbEffect.Start();
+                }
             }
 
+            // DEACTIVATED : TO BE IMPLEMENTED
             // If the player has a temporal stability of less than 0.5, then the player's voice should be distorted
             // Values are temporary currently
-            if (player.Entity.WatchedAttributes.GetDouble("temporalStability") < 0.5)
+            unstableEffect?.Stop();
+            if (toBeImplementedToggle && player.Entity.WatchedAttributes.GetDouble("temporalStability") < 0.5)
             {
-
+                unstableEffect = unstableEffect ?? new UnstableEffect(source);
+                unstableEffect.Start();
             }
 
-            /* --------- DISABLED FOR NOW ---------
+            // DEACTIVATED : TO BE IMPLEMENTED
             // If the player is drunk, then the player's voice should be affected
             // Values are temporary currently
+            intoxicatedEffect?.Stop();
             float drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
-            float pitch = drunkness <= 0.2 ? 1 : 1 - (drunkness / 5);
-            OALW.Source(source, ALSourcef.Pitch, pitch);
-            */
+            if (toBeImplementedToggle && drunkness > 0)
+            {
+                intoxicatedEffect = intoxicatedEffect ?? new IntoxicatedEffect(source);
+                intoxicatedEffect.SetToxicRate(drunkness);
+                intoxicatedEffect.Start();
+            }
 
             float gain = GetFinalGain();
             var sourcePosition = new Vec3f();
