@@ -101,7 +101,7 @@ namespace RPVoiceChat
                     .WithArgs(parsers.Bool("state"))
                     .HandleWith(ToggleAudioEncoding)
                 .EndSub()
-                .BeginSub("wallthicknessweighting")
+                .BeginSub("wtw")
                     .WithDesc(UIUtils.I18n("Command.WallThicknessWeighting.Desc"))
                     .WithAdditionalInformation(UIUtils.I18n("Command.WallThicknessWeighting.Help"))
                     .WithArgs(parsers.Float("weighting"))
