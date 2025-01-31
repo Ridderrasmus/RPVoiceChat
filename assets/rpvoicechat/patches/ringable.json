@@ -1,0 +1,8 @@
+﻿[
+  {
+    "op": "addmerge",
+    "path": "/behaviors",
+    "value": [ { "name": "Ringable" } ],
+    "file": "game:itemtypes/resource/fat.json"
+  }
+]

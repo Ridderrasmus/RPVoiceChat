@@ -120,6 +120,7 @@
   "Gui.ModMenu.unscaledAudioMeter.Label": "Unscaled Audio Meter",
   "Gui.ModMenu.unscaledAudioMeter.Tooltip": "Shows your audio amplitude on the actual full scale, before applying max input threshold. Use it as a reference for setting max input threshold(segment to the left from the slider handle will be displayed in audio input tab)",
 
+  "General.BellAttached": "Bell attached",
 
   "Handbook.Welding.block-churchbell-part.Title": "Welding Process: Part",
   "Handbook.Welding.block-churchbell-part.Text": "First step is to clayform the mold for your bell part and filling the molds with brass. For each of the three lower layers you will need 4 parts. <br><br>Second step is to heat the parts of the layer you're constructing. After heating the parts must be assembled together and will need 4 pieces of powdered borax for the welding. <br><br>Step three is to hit that thing with a hammer quite a few times.",
@@ -128,5 +129,7 @@
   "Handbook.Welding.block-churchbell.Title": "Welding Process: Full Bell",
   "Handbook.Welding.block-churchbell.Text": "The welding process for the entire bell is to first weld each (except for the topmost) layer of the bell this process can be found on the handbook page for the <a href='handbook://block-rpvoicechat:churchbell-part-brass-bottom'>bell parts</a>. <br><br>There are four layers and when they're welded you can then weld them into the full bell. That process can be seen on the handbook page for the <a href='handbook://block-rpvoicechat:churchbell-layer-brass-bottom'>layers</a>.",
   "Handbook.Usage.block-churchbell.Title": "Usage",
-  "Handbook.Usage.block-churchbell.Text": "This is a massive 3x3x4 size churchbell that when right clicked rings and can be clearly heard out to a distance of 832 blocks away. It needs to be placed on the ground and will require a free 3x3x4 space around it."
+  "Handbook.Usage.block-churchbell.Text": "This is a massive 3x3x4 size churchbell that when right clicked rings and can be clearly heard out to a distance of 832 blocks away. It needs to be placed on the ground and will require a free 3x3x4 space around it.",
+  "Handbook.Usage.smallbellparts.Title": "Usage",
+  "Handbook.Usage.smallbellparts.Text": "These are more intricate parts that can be used to craft a small bell. You believe you might also be able to attach these to doors for a nice announcement of when someone enters or leaves.",
 }

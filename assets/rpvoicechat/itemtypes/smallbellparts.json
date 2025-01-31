@@ -7,6 +7,17 @@
     }
   ],
   "enabled": true,
+  "attributes": {
+    "handbook": {
+      "groupBy": [ "smallbellparts-*" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.smallbellparts.Title",
+          "text": "rpvoicechat:Handbook.Usage.smallbellparts.Text"
+        }
+      ]
+    }
+  },
   "maxstacksize": 64,
   "creativeinventory": {
     "general": [ "*" ],
