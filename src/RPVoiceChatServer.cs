@@ -2,6 +2,7 @@ using RPVoiceChat.Networking;
 using RPVoiceChat.Server;
 using RPVoiceChat.Systems;
 using RPVoiceChat.Utils;
+using System;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;
@@ -39,6 +40,7 @@ namespace RPVoiceChat
             WorldConfig.Set(VoiceLevel.Shouting, WorldConfig.GetInt(VoiceLevel.Shouting));
             WorldConfig.Set("force-render-name-tags", WorldConfig.GetBool("force-render-name-tags", true));
             WorldConfig.Set("encode-audio", WorldConfig.GetBool("encode-audio", true));
+            WorldConfig.Set("others-hear-spectators", WorldConfig.GetBool("others-hear-spectators", true));
 
             // Register commands
             registerCommands();
@@ -99,7 +101,24 @@ namespace RPVoiceChat
                     .WithAdditionalInformation(UIUtils.I18n("Command.EncodeAudio.Help"))
                     .WithArgs(parsers.Bool("state"))
                     .HandleWith(ToggleAudioEncoding)
+                .EndSub()
+                .BeginSub("othershearspectators")
+                    .WithDesc(UIUtils.I18n("Command.OthersHearSpectators.Desc"))
+                    .WithAdditionalInformation(UIUtils.I18n("Command.OthersHearSpectators.Help"))
+                    .WithArgs(parsers.Bool("state"))
+                    .HandleWith(ToggleOthersHearSpectators)
                 .EndSub();
+        }
+
+        private TextCommandResult ToggleOthersHearSpectators(TextCommandCallingArgs args)
+        {
+            const string i18nPrefix = "Command.OthersHearSpectators.Success";
+            bool state = (bool)args[0];
+
+            WorldConfig.Set("others-hear-spectators", state);
+            string stateAsText = state ? "Enabled" : "Disabled";
+
+            return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
         }
 
         private TextCommandResult ToggleAudioEncoding(TextCommandCallingArgs args)
