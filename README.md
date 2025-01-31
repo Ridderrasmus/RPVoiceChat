@@ -65,6 +65,7 @@ You can also use `/rpvc [command]` to access world-specific settings:
 Currently the mod is maintained by the following people:
 - [Ridderrasmus](https://github.com/Ridderrasmus) - Creator and maintainer
 - [Dmitry221060](https://github.com/Dmitry221060) - Maintainer
+- [RomainOdeval](https://github.com/RomainOdeval) - Maintainer
 - [Faithfulshot](https://github.com/Faithfulshot) - 3d models
 - [Nixie]() - Audio design
 
