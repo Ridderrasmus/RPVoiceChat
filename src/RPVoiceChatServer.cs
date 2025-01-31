@@ -18,6 +18,18 @@ namespace RPVoiceChat
         {
             sapi = api;
 
+            // Register/load world config
+            WorldConfig.Set(VoiceLevel.Whispering, WorldConfig.GetInt(VoiceLevel.Whispering));
+            WorldConfig.Set(VoiceLevel.Talking, WorldConfig.GetInt(VoiceLevel.Talking));
+            WorldConfig.Set(VoiceLevel.Shouting, WorldConfig.GetInt(VoiceLevel.Shouting));
+            WorldConfig.Set("force-render-name-tags", WorldConfig.GetBool("force-render-name-tags", true));
+            WorldConfig.Set("encode-audio", WorldConfig.GetBool("encode-audio", true));
+            WorldConfig.Set("others-hear-spectators", WorldConfig.GetBool("others-hear-spectators", true));
+
+            // Register commands
+            registerCommands();
+
+
             WireNetworkHandler.RegisterServerside(api);
 
             bool forwardPorts = !config.ManualPortForwarding;
@@ -34,16 +46,6 @@ namespace RPVoiceChat
             server = new GameServer(sapi, networkTransports);
             server.Launch();
 
-            // Register/load world config
-            WorldConfig.Set(VoiceLevel.Whispering, WorldConfig.GetInt(VoiceLevel.Whispering));
-            WorldConfig.Set(VoiceLevel.Talking, WorldConfig.GetInt(VoiceLevel.Talking));
-            WorldConfig.Set(VoiceLevel.Shouting, WorldConfig.GetInt(VoiceLevel.Shouting));
-            WorldConfig.Set("force-render-name-tags", WorldConfig.GetBool("force-render-name-tags", true));
-            WorldConfig.Set("encode-audio", WorldConfig.GetBool("encode-audio", true));
-            WorldConfig.Set("others-hear-spectators", WorldConfig.GetBool("others-hear-spectators", true));
-
-            // Register commands
-            registerCommands();
         }
 
         public override void StartPre(ICoreAPI api)
