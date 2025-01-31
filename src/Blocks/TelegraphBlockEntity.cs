@@ -1,5 +1,5 @@
 ﻿using RPVoiceChat.Gui;
-using RPVoiceChat.src.Systems;
+using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Systems;
 using System.Linq;
 using System.Threading;

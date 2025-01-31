@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 
-namespace RPVoiceChat.src.Systems
+namespace RPVoiceChat.GameContent.Systems
 {
     public class WireNetwork
     {
