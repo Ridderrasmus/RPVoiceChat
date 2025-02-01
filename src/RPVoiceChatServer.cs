@@ -104,7 +104,7 @@ namespace RPVoiceChat
                     .WithArgs(parsers.Bool("state"))
                     .HandleWith(ToggleAudioEncoding)
                 .EndSub()
-                .BeginSub("othershearspectators")
+                .BeginSub("hearspectators")
                     .WithDesc(UIUtils.I18n("Command.OthersHearSpectators.Desc"))
                     .WithAdditionalInformation(UIUtils.I18n("Command.OthersHearSpectators.Help"))
                     .WithArgs(parsers.Bool("state"))
