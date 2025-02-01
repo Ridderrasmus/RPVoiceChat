@@ -39,7 +39,7 @@ namespace RPVoiceChat
             WorldConfig.Set(VoiceLevel.Shouting, WorldConfig.GetInt(VoiceLevel.Shouting));
             WorldConfig.Set("force-render-name-tags", WorldConfig.GetBool("force-render-name-tags", true));
             WorldConfig.Set("encode-audio", WorldConfig.GetBool("encode-audio", true));
-            WorldConfig.Set("wall-thickness-weighting", WorldConfig.GetFloat("wall-thickness-weighting", 1.5f));
+            WorldConfig.Set("wall-thickness-weighting", WorldConfig.GetFloat("wall-thickness-weighting", 2));
 
             // Register commands
             registerCommands();

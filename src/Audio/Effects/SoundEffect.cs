@@ -1,4 +1,3 @@
-using Cairo;
 using OpenTK.Audio.OpenAL;
 
 namespace RPVoiceChat.Audio.Effects
@@ -16,10 +15,10 @@ namespace RPVoiceChat.Audio.Effects
         {
             this.source = source;
             this.nullEffect = ALC.EFX.GenEffect();
-            GenerateEffect();
+            this.effect = GenerateEffect();
         }
 
-        public void Start()
+        public void Apply()
         {
             if (IsEnabled)
                 return;
@@ -28,7 +27,7 @@ namespace RPVoiceChat.Audio.Effects
             IsEnabled = true;
         }
 
-        public void Stop()
+        public void Clear()
         {
             if (!IsEnabled)
                 return;
@@ -37,6 +36,6 @@ namespace RPVoiceChat.Audio.Effects
             IsEnabled = false;
         }
 
-        protected abstract void GenerateEffect();
+        protected abstract int GenerateEffect();
     }
 }

@@ -1,18 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using RPVoiceChat.Audio.Effects;
+﻿using OpenTK.Audio.OpenAL;
 
-namespace RPVoiceChat.src.Audio.Effects
+namespace RPVoiceChat.Audio.Effects
 {
     public class UnstableEffect : SoundEffect
     {
         public UnstableEffect(int source) : base(source) { }
 
-        protected override void GenerateEffect()
+        protected override int GenerateEffect()
         {
+            return (int)EffectType.Distortion;
         }
     }
 }

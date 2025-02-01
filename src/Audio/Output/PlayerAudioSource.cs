@@ -2,7 +2,6 @@ using OpenTK.Audio.OpenAL;
 using RPVoiceChat.Audio.Effects;
 using RPVoiceChat.DB;
 using RPVoiceChat.Gui;
-using RPVoiceChat.src.Audio.Effects;
 using RPVoiceChat.Utils;
 using System;
 using System.Collections.Generic;
@@ -11,7 +10,6 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
-using Vintagestory.GameContent;
 
 namespace RPVoiceChat.Audio
 {
@@ -118,41 +116,33 @@ namespace RPVoiceChat.Audio
             bool toBeImplementedToggle = false;
             // DEACTIVATED : TO BE IMPLEMENTED
             // If the player is in a reverberated area, then the player's voice should be reverberated
-            reverbEffect?.Stop();
-            if (toBeImplementedToggle)
+            reverbEffect?.Clear();
+            if (toBeImplementedToggle && LocationUtils.IsReverbArea(capi, speakerPos))
             {
-                BlockPos plrpos = new BlockPos();
-                plrpos.Set((int)speakerPos.X, (int)speakerPos.Y, (int)speakerPos.Z);
-                Room room = capi.ModLoader.GetModSystem<RoomRegistry>().GetRoomForPosition(plrpos);
-                // Check whether it is a proper room, or something like a room i.e. with a roof, for example a natural cave
-                bool inEnclosedRoom = room.ExitCount == 0 || room.SkylightCount < room.NonSkylightCount;
-                if (inEnclosedRoom) 
-                {
-                    reverbEffect = reverbEffect ?? new ReverbEffect(source);
-                    reverbEffect.Start();
-                }
+                reverbEffect = reverbEffect ?? new ReverbEffect(source);
+                reverbEffect.Apply();
             }
 
             // DEACTIVATED : TO BE IMPLEMENTED
             // If the player has a temporal stability of less than 0.5, then the player's voice should be distorted
             // Values are temporary currently
-            unstableEffect?.Stop();
+            unstableEffect?.Clear();
             if (toBeImplementedToggle && player.Entity.WatchedAttributes.GetDouble("temporalStability") < 0.5)
             {
                 unstableEffect = unstableEffect ?? new UnstableEffect(source);
-                unstableEffect.Start();
+                unstableEffect.Apply();
             }
 
             // DEACTIVATED : TO BE IMPLEMENTED
             // If the player is drunk, then the player's voice should be affected
             // Values are temporary currently
-            intoxicatedEffect?.Stop();
+            intoxicatedEffect?.Clear();
             float drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
             if (toBeImplementedToggle && drunkness > 0)
             {
                 intoxicatedEffect = intoxicatedEffect ?? new IntoxicatedEffect(source);
                 intoxicatedEffect.SetToxicRate(drunkness);
-                intoxicatedEffect.Start();
+                intoxicatedEffect.Apply();
             }
 
             float gain = GetFinalGain();

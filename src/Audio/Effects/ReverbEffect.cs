@@ -6,7 +6,7 @@ namespace RPVoiceChat.Audio.Effects
     {
         public ReverbEffect(int source) : base(source) {}
 
-        protected override void GenerateEffect()
+        protected override int GenerateEffect()
         {
             effect = ALC.EFX.GenEffect();
             slot = ALC.EFX.GenAuxiliaryEffectSlot();
@@ -22,6 +22,8 @@ namespace RPVoiceChat.Audio.Effects
             ALC.EFX.Effect(effect, EffectFloat.ReverbGain, 0.23f);
 
             ALC.EFX.AuxiliaryEffectSlot(slot, EffectSlotInteger.Effect, effect);
+
+            return (int)EffectType.Reverb;
         }
     }
 }

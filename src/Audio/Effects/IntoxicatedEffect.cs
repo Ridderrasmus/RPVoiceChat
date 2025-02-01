@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using OpenTK.Audio.OpenAL;
-using RPVoiceChat.Audio;
-using RPVoiceChat.Audio.Effects;
+﻿using OpenTK.Audio.OpenAL;
 
-namespace RPVoiceChat.src.Audio.Effects
+namespace RPVoiceChat.Audio.Effects
 {
     public class IntoxicatedEffect : SoundEffect
     {
@@ -15,10 +8,14 @@ namespace RPVoiceChat.src.Audio.Effects
 
         public IntoxicatedEffect(int source) : base(source) {}
 
-        protected override void GenerateEffect()
+        protected override int GenerateEffect()
         {
+            // WARNING : changing pitch also changes audio playback speed, causing overflow of circular audio buffer.
+            // More advanced implementation is required before using this effect
             float pitch = toxicRate <= 0.2 ? 1 : 1 - (toxicRate / 5);
             OALW.Source(source, ALSourcef.Pitch, pitch);
+
+            return (int)EffectType.PitchShifter;
         }
 
         public void SetToxicRate(float toxicRate)
