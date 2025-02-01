@@ -23,7 +23,7 @@ namespace RPVoiceChat.Audio.Effects
 
             ALC.EFX.AuxiliaryEffectSlot(slot, EffectSlotInteger.Effect, effect);
 
-            return (int)EffectType.Reverb;
+            return effect;
         }
     }
 }

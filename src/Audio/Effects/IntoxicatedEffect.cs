@@ -1,4 +1,5 @@
-﻿using OpenTK.Audio.OpenAL;
+﻿using System;
+using OpenTK.Audio.OpenAL;
 
 namespace RPVoiceChat.Audio.Effects
 {
@@ -15,7 +16,7 @@ namespace RPVoiceChat.Audio.Effects
             float pitch = toxicRate <= 0.2 ? 1 : 1 - (toxicRate / 5);
             OALW.Source(source, ALSourcef.Pitch, pitch);
 
-            return (int)EffectType.PitchShifter;
+            throw new NotImplementedException();
         }
 
         public void SetToxicRate(float toxicRate)

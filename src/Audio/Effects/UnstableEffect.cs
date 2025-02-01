@@ -1,4 +1,5 @@
-﻿using OpenTK.Audio.OpenAL;
+﻿using System;
+using OpenTK.Audio.OpenAL;
 
 namespace RPVoiceChat.Audio.Effects
 {
@@ -8,7 +9,7 @@ namespace RPVoiceChat.Audio.Effects
 
         protected override int GenerateEffect()
         {
-            return (int)EffectType.Distortion;
+            throw new NotImplementedException();
         }
     }
 }
