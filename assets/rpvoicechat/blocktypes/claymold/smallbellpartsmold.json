@@ -18,6 +18,9 @@
     ],
     "*": [ { "name": "UnstableFalling" } ]
   },
+  "entityBehaviorsByType": {
+    "toolmold-burned-*": [ { "name": "TemperatureSensitive" } ]
+  },
   "variantgroups": [
     {
       "code": "materialtype",
@@ -35,8 +38,13 @@
       "requiredUnits": 50,
       "fillHeight": 2,
       "fillQuadsByLevel": [
-				{ x1: 6, z1: 4, x2: 10, z2: 12 }
-			],
+        {
+          "x1": 6,
+          "z1": 4,
+          "x2": 10,
+          "z2": 12
+        }
+      ],
       "moldrackable": false,
       "drop": {
         "type": "item",
@@ -80,7 +88,7 @@
     "base": "block/clay/mold/smallbellpartsmold"
   },
   "sounds": {
-    "walk": "walk/stone"
+    "walk": "game:walk/stone"
   },
   "collisionboxByType": {
     "*-anvil": {
