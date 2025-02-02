@@ -9,6 +9,7 @@
   "item-smallbellparts-silver": "Pièces de petite cloche",
   "itemdesc-handbell": "Une petite clochette. L'argent de la cloche semble avoir une étrange lueur violette...",
   "itemdesc-smallbellparts-silver": "Les parties les plus complexes d'une petite cloche",
+  "itemdesc-royalhorn": "Une puissante corne, utilisée pour annoncer la venue des grands de ce monde.",
   "block-bellmold-raw-part-brass-bottom": "Moule brut de la partie inférieure de la cloche d'église",
   "block-bellmold-raw-part-brass-middle": "Moule brut de la partie intermédiaire de la cloche d'église",
   "block-bellmold-raw-part-brass-top": "Moule brut de la partie supérieure de la cloche d'église",
@@ -120,5 +121,11 @@
   "Handbook.Welding.block-churchbell.Title": "Processus de soudage : Cloche complète",
   "Handbook.Welding.block-churchbell.Text": "Le processus de soudage pour l'ensemble de la cloche consiste à souder d'abord chaque couche de la cloche (à l'exception de la plus haute). Ce processus est décrit sur la page du manuel des <a href='handbook://block-rpvoicechat:churchbell-part-brass-bottom'>parties de la cloche</a>.<br><br>Il y a quatre couches et, lorsqu'elles sont soudées, vous pouvez souder chaque partie ensemble pour obtenir une cloche complète. Ce processus est décrit sur la page du manuel consacrée aux <a href='handbook://block-rpvoicechat:churchbell-layer-brass-bottom'>couches</a>.",
   "Handbook.Usage.block-churchbell.Title": "Utilisation",
-  "Handbook.Usage.block-churchbell.Text": "Il s'agit d'une cloche d'église de taille 3x3x4 massive qui, lorsque vous faites un clic droit dessus, sonne et peut être clairement entendu à une distance de 832 blocs. Elle doit être placée au sol et nécessitera un espace libre de 3x3x4 autour d'elle."
+  "Handbook.Usage.block-churchbell.Text": "Il s'agit d'une cloche d'église de taille 3x3x4 massive qui, lorsque vous faites un clic droit dessus, sonne et peut être clairement entendu à une distance de 832 blocs. Elle doit être placée au sol et nécessitera un espace libre de 3x3x4 autour d'elle.",
+  "Handbook.Usage.block-callbell.Title": "Utilisation",
+  "Handbook.Usage.block-callbell.Text": "Il s'agit d'une sonnette d'appel qui peut être placée sur le sol et qui, lorsque vous faites un clic droit dessus, sonne et peut être clairement entendue jusqu'à une distance de 16 blocs.",
+  "Handbook.Usage.item-handbell.Title": "Utilisation",
+  "Handbook.Usage.item-handbell.Text": "Il s'agit d'une petite clochette. Lorsque vous la tenez dans votre main, un clic droit vous permet de la faire sonner. Son son peut être clairement entendu jusqu'à une distance de 16 blocs.",
+  "Handbook.Usage.item-royalhorn.Title": "Utilisation",
+  "Handbook.Usage.item-royalhorn.Text": "Il s'agit d'une longue corne métallique. Tenue en main, un clic droit vous fait souffler dedans. Son bruit peut être clairement entendue jusqu'à une distance de 32 blocs."
 }

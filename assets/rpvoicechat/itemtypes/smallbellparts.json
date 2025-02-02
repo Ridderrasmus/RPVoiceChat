@@ -1,11 +1,5 @@
 {
   "code": "smallbellparts",
-  "variantgroups": [
-    {
-      "code": "material",
-      "states": [ "silver" ]
-    }
-  ],
   "enabled": true,
   "maxstacksize": 64,
   "creativeinventory": {
@@ -14,6 +8,17 @@
   },
   "shape": {
     "base": "item/smallbellparts"
+  },
+  "variantgroups": [
+    {
+      "code": "metal",
+      "states": [ "silver" ]
+    }
+  ],
+  "attributes": {
+    "handbook": {
+      "createdBy": "metalmolding"
+    }
   },
   "guiTransform": {
     "translation": {
