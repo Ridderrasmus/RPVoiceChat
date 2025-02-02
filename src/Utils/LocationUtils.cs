@@ -5,6 +5,7 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
+using Vintagestory.GameContent;
 
 namespace RPVoiceChat.Utils
 {
@@ -155,6 +156,17 @@ namespace RPVoiceChat.Utils
             }
 
             return new RayTraceResults(visitedBlocks, visitedEntities);
+        }
+
+        /// <summary>
+        /// Check if the player is in an area where there is reverb <br />
+        /// <b>May be inaccurate as game's API does not give a proper way to know this</b>
+        /// </summary>
+        public static bool IsReverbArea(ICoreClientAPI capi, EntityPos playerPos)
+        {
+            Room room = capi.ModLoader.GetModSystem<RoomRegistry>().GetRoomForPosition(playerPos.AsBlockPos);
+            // Check whether it is a proper room, or something like a room i.e. with a roof, for example a natural cave
+            return (room.ExitCount == 0 || room.SkylightCount < room.NonSkylightCount) && !room.IsSmallRoom;
         }
 
         private static Vec3d GetSpeakerLocation(EntityPos pos)

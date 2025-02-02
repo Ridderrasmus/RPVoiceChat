@@ -26,7 +26,10 @@ namespace RPVoiceChat.Audio
         private int orderingDelay = 100;
         private long lastAudioSequenceNumber = -1;
         private IAudioCodec codec;
-        private FilterLowpass lowpassFilter;
+        private LowpassFilter lowpassFilter;
+        private ReverbEffect reverbEffect;
+        private IntoxicatedEffect intoxicatedEffect;
+        private UnstableEffect unstableEffect;
 
         private ICoreClientAPI capi;
         private IPlayer player;
@@ -98,38 +101,49 @@ namespace RPVoiceChat.Audio
             // If the player is on the other side of something to the listener, then the player's voice should be muffled
             bool mufflingEnabled = ClientSettings.Muffling;
             float wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
+            float wallThicknessWeighting = WorldConfig.GetFloat("wallThicknessWeighting");
             if (capi.World.Player.Entity.Swimming)
                 wallThickness += 1.0f;
 
             lowpassFilter?.Stop();
             if (mufflingEnabled && wallThickness != 0)
             {
-                lowpassFilter = lowpassFilter ?? new FilterLowpass(source);
+                lowpassFilter = lowpassFilter ?? new LowpassFilter(source);
                 lowpassFilter.Start();
-                lowpassFilter.SetHFGain(Math.Max(1.0f - (wallThickness / 2), 0.1f));
+                lowpassFilter.SetHFGain(Math.Max(1.0f - (wallThickness / wallThicknessWeighting), 0.1f));
             }
 
+            bool toBeImplementedToggle = false;
+            // DEACTIVATED : TO BE IMPLEMENTED
             // If the player is in a reverberated area, then the player's voice should be reverberated
-            bool isReverberated = false;
-            if (isReverberated)
+            reverbEffect?.Clear();
+            if (toBeImplementedToggle && LocationUtils.IsReverbArea(capi, speakerPos))
             {
-
+                reverbEffect = reverbEffect ?? new ReverbEffect(source);
+                reverbEffect.Apply();
             }
 
+            // DEACTIVATED : TO BE IMPLEMENTED
             // If the player has a temporal stability of less than 0.5, then the player's voice should be distorted
             // Values are temporary currently
-            if (player.Entity.WatchedAttributes.GetDouble("temporalStability") < 0.5)
+            unstableEffect?.Clear();
+            if (toBeImplementedToggle && player.Entity.WatchedAttributes.GetDouble("temporalStability") < 0.5)
             {
-
+                unstableEffect = unstableEffect ?? new UnstableEffect(source);
+                unstableEffect.Apply();
             }
 
-            /* --------- DISABLED FOR NOW ---------
+            // DEACTIVATED : TO BE IMPLEMENTED
             // If the player is drunk, then the player's voice should be affected
             // Values are temporary currently
+            intoxicatedEffect?.Clear();
             float drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
-            float pitch = drunkness <= 0.2 ? 1 : 1 - (drunkness / 5);
-            OALW.Source(source, ALSourcef.Pitch, pitch);
-            */
+            if (toBeImplementedToggle && drunkness > 0)
+            {
+                intoxicatedEffect = intoxicatedEffect ?? new IntoxicatedEffect(source);
+                intoxicatedEffect.SetToxicRate(drunkness);
+                intoxicatedEffect.Apply();
+            }
 
             float gain = GetFinalGain();
             var sourcePosition = new Vec3f();
