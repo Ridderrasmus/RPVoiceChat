@@ -12,7 +12,7 @@
   "variantgroups": [
     {
       "code": "metal",
-      "states": [ "blackbronze" ]
+      "states": [ "brass" ]
     }
   ],
   "guiTransform": {
