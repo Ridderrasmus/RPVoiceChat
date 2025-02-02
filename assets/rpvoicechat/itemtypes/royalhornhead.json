@@ -9,6 +9,17 @@
   "shape": {
     "base": "item/royalhornhead"
   },
+  "variantgroups": [
+    {
+      "code": "metal",
+      "states": [ "blackbronze" ]
+    }
+  ],
+  "attributes": {
+    "handbook": {
+      "createdBy": "metalmolding"
+    }
+  },
   "guiTransform": {
     "rotation": {
       "x": 0,
