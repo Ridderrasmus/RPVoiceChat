@@ -34,8 +34,14 @@ namespace RPVoiceChat.GameContent.BlockBehaviours
                 {
                     // Set the bell part item to the small bell parts item
                     ringable.BellPartCode = item.Code.Path;
-                    byPlayer.InventoryManager.ActiveHotbarSlot.TakeOut(1);
-                    byPlayer.InventoryManager.ActiveHotbarSlot.MarkDirty();
+
+                    if (byPlayer.WorldData.CurrentGameMode != EnumGameMode.Creative)
+                    {
+                        // Remove the bell part item from the player's inventory
+                        byPlayer.InventoryManager.ActiveHotbarSlot.TakeOut(1);
+                        byPlayer.InventoryManager.ActiveHotbarSlot.MarkDirty();
+                    }
+                    
                     ringable.Blockentity.MarkDirty(true);
                 }
 
