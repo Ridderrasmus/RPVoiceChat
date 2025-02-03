@@ -7,7 +7,7 @@ namespace RPVoiceChat.GameContent.Items
 {
     public class TelegraphWireItem : Item
     {
-        private WireConnection connection;
+        private WireNode nodeConnection;
 
         public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handling)
         {
@@ -24,15 +24,14 @@ namespace RPVoiceChat.GameContent.Items
                 handling = EnumHandHandling.PreventDefault;
 
                 // Handle connection
-                if (connection == null)
+                if (nodeConnection == null)
                 {
-                    connection = new WireConnection(telegraph);
-                    node.Connect(connection);
+                    nodeConnection = telegraph;
                 }
                 else
                 {
-                    node.Connect(connection);
-                    connection = null;
+                    telegraph.Connect(nodeConnection);
+                    nodeConnection = null;
                 }
             }
 
@@ -40,12 +39,11 @@ namespace RPVoiceChat.GameContent.Items
 
         public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
         {
-            if (connection != null)
+            if (nodeConnection != null)
             {
                 dsc.AppendLine();
-                dsc.AppendLine("Connections:");
-                dsc.AppendLine($"Node1 - {((connection.Node1 != null) ? connection.Node1.Pos : "null")}");
-                dsc.AppendLine($"Node2 - {((connection.Node2 != null) ? connection.Node2.Pos : "null")}");
+                dsc.AppendLine("Connecting:");
+                dsc.AppendLine($"Node - {((nodeConnection != null) ? nodeConnection.Pos : "null")}");
             }
             base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
         }

@@ -51,15 +51,6 @@ namespace RPVoiceChat.GameContent.Blocks
 
             (Api as ICoreClientAPI).Network.GetChannel(WireNetworkHandler.NetworkChannel).SendPacket(new WireNetworkMessage() { NetworkUID = NetworkUID, Message = $"{KeyChar}", SenderPos = Pos });
 
-            return;
-
-            WireNetwork network = WireNetworkHandler.GetNetwork(NetworkUID);
-
-            if (network != null)
-            {
-
-                network.SendSignal(this, $"{KeyChar}");
-            }
         }
 
         public void OnRecievedSignal(char KeyChar)
