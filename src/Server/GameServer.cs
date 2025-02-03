@@ -2,6 +2,7 @@ using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
 using System;
 using System.Collections.Generic;
+using Vintagestory.API.Common;
 using Vintagestory.API.Server;
 
 namespace RPVoiceChat.Server
@@ -52,6 +53,7 @@ namespace RPVoiceChat.Server
         public void SendAudioToAllClientsInRange(AudioPacket packet)
         {
             var transmittingPlayer = api.World.PlayerByUid(packet.PlayerId);
+            bool transmittingIsSpectator = transmittingPlayer?.WorldData.CurrentGameMode == EnumGameMode.Spectator;
             int distance = WorldConfig.GetInt(packet.VoiceLevel);
             int squareDistance = distance * distance;
 
@@ -60,6 +62,7 @@ namespace RPVoiceChat.Server
                 if (player == transmittingPlayer ||
                     player.Entity == null ||
                     player.ConnectionState != EnumClientState.Playing ||
+                    (!WorldConfig.GetBool("others-hear-spectators", true) && transmittingIsSpectator && player.WorldData.CurrentGameMode != EnumGameMode.Spectator) ||
                     transmittingPlayer.Entity.Pos.SquareDistanceTo(player.Entity.Pos.XYZ) > squareDistance)
                     continue;
 
