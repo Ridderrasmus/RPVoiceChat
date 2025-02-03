@@ -1,11 +1,11 @@
 {
   "code": "royalhornheadmold",
-  "enabled": false,
+  "enabled": true,
   "classByType": {
     "royalhornheadmold-raw-*": "Block",
     "royalhornheadmold-burned-*": "BlockToolMold"
   },
-  "behavioursByType": {
+  "behaviorsByType": {
     "*-raw-*": [
       {
         "name": "GroundStorable",
@@ -19,6 +19,9 @@
     ],
     "*": [ { "name": "UnstableFalling" } ]
   },
+  "entityBehaviorsByType": {
+    "royalhornheadmold-burned-*": [ { "name": "TemperatureSensitive" } ]
+  },
   "variantgroups": [
     {
       "code": "materialtype",
@@ -26,34 +29,59 @@
     },
     {
       "code": "tooltype",
-      "states": [ "hornhead" ]
+      "states": [ "royalhornhead" ]
     }
   ],
   "attributesByType": {
-    "toolmold-burned-hornhead": {
+    "royalhornheadmold-burned-*": {
       "requiredUnits": 200,
-      "fillHeight": 1,
-      "moldrackable": true,
-      "onmoldrackTransform": { "rotation": { "z": 90 } },
+      "fillHeight": 4,
+      "fillQuadsByLevel": [
+        {
+          "x1": 6,
+          "z1": 5,
+          "x2": 11,
+          "z2": 10
+        },
+        {
+          "x1": 6,
+          "z1": 5,
+          "x2": 11,
+          "z2": 10
+        },
+        {
+          "x1": 6,
+          "z1": 5,
+          "x2": 11,
+          "z2": 10
+        },
+        {
+          "x1": 6,
+          "z1": 5,
+          "x2": 11,
+          "z2": 10
+        }
+      ],
+      "moldrackable": false,
       "drop": {
         "type": "item",
-        "code": "game:{tooltype}-{metal}",
+        "code": "{tooltype}-{metal}",
         "quantity": 1
       }
     }
   },
   "entityClassByType": {
-    "toolmold-burned-*": "ToolMold"
+    "royalhornheadmold-burned-*": "ToolMold"
   },
   "combustiblePropsByType": {
-    "toolmold-raw-*": {
+    "royalhornheadmold-raw-*": {
       "meltingPoint": 650,
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
       "smeltedStack": {
         "type": "block",
-        "code": "toolmold-burned-{tooltype}"
+        "code": "royalhornheadmold-burned-{tooltype}"
       },
       "requiresContainer": false
     }
@@ -68,17 +96,16 @@
   "maxStackSize": 8,
   "lightAbsorption": 0,
   "texturesByType": {
-    "toolmold-raw-*": { "all": { "base": "game:block/clay/blueclay" } },
-    "toolmold-burned-*": {
-      "floor": { "base": "game:block/clay/ceramic-dark" },
-      "other": { "base": "game:block/clay/ceramic" }
+    "royalhornheadmold-raw-*": { "all": { "base": "game:block/clay/blueclay" } },
+    "royalhornheadmold-burned-*": {
+      "all": { "base": "game:block/clay/ceramic" }
     }
   },
   "shape": {
-    "base": "block/clay/mold/{tooltype}"
+    "base": "block/clay/mold/{tooltype}mold"
   },
   "sounds": {
-    "walk": "walk/stone"
+    "walk": "game:walk/stone"
   },
   "collisionboxByType": {
     "*-anvil": {
