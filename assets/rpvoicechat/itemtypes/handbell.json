@@ -30,7 +30,15 @@
       "item/handbell/handbell_hit_1",
       "item/handbell/handbell_hit_2",
       "item/handbell/handbell_hit_3"
-    ]
+    ],
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.item-handbell.Title",
+          "text": "rpvoicechat:Handbook.Usage.item-handbell.Text"
+        }
+      ]
+    }
   },
   "guiTransform": {
     "translation": {

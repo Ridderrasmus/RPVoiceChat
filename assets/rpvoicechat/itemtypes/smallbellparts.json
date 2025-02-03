@@ -1,15 +1,10 @@
 {
   "code": "smallbellparts",
-  "variantgroups": [
-    {
-      "code": "material",
-      "states": [ "silver" ]
-    }
-  ],
   "enabled": true,
   "attributes": {
     "handbook": {
       "groupBy": [ "smallbellparts-*" ],
+      "createdBy": "metalmolding",
       "extraSections": [
         {
           "title": "rpvoicechat:Handbook.Usage.smallbellparts.Title",
@@ -26,6 +21,12 @@
   "shape": {
     "base": "item/smallbellparts"
   },
+  "variantgroups": [
+    {
+      "code": "metal",
+      "states": [ "silver" ]
+    }
+  ],
   "guiTransform": {
     "translation": {
       "x": 0,

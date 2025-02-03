@@ -17,7 +17,15 @@
       "block/callbell/callbell_1",
       "block/callbell/callbell_2",
       "block/callbell/callbell_3"
-    ]
+    ],
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-callbell.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-callbell.Text"
+        }
+      ]
+    }
   },
   "rainPermeable": true,
   "sidesolid": {
