@@ -1,8 +1,8 @@
 using RPVoiceChat.GameContent.BlockEntities;
 using RPVoiceChat.GameContent.Blocks;
 using RPVoiceChat.GameContent.Items;
-using RPVoiceChat.GameContent.BlockBehaviours;
-using RPVoiceChat.GameContent.BlockEntityBehaviours;
+using RPVoiceChat.GameContent.BlockBehaviors;
+using RPVoiceChat.GameContent.BlockEntityBehaviors;
 using RPVoiceChat.Utils;
 using Vintagestory.API.Common;
 
@@ -31,8 +31,8 @@ namespace RPVoiceChat
             ItemRegistry.RegisterItems(api);
             BlockRegistry.RegisterBlocks(api);
             BlockEntityRegistry.RegisterBlockEntities(api);
-            BlockBehaviourRegistry.RegisterBlockEntityBehaviours(api);
-            BlockEntityBehaviourRegistry.RegisterBlockEntityBehaviours(api);
+            BlockBehaviorRegistry.RegisterBlockEntityBehaviors(api);
+            BlockEntityBehaviorRegistry.RegisterBlockEntityBehaviors(api);
 
         }
 
@@ -42,8 +42,8 @@ namespace RPVoiceChat
 
             if (api.Side == EnumAppSide.Server)
             {
-                BlockBehaviourRegistry.AddBehaviours(api);
-                BlockEntityBehaviourRegistry.AddBlockEntityBehaviours(api);
+                BlockBehaviorRegistry.AddBehaviors(api);
+                BlockEntityBehaviorRegistry.AddBlockEntityBehaviors(api);
             }
         }
 

@@ -5,16 +5,16 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.Util;
 
-namespace RPVoiceChat.GameContent.BlockEntityBehaviours
+namespace RPVoiceChat.GameContent.BlockEntityBehaviors
 {
-    public class BlockEntityBehaviourRegistry
+    public class BlockEntityBehaviorRegistry
     {
-        public static void RegisterBlockEntityBehaviours(ICoreAPI api)
+        public static void RegisterBlockEntityBehaviors(ICoreAPI api)
         {
-            api.RegisterBlockEntityBehaviorClass("BERingable", typeof(BEBehaviourRingable));
+            api.RegisterBlockEntityBehaviorClass("BERingable", typeof(BEBehaviorRingable));
         }
 
-        public static void AddBlockEntityBehaviours(ICoreAPI api)
+        public static void AddBlockEntityBehaviors(ICoreAPI api)
         {
             // If block has "Door" behaviour on it add the Ringable behaviour
             foreach (Block block in api.World.Blocks.Where(x => x != null && x.Code != null && x.BlockBehaviors.Any(behaviour => behaviour.GetType().Name == "BlockBehaviorDoor" || behaviour.GetType().Name == "BlockBehaviorTrapDoor")))

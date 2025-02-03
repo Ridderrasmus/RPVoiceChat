@@ -1,4 +1,4 @@
-﻿using RPVoiceChat.GameContent.BlockEntityBehaviours;
+﻿using RPVoiceChat.GameContent.BlockEntityBehaviors;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,11 +9,11 @@ using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 
-namespace RPVoiceChat.GameContent.BlockBehaviours
+namespace RPVoiceChat.GameContent.BlockBehaviors
 {
-    class BehaviourRingable : BlockBehavior
+    class BehaviorRingable : BlockBehavior
     {
-        public BehaviourRingable(Block block) : base(block)
+        public BehaviorRingable(Block block) : base(block)
         {
         }
 
@@ -21,7 +21,7 @@ namespace RPVoiceChat.GameContent.BlockBehaviours
         {
 
             Block block = world.BlockAccessor.GetBlock(blockSel.Position);
-            BEBehaviourRingable? ringable = world.GetBlockAccessor(false, false, false).GetBlockEntity(blockSel.Position)?.GetBehavior<BEBehaviourRingable>();
+            BEBehaviorRingable? ringable = world.GetBlockAccessor(false, false, false).GetBlockEntity(blockSel.Position)?.GetBehavior<BEBehaviorRingable>();
 
             if (ringable == null)
                 return base.OnBlockInteractStart(world, byPlayer, blockSel, ref handling);
@@ -68,7 +68,7 @@ namespace RPVoiceChat.GameContent.BlockBehaviours
 
             if (byPlayer.WorldData.CurrentGameMode != EnumGameMode.Creative)
             {
-                BEBehaviourRingable? ringable = world.GetBlockAccessor(false, false, false).GetBlockEntity(pos).GetBehavior<BEBehaviourRingable>();
+                BEBehaviorRingable? ringable = world.GetBlockAccessor(false, false, false).GetBlockEntity(pos).GetBehavior<BEBehaviorRingable>();
                 
                 ItemStack stack = new ItemStack(world.GetItem(new AssetLocation(RPVoiceChatMod.modID, ringable.BellPartCode)));
                 stack.StackSize = 1;

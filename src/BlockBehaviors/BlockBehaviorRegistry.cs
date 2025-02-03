@@ -2,22 +2,22 @@
 using Vintagestory.API.Common;
 using Vintagestory.API.Util;
 
-namespace RPVoiceChat.GameContent.BlockBehaviours
+namespace RPVoiceChat.GameContent.BlockBehaviors
 {
-    public class BlockBehaviourRegistry
+    public class BlockBehaviorRegistry
     {
 
-        public static void RegisterBlockEntityBehaviours(ICoreAPI api)
+        public static void RegisterBlockEntityBehaviors(ICoreAPI api)
         {
-            api.RegisterBlockBehaviorClass("Ringable", typeof(BehaviourRingable));
+            api.RegisterBlockBehaviorClass("Ringable", typeof(BehaviorRingable));
         }
 
-        public static void AddBehaviours(ICoreAPI api)
+        public static void AddBehaviors(ICoreAPI api)
         {
             // If block has "Door" behaviour on it add the Ringable behaviour
             foreach (Block block in api.World.Blocks.Where(x => x != null && x.Code != null && x.BlockBehaviors.Any(behaviour => behaviour.GetType().Name == "BlockBehaviorDoor" || behaviour.GetType().Name == "BlockBehaviorTrapDoor")))
             {
-                BehaviourRingable behaviour = new BehaviourRingable(block);
+                BehaviorRingable behaviour = new BehaviorRingable(block);
                 block.CollectibleBehaviors = block.CollectibleBehaviors.Append(behaviour);
                 block.BlockBehaviors = block.BlockBehaviors.Append(behaviour);
             }

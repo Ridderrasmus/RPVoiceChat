@@ -6,14 +6,14 @@ using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.GameContent;
 
-namespace RPVoiceChat.GameContent.BlockEntityBehaviours
+namespace RPVoiceChat.GameContent.BlockEntityBehaviors
 {
-    public class BEBehaviourRingable : BlockEntityBehavior
+    public class BEBehaviorRingable : BlockEntityBehavior
     {
         public string BellPartCode { get; set; } = string.Empty;
         public DateTime? LastRung { get; set; }
 
-        public BEBehaviourRingable(BlockEntity blockentity) : base(blockentity)
+        public BEBehaviorRingable(BlockEntity blockentity) : base(blockentity)
         {
         }
 
