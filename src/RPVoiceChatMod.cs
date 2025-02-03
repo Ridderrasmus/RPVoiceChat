@@ -1,6 +1,8 @@
 using RPVoiceChat.GameContent.BlockEntities;
 using RPVoiceChat.GameContent.Blocks;
 using RPVoiceChat.GameContent.Items;
+using RPVoiceChat.GameContent.BlockBehaviors;
+using RPVoiceChat.GameContent.BlockEntityBehaviors;
 using RPVoiceChat.Utils;
 using Vintagestory.API.Common;
 
@@ -29,7 +31,20 @@ namespace RPVoiceChat
             ItemRegistry.RegisterItems(api);
             BlockRegistry.RegisterBlocks(api);
             BlockEntityRegistry.RegisterBlockEntities(api);
-            
+            BlockBehaviorRegistry.RegisterBlockEntityBehaviors(api);
+            BlockEntityBehaviorRegistry.RegisterBlockEntityBehaviors(api);
+
+        }
+
+        public override void AssetsFinalize(ICoreAPI api)
+        {
+            base.AssetsFinalize(api);
+
+            if (api.Side == EnumAppSide.Server)
+            {
+                BlockBehaviorRegistry.AddBehaviors(api);
+                BlockEntityBehaviorRegistry.AddBlockEntityBehaviors(api);
+            }
         }
 
         public override void Dispose()

@@ -1,7 +1,7 @@
 ﻿using ProtoBuf;
 using Vintagestory.API.MathTools;
 
-namespace RPVoiceChat.src.Systems
+namespace RPVoiceChat.GameContent.Systems
 {
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     public class WireNetworkMessage
