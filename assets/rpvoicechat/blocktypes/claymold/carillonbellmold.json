@@ -1,0 +1,73 @@
+{
+  "code": "carillonbellmold",
+  "enabled": false,
+  "classByType": {
+    "carillonbellmold-raw-*": "Block",
+    "carillonbellmold-burned-*": "BlockToolMold"
+  },
+  "behaviorsByType": {
+    "*-raw-*": [
+      {
+        "name": "GroundStorable",
+        "properties": { "layout": "SingleCenter" }
+      },
+      {
+        "name": "Unplaceable",
+        "__comment": "The ground storable obsoletes this being a block. Should be an item, but is kept a block for backwards compatibility"
+      },
+      { "name": "RightClickPickup" }
+    ],
+    "*": [ { "name": "UnstableFalling" } ]
+  },
+  "variantgroups": [
+    {
+      "code": "materialtype",
+      "states": [ "raw", "burned" ]
+    },
+    {
+      "code": "tooltype",
+      "states": [ "carillonbell" ]
+    }
+  ],
+  "attributesByType": {
+    "carillonbellmold-burned-*": {
+      "requiredUnits": 200,
+      "fillHeight": 4,
+      "fillQuadsByLevel": [
+        {
+          "x1": 6,
+          "z1": 5,
+          "x2": 11,
+          "z2": 10
+        },
+        {
+          "x1": 6,
+          "z1": 5,
+          "x2": 11,
+          "z2": 10
+        },
+        {
+          "x1": 6,
+          "z1": 5,
+          "x2": 11,
+          "z2": 10
+        },
+        {
+          "x1": 6,
+          "z1": 5,
+          "x2": 11,
+          "z2": 10
+        }
+      ],
+      "moldrackable": false,
+      "drop": {
+        "type": "item",
+        "code": "{tooltype}-{metal}",
+        "quantity": 1
+      }
+    }
+  },
+  "entityClassByType": {
+    "carillonbellmold-burned-*": "ToolMold"
+  }
+}

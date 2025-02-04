@@ -7,7 +7,7 @@
   "blockmaterial": "Metal",
   "drawtype": "json",
   "shape": {
-    "base": "block/churchbell/bigbell"
+    "base": "block/churchbell/churchbell"
   },
   "behaviors": [
     {
@@ -41,7 +41,7 @@
     "soundVolume": 1,
     "cooldownTime": 3,
     "blockInteractSounds": [
-      "block/churchbell/bigbell"
+      "block/churchbell/churchbell"
     ]
   },
   "rainPermeable": true,

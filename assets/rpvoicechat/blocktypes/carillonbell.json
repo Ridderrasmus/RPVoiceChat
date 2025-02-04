@@ -1,0 +1,55 @@
+{
+  "code": "carillonbell",
+  "enabled": false,
+  "class": "soundemittingblock",
+  "creativeinventory": {
+    "general": [ "*" ]
+  },
+  "blockmaterial": "Metal",
+  "drawtype": "json",
+  "shape": {
+    "base": "block/churchbell/carillonbell"
+  },
+  "attributes": {
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-carillonbell.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-carillonbell.Text"
+        }
+      ]
+    },
+    "soundAudibleDistance": 128,
+    "soundVolume": 1,
+    "cooldownTime": 3
+  },
+  "rainPermeable": true,
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "lightAbsorption": 0,
+  "resistance": 1,
+  "sounds": {
+    "place": "game:block/anvil",
+    "walk": "game:walk/stone"
+  },
+  "guiTransform": {
+    "translation": {
+      "x": -1,
+      "y": 9,
+      "z": 0
+    },
+    "scale": 0.26
+  },
+  "fpHandTransform": {
+    "translation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "scale": 0.5
+  }
+}

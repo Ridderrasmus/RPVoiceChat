@@ -1,0 +1,18 @@
+{
+  "editor": {
+    "allAngles": true,
+    "entityTextureMode": false
+  },
+  "textureWidth": 16,
+  "textureHeight": 16,
+  "textureSizes": {
+  },
+  "textures": {
+    "lead": "game:block/metal/ingot/lead",
+    "steel": "game:block/metal/ingot/steel",
+    "brass": "game:block/metal/ingot/brass"
+  },
+  "elements": [
+
+  ]
+}
