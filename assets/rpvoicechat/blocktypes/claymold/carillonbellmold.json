@@ -29,6 +29,9 @@
       "states": [ "carillonbell" ]
     }
   ],
+  "entityClassByType": {
+    "carillonbellmold-burned-*": "ToolMold"
+  },
   "attributesByType": {
     "carillonbellmold-burned-*": {
       "requiredUnits": 200,

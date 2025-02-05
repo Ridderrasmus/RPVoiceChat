@@ -1,8 +1,8 @@
 {
-  "code": "toolmold",
+  "code": "smallbellpartsmold",
   "classByType": {
-    "toolmold-raw-*": "Block",
-    "toolmold-burned-*": "BlockToolMold"
+    "smallbellparts-raw-*": "Block",
+    "smallbellpartsburned-*": "BlockToolMold"
   },
   "behaviorsByType": {
     "*-raw-*": [
@@ -19,7 +19,7 @@
     "*": [ { "name": "UnstableFalling" } ]
   },
   "entityBehaviorsByType": {
-    "toolmold-burned-*": [ { "name": "TemperatureSensitive" } ]
+    "smallbellpartsmold-burned-*": [ { "name": "TemperatureSensitive" } ]
   },
   "variantgroups": [
     {
@@ -33,8 +33,12 @@
       ]
     }
   ],
+  "entityClassByType": {
+    "smallbellpartsmold-burned-*": "ToolMold"
+  },
   "attributesByType": {
-    "toolmold-burned-smallbellparts": {
+    "smallbellpartsmold-burned-smallbellparts": {
+      "allowedMetals": [ "silver" ],
       "requiredUnits": 50,
       "fillHeight": 2,
       "fillQuadsByLevel": [
@@ -53,18 +57,15 @@
       }
     }
   },
-  "entityClassByType": {
-    "toolmold-burned-*": "ToolMold"
-  },
   "combustiblePropsByType": {
-    "toolmold-raw-*": {
+    "smallbellpartsmold-raw-*": {
       "meltingPoint": 650,
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
       "smeltedStack": {
         "type": "block",
-        "code": "toolmold-burned-{tooltype}"
+        "code": "smallbellpartsmold-burned-{tooltype}"
       },
       "requiresContainer": false
     }
@@ -79,8 +80,8 @@
   "maxStackSize": 8,
   "lightAbsorption": 0,
   "texturesByType": {
-    "toolmold-raw-*": { "all": { "base": "game:block/clay/blueclay" } },
-    "toolmold-burned-*": {
+    "smallbellpartsmold-raw-*": { "all": { "base": "game:block/clay/blueclay" } },
+    "smallbellpartsmold-burned-*": {
       "all": { "base": "game:block/clay/ceramic" }
     }
   },

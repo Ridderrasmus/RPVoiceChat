@@ -9,12 +9,6 @@
   "shape": {
     "base": "item/royalhornhandle"
   },
-  "variantgroups": [
-    {
-      "code": "metal",
-      "states": [ "brass" ]
-    }
-  ],
   "guiTransform": {
     "translation": {
       "x": 0,

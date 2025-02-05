@@ -64,10 +64,10 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 		<None Remove="assets\rpvoicechat\blocktypes\claymold\bellpartmold.json" />
-		<None Remove="assets\rpvoicechat\recipes\clayforming\Bellmold-layer-topmostR.json" />
-		<None Remove="assets\rpvoicechat\recipes\clayforming\Bellmold-part-bottomR.json" />
-		<None Remove="assets\rpvoicechat\recipes\clayforming\Bellmold-part-middleR.json" />
-		<None Remove="assets\rpvoicechat\recipes\clayforming\Bellmold-part-topR.json" />
+		<None Remove="assets\rpvoicechat\recipes\clayforming\bellmold-layer-topmostR.json" />
+		<None Remove="assets\rpvoicechat\recipes\clayforming\bellmold-part-bottomR.json" />
+		<None Remove="assets\rpvoicechat\recipes\clayforming\bellmold-part-middleR.json" />
+		<None Remove="assets\rpvoicechat\recipes\clayforming\bellmold-part-topR.json" />
 		<None Remove="assets\rpvoicechat\blocktypes\connnector.json" />
 		<None Remove="assets\rpvoicechat\blocktypes\telegraph.json" />
 		<Content Include="modinfo.json">

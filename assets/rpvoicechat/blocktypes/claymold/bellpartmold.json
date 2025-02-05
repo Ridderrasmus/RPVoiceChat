@@ -28,6 +28,9 @@
       "states": [ "part-brass-bottom", "part-brass-middle", "part-brass-top", "layer-brass-topmost" ]
     }
   ],
+  "entityClassByType": {
+    "bellmold-burned-*": "ToolMold"
+  },
   "attributesByType": {
     "bellmold-burned-part-brass-bottom": {
       "requiredUnits": 300,
@@ -105,9 +108,6 @@
         "quantity": 1
       }
     }
-  },
-  "entityClassByType": {
-    "bellmold-burned-*": "ToolMold"
   },
   "combustiblePropsByType": {
     "bellmold-raw-*": {

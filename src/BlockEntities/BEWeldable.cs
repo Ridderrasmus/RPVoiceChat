@@ -109,7 +109,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 FluxMeshRefs[i] = capi.Render.UploadMesh(meshdata);
             }
 
-            // If the inventory contains the big bell parts, then we want to render the big bell part mesh
+            // If the inventory contains the church bell parts, then we want to render the big bell part mesh
             for (int i = 0; i < PartMeshRefs.Length; i++)
             {
                 if (Inv[i + 1].Empty) continue;

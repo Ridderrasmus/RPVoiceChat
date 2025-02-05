@@ -32,6 +32,9 @@
       "states": [ "royalhornhead" ]
     }
   ],
+  "entityClassByType": {
+    "royalhornheadmold-burned-*": "ToolMold"
+  },
   "attributesByType": {
     "royalhornheadmold-burned-*": {
       "requiredUnits": 200,
@@ -69,9 +72,6 @@
         "quantity": 1
       }
     }
-  },
-  "entityClassByType": {
-    "royalhornheadmold-burned-*": "ToolMold"
   },
   "combustiblePropsByType": {
     "royalhornheadmold-raw-*": {
