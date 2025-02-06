@@ -1,6 +1,6 @@
 {
   "code": "carillonbell",
-  "enabled": false,
+  "enabled": true,
   "class": "soundemittingblock",
   "creativeinventory": {
     "general": [ "*" ]
@@ -8,14 +8,24 @@
   "blockmaterial": "Metal",
   "drawtype": "json",
   "shape": {
-    "base": "block/churchbell/carillonbell"
+    "base": "block/carillonbell"
+  },
+  "variantgroups": [
+    {
+      "code": "metal",
+      "states": [ "blackbronze", "brass", "copper", "tinbronze", "iron", "steel", "silver", "gold" ]
+    }
+  ],
+  "textures": {
+    "metal": { "base": "game:block/metal/plate/{metal}" }
   },
   "attributes": {
     "handbook": {
+      "createdBy": "metalmolding",
       "extraSections": [
         {
-          "title": "rpvoicechat:Handbook.Usage.block-carillonbell.Title",
-          "text": "rpvoicechat:Handbook.Usage.block-carillonbell.Text"
+          "title": "rpvoicechat:Handbook.Usage.block-carillonbell-{metal}.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-carillonbell-{metal}.Text"
         }
       ]
     },
@@ -42,14 +52,29 @@
       "y": 9,
       "z": 0
     },
-    "scale": 0.26
-  },
-  "fpHandTransform": {
-    "translation": {
-      "x": 0,
-      "y": 0,
-      "z": 0
+    "origin": {
+      "x": 0.5,
+      "y": 0.18,
+      "z": 0.5
     },
-    "scale": 0.5
+    "scale": 1.76
+  },
+  "tpHandTransform": {
+    "translation": {
+      "x": -2,
+      "y": -1,
+      "z": -1.5
+    },
+    "rotation": {
+      "x": 0,
+      "y": -80,
+      "z": -5
+    },
+    "origin": {
+      "x": 0.6,
+      "y": 0,
+      "z": 0.5
+    },
+    "scale": 1
   }
 }
