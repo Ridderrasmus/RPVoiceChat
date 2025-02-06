@@ -20,7 +20,7 @@ namespace RPVoiceChat.Gui
 
         public static LoadedTexture GetRenderer(EntityPlayer entity, double[] color = null, TextBackground bg = null)
         {
-            string playerName = entity.GetBehavior<EntityBehaviorNameTag>()?.DisplayName;
+            string playerName = entity?.GetBehavior<EntityBehaviorNameTag>()?.DisplayName;
             if (playerName == null || playerName.Length == 0) return null;
 
             color ??= ColorUtil.WhiteArgbDouble;

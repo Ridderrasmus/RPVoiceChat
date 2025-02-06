@@ -25,7 +25,7 @@ namespace RPVoiceChat
 
         public static bool DefaultEntitlementTagRenderer_renderTag(ref LoadedTexture __result, double[] ___color, TextBackground ___background, Entity entity)
         {
-            if (entity is not EntityPlayer playerEntity) return true;
+            if (entity is null || __result is null || entity is not EntityPlayer playerEntity) return true;
 
             __result = PlayerNameTagRenderer.GetRenderer(playerEntity, ___color, ___background);
             return false;
@@ -33,7 +33,7 @@ namespace RPVoiceChat
 
         public static bool DefaultNameTagRenderer(ref LoadedTexture __result, Entity entity)
         {
-            if (entity is not EntityPlayer playerEntity) return true;
+            if (entity is null || __result is null || entity is not EntityPlayer playerEntity) return true;
 
             __result = PlayerNameTagRenderer.GetRenderer(playerEntity);
             return false;
