@@ -2,7 +2,7 @@
   "code": "smallbellpartsmold",
   "classByType": {
     "smallbellparts-raw-*": "Block",
-    "smallbellpartsburned-*": "BlockToolMold"
+    "smallbellparts-burned-*": "BlockToolMold"
   },
   "behaviorsByType": {
     "*-raw-*": [
