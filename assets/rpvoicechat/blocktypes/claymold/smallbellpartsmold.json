@@ -38,7 +38,6 @@
   },
   "attributesByType": {
     "smallbellpartsmold-burned-smallbellparts": {
-      "allowedMetals": [ "silver" ],
       "requiredUnits": 50,
       "fillHeight": 2,
       "fillQuadsByLevel": [
