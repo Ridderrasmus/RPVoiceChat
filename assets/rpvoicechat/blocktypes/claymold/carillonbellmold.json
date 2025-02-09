@@ -1,6 +1,6 @@
 {
   "code": "carillonbellmold",
-  "enabled": true,
+  "enabled": false,
   "classByType": {
     "carillonbellmold-raw-*": "Block",
     "carillonbellmold-burned-*": "BlockToolMold"
@@ -33,9 +33,9 @@
     "carillonbellmold-burned-*": "ToolMold"
   },
   "attributesByType": {
-    "carillonbellmold-burned-*": {
+    "carillonbellmold-burned-carillonbell": {
       "requiredUnits": 800,
-      "fillHeight": 14,
+      "fillHeight": 13,
       "fillQuadsByLevel": [
         {
           "x1": 6,
@@ -64,8 +64,8 @@
       ],
       "moldrackable": false,
       "drop": {
-        "type": "item",
-        "code": "{tooltype}-{metal}",
+        "type": "block",
+        "code": "carillonbell-{metal}",
         "quantity": 1
       }
     }

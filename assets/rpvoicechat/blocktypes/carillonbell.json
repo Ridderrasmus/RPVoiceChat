@@ -1,7 +1,8 @@
 {
   "code": "carillonbell",
-  "enabled": true,
+  "enabled": false,
   "class": "soundemittingblock",
+  "maxstacksize": 1,
   "creativeinventory": {
     "general": [ "*" ]
   },
@@ -21,6 +22,7 @@
   },
   "attributes": {
     "handbook": {
+      "groupBy": [ "carillonbell-*" ],
       "createdBy": "metalmolding",
       "extraSections": [
         {

@@ -1,5 +1,6 @@
 {
   "code": "churchbellmold",
+  "enabled": true,
   "classByType": {
     "churchbellmold-raw-*": "Block",
     "churchbellmold-burned-*": "BlockToolMold"
