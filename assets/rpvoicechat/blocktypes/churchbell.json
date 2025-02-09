@@ -1,5 +1,6 @@
 {
   "code": "churchbell",
+  "enabled": true,
   "class": "soundemittingblock",
   "creativeinventory": {
     "general": [ "*" ]

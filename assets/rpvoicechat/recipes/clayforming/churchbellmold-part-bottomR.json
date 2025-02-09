@@ -36,6 +36,6 @@
   "name": "Bellmold Bottom Part",
   "output": {
     "type": "block",
-    "code": "bellmold-raw-part-brass-bottom"
+    "code": "churchbellmold-raw-part-brass-bottom"
   }
 }
