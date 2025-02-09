@@ -1,6 +1,6 @@
 {
   "code": "carillonbellmold",
-  "enabled": false,
+  "enabled": true,
   "classByType": {
     "carillonbellmold-raw-*": "Block",
     "carillonbellmold-burned-*": "BlockToolMold"
