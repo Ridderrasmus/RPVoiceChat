@@ -2,9 +2,7 @@
 using System;
 using System.Text;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
-using Vintagestory.GameContent;
 
 namespace RPVoiceChat.GameContent.BlockEntityBehaviors
 {

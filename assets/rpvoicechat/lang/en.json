@@ -173,5 +173,7 @@
   "Handbook.Usage.block-carillonbell-silver.Text": "This is a carillon bell. Hanging from the ceiling, right-clicking it will ring it, playing the note A.",
   "Handbook.Usage.block-carillonbell-cupronickel.Text": "This is a carillon bell. Hanging from the ceiling, right-clicking it will ring it, playing the note A#.",
   "Handbook.Usage.block-carillonbell-gold.Text": "This is a carillon bell. Hanging from the ceiling, right-clicking it will ring it, playing the note B.",
-  "Handbook.Usage.block-carillonbell-electrum.Text": "This is a carillon bell. Hanging from the ceiling, right-clicking it will ring it, playing the note C(8va)."
+  "Handbook.Usage.block-carillonbell-electrum.Text": "This is a carillon bell. Hanging from the ceiling, right-clicking it will ring it, playing the note C(8va).",
+
+  "game:placefailure-block_not_on_ceiling": "You can only place this block on a ceiling."
 }

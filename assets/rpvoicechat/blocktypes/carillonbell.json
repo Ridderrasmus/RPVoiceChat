@@ -2,6 +2,9 @@
   "code": "carillonbell",
   "enabled": true,
   "class": "soundemittingblock",
+  "behaviors": [
+    { "name": "CeilingOnly" }
+  ],
   "maxstacksize": 1,
   "creativeinventory": {
     "general": [ "*" ]
@@ -54,7 +57,7 @@
   "guiTransform": {
     "translation": {
       "x": -1,
-      "y": 9,
+      "y": 18,
       "z": 0
     },
     "origin": {
