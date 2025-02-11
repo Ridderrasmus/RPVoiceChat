@@ -10,7 +10,6 @@ namespace RPVoiceChat.GameContent.BlockBehaviors
         public static void RegisterBlockEntityBehaviors(ICoreAPI api)
         {
             api.RegisterBlockBehaviorClass("Ringable", typeof(BehaviorRingable));
-            api.RegisterBlockBehaviorClass("CeilingOnly", typeof(BlockBehaviorCeilingOnly));
         }
 
         public static void AddBehaviors(ICoreAPI api)

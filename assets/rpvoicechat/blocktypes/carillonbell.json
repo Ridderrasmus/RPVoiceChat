@@ -3,7 +3,25 @@
   "enabled": true,
   "class": "soundemittingblock",
   "behaviors": [
-    { "name": "CeilingOnly" }
+    {
+      "name": "UnstableFalling",
+      "properties": {
+        "attachableFaces": [ "up" ],
+        "impactDamageMul": 10,
+        "fallSound": "block/carillonbell/carillonbell_{metal}",
+        "dustIntensity": 1,
+        "attachmentAreas": {
+          "up": {
+            "x1": 4.5,
+            "y1": 5,
+            "z1": 4.5,
+            "x2": 5.5,
+            "y2": 6,
+            "z2": 6.5
+          }
+        }
+      }
+    }
   ],
   "maxstacksize": 1,
   "creativeinventory": {
@@ -36,7 +54,7 @@
     },
     "soundAudibleDistance": 128,
     "soundVolume": 1,
-    "cooldownTime": 3,
+    "cooldownTime": 1.5,
     "blockInteractSounds": [
       "block/carillonbell/carillonbell_{metal}"
     ]

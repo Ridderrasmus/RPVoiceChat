@@ -158,6 +158,4 @@
   "Handbook.Usage.block-carillonbell-cupronickel.Text": "Il s'agit d'une cloche de carillon. Accrochée au plafond, un clic droit permet de la faire sonner, en émettant la note La#.",
   "Handbook.Usage.block-carillonbell-gold.Text": "Il s'agit d'une cloche de carillon. Accrochée au plafond, un clic droit permet de la faire sonner, en émettant la note Si.",
   "Handbook.Usage.block-carillonbell-electrum.Text": "Il s'agit d'une cloche de carillon. Accrochée au plafond, un clic droit permet de la faire sonner, en émettant la note Do(8va).",
-
-  "game:placefailure-block_not_on_ceiling": "Vous ne pouvez placer ce bloc qu'au plafond."
 } 
