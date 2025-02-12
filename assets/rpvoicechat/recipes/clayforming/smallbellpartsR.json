@@ -33,6 +33,6 @@
   "name": "Small bell parts mold",
   "output": {
     "type": "block",
-    "code": "toolmold-raw-smallbellparts"
+    "code": "smallbellpartsmold-raw-smallbellparts"
   }
 }

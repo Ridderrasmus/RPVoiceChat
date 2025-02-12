@@ -1,8 +1,9 @@
 {
-  "code": "bellmold",
+  "code": "churchbellmold",
+  "enabled": true,
   "classByType": {
-    "bellmold-raw-*": "Block",
-    "bellmold-burned-*": "BlockToolMold"
+    "churchbellmold-raw-*": "Block",
+    "churchbellmold-burned-*": "BlockToolMold"
   },
   "behaviorsByType": {
     "*-raw-*": [
@@ -28,8 +29,11 @@
       "states": [ "part-brass-bottom", "part-brass-middle", "part-brass-top", "layer-brass-topmost" ]
     }
   ],
+  "entityClassByType": {
+    "churchbellmold-burned-*": "ToolMold"
+  },
   "attributesByType": {
-    "bellmold-burned-part-brass-bottom": {
+    "churchbellmold-burned-part-brass-bottom": {
       "requiredUnits": 300,
       "fillHeight": 2,
       "fillQuadsByLevel": [
@@ -48,7 +52,7 @@
         "quantity": 1
       }
     },
-    "bellmold-burned-part-brass-middle": {
+    "churchbellmold-burned-part-brass-middle": {
       "requiredUnits": 300,
       "fillHeight": 2,
       "fillQuadsByLevel": [
@@ -67,7 +71,7 @@
         "quantity": 1
       }
     },
-    "bellmold-burned-part-brass-top": {
+    "churchbellmold-burned-part-brass-top": {
       "requiredUnits": 300,
       "fillHeight": 2,
       "fillQuadsByLevel": [
@@ -86,7 +90,7 @@
         "quantity": 1
       }
     },
-    "bellmold-burned-layer-brass-topmost": {
+    "churchbellmold-burned-layer-brass-topmost": {
       "requiredUnits": 300,
       "fillHeight": 2,
       "fillQuadsByLevel": [
@@ -106,18 +110,15 @@
       }
     }
   },
-  "entityClassByType": {
-    "bellmold-burned-*": "ToolMold"
-  },
   "combustiblePropsByType": {
-    "bellmold-raw-*": {
+    "churchbellmold-raw-*": {
       "meltingPoint": 650,
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
       "smeltedStack": {
         "type": "block",
-        "code": "bellmold-burned-{layer}"
+        "code": "churchbellmold-burned-{layer}"
       },
       "requiresContainer": false
     }
@@ -132,17 +133,17 @@
   "maxStackSize": 8,
   "lightAbsorption": 0,
   "texturesByType": {
-    "bellmold-raw-*": { "all": { "base": "game:block/clay/blueclay" } },
-    "bellmold-burned-*": {
+    "churchbellmold-raw-*": { "all": { "base": "game:block/clay/blueclay" } },
+    "churchbellmold-burned-*": {
       "all": { "base": "game:block/clay/ceramic" }
     }
   },
   "shapeByType": {
 
-    "bellmold-*-part-*-bottom": { "base": "block/clay/mold/bellmold-part-bottom" },
-    "bellmold-*-part-*-middle": { "base": "block/clay/mold/bellmold-part-middle" },
-    "bellmold-*-part-*-top": { "base": "block/clay/mold/bellmold-part-top" },
-    "bellmold-*-layer-*-topmost": { "base": "block/clay/mold/bellmold-layer-topmost" }
+    "churchbellmold-*-part-*-bottom": { "base": "block/clay/mold/churchbellmold-part-bottom" },
+    "churchbellmold-*-part-*-middle": { "base": "block/clay/mold/churchbellmold-part-middle" },
+    "churchbellmold-*-part-*-top": { "base": "block/clay/mold/churchbellmold-part-top" },
+    "churchbellmold-*-layer-*-topmost": { "base": "block/clay/mold/churchbellmold-layer-topmost" }
   },
   "sounds": {
     "walk": "game:walk/stone"

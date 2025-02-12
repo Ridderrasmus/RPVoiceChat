@@ -1,14 +1,15 @@
 {
-  "code": "smallbellpartsmold",
+  "code": "carillonbellmold",
+  "enabled": true,
   "classByType": {
-    "smallbellpartsmold-raw-*": "Block",
-    "smallbellpartsmold-burned-*": "BlockToolMold"
+    "carillonbellmold-raw-*": "Block",
+    "carillonbellmold-burned-*": "BlockToolMold"
   },
   "behaviorsByType": {
     "*-raw-*": [
       {
         "name": "GroundStorable",
-        "properties": { "layout": "Halves" }
+        "properties": { "layout": "SingleCenter" }
       },
       {
         "name": "Unplaceable",
@@ -18,9 +19,6 @@
     ],
     "*": [ { "name": "UnstableFalling" } ]
   },
-  "entityBehaviorsByType": {
-    "smallbellpartsmold-burned-*": [ { "name": "TemperatureSensitive" } ]
-  },
   "variantgroups": [
     {
       "code": "materialtype",
@@ -28,43 +26,59 @@
     },
     {
       "code": "tooltype",
-      "states": [
-        "smallbellparts"
-      ]
+      "states": [ "carillonbell" ]
     }
   ],
   "entityClassByType": {
-    "smallbellpartsmold-burned-*": "ToolMold"
+    "carillonbellmold-burned-*": "ToolMold"
   },
   "attributesByType": {
-    "smallbellpartsmold-burned-smallbellparts": {
-      "requiredUnits": 50,
-      "fillHeight": 2,
+    "carillonbellmold-burned-carillonbell": {
+      "requiredUnits": 800,
+      "fillHeight": 13,
       "fillQuadsByLevel": [
         {
           "x1": 6,
-          "z1": 4,
-          "x2": 10,
-          "z2": 12
+          "z1": 5,
+          "x2": 11,
+          "z2": 10
+        },
+        {
+          "x1": 6,
+          "z1": 5,
+          "x2": 11,
+          "z2": 10
+        },
+        {
+          "x1": 6,
+          "z1": 5,
+          "x2": 11,
+          "z2": 10
+        },
+        {
+          "x1": 6,
+          "z1": 5,
+          "x2": 11,
+          "z2": 10
         }
       ],
       "moldrackable": false,
       "drop": {
-        "type": "item",
-        "code": "smallbellparts-silver",
+        "type": "block",
+        "code": "carillonbell-{metal}",
         "quantity": 1
       }
     }
   },
   "combustiblePropsByType": {
-    "smallbellpartsmold-raw-*": {
+    "carillonbellmold-raw-*": {
       "meltingPoint": 650,
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
       "smeltedStack": {
         "type": "block",
-        "code": "smallbellpartsmold-burned-{tooltype}"
+        "code": "carillonbellmold-burned-{tooltype}"
       },
       "requiresContainer": false
     }
@@ -76,16 +90,16 @@
   },
   "replaceable": 700,
   "resistance": 1.5,
-  "maxStackSize": 8,
+  "maxStackSize": 1,
   "lightAbsorption": 0,
   "texturesByType": {
-    "smallbellpartsmold-raw-*": { "all": { "base": "game:block/clay/blueclay" } },
-    "smallbellpartsmold-burned-*": {
+    "carillonbellmold-raw-*": { "all": { "base": "game:block/clay/blueclay" } },
+    "carillonbellmold-burned-*": {
       "all": { "base": "game:block/clay/ceramic" }
     }
   },
   "shape": {
-    "base": "block/clay/mold/smallbellpartsmold"
+    "base": "block/clay/mold/{tooltype}mold"
   },
   "sounds": {
     "walk": "game:walk/stone"
@@ -141,49 +155,34 @@
       },
       "origin": {
         "x": 0.5,
-        "y": 0.0625,
+        "y": 0.35,
         "z": 0.5
       },
-      "scale": 1.33
+      "scale": 1.15
     }
   },
-  "tpHandTransformByType": {
-    "*": {
-      "translation": {
-        "x": -1,
-        "y": 0.2,
-        "z": -0.9
-      },
-      "rotation": {
-        "x": -87,
-        "y": 9,
-        "z": 4
-      },
-      "origin": {
-        "x": 0.5,
-        "y": 0.125,
-        "z": 0.5
-      },
-      "scale": 0.5
+  "tpHandTransform": {
+    "translation": {
+      "x": -1.23,
+      "y": -0.91,
+      "z": -0.8
+    },
+    "rotation": {
+      "x": -2,
+      "y": 25,
+      "z": -78
     }
   },
-  "fpHandTransformByType": {
-    "*": {
-      "translation": {
-        "x": -0.3,
-        "y": 0,
-        "z": 0.5
-      },
-      "rotation": {
-        "x": 16,
-        "y": -51,
-        "z": 91
-      },
-      "origin": {
-        "x": 0.5,
-        "y": 0.125,
-        "z": 0.5
-      }
+  "tpOffHandTransform": {
+    "translation": {
+      "x": -1.23,
+      "y": -0.91,
+      "z": -0.8
+    },
+    "rotation": {
+      "x": -2,
+      "y": 25,
+      "z": -78
     }
   },
   "groundTransform": {
@@ -202,6 +201,6 @@
       "y": 0,
       "z": 0.5
     },
-    "scale": 1
+    "scale": 2.2
   }
 }

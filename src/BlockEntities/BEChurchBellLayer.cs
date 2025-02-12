@@ -2,15 +2,10 @@
 using RPVoiceChat.Utils;
 using System;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
-using Vintagestory.API.MathTools;
-using Vintagestory.API.Server;
 using Vintagestory.API.Util;
-using Vintagestory.GameContent;
 
 namespace RPVoiceChat.GameContent.BlockEntities
 {
@@ -26,7 +21,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
         
 
 
-        // The slots for the big bell parts are the second, third, fourth, and fifth slots in the inventory
+        // The slots for the church bell parts are the second, third, fourth, and fifth slots in the inventory
         public ItemSlot[] BellLayerSlots => new ItemSlot[] { Inv[1], Inv[2], Inv[3], Inv[4] };
 
         public override string InventoryClassName => "churchbelllayer";
@@ -65,7 +60,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
             
             ICoreClientAPI capi = Api as ICoreClientAPI;
 
-            // If the inventory contains the big bell parts, then we want to render the big bell part mesh
+            // If the inventory contains the church bell parts, then we want to render the church bell part mesh
             for (int i = 0; i < 4; i++)
             {
                 if (BellLayerSlots[i].Empty) continue;
@@ -76,8 +71,8 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 meshdata.Clear();
             }
 
-            // If the inventory contains flux AND two big bell layers then we want to render the flux mesh between the two big bell layers
-            // The fitting flux mesh is derived from the lower big bell layer
+            // If the inventory contains flux AND two church bell layers then we want to render the flux mesh between the two church bell layers
+            // The fitting flux mesh is derived from the lower church bell layer
             for (int i = 0; i < FluxNeeded; i++)
             {
                 if (BellLayerSlots[i].Empty && BellLayerSlots[i+1].Empty) continue;

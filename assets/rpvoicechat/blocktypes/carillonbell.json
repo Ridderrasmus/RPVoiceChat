@@ -1,0 +1,106 @@
+{
+  "code": "carillonbell",
+  "enabled": true,
+  "class": "soundemittingblock",
+  "behaviors": [
+    {
+      "name": "UnstableFalling",
+      "properties": {
+        "attachableFaces": [ "up" ],
+        "impactDamageMul": 10,
+        "fallSound": "block/carillonbell/carillonbell_{metal}",
+        "dustIntensity": 1,
+        "attachmentAreas": {
+          "up": {
+            "x1": 4.5,
+            "y1": 5,
+            "z1": 4.5,
+            "x2": 5.5,
+            "y2": 6,
+            "z2": 6.5
+          }
+        }
+      }
+    }
+  ],
+  "maxstacksize": 1,
+  "creativeinventory": {
+    "general": [ "*" ]
+  },
+  "blockmaterial": "Metal",
+  "drawtype": "json",
+  "shape": {
+    "base": "block/carillonbell"
+  },
+  "variantgroups": [
+    {
+      "code": "metal",
+      "states": [ "blackbronze", "bismuthbronze", "brass", "tinbronze", "copper", "tin", "zinc", "iron", "nickel", "silver", "cupronickel", "gold", "electrum" ]
+    }
+  ],
+  "textures": {
+    "metal": { "base": "game:block/metal/plate/{metal}" }
+  },
+  "attributes": {
+    "handbook": {
+      "groupBy": [ "carillonbell-*" ],
+      "createdBy": "metalmolding",
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-carillonbell.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-carillonbell-{metal}.Text"
+        }
+      ]
+    },
+    "soundAudibleDistance": 128,
+    "soundVolume": 1,
+    "cooldownTime": 1.5,
+    "blockInteractSounds": [
+      "block/carillonbell/carillonbell_{metal}"
+    ]
+  },
+  "rainPermeable": true,
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "lightAbsorption": 0,
+  "resistance": 1,
+  "sounds": {
+    "place": "game:block/anvil",
+    "walk": "game:walk/stone"
+  },
+  "guiTransform": {
+    "translation": {
+      "x": -1,
+      "y": 18,
+      "z": 0
+    },
+    "origin": {
+      "x": 0.5,
+      "y": 0.18,
+      "z": 0.5
+    },
+    "scale": 1.76
+  },
+  "tpHandTransform": {
+    "translation": {
+      "x": -2,
+      "y": -1,
+      "z": -1.5
+    },
+    "rotation": {
+      "x": 0,
+      "y": -80,
+      "z": -5
+    },
+    "origin": {
+      "x": 0.6,
+      "y": 0,
+      "z": 0.5
+    },
+    "scale": 1
+  }
+}
