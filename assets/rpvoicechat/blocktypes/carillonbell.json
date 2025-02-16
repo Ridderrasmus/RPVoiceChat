@@ -4,20 +4,32 @@
   "class": "soundemittingblock",
   "behaviors": [
     {
+      "name": "HorizontalUpDownOrientable"
+    },
+    {
+      // TODO : create a overriden version of UnstableFalling to change "v" variant to "down" after falling
       "name": "UnstableFalling",
       "properties": {
-        "attachableFaces": [ "up" ],
+        "attachableFaces": [ "up", "down" ],
         "impactDamageMul": 10,
         "fallSound": "block/carillonbell/carillonbell_{metal}",
         "dustIntensity": 1,
         "attachmentAreas": {
           "up": {
             "x1": 4.5,
-            "y1": 5,
+            "y1": 0,
             "z1": 4.5,
             "x2": 5.5,
-            "y2": 6,
-            "z2": 6.5
+            "y2": 0,
+            "z2": 5.5
+          },
+          "down": {
+            "x1": 4.5,
+            "y1": 15,
+            "z1": 4.5,
+            "x2": 5.5,
+            "y2": 15,
+            "z2": 5.5
           }
         }
       }
@@ -25,19 +37,28 @@
   ],
   "maxstacksize": 1,
   "creativeinventory": {
-    "general": [ "*" ]
+    "general": [ "*-up-north" ]
   },
   "blockmaterial": "Metal",
   "drawtype": "json",
-  "shape": {
-    "base": "block/carillonbell"
-  },
   "variantgroups": [
     {
       "code": "metal",
       "states": [ "blackbronze", "bismuthbronze", "brass", "tinbronze", "copper", "tin", "zinc", "iron", "nickel", "silver", "cupronickel", "gold", "electrum" ]
+    },
+    {
+      "code": "v",
+      "loadFromProperties": "abstract/verticalorientation"
+    },
+    {
+      "code": "side",
+      "loadFromProperties": "abstract/horizontalorientation"
     }
   ],
+  "shapebytype": {
+    "*-up-*": { "base": "block/carillonbell/carillonbell-floor.json" },
+    "*-down-*": { "base": "block/carillonbell/carillonbell-ceiling_hang.json" }
+  },
   "textures": {
     "metal": { "base": "game:block/metal/plate/{metal}" }
   },
@@ -74,13 +95,13 @@
   },
   "guiTransform": {
     "translation": {
-      "x": -1,
-      "y": 18,
+      "x": 0,
+      "y": 0,
       "z": 0
     },
     "origin": {
       "x": 0.5,
-      "y": 0.18,
+      "y": 0.3,
       "z": 0.5
     },
     "scale": 1.76
