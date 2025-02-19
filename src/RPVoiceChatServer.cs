@@ -2,6 +2,7 @@ using RPVoiceChat.Networking;
 using RPVoiceChat.Server;
 using RPVoiceChat.Systems;
 using RPVoiceChat.Utils;
+using System;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;
@@ -16,6 +17,19 @@ namespace RPVoiceChat
         public override void StartServerSide(ICoreServerAPI api)
         {
             sapi = api;
+
+            // Register/load world config
+            WorldConfig.Set(VoiceLevel.Whispering, WorldConfig.GetInt(VoiceLevel.Whispering));
+            WorldConfig.Set(VoiceLevel.Talking, WorldConfig.GetInt(VoiceLevel.Talking));
+            WorldConfig.Set(VoiceLevel.Shouting, WorldConfig.GetInt(VoiceLevel.Shouting));
+            WorldConfig.Set("force-render-name-tags", WorldConfig.GetBool("force-render-name-tags", true));
+            WorldConfig.Set("encode-audio", WorldConfig.GetBool("encode-audio", true));
+            WorldConfig.Set("others-hear-spectators", WorldConfig.GetBool("others-hear-spectators", true));
+            WorldConfig.Set("wall-thickness-weighting", WorldConfig.GetFloat("wall-thickness-weighting", 2));
+
+            // Register commands
+            registerCommands();
+
 
             WireNetworkHandler.RegisterServerside(api);
 
@@ -32,16 +46,6 @@ namespace RPVoiceChat
 
             server = new GameServer(sapi, networkTransports);
             server.Launch();
-
-            // Register/load world config
-            WorldConfig.Set(VoiceLevel.Whispering, WorldConfig.GetInt(VoiceLevel.Whispering));
-            WorldConfig.Set(VoiceLevel.Talking, WorldConfig.GetInt(VoiceLevel.Talking));
-            WorldConfig.Set(VoiceLevel.Shouting, WorldConfig.GetInt(VoiceLevel.Shouting));
-            WorldConfig.Set("force-render-name-tags", WorldConfig.GetBool("force-render-name-tags", true));
-            WorldConfig.Set("encode-audio", WorldConfig.GetBool("encode-audio", true));
-
-            // Register commands
-            registerCommands();
         }
 
         public override void StartPre(ICoreAPI api)
@@ -99,7 +103,29 @@ namespace RPVoiceChat
                     .WithAdditionalInformation(UIUtils.I18n("Command.EncodeAudio.Help"))
                     .WithArgs(parsers.Bool("state"))
                     .HandleWith(ToggleAudioEncoding)
+                .EndSub()
+                .BeginSub("hearspectators")
+                    .WithDesc(UIUtils.I18n("Command.OthersHearSpectators.Desc"))
+                    .WithAdditionalInformation(UIUtils.I18n("Command.OthersHearSpectators.Help"))
+                    .WithArgs(parsers.Bool("state"))
+                    .HandleWith(ToggleOthersHearSpectators)
+                .BeginSub("wtw")
+                    .WithDesc(UIUtils.I18n("Command.WallThicknessWeighting.Desc"))
+                    .WithAdditionalInformation(UIUtils.I18n("Command.WallThicknessWeighting.Help"))
+                    .WithArgs(parsers.Float("weighting"))
+                    .HandleWith(SetWallThicknessWeighting)
                 .EndSub();
+        }
+
+        private TextCommandResult ToggleOthersHearSpectators(TextCommandCallingArgs args)
+        {
+            const string i18nPrefix = "Command.OthersHearSpectators.Success";
+            bool state = (bool)args[0];
+
+            WorldConfig.Set("others-hear-spectators", state);
+            string stateAsText = state ? "Enabled" : "Disabled";
+
+            return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
         }
 
         private TextCommandResult ToggleAudioEncoding(TextCommandCallingArgs args)
@@ -140,8 +166,9 @@ namespace RPVoiceChat
             int shout = WorldConfig.GetInt(VoiceLevel.Shouting);
             bool forceNameTags = WorldConfig.GetBool("force-render-name-tags");
             bool encoding = WorldConfig.GetBool("encode-audio");
+            float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");
 
-            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceNameTags, encoding));
+            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceNameTags, encoding, wallThicknessWeighting));
         }
 
         private TextCommandResult SetWhisperHandler(TextCommandCallingArgs args)
@@ -169,6 +196,15 @@ namespace RPVoiceChat
             WorldConfig.Set(VoiceLevel.Shouting, distance);
 
             return TextCommandResult.Success(UIUtils.I18n($"Command.Shout.Success", distance));
+        }
+
+        private TextCommandResult SetWallThicknessWeighting(TextCommandCallingArgs args)
+        {
+            float weighting = (float)args[0];
+
+            WorldConfig.Set("wall-thickness-weighting", weighting);
+
+            return TextCommandResult.Success(UIUtils.I18n("Command.WallThicknessWeighting.Success", weighting));
         }
 
         public override void Dispose()

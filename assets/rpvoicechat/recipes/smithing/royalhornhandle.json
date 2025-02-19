@@ -1,4 +1,5 @@
 ﻿{
+  "enabled": true,
   "ingredient": {
     "type": "item",
     "code": "game:ingot-brass"

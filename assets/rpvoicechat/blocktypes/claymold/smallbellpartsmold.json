@@ -1,8 +1,8 @@
 {
-  "code": "toolmold",
+  "code": "smallbellpartsmold",
   "classByType": {
-    "toolmold-raw-*": "Block",
-    "toolmold-burned-*": "BlockToolMold"
+    "smallbellpartsmold-raw-*": "Block",
+    "smallbellpartsmold-burned-*": "BlockToolMold"
   },
   "behaviorsByType": {
     "*-raw-*": [
@@ -18,6 +18,9 @@
     ],
     "*": [ { "name": "UnstableFalling" } ]
   },
+  "entityBehaviorsByType": {
+    "smallbellpartsmold-burned-*": [ { "name": "TemperatureSensitive" } ]
+  },
   "variantgroups": [
     {
       "code": "materialtype",
@@ -30,13 +33,21 @@
       ]
     }
   ],
+  "entityClassByType": {
+    "smallbellpartsmold-burned-*": "ToolMold"
+  },
   "attributesByType": {
-    "toolmold-burned-smallbellparts": {
+    "smallbellpartsmold-burned-smallbellparts": {
       "requiredUnits": 50,
       "fillHeight": 2,
       "fillQuadsByLevel": [
-				{ x1: 6, z1: 4, x2: 10, z2: 12 }
-			],
+        {
+          "x1": 6,
+          "z1": 4,
+          "x2": 10,
+          "z2": 12
+        }
+      ],
       "moldrackable": false,
       "drop": {
         "type": "item",
@@ -45,18 +56,15 @@
       }
     }
   },
-  "entityClassByType": {
-    "toolmold-burned-*": "ToolMold"
-  },
   "combustiblePropsByType": {
-    "toolmold-raw-*": {
+    "smallbellpartsmold-raw-*": {
       "meltingPoint": 650,
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
       "smeltedStack": {
         "type": "block",
-        "code": "toolmold-burned-{tooltype}"
+        "code": "smallbellpartsmold-burned-{tooltype}"
       },
       "requiresContainer": false
     }
@@ -71,8 +79,8 @@
   "maxStackSize": 8,
   "lightAbsorption": 0,
   "texturesByType": {
-    "toolmold-raw-*": { "all": { "base": "game:block/clay/blueclay" } },
-    "toolmold-burned-*": {
+    "smallbellpartsmold-raw-*": { "all": { "base": "game:block/clay/blueclay" } },
+    "smallbellpartsmold-burned-*": {
       "all": { "base": "game:block/clay/ceramic" }
     }
   },
@@ -80,7 +88,7 @@
     "base": "block/clay/mold/smallbellpartsmold"
   },
   "sounds": {
-    "walk": "walk/stone"
+    "walk": "game:walk/stone"
   },
   "collisionboxByType": {
     "*-anvil": {

@@ -9,24 +9,24 @@ namespace RPVoiceChat.GameContent.Blocks
 
         public override Cuboidf[] GetCollisionBoxes(IBlockAccessor blockAccessor, BlockPos pos)
         {
-            BlockEntityChurchBellLayer bigBellPart = blockAccessor.GetBlockEntity(pos) as BlockEntityChurchBellLayer;
-            if (bigBellPart?.Inventory != null && bigBellPart.Inventory[2].Empty) return new Cuboidf[] { CollisionBoxes[0] };
+            BlockEntityChurchBellLayer churchBellPart = blockAccessor.GetBlockEntity(pos) as BlockEntityChurchBellLayer;
+            if (churchBellPart?.Inventory != null && churchBellPart.Inventory[2].Empty) return new Cuboidf[] { CollisionBoxes[0] };
 
             return base.GetCollisionBoxes(blockAccessor, pos);
         }
 
         public override Cuboidf[] GetSelectionBoxes(IBlockAccessor blockAccessor, BlockPos pos)
         {
-            BlockEntityChurchBellLayer bigBellPart = blockAccessor.GetBlockEntity(pos) as BlockEntityChurchBellLayer;
-            if (bigBellPart?.Inventory != null && bigBellPart.Inventory[2].Empty) return new Cuboidf[] { SelectionBoxes[0] };
+            BlockEntityChurchBellLayer churchBellPart = blockAccessor.GetBlockEntity(pos) as BlockEntityChurchBellLayer;
+            if (churchBellPart?.Inventory != null && churchBellPart.Inventory[2].Empty) return new Cuboidf[] { SelectionBoxes[0] };
 
             return base.GetSelectionBoxes(blockAccessor, pos);
         }
 
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
-            BlockEntityChurchBellLayer bigBellPart = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityChurchBellLayer;
-            bigBellPart?.OnInteract(byPlayer);
+            BlockEntityChurchBellLayer churchBellPart = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityChurchBellLayer;
+            churchBellPart?.OnInteract(byPlayer);
 
             return true;
         }
@@ -37,8 +37,8 @@ namespace RPVoiceChat.GameContent.Blocks
         //    {
         //        // Functions here aren't being called on server. Need to fix that.
 
-        //        BlockEntityChurchBellLayer bigBellPart = player.Entity.World.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityChurchBellLayer;
-        //        bigBellPart?.OnHammerHitOver(player, player.CurrentBlockSelection.HitPosition);
+        //        BlockEntityChurchBellLayer churchBellPart = player.Entity.World.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityChurchBellLayer;
+        //        churchBellPart?.OnHammerHitOver(player, player.CurrentBlockSelection.HitPosition);
 
         //        return 800f;
         //    }

@@ -1,7 +1,7 @@
 ﻿using RPVoiceChat.GameContent.Blocks;
 using Vintagestory.API.MathTools;
 
-namespace RPVoiceChat.src.Systems
+namespace RPVoiceChat.GameContent.Systems
 {
     public  class WireConnection
     {

@@ -1,0 +1,206 @@
+{
+  "code": "carillonbellmold",
+  "enabled": true,
+  "classByType": {
+    "carillonbellmold-raw-*": "Block",
+    "carillonbellmold-burned-*": "BlockToolMold"
+  },
+  "behaviorsByType": {
+    "*-raw-*": [
+      {
+        "name": "GroundStorable",
+        "properties": { "layout": "SingleCenter" }
+      },
+      {
+        "name": "Unplaceable",
+        "__comment": "The ground storable obsoletes this being a block. Should be an item, but is kept a block for backwards compatibility"
+      },
+      { "name": "RightClickPickup" }
+    ],
+    "*": [ { "name": "UnstableFalling" } ]
+  },
+  "variantgroups": [
+    {
+      "code": "materialtype",
+      "states": [ "raw", "burned" ]
+    },
+    {
+      "code": "tooltype",
+      "states": [ "carillonbell" ]
+    }
+  ],
+  "entityClassByType": {
+    "carillonbellmold-burned-*": "ToolMold"
+  },
+  "attributesByType": {
+    "carillonbellmold-burned-carillonbell": {
+      "requiredUnits": 800,
+      "fillHeight": 13,
+      "fillQuadsByLevel": [
+        {
+          "x1": 6,
+          "z1": 5,
+          "x2": 11,
+          "z2": 10
+        },
+        {
+          "x1": 6,
+          "z1": 5,
+          "x2": 11,
+          "z2": 10
+        },
+        {
+          "x1": 6,
+          "z1": 5,
+          "x2": 11,
+          "z2": 10
+        },
+        {
+          "x1": 6,
+          "z1": 5,
+          "x2": 11,
+          "z2": 10
+        }
+      ],
+      "moldrackable": false,
+      "drop": {
+        "type": "block",
+        "code": "carillonbell-{metal}",
+        "quantity": 1
+      }
+    }
+  },
+  "combustiblePropsByType": {
+    "carillonbellmold-raw-*": {
+      "meltingPoint": 650,
+      "meltingDuration": 45,
+      "smeltedRatio": 1,
+      "smeltingType": "fire",
+      "smeltedStack": {
+        "type": "block",
+        "code": "carillonbellmold-burned-{tooltype}"
+      },
+      "requiresContainer": false
+    }
+  },
+  "blockmaterial": "Ceramic",
+  "creativeinventory": {
+    "general": [ "*" ],
+    "construction": [ "*" ]
+  },
+  "replaceable": 700,
+  "resistance": 1.5,
+  "maxStackSize": 1,
+  "lightAbsorption": 0,
+  "texturesByType": {
+    "carillonbellmold-raw-*": { "all": { "base": "game:block/clay/blueclay" } },
+    "carillonbellmold-burned-*": {
+      "all": { "base": "game:block/clay/ceramic" }
+    }
+  },
+  "shape": {
+    "base": "block/clay/mold/{tooltype}mold"
+  },
+  "sounds": {
+    "walk": "game:walk/stone"
+  },
+  "collisionboxByType": {
+    "*-anvil": {
+      "x1": 0.0625,
+      "y1": 0,
+      "z1": 0.0625,
+      "x2": 0.9375,
+      "y2": 0.6875,
+      "z2": 0.9375
+    },
+    "*": {
+      "x1": 0,
+      "y1": 0,
+      "z1": 0,
+      "x2": 1,
+      "y2": 0.1875,
+      "z2": 1
+    }
+  },
+  "selectionboxByType": {
+    "*-anvil": {
+      "x1": 0,
+      "y1": 0,
+      "z1": 0,
+      "x2": 1,
+      "y2": 0.6875,
+      "z2": 1
+    },
+    "*": {
+      "x1": 0,
+      "y1": 0,
+      "z1": 0,
+      "x2": 1,
+      "y2": 0.1875,
+      "z2": 1
+    }
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "sidesolid": {
+    "all": false
+  },
+  "guiTransformByType": {
+    "*": {
+      "translation": {
+        "x": 0,
+        "y": 3,
+        "z": 0
+      },
+      "origin": {
+        "x": 0.5,
+        "y": 0.35,
+        "z": 0.5
+      },
+      "scale": 1.15
+    }
+  },
+  "tpHandTransform": {
+    "translation": {
+      "x": -1.23,
+      "y": -0.91,
+      "z": -0.8
+    },
+    "rotation": {
+      "x": -2,
+      "y": 25,
+      "z": -78
+    }
+  },
+  "tpOffHandTransform": {
+    "translation": {
+      "x": -1.23,
+      "y": -0.91,
+      "z": -0.8
+    },
+    "rotation": {
+      "x": -2,
+      "y": 25,
+      "z": -78
+    }
+  },
+  "groundTransform": {
+    "translation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "rotation": {
+      "x": 0,
+      "y": -45,
+      "z": 0
+    },
+    "origin": {
+      "x": 0.5,
+      "y": 0,
+      "z": 0.5
+    },
+    "scale": 2.2
+  }
+}

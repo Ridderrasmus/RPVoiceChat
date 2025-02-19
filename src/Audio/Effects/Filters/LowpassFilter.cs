@@ -2,7 +2,7 @@ using OpenTK.Audio.OpenAL;
 
 namespace RPVoiceChat.Audio.Effects
 {
-    public class FilterLowpass
+    public class LowpassFilter
     {
         private int source;
         private int nullFilter;
@@ -11,7 +11,7 @@ namespace RPVoiceChat.Audio.Effects
         public bool IsEnabled { get; set; } = false;
 
 
-        public FilterLowpass(int source)
+        public LowpassFilter(int source)
         {
             this.source = source;
             nullFilter = ALC.EFX.GenFilter();

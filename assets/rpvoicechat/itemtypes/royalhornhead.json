@@ -9,6 +9,11 @@
   "shape": {
     "base": "item/royalhornhead"
   },
+  "attributes": {
+    "handbook": {
+      "createdBy": "metalmolding"
+    }
+  },
   "guiTransform": {
     "rotation": {
       "x": 0,

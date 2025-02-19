@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using RPVoiceChat.GameContent.Blocks;
-using RPVoiceChat.src.Systems;
+using RPVoiceChat.GameContent.Systems;
 using Vintagestory.API.Client;
 using Vintagestory.API.Server;
 

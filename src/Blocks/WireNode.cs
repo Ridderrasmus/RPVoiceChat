@@ -1,5 +1,5 @@
 ﻿using ProtoBuf;
-using RPVoiceChat.src.Systems;
+using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Systems;
 using System;
 using System.Collections.Generic;
