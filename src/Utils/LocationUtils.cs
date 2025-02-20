@@ -89,6 +89,29 @@ namespace RPVoiceChat.Utils
             var origin = GetLocationOfPlayer(source);
             var destination = GetLocationOfPlayer(target);
 
+            return GetWallThickness(capi, origin, destination);
+        }
+
+        /// <summary>
+        /// Calculates obstruction level between two given players
+        /// </summary>
+        /// <returns>Combined volume of obstructing blocks</returns>
+        public static float GetWallThickness(ICoreClientAPI capi, Vec3d source, IPlayer target)
+        {
+            var destination = GetLocationOfPlayer(target);
+
+            return GetWallThickness(capi, source, destination);
+        }
+
+        /// <summary>
+        /// Calculates obstruction level between two given players
+        /// </summary>
+        /// <returns>Combined volume of obstructing blocks</returns>
+        public static float GetWallThickness(ICoreClientAPI capi, Vec3d source, Vec3d target)
+        {
+            var origin = source;
+            var destination = target;
+
             var obstructingBlocks = RayTraceThrough(capi, origin, destination).Item1;
             float thickness = 0;
             foreach (BlockEntry blockEntry in obstructingBlocks)
@@ -162,9 +185,9 @@ namespace RPVoiceChat.Utils
         /// Check if the player is in an area where there is reverb <br />
         /// <b>May be inaccurate as game's API does not give a proper way to know this</b>
         /// </summary>
-        public static bool IsReverbArea(ICoreClientAPI capi, EntityPos playerPos)
+        public static bool IsReverbArea(ICoreClientAPI capi, Vec3d sourcePos)
         {
-            Room room = capi.ModLoader.GetModSystem<RoomRegistry>().GetRoomForPosition(playerPos.AsBlockPos);
+            Room room = capi.ModLoader.GetModSystem<RoomRegistry>().GetRoomForPosition(sourcePos.AsBlockPos);
             // Check whether it is a proper room, or something like a room i.e. with a roof, for example a natural cave
             return (room.ExitCount == 0 || room.SkylightCount < room.NonSkylightCount) && !room.IsSmallRoom;
         }
