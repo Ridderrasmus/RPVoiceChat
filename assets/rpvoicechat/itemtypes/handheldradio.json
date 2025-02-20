@@ -6,7 +6,8 @@
   "creativeinventory": {
     "general": [ "*" ],
     "items": [ "*" ],
-    "tools": [ "*" ]
+    "tools": [ "*" ],
+    "rpvoicechat": [ "*" ]
   },
   "texture": {
     "base": "item/handheldradio"

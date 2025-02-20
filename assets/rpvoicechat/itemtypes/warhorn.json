@@ -1,18 +1,19 @@
 {
-  "code": "royalhorn",
+  "code": "warhorn",
   "class": "soundemittingitem",
   "enabled": true,
   "maxstacksize": 1,
   "creativeinventory": {
     "general": [ "*" ],
     "items": [ "*" ],
-    "tools": [ "*" ]
+    "tools": [ "*" ],
+    "rpvoicechat": [ "*" ]
   },
   "shape": {
-    "base": "item/royalhorn"
+    "base": "item/warhorn"
   },
   "attributes": {
-    "soundAudibleDistance": 72,
+    "soundAudibleDistance": 128,
     "soundVolume": 0.6,
     "cooldownTime": 3,
     "rightClickSounds": [
@@ -21,8 +22,8 @@
     "handbook": {
       "extraSections": [
         {
-          "title": "rpvoicechat:Handbook.Usage.item-royalhorn.Title",
-          "text": "rpvoicechat:Handbook.Usage.item-royalhorn.Text"
+          "title": "rpvoicechat:Handbook.Usage.item-warhorn.Title",
+          "text": "rpvoicechat:Handbook.Usage.item-warhorn.Text"
         }
       ]
     }
@@ -40,23 +41,10 @@
     },
     "origin": {
       "x": 0,
-      "y": 1,
-      "z": 0
-    },
-    "scale": 1.56
-  },
-  "fpHandTransform": {
-    "translation": {
-      "x": 0.05,
       "y": 0.5,
-      "z": -0.8
+      "z": 0.15
     },
-    "rotation": {
-      "x": -140,
-      "y": -75,
-      "z": 20
-    },
-    "scale": 2.5
+    "scale": 1.6
   },
   "tpHandTransform": {
     "translation": {
