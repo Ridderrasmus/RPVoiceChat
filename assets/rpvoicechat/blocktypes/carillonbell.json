@@ -7,7 +7,7 @@
       "name": "HorizontalUpDownOrientable"
     },
     {
-      "name": "UnstableFallingShape",
+      "name": "UnstableFallingVariant",
       "properties": {
         "attachableFaces": [ "up", "down" ],
         "impactDamageMul": 10,

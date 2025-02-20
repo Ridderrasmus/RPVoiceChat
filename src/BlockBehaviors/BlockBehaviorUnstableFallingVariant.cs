@@ -14,9 +14,9 @@ using static HarmonyLib.Code;
 
 namespace RPVoiceChat.GameContent.BlockBehaviors
 {
-    // This class is "temporary" : the idea is to give the code that allow shape changing after falling to Vanilla Vintage Story
+    // This class is "temporary" : the idea is to give the code that allow variant changing after falling to Vanilla Vintage Story
     // into genuine BlockBehaviorUnstableFalling 
-    class BlockBehaviorUnstableFallingShape : BlockBehavior
+    class BlockBehaviorUnstableFallingVariant : BlockBehavior
     {
         private bool ignorePlaceTest;
 
@@ -38,7 +38,7 @@ namespace RPVoiceChat.GameContent.BlockBehaviors
 
         public AssetLocation variantAfterFalling = null;
 
-        public BlockBehaviorUnstableFallingShape(Block block)
+        public BlockBehaviorUnstableFallingVariant(Block block)
             : base(block)
         {
         }
@@ -152,8 +152,7 @@ namespace RPVoiceChat.GameContent.BlockBehaviors
                     if (variantAfterFalling != null)
                     {
                         Block fallenBlock = world.BlockAccessor.GetBlock(variantAfterFalling);
-                        //world.BlockAccessor.ExchangeBlock(fallenBlock.BlockId, pos);
-                        block.BlockId = fallenBlock.BlockId;
+                        block = fallenBlock;
                     }
                     EntityBlockFalling entity = new EntityBlockFalling(block, world.BlockAccessor.GetBlockEntity(pos), pos, fallSound, impactDamageMul, canFallSideways: true, dustIntensity);
                     world.SpawnEntity(entity);
