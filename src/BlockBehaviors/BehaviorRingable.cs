@@ -63,8 +63,22 @@ namespace RPVoiceChat.GameContent.BlockBehaviors
             if (byPlayer.WorldData.CurrentGameMode != EnumGameMode.Creative)
             {
                 BEBehaviorRingable? ringable = world.GetBlockAccessor(false, false, false).GetBlockEntity(pos).GetBehavior<BEBehaviorRingable>();
-                
-                ItemStack stack = new ItemStack(world.GetItem(new AssetLocation(RPVoiceChatMod.modID, ringable.BellPartCode)));
+
+                if (ringable == null || string.IsNullOrWhiteSpace(ringable.BellPartCode))
+                {
+                    base.OnBlockBroken(world, pos, byPlayer, ref handling);
+                    return;
+                }
+
+                Item item = world.GetItem(new AssetLocation(RPVoiceChatMod.modID, ringable.BellPartCode));
+
+                if (item == null)
+                {
+                    base.OnBlockBroken(world, pos, byPlayer, ref handling);
+                    return;
+                }
+
+                ItemStack stack = new ItemStack(item);
                 stack.StackSize = 1;
 
                 world.SpawnItemEntity(stack, pos.ToVec3d());
