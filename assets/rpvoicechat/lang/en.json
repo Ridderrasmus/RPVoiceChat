@@ -9,10 +9,14 @@
   "item-telegraphwire": "Telegraph Wire",
   "item-radiocase": "Radio Case",
   "item-smallbellparts-silver": "Small Bell Parts",
+  "item-goathorn": "Goat horn",
+  "item-warhorn": "Warhorn",
 
   "itemdesc-handbell": "A small handbell. The silver of the bell seems to have a weird purplep shimmer to it...",
   "itemdesc-smallbellparts-silver": "The more intricate parts of a small bell",
   "itemdesc-royalhorn": "A mighty horn, used to announce the coming of the great ones of this world.",
+  "itemdesc-goathorn": "A goat horn in perfect condition. It is rare to find one of this quality.",
+  "itemdesc-warhorn": "A rustic war horn, used to rally even the most distant allies.",
 
   "block-churchbellmold-raw-part-brass-bottom": "Raw Bottom Churchbell Part Mold",
   "block-churchbellmold-raw-part-brass-middle": "Raw Middle Churchbell Part Mold",

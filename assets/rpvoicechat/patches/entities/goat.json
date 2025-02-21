@@ -1,0 +1,16 @@
+[
+  {
+    "enabled": true,
+    "op": "addmerge",
+    "path": "/drops/-",
+    "value": {
+      "type": "item",
+      "code": "rpvoicechat:goathorn",
+      "quantity": {
+        "avg": 0.03,
+        "var": 0.02
+      }
+    },
+    "file": "game:entities/land/hooved/goat.json"
+  }
+]
