@@ -7,7 +7,7 @@
       "type":  "item",
       "code": "rpvoicechat:perfectgoathorn",
       "quantity": {
-        "avg": 3,
+        "avg": 0.03,
         "var": 0.02
       },
       "fixedweight": true

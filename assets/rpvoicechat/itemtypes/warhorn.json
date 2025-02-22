@@ -17,7 +17,7 @@
     "soundVolume": 0.6,
     "cooldownTime": 3,
     "rightClickSounds": [
-      "item/royalhorn/royalhorn"
+      "item/warhorn/warhorn"
     ],
     "handbook": {
       "extraSections": [
