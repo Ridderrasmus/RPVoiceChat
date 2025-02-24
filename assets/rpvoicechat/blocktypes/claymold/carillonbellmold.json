@@ -65,7 +65,7 @@
       "moldrackable": false,
       "drop": {
         "type": "block",
-        "code": "carillonbell-{metal}",
+        "code": "carillonbell-{metal}-up-north",
         "quantity": 1
       }
     }
