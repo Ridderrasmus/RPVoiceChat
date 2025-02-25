@@ -7,7 +7,7 @@
   ],
   "attributes": {
     "handbook": {
-      "groupBy": ["churchbell-layer-*"],
+      "groupBy": [ "churchbell-layer-*" ],
       "extraSections": [
         {
           "title": "rpvoicechat:Handbook.Welding.block-churchbell-layer.Title",
@@ -37,7 +37,8 @@
   "entityClass": "ChurchBellLayer",
   "drops": [],
   "creativeinventory": {
-    "general": [ "*" ]
+    "general": [ "*" ],
+    "rpvoicechat": [ "*" ]
   },
   "blockmaterial": "Metal",
   "shapeByType": {
