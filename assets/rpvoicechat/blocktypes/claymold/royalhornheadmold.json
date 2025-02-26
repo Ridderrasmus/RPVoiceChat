@@ -152,14 +152,9 @@
   },
   "guiTransformByType": {
     "*": {
-      "translation": {
-        "x": 0,
-        "y": 3,
-        "z": 0
-      },
       "origin": {
-        "x": 0.5,
-        "y": 0.0625,
+        "x": 0.45,
+        "y": 0.2,
         "z": 0.5
       },
       "scale": 1.33

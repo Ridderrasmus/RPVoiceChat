@@ -23,10 +23,6 @@
     {
       "code": "materialtype",
       "states": [ "raw", "burned" ]
-    },
-    {
-      "code": "tooltype",
-      "states": [ "carillonbell" ]
     }
   ],
   "entityClassByType": {
@@ -131,20 +127,13 @@
   "sidesolid": {
     "all": false
   },
-  "guiTransformByType": {
-    "*": {
-      "translation": {
-        "x": 0,
-        "y": 3,
-        "z": 0
-      },
-      "origin": {
-        "x": 0.5,
-        "y": 0.35,
-        "z": 0.5
-      },
-      "scale": 1.15
-    }
+  "guiTransform": {
+    "origin": {
+      "x": 0.5,
+      "y": 0.4,
+      "z": 0.5
+    },
+    "scale": 1.15
   },
   "tpHandTransform": {
     "translation": {
