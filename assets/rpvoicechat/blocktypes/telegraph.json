@@ -4,7 +4,8 @@
   "class": "telegraphblock",
   "entityClass": "TelegraphBlockEntity",
   "creativeinventory": {
-    "general": [ "*" ]
+    "general": [ "*" ],
+    "rpvoicechat": [ "*" ]
   },
   "blockmaterial": "Metal",
   "resistance": 1,

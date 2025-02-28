@@ -37,7 +37,8 @@
   "entityClass": "ChurchBellPart",
   "drops": [],
   "creativeinventory": {
-    "general": [ "*" ]
+    "general": [ "*" ],
+    "rpvoicechat": [ "*" ]
   },
   "blockmaterial": "Metal",
   "shapeByType": {

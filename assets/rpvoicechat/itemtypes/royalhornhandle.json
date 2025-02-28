@@ -4,7 +4,8 @@
   "maxstacksize": 1,
   "creativeinventory": {
     "general": [ "*" ],
-    "items": [ "*" ]
+    "items": [ "*" ],
+    "rpvoicechat": [ "*" ]
   },
   "shape": {
     "base": "item/royalhornhandle"

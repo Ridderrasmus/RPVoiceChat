@@ -3,7 +3,8 @@
   "enabled": false,
   "class": "connectorblock",
   "creativeinventory": {
-    "general": [ "*" ]
+    "general": [ "*" ],
+    "rpvoicechat": [ "*" ]
   },
   "blockmaterial": "Metal",
   "resistance": 1,

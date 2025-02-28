@@ -4,7 +4,8 @@
   "maxstacksize": 4,
   "creativeinventory": {
     "general": [ "*" ],
-    "items": [ "*" ]
+    "items": [ "*" ],
+    "rpvoicechat": [ "*" ]
   },
   "texture": {
     "base": "item/radiocase"
