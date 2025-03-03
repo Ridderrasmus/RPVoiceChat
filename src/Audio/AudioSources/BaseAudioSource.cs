@@ -1,20 +1,15 @@
 ﻿using OpenTK.Audio.OpenAL;
-using RPVoiceChat.Audio;
 using RPVoiceChat.Audio.Effects;
 using RPVoiceChat.DB;
-using RPVoiceChat.Gui;
 using RPVoiceChat.Utils;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
-using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
 
-namespace RPVoiceChat.src.Audio.Output
+namespace RPVoiceChat.Audio.AudioSources
 {
     public abstract class BaseAudioSource : IDisposable
     {
@@ -37,7 +32,7 @@ namespace RPVoiceChat.src.Audio.Output
         protected ICoreClientAPI capi;
         protected ClientSettingsRepository clientSettingsRepo;
 
-        public Guid AudioSourceGuid { get; private set; }
+        public abstract string GetSourceId();
 
         public bool IsLocational { get; set; } = true;
         public VoiceLevel voiceLevel { get; private set; } = VoiceLevel.Talking;
@@ -55,7 +50,6 @@ namespace RPVoiceChat.src.Audio.Output
 
         public BaseAudioSource(ICoreClientAPI capi, ClientSettingsRepository clientSettingsRepo, Vec3f sourceLocation)
         {
-            AudioSourceGuid = Guid.NewGuid();
 
             this.capi = capi;
             this.clientSettingsRepo = clientSettingsRepo;
@@ -77,7 +71,7 @@ namespace RPVoiceChat.src.Audio.Output
         }
 
         // Must be implemented by child classes
-        public abstract Vec3d? GetSourcePosition();
+        public abstract Vec3d GetSourcePosition();
 
         public abstract float GetFinalGain();
 
@@ -124,7 +118,7 @@ namespace RPVoiceChat.src.Audio.Output
             {
                 lowpassFilter = lowpassFilter ?? new LowpassFilter(source);
                 lowpassFilter.Start();
-                lowpassFilter.SetHFGain(Math.Max(1.0f - (wallThickness / wallThicknessWeighting), 0.1f));
+                lowpassFilter.SetHFGain(Math.Max(1.0f - wallThickness / wallThicknessWeighting, 0.1f));
             }
 
             bool toBeImplementedToggle = false;

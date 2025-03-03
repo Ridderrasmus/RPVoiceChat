@@ -1,5 +1,6 @@
 using RPVoiceChat.DB;
 using RPVoiceChat.Networking;
+using RPVoiceChat.Audio.AudioSources;
 using RPVoiceChat.Utils;
 using System;
 using System.Collections.Concurrent;
@@ -34,7 +35,7 @@ namespace RPVoiceChat.Audio
             }
         }
 
-        private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
+        private ConcurrentDictionary<string, BaseAudioSource> audioSources = new ConcurrentDictionary<string, BaseAudioSource>();
         private PlayerAudioSource localPlayerAudioSource;
         private ClientSettingsRepository clientSettingsRepo;
 
@@ -81,7 +82,7 @@ namespace RPVoiceChat.Audio
 
             if (source.voiceLevel != packet.VoiceLevel)
                 source.UpdateVoiceLevel(packet.VoiceLevel);
-            source.UpdatePlayer();
+            source.UpdateAudioSource();
             source.UpdateAudioFormat(codec, frequency, channels);
             source.EnqueueAudio(audioData, packet.SequenceNumber);
         }
@@ -95,7 +96,7 @@ namespace RPVoiceChat.Audio
 
         private void ClientLoaded()
         {
-            localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, capi, clientSettingsRepo)
+            localPlayerAudioSource = new PlayerAudioSource(capi, clientSettingsRepo, capi.World.Player)
             {
                 IsLocational = false,
             };
@@ -106,9 +107,9 @@ namespace RPVoiceChat.Audio
 
         private PlayerAudioSource GetOrCreatePlayerSource(string playerId)
         {
-            PlayerAudioSource source;
-            if (playerSources.TryGetValue(playerId, out source) && !source.IsDisposed)
-                return source;
+            BaseAudioSource source;
+            if (audioSources.TryGetValue(playerId, out source) && !source.IsDisposed)
+                return source as PlayerAudioSource;
 
             var player = capi.World.PlayerByUid(playerId);
             if (player == null) return null;
@@ -118,8 +119,8 @@ namespace RPVoiceChat.Audio
 
         private PlayerAudioSource CreatePlayerSource(IPlayer player)
         {
-            var source = new PlayerAudioSource(player, capi, clientSettingsRepo);
-            playerSources.AddOrUpdate(player.PlayerUID, source, (_, __) => source);
+            var source = new PlayerAudioSource(capi, clientSettingsRepo, player);
+            audioSources.AddOrUpdate(player.PlayerUID, source, (_, __) => source);
             source.StartPlaying();
 
             return source;
@@ -141,14 +142,14 @@ namespace RPVoiceChat.Audio
                 return;
             }
 
-            playerSources.TryGetValue(player.PlayerUID, out var source);
+            audioSources.TryGetValue(player.PlayerUID, out var source);
             source?.Dispose();
-            playerSources.Remove(player.PlayerUID);
+            audioSources.Remove(player.PlayerUID);
         }
 
         public bool IsPlayerTalking(string playerId)
         {
-            if (playerSources.TryGetValue(playerId, out var source))
+            if (audioSources.TryGetValue(playerId, out var source))
                 return source.IsPlaying;
 
             if (capi.World.Player.PlayerUID == playerId)
@@ -165,7 +166,7 @@ namespace RPVoiceChat.Audio
 
             PlayerListener.Dispose();
             localPlayerAudioSource?.Dispose();
-            foreach (var source in playerSources.Values)
+            foreach (var source in audioSources.Values)
                 source?.Dispose();
         }
     }

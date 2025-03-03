@@ -1,18 +1,11 @@
-using OpenTK.Audio.OpenAL;
-using RPVoiceChat.Audio.Effects;
 using RPVoiceChat.DB;
 using RPVoiceChat.Gui;
-using RPVoiceChat.src.Audio.Output;
-using RPVoiceChat.Utils;
 using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
 
-namespace RPVoiceChat.Audio
+namespace RPVoiceChat.Audio.AudioSources
 {
     public class PlayerAudioSource : BaseAudioSource
     {
@@ -26,6 +19,11 @@ namespace RPVoiceChat.Audio
             OnSourceStopPlaying += OnPlayerStoppedSpeaking;
         }
 
+        public override string GetSourceId()
+        {
+            return $"player-{player.PlayerUID}";
+        }
+
         public override float GetFinalGain()
         {
             var globalGain = Math.Min(PlayerListener.gain, 1);
@@ -35,7 +33,7 @@ namespace RPVoiceChat.Audio
             return finalGain;
         }
 
-        public override Vec3d? GetSourcePosition()
+        public override Vec3d GetSourcePosition()
         {
             return player.Entity?.SidedPos?.XYZ;
         }

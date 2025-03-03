@@ -68,6 +68,9 @@
 		<Content Include="modinfo.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
+    <Content Include="modicon.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
 		<Content Include="Lib\RNNoise.so">
 			<Link>RNNoise.so</Link>
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
