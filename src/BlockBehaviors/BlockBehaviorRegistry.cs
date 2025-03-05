@@ -10,6 +10,7 @@ namespace RPVoiceChat.GameContent.BlockBehaviors
         public static void RegisterBlockEntityBehaviors(ICoreAPI api)
         {
             api.RegisterBlockBehaviorClass("Ringable", typeof(BehaviorRingable));
+            api.RegisterBlockBehaviorClass("UnstableFallingVariant", typeof(BlockBehaviorUnstableFallingVariant));
         }
 
         public static void AddBehaviors(ICoreAPI api)
