@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using HarmonyLib;
 using RPVoiceChat.Utils;
 using System.Collections.Generic;
@@ -15,7 +16,7 @@ namespace RPVoiceChat
     {
         private static readonly CodeInstruction anchor = new CodeInstruction(
             OpCodes.Callvirt,
-            AccessTools.Method(typeof(Queue<NetIncomingMessage>), "Enqueue")
+            AccessTools.Method(typeof(ConcurrentQueue<NetIncomingMessage>), "Enqueue")
         );
         private static readonly List<CodeInstruction> patch = new List<CodeInstruction>() {
             // Pass first local variable (msg)
