@@ -7,7 +7,7 @@
   ],
   "attributes": {
     "handbook": {
-      "groupBy": [ "churchbell-layer-*" ],
+      "groupBy": ["churchbell-layer-*"],
       "extraSections": [
         {
           "title": "rpvoicechat:Handbook.Welding.block-churchbell-layer.Title",
@@ -37,8 +37,7 @@
   "entityClass": "ChurchBellLayer",
   "drops": [],
   "creativeinventory": {
-    "general": [ "*" ],
-    "rpvoicechat": [ "*" ]
+    "general": [ "*" ]
   },
   "blockmaterial": "Metal",
   "shapeByType": {
@@ -89,11 +88,11 @@
       "z": 0
     },
     "origin": {
-      "x": 0.8,
-      "y": 0.1,
-      "z": 0
+      "x": 0.5,
+      "y": 0.5,
+      "z": 1.5
     },
-    "scale": 0.42
+    "scale": 0.53
   },
   "fpHandTransform": {
     "translation": {

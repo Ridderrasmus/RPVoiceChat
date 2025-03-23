@@ -126,8 +126,7 @@
   "blockmaterial": "Ceramic",
   "creativeinventory": {
     "general": [ "*" ],
-    "construction": [ "*" ],
-    "rpvoicechat": [ "*" ]
+    "construction": [ "*" ]
   },
   "replaceable": 700,
   "resistance": 1.5,

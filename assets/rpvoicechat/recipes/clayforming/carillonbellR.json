@@ -2,7 +2,8 @@
   "ingredient": {
     "type": "item",
     "code": "game:clay-*",
-    "name": "type"
+    "name": "type",
+    "allowedVariants": [ "blue", "fire" ]
   },
   "pattern": [
     [
