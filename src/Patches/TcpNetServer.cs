@@ -1,6 +1,6 @@
-using System.Collections.Concurrent;
 using HarmonyLib;
 using RPVoiceChat.Utils;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
@@ -24,7 +24,7 @@ namespace RPVoiceChat
             // Into OnReceivedMessage
             new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(TcpNetServerPatch), nameof(OnReceivedMessage)))
         };
-        private static Queue<NetIncomingMessage> messages = new Queue<NetIncomingMessage>();
+        private static ConcurrentQueue<NetIncomingMessage> messages = new ConcurrentQueue<NetIncomingMessage>();
 
         public static void Patch(Harmony harmony)
         {
@@ -66,8 +66,11 @@ namespace RPVoiceChat
         {
             lock (messages)
             {
-                if (messages.Count == 0) return null;
-                return messages.Dequeue();
+                if (messages.TryDequeue(out var result))
+                {
+                    return result;
+                }
+                return null;
             }
         }
     }
