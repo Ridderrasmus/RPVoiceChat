@@ -4,7 +4,8 @@
   "enabled": false,
   "creativeinventory": {
     "general": [ "*" ],
-    "items": [ "*" ]
+    "items": [ "*" ],
+    "rpvoicechat": [ "*" ]
   },
   "texture": {
     "base": "item/handbell"

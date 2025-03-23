@@ -1,0 +1,13 @@
+{
+  "code": "perfectgoathorn",
+  "enabled": true,
+  "maxstacksize": 16,
+  "creativeinventory": {
+    "general": [ "*" ],
+    "items": [ "*" ],
+    "rpvoicechat": [ "*" ]
+  },
+  "shape": {
+    "base": "item/perfectgoathorn"
+  }
+}
