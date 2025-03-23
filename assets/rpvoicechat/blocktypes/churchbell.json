@@ -3,8 +3,7 @@
   "enabled": true,
   "class": "soundemittingblock",
   "creativeinventory": {
-    "general": [ "*" ],
-    "rpvoicechat": [ "*" ]
+    "general": [ "*" ]
   },
   "blockmaterial": "Metal",
   "drawtype": "json",
@@ -60,10 +59,10 @@
     "walk": "game:walk/stone"
   },
   "guiTransform": {
-    "origin": {
-      "x": 0.5,
-      "y": 1.5,
-      "z": 0.5
+    "translation": {
+      "x": -1,
+      "y": 9,
+      "z": 0
     },
     "scale": 0.26
   },

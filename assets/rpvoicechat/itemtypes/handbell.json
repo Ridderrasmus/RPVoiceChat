@@ -7,8 +7,7 @@
   "creativeinventory": {
     "general": [ "*" ],
     "items": [ "*" ],
-    "tools": [ "*" ],
-    "rpvoicechat": [ "*" ]
+    "tools": [ "*" ]
   },
   "shape": {
     "base": "item/handbell"
@@ -43,19 +42,14 @@
   },
   "guiTransform": {
     "translation": {
-      "x": 0,
-      "y": 0,
+      "x": 6,
+      "y": -3,
       "z": 0
     },
     "rotation": {
       "x": 6,
       "y": -11,
       "z": -144
-    },
-    "origin": {
-      "x": 0.7,
-      "y": 0.45,
-      "z": 0
     },
     "scale": 1.9
   },

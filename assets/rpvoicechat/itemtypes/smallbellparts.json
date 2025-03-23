@@ -16,8 +16,7 @@
   "maxstacksize": 64,
   "creativeinventory": {
     "general": [ "*" ],
-    "items": [ "*" ],
-    "rpvoicechat": [ "*" ]
+    "items": [ "*" ]
   },
   "shape": {
     "base": "item/smallbellparts"

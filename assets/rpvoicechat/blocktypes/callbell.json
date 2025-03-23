@@ -2,8 +2,7 @@
   "code": "callbell",
   "class": "soundemittingblock",
   "creativeinventory": {
-    "general": [ "*" ],
-    "rpvoicechat": [ "*" ]
+    "general": [ "*" ]
   },
   "blockmaterial": "Metal",
   "drawtype": "json",

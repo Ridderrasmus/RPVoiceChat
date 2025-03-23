@@ -12,7 +12,7 @@
     "base": "item/royalhorn"
   },
   "attributes": {
-    "soundAudibleDistance": 72,
+    "soundAudibleDistance": 32,
     "soundVolume": 0.6,
     "cooldownTime": 3,
     "rightClickSounds": [
