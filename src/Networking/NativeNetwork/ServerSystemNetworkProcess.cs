@@ -37,6 +37,11 @@ namespace RPVoiceChat.Networking
 
         private void NetworkProcess(object cancellationToken)
         {
+            if (ServerMain.FrameProfiler is null)
+            {
+                ServerMain.FrameProfiler = new Vintagestory.API.Common.FrameProfilerUtil("[RPVC - Network Process]");
+            }
+
             var ct = (CancellationToken)cancellationToken;
             while (packetProcessingThread.IsAlive && !ct.IsCancellationRequested)
             {
@@ -45,11 +50,14 @@ namespace RPVoiceChat.Networking
                     NetIncomingMessage msg;
                     while ((msg = TcpNetServerPatch.ReadMessage()) != null)
                     {
+
+
                         var connection = (NetConnection)senderConnectionField.GetValue(msg);
                         var player = ResolveServerPlayer(connection);
                         if (player == null) continue;
                         var data = (byte[])messageField.GetValue(msg);
                         var length = (int)messageLengthField.GetValue(msg);
+
                         TryReadPacket(data, length, player);
                     }
                     Thread.Sleep(1);
