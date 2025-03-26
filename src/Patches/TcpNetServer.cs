@@ -66,8 +66,9 @@ namespace RPVoiceChat
         {
             lock (messages)
             {
-                if (messages.TryDequeue(out var result))
+                if (messages.Count > 0)
                 {
+                    messages.TryDequeue(out var result);
                     return result;
                 }
                 return null;
