@@ -2,11 +2,11 @@
   "_comentarios": "Traducido por C4BR3R4 || Versión del Mod: 2.3.13 || Fecha de modificación: 20250220 || Registro: http://c4br3r4.es/index.php?topic=1301.0 ",
 
   "game:tabname-rpvoicechat": "RPVoiceChat",
-  
+
   "item-handbell": "Campanilla",
   "item-royalhorn": "Cuerno",
   "item-royalhornhandle": "Boquilla de Cuerno",
-  "item-royalhornhead": "Pabellón de Cuerno",
+  "item-royalhornhead-blackbronze": "Pabellón de Cuerno",
   "item-handheldradio": "Radio Portátil",
   "item-telegraphwire": "Cable Telegráfico",
   "item-radiocase": "Caja de Radio",
@@ -53,7 +53,7 @@
   "block-carillonbell-cupronickel-*": "Carillón de Cuproníquel (Nota La#)",
   "block-carillonbell-gold-*": "Carillón de Oro (Nota Si)",
   "block-carillonbell-electrum-*": "Carillón de Oro Blanco (Nota Do 8ª)",
-  "blockdesc-carillonbell-*": "Una Campana de Carillón puede hacer sonar una melodía para toda una aldea.",  
+  "blockdesc-carillonbell-*": "Una Campana de Carillón puede hacer sonar una melodía para toda una aldea.",
 
   "Welding.WeldReady": "<br><font color='green'>Golpea para Fusionar.</font>",
   "Welding.WeldNotReady": "<br><font color='lightcoral'>No está preparado para Fusionar.</font>",
