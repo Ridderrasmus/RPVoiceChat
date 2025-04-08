@@ -1,14 +1,14 @@
 {
-    "item-handbell": "Dzwonek ręczny",
-    "item-royalhorn": "Królewski rożek",
-    "item-royalhornhandle": "Rękojeść królewskiego rożka",
-    "item-royalhornhead": "Głowica królewskiego rożka",
-    "item-handheldradio": "Radio przenośne",
-    "item-telegraphwire": "Drut telegraficzny",
-    "item-radiocase": "Pokrowiec na radio",
-    "itemdesc-handbell": "Mały dzwonek ręczny. Srebro dzwonka wydaje się mieć dziwny, fioletowy połysk...",
-    "block-callbell": "Dzwonek wezwania",
-    "blockdesc-callbell": "Mały dzwonek, który można dzwonić, aby kogoś wezwać.",
-    "Gui.ModMenu.muteMicrophone.Label": "Wycisz",
-    "Handbook.Usage.block-churchbell.Title": "Instrukcja"
+  "item-handbell": "Dzwonek ręczny",
+  "item-royalhorn": "Królewski rożek",
+  "item-royalhornhandle": "Rękojeść królewskiego rożka",
+  "item-royalhornhead-blackbronze": "Głowica królewskiego rożka",
+  "item-handheldradio": "Radio przenośne",
+  "item-telegraphwire": "Drut telegraficzny",
+  "item-radiocase": "Pokrowiec na radio",
+  "itemdesc-handbell": "Mały dzwonek ręczny. Srebro dzwonka wydaje się mieć dziwny, fioletowy połysk...",
+  "block-callbell": "Dzwonek wezwania",
+  "blockdesc-callbell": "Mały dzwonek, który można dzwonić, aby kogoś wezwać.",
+  "Gui.ModMenu.muteMicrophone.Label": "Wycisz",
+  "Handbook.Usage.block-churchbell.Title": "Instrukcja"
 }

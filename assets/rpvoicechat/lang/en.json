@@ -4,7 +4,7 @@
   "item-handbell": "Handbell",
   "item-royalhorn": "Royal Horn",
   "item-royalhornhandle": "Royal Horn Handle",
-  "item-royalhornhead": "Royal Horn Head",
+  "item-royalhornhead-blackbronze": "Royal Horn Head",
   "item-handheldradio": "Handheld Radio",
   "item-telegraphwire": "Telegraph Wire",
   "item-radiocase": "Radio Case",
@@ -17,6 +17,7 @@
   "itemdesc-royalhorn": "A mighty horn, used to announce the coming of the great ones of this world.",
   "itemdesc-perfectgoathorn": "A goat horn in perfect condition. It is rare to find one of this quality.",
   "itemdesc-warhorn": "A rustic war horn, used to rally even the most distant allies.",
+  "itemdesc-royalhornhead-blackbronze": "A bell (head) for a royal horn, made of black bronze.",
 
   "block-churchbellmold-raw-part-brass-bottom": "Raw Bottom Churchbell Part Mold",
   "block-churchbellmold-raw-part-brass-middle": "Raw Middle Churchbell Part Mold",
