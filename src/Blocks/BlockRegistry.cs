@@ -7,6 +7,7 @@ namespace RPVoiceChat.GameContent.Blocks
     {
         public static void RegisterBlocks(ICoreAPI api)
         {
+            if (WorldConfig.GetBool("additional-content") == false) return;
             api.RegisterBlockClass("soundemittingblock", typeof(SoundEmittingBlock));
             api.RegisterBlockClass("churchbellpart", typeof(ChurchBellPartBlock));
             api.RegisterBlockClass("churchbelllayer", typeof(ChurchBellLayerBlock));

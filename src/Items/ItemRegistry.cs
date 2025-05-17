@@ -6,7 +6,7 @@ namespace RPVoiceChat.GameContent.Items
     {
         public static void RegisterItems(ICoreAPI api)
         {
-            if (WorldConfig.GetBool("extra-content") == false) return;
+            if (WorldConfig.GetBool("additional-content") == false) return;
             api.RegisterItemClass("soundemittingitem", typeof(SoundEmittingItem));
             api.RegisterItemClass("handheldradio", typeof(RadioItem));
             api.RegisterItemClass("telegraphwire", typeof(TelegraphWireItem));
