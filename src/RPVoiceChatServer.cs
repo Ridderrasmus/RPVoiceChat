@@ -51,7 +51,7 @@ namespace RPVoiceChat
         public override void StartPre(ICoreAPI api)
         {
             base.StartPre(api);
-            WorldConfig.Set("extra-content", config.AdditionalContent);
+            WorldConfig.Set("additional-content", config.AdditionalContent);
         }
 
         public override double ExecuteOrder() => 1.02;
