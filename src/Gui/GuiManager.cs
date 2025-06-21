@@ -1,5 +1,6 @@
 using RPVoiceChat.Audio;
 using RPVoiceChat.DB;
+using RPVoiceChat.VoiceGroups.Manager;
 using System;
 using Vintagestory.API.Client;
 
@@ -11,13 +12,14 @@ namespace RPVoiceChat.Gui
         public FirstLaunchDialog firstLaunchDialog { get; }
         public ModMenuDialog modMenuDialog { get; }
 
-        public GuiManager(ICoreClientAPI capi, MicrophoneManager audioInputManager, AudioOutputManager audioOutputManager, ClientSettingsRepository settingsRepository)
+        public GuiManager(ICoreClientAPI capi, MicrophoneManager audioInputManager, AudioOutputManager audioOutputManager, ClientSettingsRepository settingsRepository, VoiceGroupManagerClient voiceGroupManagerClient)
         {
             audioWizardDialog = new AudioWizardDialog(capi, audioInputManager, audioOutputManager);
             firstLaunchDialog = new FirstLaunchDialog(capi, this);
             modMenuDialog = new ModMenuDialog(capi, audioInputManager, audioOutputManager, settingsRepository, this);
             capi.Gui.RegisterDialog(new SpeechIndicator(capi, audioInputManager));
             capi.Gui.RegisterDialog(new VoiceLevelIcon(capi, audioInputManager));
+            capi.Gui.RegisterDialog(new GroupDisplay(capi, voiceGroupManagerClient, audioOutputManager));
             new PlayerNameTagRenderer(capi, audioOutputManager);
         }
 

@@ -1,5 +1,6 @@
 using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
+using RPVoiceChat.VoiceGroups.Manager;
 using System;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
@@ -15,8 +16,9 @@ namespace RPVoiceChat.Server
         private IServerNetworkChannel handshakeChannel;
         private Dictionary<string, INetworkServer> serverByTransportID = new Dictionary<string, INetworkServer>();
         private ConnectionRequest connectionRequest;
+        private VoiceGroupManagerServer _voiceGroupManager;
 
-        public GameServer(ICoreServerAPI sapi, List<INetworkServer> serverTransports)
+        public GameServer(ICoreServerAPI sapi, List<INetworkServer> serverTransports, VoiceGroupManagerServer voiceGroupManager)
         {
             api = sapi;
             _initialTransports = serverTransports;
@@ -25,6 +27,8 @@ namespace RPVoiceChat.Server
                 .RegisterMessageType<ConnectionRequest>()
                 .RegisterMessageType<ConnectionInfo>()
                 .SetMessageHandler<ConnectionInfo>(FinalizeHandshake);
+
+            _voiceGroupManager = voiceGroupManager;
         }
 
         public void Launch()
@@ -57,16 +61,15 @@ namespace RPVoiceChat.Server
             int distance = WorldConfig.GetInt(packet.VoiceLevel);
             int squareDistance = distance * distance;
 
-            foreach (IServerPlayer player in api.World.AllOnlinePlayers)
+            foreach (IServerPlayer receivingPlayer in api.World.AllOnlinePlayers)
             {
-                if (player == transmittingPlayer ||
-                    player.Entity == null ||
-                    player.ConnectionState != EnumClientState.Playing ||
-                    (!WorldConfig.GetBool("others-hear-spectators", true) && transmittingIsSpectator && player.WorldData.CurrentGameMode != EnumGameMode.Spectator) ||
-                    transmittingPlayer.Entity.Pos.SquareDistanceTo(player.Entity.Pos.XYZ) > squareDistance)
+                if (BaseLimitation(transmittingPlayer, receivingPlayer) ||
+                    SpectatorHearsSpectatorsLimitation(receivingPlayer, transmittingIsSpectator) ||
+                    !(IsWithinRangeLimitation(transmittingPlayer, receivingPlayer, squareDistance) || IsInGroupLimitation(transmittingPlayer, receivingPlayer))
+                    )
                     continue;
 
-                SendPacket(packet, player.PlayerUID);
+                SendPacket(packet, receivingPlayer.PlayerUID);
             }
         }
 
@@ -162,6 +165,67 @@ namespace RPVoiceChat.Server
         {
             foreach (var server in activeServers)
                 server.Dispose();
+        }
+
+
+        /// <summary>
+        /// Determines whether a message transmission is allowed based on the relationship  between the transmitting
+        /// player and the receiving player, as well as the receiving player's state.
+        /// </summary>
+        /// <param name="transmittingPlayer">The player attempting to transmit the message.</param>
+        /// <param name="receivingPlayer">The player intended to receive the message.</param>
+        /// <returns><see langword="true"/> if the receiving player is the same as the transmitting player,  the receiving
+        /// player's entity is null, or the receiving player is not in the playing state;  otherwise, <see
+        /// langword="false"/>.</returns>
+        private static bool BaseLimitation(IPlayer transmittingPlayer, IServerPlayer receivingPlayer)
+        {
+            return receivingPlayer == transmittingPlayer ||
+                    receivingPlayer.Entity == null ||
+                    receivingPlayer.ConnectionState != EnumClientState.Playing;
+        }
+
+        /// <summary>
+        /// Determines whether the distance between the transmitting player and the receiving player is within the
+        /// specified square distance limit.
+        /// </summary>
+        /// <param name="transmittingPlayer">The player initiating the transmission.</param>
+        /// <param name="receivingPlayer">The player receiving the transmission.</param>
+        /// <param name="squareDistance">The maximum allowable distance, in squared units, between the transmitting player and the receiving player.</param>
+        /// <returns><see langword="true"/> if the squared distance between the transmitting player and the receiving player is
+        /// less than or equal to <paramref name="squareDistance"/>; otherwise, <see langword="false"/>.</returns>
+        private static bool IsWithinRangeLimitation(IPlayer transmittingPlayer, IServerPlayer receivingPlayer, int squareDistance)
+        {
+            return transmittingPlayer.Entity.Pos.SquareDistanceTo(receivingPlayer.Entity.Pos.XYZ) <= squareDistance;
+        }
+
+        /// <summary>
+        /// Determines whether a spectator's communication is limited based on the receiving player's game mode and the
+        /// server configuration.
+        /// </summary>
+        /// <remarks>This method checks the server configuration setting <c>"others-hear-spectators"</c>
+        /// and the receiving player's game mode to determine if a spectator's communication should be limited.
+        /// Spectator communication is restricted when the configuration disables it, the transmitting player is a
+        /// spectator, and the receiving player is not in spectator mode.</remarks>
+        /// <param name="receivingPlayer">The player receiving the communication.</param>
+        /// <param name="transmittingIsSpectator">A value indicating whether the transmitting player is a spectator.</param>
+        /// <returns><see langword="true"/> if the spectator's communication is restricted and cannot be heard by the receiving
+        /// player; otherwise, <see langword="false"/>.</returns>
+        private static bool SpectatorHearsSpectatorsLimitation(IServerPlayer receivingPlayer, bool transmittingIsSpectator)
+        {
+            return (!WorldConfig.GetBool("others-hear-spectators", true) && transmittingIsSpectator && receivingPlayer.WorldData.CurrentGameMode != EnumGameMode.Spectator);
+        }
+
+        /// <summary>
+        /// Determines whether the transmitting player and the receiving player are subject to group voice chat
+        /// limitations.
+        /// </summary>
+        /// <param name="transmittingPlayer">The player initiating the voice transmission.</param>
+        /// <param name="receivingPlayer">The player receiving the voice transmission.</param>
+        /// <returns><see langword="true"/> if group voice chat is enabled and both players are in the same group;  otherwise,
+        /// <see langword="false"/>.</returns>
+        private bool IsInGroupLimitation(IPlayer transmittingPlayer, IServerPlayer receivingPlayer)
+        {
+            return (WorldConfig.GetBool("allow-group-voicechat", false) && _voiceGroupManager.InSameGroup(transmittingPlayer.PlayerUID, receivingPlayer.PlayerUID));
         }
     }
 }

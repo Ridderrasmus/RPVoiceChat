@@ -5,6 +5,7 @@ using RPVoiceChat.Gui;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Systems;
 using RPVoiceChat.Utils;
+using RPVoiceChat.VoiceGroups.Manager;
 using System;
 using System.Collections.Generic;
 using Vintagestory.API.Client;
@@ -20,6 +21,7 @@ namespace RPVoiceChat
         private AudioOutputManager audioOutputManager;
         private PlayerNetworkClient client;
         private GuiManager guiManager;
+        private VoiceGroupManagerClient voiceGroupManager;
         private bool isReady = false;
         private bool mutePressed = false;
         private bool voiceMenuPressed = false;
@@ -34,8 +36,6 @@ namespace RPVoiceChat
         {
             capi = api;
 
-            WireNetworkHandler.RegisterClientside(api);
-
             // Sneak in native dlls
             EmbeddedDllClass.ExtractEmbeddedDlls();
             EmbeddedDllClass.LoadDll("RNNoise.dll");
@@ -46,6 +46,9 @@ namespace RPVoiceChat
             // Init microphone and audio output managers
             micManager = new MicrophoneManager(capi);
             audioOutputManager = new AudioOutputManager(capi, clientSettingsRepository);
+
+            // Init voice groups manager
+            voiceGroupManager = new VoiceGroupManagerClient(capi);
 
             // Init voice chat client
             bool forwardPorts = !config.ManualPortForwarding;
@@ -58,7 +61,7 @@ namespace RPVoiceChat
             client = new PlayerNetworkClient(capi, networkTransports);
 
             // Initialize gui
-            guiManager = new GuiManager(capi, micManager, audioOutputManager, clientSettingsRepository);
+            guiManager = new GuiManager(capi, micManager, audioOutputManager, clientSettingsRepository, voiceGroupManager);
 
             // Set up keybinds
             capi.Input.RegisterHotKey("voicechatMenu", UIUtils.I18n("Hotkey.ModMenu"), GlKeys.P, HotkeyType.GUIOrOtherControls);

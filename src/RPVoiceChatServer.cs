@@ -2,6 +2,7 @@ using RPVoiceChat.Networking;
 using RPVoiceChat.Server;
 using RPVoiceChat.Systems;
 using RPVoiceChat.Utils;
+using RPVoiceChat.VoiceGroups.Manager;
 using System;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
@@ -14,6 +15,7 @@ namespace RPVoiceChat
     {
         protected ICoreServerAPI sapi;
         private GameServer server;
+        private VoiceGroupManagerServer voiceGroupManager;
         public override void StartServerSide(ICoreServerAPI api)
         {
             sapi = api;
@@ -31,7 +33,8 @@ namespace RPVoiceChat
             registerCommands();
 
 
-            WireNetworkHandler.RegisterServerside(api);
+            // Initialize voice group manager
+            voiceGroupManager = new VoiceGroupManagerServer(api);
 
             bool forwardPorts = !config.ManualPortForwarding;
             var networkTransports = new List<INetworkServer>()
@@ -44,7 +47,7 @@ namespace RPVoiceChat
                 networkTransports.Insert(1, new TCPNetworkServer(config.ServerPort, config.ServerIP, forwardPorts));
             }
 
-            server = new GameServer(sapi, networkTransports);
+            server = new GameServer(sapi, networkTransports, voiceGroupManager);
             server.Launch();
         }
 
@@ -109,12 +112,32 @@ namespace RPVoiceChat
                     .WithAdditionalInformation(UIUtils.I18n("Command.OthersHearSpectators.Help"))
                     .WithArgs(parsers.Bool("state"))
                     .HandleWith(ToggleOthersHearSpectators)
+                .EndSub()
+                .BeginSub("allowgroupvc")
+                    .WithDesc(UIUtils.I18n("Command.AllowGroupVoiceChat.Desc"))
+                    .WithAdditionalInformation(UIUtils.I18n("Command.AllowGroupVoiceChat.Help"))
+                    .WithArgs(parsers.Bool("state"))
+                    .HandleWith(ToggleAllowGroupVC)
+                .EndSub()
                 .BeginSub("wtw")
                     .WithDesc(UIUtils.I18n("Command.WallThicknessWeighting.Desc"))
                     .WithAdditionalInformation(UIUtils.I18n("Command.WallThicknessWeighting.Help"))
                     .WithArgs(parsers.Float("weighting"))
                     .HandleWith(SetWallThicknessWeighting)
                 .EndSub();
+
+            
+        }
+
+        private TextCommandResult ToggleAllowGroupVC(TextCommandCallingArgs args)
+        {
+            const string i18nPrefix = "Command.AllowGroupVoiceChat.Success";
+            bool state = (bool)args[0];
+
+            WorldConfig.Set("allow-group-voicechat", state);
+            string stateAsText = state ? "Enabled" : "Disabled";
+
+            return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
         }
 
         private TextCommandResult ToggleOthersHearSpectators(TextCommandCallingArgs args)

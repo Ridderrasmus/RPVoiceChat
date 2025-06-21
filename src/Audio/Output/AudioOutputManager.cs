@@ -9,6 +9,10 @@ using Vintagestory.API.Util;
 
 namespace RPVoiceChat.Audio
 {
+    // TODO: Audio sources need to be split into different kinds of sources, e.g. locational and non-locational
+    // TODO: Create support for voice chat groups, so that players can talk to each other without being in the same location
+
+
     public class AudioOutputManager : IDisposable
     {
         ICoreClientAPI capi;
@@ -151,7 +155,7 @@ namespace RPVoiceChat.Audio
             if (playerSources.TryGetValue(playerId, out var source))
                 return source.IsPlaying;
 
-            if (capi.World.Player.PlayerUID == playerId)
+            if (capi.World.Player?.PlayerUID == playerId)
                 return localPlayerAudioSource.IsPlaying;
 
             Logger.client.Warning($"Could not find player audio source for {playerId}, assuming player isn't talking");
