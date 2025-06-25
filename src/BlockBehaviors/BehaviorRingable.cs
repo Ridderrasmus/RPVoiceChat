@@ -13,82 +13,83 @@ namespace RPVoiceChat.GameContent.BlockBehaviors
 
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel, ref EnumHandling handling)
         {
+            var blockEntity = world.BlockAccessor.GetBlockEntity(blockSel.Position);
+            if (blockEntity == null) return base.OnBlockInteractStart(world, byPlayer, blockSel, ref handling);
 
-            Block block = world.BlockAccessor.GetBlock(blockSel.Position);
-            BEBehaviorRingable? ringable = world.GetBlockAccessor(false, false, false).GetBlockEntity(blockSel.Position)?.GetBehavior<BEBehaviorRingable>();
+            BEBehaviorRingable? ringable = blockEntity.GetBehavior<BEBehaviorRingable>();
+            if (ringable == null) return base.OnBlockInteractStart(world, byPlayer, blockSel, ref handling);
 
-            if (ringable == null)
-                return base.OnBlockInteractStart(world, byPlayer, blockSel, ref handling);
-
-
-            // Check if the player is holding the bell part item
-            if (byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack?.Item is Item item && string.IsNullOrWhiteSpace(ringable.BellPartCode))
+            // 1) Player attaches a bell part if they hold one and none is present
+            if (byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack?.Item is Item item &&
+                string.IsNullOrWhiteSpace(ringable.BellPartCode))
             {
                 if (item.Code.Path.StartsWith("smallbellparts"))
                 {
-                    // Set the bell part item to the small bell parts item
                     ringable.BellPartCode = item.Code.Path;
 
                     if (byPlayer.WorldData.CurrentGameMode != EnumGameMode.Creative)
                     {
-                        // Remove the bell part item from the player's inventory
                         byPlayer.InventoryManager.ActiveHotbarSlot.TakeOut(1);
                         byPlayer.InventoryManager.ActiveHotbarSlot.MarkDirty();
                     }
-                    
-                    ringable.Blockentity.MarkDirty(true);
-                }
 
-                return true;
+                    ringable.Blockentity.MarkDirty(true);
+                    return true;
+                }
             }
             else
             {
-                // If the bell part item is not "none" and the time since the last ring is greater than 5 seconds, play the bell sound
-                if (!string.IsNullOrWhiteSpace(ringable.BellPartCode) && (ringable.LastRung == null || (ringable.LastRung < DateTime.Now - (TimeSpan.FromSeconds(5)))))
+                // 2) Player rings the bell if a part is attached and cooldown elapsed
+                if (!string.IsNullOrWhiteSpace(ringable.BellPartCode) &&
+                    (ringable.LastRung == null || ringable.LastRung < DateTime.Now.AddSeconds(-5)))
                 {
                     ringable.LastRung = DateTime.Now;
                     int rand = new Random().Next(1, 3);
-                    world.PlaySoundAt(new AssetLocation(RPVoiceChatMod.modID, $"sounds/block/callbell/callbell_{rand}.ogg"), blockSel.Position.X, blockSel.Position.Y, blockSel.Position.Z, byPlayer, false, 16);
+                    float volume = RPVoiceChatModSystem.AudioSettings?.GetVolume("block") ?? 0.6f;
+
+                    world.PlaySoundAt(
+                        new AssetLocation("rpvoicechat", $"sounds/block/callbell/callbell_{rand}.ogg"),
+                        blockSel.Position.X + 0.5, blockSel.Position.Y + 0.5, blockSel.Position.Z + 0.5,
+                        byPlayer,
+                        false,
+                        16f,
+                        volume
+                    );
                 }
             }
-
 
             return base.OnBlockInteractStart(world, byPlayer, blockSel, ref handling);
         }
 
         public override void OnBlockBroken(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, ref EnumHandling handling)
         {
-            // Drop itemstack of bellpart on block broken by non creative player
-
             if (byPlayer.WorldData.CurrentGameMode != EnumGameMode.Creative)
             {
-                BEBehaviorRingable? ringable = world.GetBlockAccessor(false, false, false).GetBlockEntity(pos).GetBehavior<BEBehaviorRingable>();
+                var blockEntity = world.BlockAccessor.GetBlockEntity(pos);
+                if (blockEntity == null) { base.OnBlockBroken(world, pos, byPlayer, ref handling); return; }
 
+                BEBehaviorRingable? ringable = blockEntity.GetBehavior<BEBehaviorRingable>();
                 if (ringable == null || string.IsNullOrWhiteSpace(ringable.BellPartCode))
                 {
                     base.OnBlockBroken(world, pos, byPlayer, ref handling);
                     return;
                 }
 
-                Item item = world.GetItem(new AssetLocation(RPVoiceChatMod.modID, ringable.BellPartCode));
-
+                Item item = world.GetItem(new AssetLocation("rpvoicechat", ringable.BellPartCode));
                 if (item == null)
                 {
                     base.OnBlockBroken(world, pos, byPlayer, ref handling);
                     return;
                 }
 
-                ItemStack stack = new ItemStack(item);
-                stack.StackSize = 1;
-
+                ItemStack stack = new ItemStack(item)
+                {
+                    StackSize = 1
+                };
                 world.SpawnItemEntity(stack, pos.ToVec3d());
             }
 
             base.OnBlockBroken(world, pos, byPlayer, ref handling);
-
-            
-
         }
-
     }
 }

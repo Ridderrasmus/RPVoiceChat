@@ -6,48 +6,46 @@ namespace RPVoiceChat.GameContent.Items
 {
     public class SoundEmittingItem : Item
     {
-        private Random Random = new Random();
+        private Random rand = new Random();
 
         protected int AudibleDistance = 16;
-        protected float Volume = 0.6f;
+        protected float DefaultVolume = 0.6f;
         protected int CooldownTime = 2;
 
         private bool isUsable = true;
         private int time = 0;
-
         private long cooldownThreadID = 0;
+        private ICoreAPI api;
 
         public override void OnLoaded(ICoreAPI api)
         {
             this.api = api;
             base.OnLoaded(api);
 
-            AudibleDistance = (int)(Attributes?["soundAudibleDistance"].AsInt(AudibleDistance));
-            Volume = (float)(Attributes?["soundVolume"].AsFloat(Volume));
-            CooldownTime = (int)(Attributes?["cooldownTime"].AsInt(CooldownTime));
+            AudibleDistance = Attributes?["soundAudibleDistance"].AsInt(AudibleDistance) ?? AudibleDistance;
+            DefaultVolume = Attributes?["soundVolume"].AsFloat(DefaultVolume) ?? DefaultVolume;
+            CooldownTime = Attributes?["cooldownTime"].AsInt(CooldownTime) ?? CooldownTime;
         }
 
-
-        // When an entity is attacked with this item
-        // Called twice it seems. Both clientside and serverside?
         public override void OnAttackingWith(IWorldAccessor world, Entity byEntity, Entity attackedEntity, ItemSlot slot)
         {
             base.OnAttackingWith(world, byEntity, attackedEntity, slot);
             if (!world.Side.IsServer()) return;
 
-
-            if (byEntity is EntityPlayer)
-                PlaySound("rightClickSounds", byEntity.World.PlayerByUid((byEntity as EntityPlayer).PlayerUID));
+            if (byEntity is EntityPlayer player)
+            {
+                PlaySound("rightClickSounds", player.World.PlayerByUid(player.PlayerUID));
+            }
         }
 
-        // When a block is broken with this item
-        // Called twice it seems. Both clientside and serverside?
         public override bool OnBlockBrokenWith(IWorldAccessor world, Entity byEntity, ItemSlot slot, BlockSelection blockSel, float dropQuantityMultiplier = 1)
         {
             if (!world.Side.IsServer()) return base.OnBlockBrokenWith(world, byEntity, slot, blockSel, dropQuantityMultiplier);
 
-            if (byEntity is EntityPlayer)
-                PlaySound("breakBlockSounds", byEntity.World.PlayerByUid((byEntity as EntityPlayer).PlayerUID));
+            if (byEntity is EntityPlayer player)
+            {
+                PlaySound("breakBlockSounds", player.World.PlayerByUid(player.PlayerUID));
+            }
 
             return base.OnBlockBrokenWith(world, byEntity, slot, blockSel, dropQuantityMultiplier);
         }
@@ -57,8 +55,10 @@ namespace RPVoiceChat.GameContent.Items
             IWorldAccessor world = byEntity.World;
             if (!world.Side.IsServer()) return;
 
-            if (byEntity is EntityPlayer)
-                PlaySound("rightClickSounds", byEntity.World.PlayerByUid((byEntity as EntityPlayer).PlayerUID));
+            if (byEntity is EntityPlayer player)
+            {
+                PlaySound("rightClickSounds", player.World.PlayerByUid(player.PlayerUID));
+            }
         }
 
         public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handling)
@@ -76,40 +76,44 @@ namespace RPVoiceChat.GameContent.Items
             return true;
         }
 
-        private void PlaySound(string soundSource, IPlayer player)
+        private void PlaySound(string soundKey, IPlayer player)
         {
-            PlaySound(soundSource, player, false);
+            PlaySound(soundKey, player, dualCall: false);
         }
 
-        private void PlaySound(string soundSource, IPlayer player, bool dualCall)
+        private void PlaySound(string soundKey, IPlayer player, bool dualCall)
         {
-            if (!isUsable) return;
-            isUsable = false;
+            if (!isUsable || player == null) return;
 
-            if (player == null) return;
-
-            string[] soundList = Attributes?[soundSource].AsArray<string>(new string[0]);
-
+            string[] soundList = Attributes?[soundKey].AsArray<string>(Array.Empty<string>());
             if (soundList == null || soundList.Length == 0) return;
 
-            string sound = soundList[Random.Next(soundList.Length)];
+            string chosenSound = soundList[rand.Next(soundList.Length)];
 
-            if (dualCall)
-                player.Entity.World.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/" + sound + ".ogg"), player, player, false, AudibleDistance, Volume);
-            else
-                player.Entity.World.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/" + sound + ".ogg"), player, null, false, AudibleDistance, Volume);
+            // Volume configurable
+            float volume = RPVoiceChatModSystem.AudioSettings?.GetVolume("item") ?? DefaultVolume;
 
-            StartCountdown();
+            player.Entity.World.PlaySoundAt(
+                new AssetLocation("rpvoicechat", $"sounds/{chosenSound}.ogg"),
+                player,
+                dualCall ? player : null,
+                false,
+                AudibleDistance,
+                volume
+            );
+
+            StartCooldown();
         }
 
-
-        private void StartCountdown()
+        private void StartCooldown()
         {
-            if (cooldownThreadID == 0)
-                cooldownThreadID = api.Event.RegisterGameTickListener(Cooldown, 1000);
+            if (cooldownThreadID == 0 && api != null)
+            {
+                cooldownThreadID = api.Event.RegisterGameTickListener(CooldownTick, 1000);
+            }
         }
 
-        private void Cooldown(float dt)
+        private void CooldownTick(float dt)
         {
             time++;
 
