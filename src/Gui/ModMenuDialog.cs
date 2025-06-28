@@ -457,6 +457,8 @@ namespace RPVoiceChat.Gui
                 return;
 
             var outputGain = ClientSettings.OutputGain * 100;
+            var outputBlock = ClientSettings.OutputBlock * 100;
+            var outputItem = ClientSettings.OutputItem * 100;
             var inputGainDBS = AudioUtils.FactorToDBs(ClientSettings.InputGain) * 10;
             var inputThreshold = ClientSettings.InputThreshold * 100;
             var denoisingSensitivity = ClientSettings.BackgroundNoiseThreshold * 100;
@@ -469,6 +471,8 @@ namespace RPVoiceChat.Gui
             SetValue("loopback", ClientSettings.Loopback);
             SetValue("outputGain", new dynamic[] { outputGain, 0, 200, 1, "%" });
             SetValue("inputGain", new dynamic[] { inputGainDBS, -200, 200, 1, "" });
+            SetValue("inputBlock", new dynamic[] { inputGainDBS, -200, 200, 1, "" });
+            SetValue("inputItem", new dynamic[] { inputGainDBS, -200, 200, 1, "" });
             SetValue("inputThreshold", new dynamic[] { inputThreshold, 0, 100, 1, "" });
             SetValue("toggleHUD", ClientSettings.ShowHud);
             SetValue("toggleMuffling", ClientSettings.Muffling);
