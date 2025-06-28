@@ -48,7 +48,7 @@ namespace RPVoiceChat.GameContent.BlockBehaviors
                     float volume = RPVoiceChatModSystem.AudioSettings?.GetVolume("block") ?? 0.6f;
 
                     world.PlaySoundAt(
-                        new AssetLocation("rpvoicechat", $"sounds/block/callbell/callbell_{rand}.ogg"),
+                        new AssetLocation(RPVoiceChatMod.modID, $"sounds/block/callbell/callbell_{rand}.ogg"),
                         blockSel.Position.X + 0.5, blockSel.Position.Y + 0.5, blockSel.Position.Z + 0.5,
                         byPlayer,
                         false,
@@ -75,7 +75,7 @@ namespace RPVoiceChat.GameContent.BlockBehaviors
                     return;
                 }
 
-                Item item = world.GetItem(new AssetLocation("rpvoicechat", ringable.BellPartCode));
+                Item item = world.GetItem(new AssetLocation(RPVoiceChatMod.modID, ringable.BellPartCode));
                 if (item == null)
                 {
                     base.OnBlockBroken(world, pos, byPlayer, ref handling);

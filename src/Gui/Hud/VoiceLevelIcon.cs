@@ -68,7 +68,7 @@ namespace RPVoiceChat.Gui
         {
             string voiceLevel = textureNameByVoiceLevel[currentVoiceLevel];
             SingleComposer = capi.Gui.CreateCompo("rpvcvoicelevelicon", dialogBounds)
-                .AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation("rpvoicechat", $"textures/gui/{voiceLevel}.png"))
+                .AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation(RPVoiceChatMod.modID, $"textures/gui/{voiceLevel}.png"))
                 .Compose();
 
             UpdateDisplay();

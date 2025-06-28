@@ -67,9 +67,9 @@ namespace RPVoiceChat.GameContent.Blocks
             string sound = soundList[Random.Next(soundList.Length)];
 
             if(player == null)
-                api.World.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/" + sound + ".ogg"), x, y, z, null, false, AudibleDistance, Volume);
+                api.World.PlaySoundAt(new AssetLocation(RPVoiceChatMod.modID, "sounds/" + sound + ".ogg"), x, y, z, null, false, AudibleDistance, Volume);
             else
-                api.World.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/" + sound + ".ogg"), x, y, z, player, false, AudibleDistance, Volume);
+                api.World.PlaySoundAt(new AssetLocation(RPVoiceChatMod.modID, "sounds/" + sound + ".ogg"), x, y, z, player, false, AudibleDistance, Volume);
 
             StartCountdown();
         }
@@ -93,9 +93,9 @@ namespace RPVoiceChat.GameContent.Blocks
             string sound = soundList[Random.Next(soundList.Length)];
 
             if (dualCall)
-                player.Entity.World.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/" + sound + ".ogg"), player, player, false, AudibleDistance, Volume);
+                player.Entity.World.PlaySoundAt(new AssetLocation(RPVoiceChatMod.modID, "sounds/" + sound + ".ogg"), player, player, false, AudibleDistance, Volume);
             else
-                player.Entity.World.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/" + sound + ".ogg"), player, null, false, AudibleDistance, Volume);
+                player.Entity.World.PlaySoundAt(new AssetLocation(RPVoiceChatMod.modID, "sounds/" + sound + ".ogg"), player, null, false, AudibleDistance, Volume);
 
             StartCountdown();
         }

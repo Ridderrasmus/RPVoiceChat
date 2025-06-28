@@ -94,7 +94,7 @@ namespace RPVoiceChat.GameContent.Items
             float volume = RPVoiceChatModSystem.AudioSettings?.GetVolume("item") ?? DefaultVolume;
 
             player.Entity.World.PlaySoundAt(
-                new AssetLocation("rpvoicechat", $"sounds/{chosenSound}.ogg"),
+                new AssetLocation(RPVoiceChatMod.modID, $"sounds/{chosenSound}.ogg"),
                 player,
                 dualCall ? player : null,
                 false,
