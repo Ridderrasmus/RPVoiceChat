@@ -1,9 +1,10 @@
+using System;
+using System.Collections.Generic;
+using RPVoiceChat.Audio;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Server;
 using RPVoiceChat.Systems;
 using RPVoiceChat.Utils;
-using System;
-using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;
 using Vintagestory.API.Server;
@@ -14,6 +15,8 @@ namespace RPVoiceChat
     {
         protected ICoreServerAPI sapi;
         private GameServer server;
+        public static AudioSourceManager AudioSourceManager;
+
         public override void StartServerSide(ICoreServerAPI api)
         {
             sapi = api;
@@ -43,6 +46,8 @@ namespace RPVoiceChat
                 networkTransports.Insert(0, new UDPNetworkServer(config.ServerPort, config.ServerIP, forwardPorts));
                 networkTransports.Insert(1, new TCPNetworkServer(config.ServerPort, config.ServerIP, forwardPorts));
             }
+
+            AudioSourceManager = new AudioSourceManager(api);
 
             server = new GameServer(sapi, networkTransports);
             server.Launch();
@@ -211,5 +216,6 @@ namespace RPVoiceChat
         {
             server?.Dispose();
         }
+
     }
 }

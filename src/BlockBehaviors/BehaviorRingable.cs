@@ -45,7 +45,7 @@ namespace RPVoiceChat.GameContent.BlockBehaviors
                 {
                     ringable.LastRung = DateTime.Now;
                     int rand = new Random().Next(1, 3);
-                    float volume = RPVoiceChatModSystem.AudioSettings?.GetVolume("block") ?? 0.6f;
+                    float volume = ClientSettings.OutputBlock != 0 ? ClientSettings.OutputBlock : 0.6f;
 
                     world.PlaySoundAt(
                         new AssetLocation(RPVoiceChatMod.modID, $"sounds/block/callbell/callbell_{rand}.ogg"),

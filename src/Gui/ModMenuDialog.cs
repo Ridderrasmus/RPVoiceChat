@@ -305,6 +305,26 @@ namespace RPVoiceChat.Gui
 
             RegisterOption(new ConfigOption
             {
+                Key = "outputBlock",
+                Type = ElementType.Slider,
+                Label = true,
+                Tooltip = true,
+                Tab = audioOutputTab,
+                SlideAction = SlideOutputBlock
+            });
+
+            RegisterOption(new ConfigOption
+            {
+                Key = "outputItem",
+                Type = ElementType.Slider,
+                Label = true,
+                Tooltip = true,
+                Tab = audioOutputTab,
+                SlideAction = SlideOutputItem
+            });
+
+            RegisterOption(new ConfigOption
+            {
                 Key = "inputGain",
                 Type = ElementType.Slider,
                 Label = true,
@@ -512,6 +532,24 @@ namespace RPVoiceChat.Gui
         {
             float gain = (float)intGain / 100;
             ClientSettings.OutputGain = gain;
+            PlayerListener.SetGain(gain);
+
+            return true;
+        }
+
+        private bool SlideOutputBlock(int intGain)
+        {
+            float gain = (float)intGain / 100;
+            ClientSettings.OutputBlock = gain;
+            PlayerListener.SetGain(gain);
+
+            return true;
+        }
+
+        private bool SlideOutputItem(int intGain)
+        {
+            float gain = (float)intGain / 100;
+            ClientSettings.OutputItem = gain;
             PlayerListener.SetGain(gain);
 
             return true;

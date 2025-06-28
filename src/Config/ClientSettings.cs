@@ -5,7 +5,9 @@ namespace RPVoiceChat
 {
     public static class ClientSettings
     {
-        public static float OutputGain { get => GetFloat("outputGain", 1); set => Set("outputGain", value); }
+        public static float OutputGain { get => GetFloat("outputGain", 1f); set => Set("outputGain", value); }
+        public static float OutputBlock { get => GetFloat("outputBlock", 0.6f); set => Set("outputBlock", value); }
+        public static float OutputItem { get => GetFloat("outputItem", 0.6f); set => Set("outputItem", value); }
         public static float InputGain { get => GetFloat("inputGain", 1); set => Set("inputGain", value); }
         public static float InputThreshold { get => GetFloat("inputThreshold", 0.36f); set => Set("inputThreshold", value); }
         public static float BackgroundNoiseThreshold { get => GetFloat("denoisingSensitivity", 0.5f); set => Set("denoisingSensitivity", value); }

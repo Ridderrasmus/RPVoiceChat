@@ -91,7 +91,7 @@ namespace RPVoiceChat.GameContent.Items
             string chosenSound = soundList[rand.Next(soundList.Length)];
 
             // Volume configurable
-            float volume = RPVoiceChatModSystem.AudioSettings?.GetVolume("item") ?? DefaultVolume;
+            float volume = ClientSettings.OutputItem != 0 ? ClientSettings.OutputItem : DefaultVolume;
 
             player.Entity.World.PlaySoundAt(
                 new AssetLocation(RPVoiceChatMod.modID, $"sounds/{chosenSound}.ogg"),
