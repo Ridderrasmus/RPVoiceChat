@@ -295,12 +295,12 @@ namespace RPVoiceChat.Gui
 
             RegisterOption(new ConfigOption
             {
-                Key = "outputGain",
+                Key = "outputVoice",
                 Type = ElementType.Slider,
                 Label = true,
                 Tooltip = true,
                 Tab = audioOutputTab,
-                SlideAction = SlideOutputGain
+                SlideAction = SlideOutputVoice
             });
 
             RegisterOption(new ConfigOption
@@ -456,7 +456,7 @@ namespace RPVoiceChat.Gui
             if (!IsOpened())
                 return;
 
-            var outputGain = ClientSettings.OutputGain * 100;
+            var outputVoice = ClientSettings.OutputVoice * 100;
             var outputBlock = ClientSettings.OutputBlock * 100;
             var outputItem = ClientSettings.OutputItem * 100;
             var inputGainDBS = AudioUtils.FactorToDBs(ClientSettings.InputGain) * 10;
@@ -469,10 +469,10 @@ namespace RPVoiceChat.Gui
             SetValue("togglePushToTalk", ClientSettings.PushToTalkEnabled);
             SetValue("muteMicrophone", ClientSettings.IsMuted);
             SetValue("loopback", ClientSettings.Loopback);
-            SetValue("outputGain", new dynamic[] { outputGain, 0, 200, 1, "%" });
+            SetValue("outputVoice", new dynamic[] { outputVoice, 0, 200, 1, "%" });
             SetValue("inputGain", new dynamic[] { inputGainDBS, -200, 200, 1, "" });
-            SetValue("inputBlock", new dynamic[] { inputGainDBS, -200, 200, 1, "" });
-            SetValue("inputItem", new dynamic[] { inputGainDBS, -200, 200, 1, "" });
+            SetValue("outputBlock", new dynamic[] { outputBlock, 0, 200, 1, "%" });
+            SetValue("outputItem", new dynamic[] { outputItem, 0, 200, 1, "%" });
             SetValue("inputThreshold", new dynamic[] { inputThreshold, 0, 100, 1, "" });
             SetValue("toggleHUD", ClientSettings.ShowHud);
             SetValue("toggleMuffling", ClientSettings.Muffling);
@@ -532,29 +532,29 @@ namespace RPVoiceChat.Gui
             audioOutputManager.IsLoopbackEnabled = enabled;
         }
 
-        private bool SlideOutputGain(int intGain)
+        private bool SlideOutputVoice(int intGain)
         {
-            float gain = (float)intGain / 100;
-            ClientSettings.OutputGain = gain;
-            PlayerListener.SetGain(gain);
+            float gain = intGain / 100f;
+            ClientSettings.OutputVoice = gain;
+            PlayerListener.SetVoiceGain(gain);
 
             return true;
         }
 
         private bool SlideOutputBlock(int intGain)
         {
-            float gain = (float)intGain / 100;
+            float gain = intGain / 100f;
             ClientSettings.OutputBlock = gain;
-            PlayerListener.SetGain(gain);
+            PlayerListener.SetBlockGain(gain);
 
             return true;
         }
 
         private bool SlideOutputItem(int intGain)
         {
-            float gain = (float)intGain / 100;
+            float gain = intGain / 100f;
             ClientSettings.OutputItem = gain;
-            PlayerListener.SetGain(gain);
+            PlayerListener.SetItemGain(gain);
 
             return true;
         }

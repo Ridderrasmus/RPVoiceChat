@@ -17,6 +17,8 @@ namespace RPVoiceChat.Audio
     {
         public bool IsDisposed = false;
         public bool IsPlaying { get => _IsPlaying(); }
+        public const float MaxGain = 2f;
+
         private const int BufferCount = 20;
         private int source;
         private CircularAudioBuffer buffer;
@@ -25,12 +27,12 @@ namespace RPVoiceChat.Audio
         private object dequeue_audio_lock = new object();
         private int orderingDelay = 100;
         private long lastAudioSequenceNumber = -1;
+
         private IAudioCodec codec;
         private LowpassFilter lowpassFilter;
         private ReverbEffect reverbEffect;
         private IntoxicatedEffect intoxicatedEffect;
         private UnstableEffect unstableEffect;
-
         private ICoreClientAPI capi;
         private IPlayer player;
         private ClientSettingsRepository clientSettingsRepo;
@@ -168,9 +170,9 @@ namespace RPVoiceChat.Audio
 
         private float GetFinalGain()
         {
-            var globalGain = Math.Min(PlayerListener.gain, 1);
+            var globalGain = Math.Clamp(PlayerListener.VoiceGain, 0, MaxGain);
             var sourceGain = clientSettingsRepo.GetPlayerGain(player.PlayerUID);
-            var finalGain = GameMath.Clamp(globalGain * sourceGain, 0, 1);
+            var finalGain = GameMath.Clamp(globalGain * sourceGain, 0, MaxGain);
 
             return finalGain;
         }

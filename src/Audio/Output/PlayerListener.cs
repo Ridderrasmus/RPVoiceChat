@@ -5,33 +5,65 @@ namespace RPVoiceChat.Audio
 {
     public static class PlayerListener
     {
-        public static float gain = 1;
+        public static float VoiceGain = 1f;
+        public static float BlockGain = 1f;
+        public static float ItemGain = 1f;
+
         private static ICoreClientAPI capi;
 
         public static void Init(ICoreClientAPI api)
         {
             capi = api;
-            SetGain(ClientSettings.OutputGain);
+
+            VoiceGain = ClientSettings.OutputVoice;
+            BlockGain = ClientSettings.OutputBlock;
+            ItemGain = ClientSettings.OutputItem;
         }
 
-        public static void SetGain(float newGain)
+        public static void SetVoiceGain(float gain)
         {
-            if (newGain == gain) return;
+            if (gain == VoiceGain) return;
 
-            gain = newGain;
-            if (gain < 1) return;
+            VoiceGain = gain;
+            ApplyVoiceGain();
+        }
 
-            //Force game to update volume of already playing sounds
-            capi.Settings.Int["soundLevel"] = capi.Settings.Int["soundLevel"] + 1;
-            capi.Settings.Int["soundLevel"] = capi.Settings.Int["soundLevel"] - 1;
+        public static void SetBlockGain(float gain)
+        {
+            if (gain == BlockGain) return;
+            BlockGain = gain;
+        }
 
-            OALW.Listener(ALListenerf.Gain, gain);
+        public static void SetItemGain(float gain)
+        {
+            if (gain == ItemGain) return;
+            ItemGain = gain;
+        }
+
+        private static void ApplyVoiceGain()
+        {
+            capi.Settings.Int["soundLevel"] += 1;
+            capi.Settings.Int["soundLevel"] -= 1;
+        }
+
+   
+        public static float GetGainForSource(string sourceType)
+        {
+            return sourceType switch
+            {
+                "voice" => VoiceGain,
+                "block" => BlockGain,
+                "item" => ItemGain,
+                _ => 1f
+            };
         }
 
         public static void Dispose()
         {
             capi = null;
-            gain = 1;
+            VoiceGain = 1f;
+            BlockGain = 1f;
+            ItemGain = 1f;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using RPVoiceChat.Audio;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 
@@ -7,14 +8,14 @@ namespace RPVoiceChat.GameContent.Items
     public class SoundEmittingItem : Item
     {
         private Random rand = new Random();
+        public const float MaxGain = 2f;
 
         protected int AudibleDistance = 16;
-        protected float DefaultVolume = 0.6f;
-        protected int CooldownTime = 2;
-
+        protected float DefaultVolume = 1f;
+        private float soundDuration = 2f;
         private bool isUsable = true;
-        private int time = 0;
-        private long cooldownThreadID = 0;
+        private bool cooldownActive = false;
+
         private ICoreAPI api;
 
         public override void OnLoaded(ICoreAPI api)
@@ -24,7 +25,7 @@ namespace RPVoiceChat.GameContent.Items
 
             AudibleDistance = Attributes?["soundAudibleDistance"].AsInt(AudibleDistance) ?? AudibleDistance;
             DefaultVolume = Attributes?["soundVolume"].AsFloat(DefaultVolume) ?? DefaultVolume;
-            CooldownTime = Attributes?["cooldownTime"].AsInt(CooldownTime) ?? CooldownTime;
+            soundDuration = Attributes?["soundDuration"].AsFloat(soundDuration) ?? soundDuration;
         }
 
         public override void OnAttackingWith(IWorldAccessor world, Entity byEntity, Entity attackedEntity, ItemSlot slot)
@@ -90,8 +91,8 @@ namespace RPVoiceChat.GameContent.Items
 
             string chosenSound = soundList[rand.Next(soundList.Length)];
 
-            // Volume configurable
-            float volume = ClientSettings.OutputItem != 0 ? ClientSettings.OutputItem : DefaultVolume;
+            float rawVolume = DefaultVolume * PlayerListener.ItemGain;
+            float volume = Math.Clamp(rawVolume, 0f, MaxGain);
 
             player.Entity.World.PlaySoundAt(
                 new AssetLocation(RPVoiceChatMod.modID, $"sounds/{chosenSound}.ogg"),
@@ -102,28 +103,29 @@ namespace RPVoiceChat.GameContent.Items
                 volume
             );
 
-            StartCooldown();
+            StartSoundDurationCooldown();
         }
 
-        private void StartCooldown()
+        /// <summary>
+        /// Starts a cooldown timer based on the duration of the sound to prevent overlapping playback.
+        /// 
+        /// Note:
+        /// 1) Each sound-emitting item should define a "soundDuration" value in its JSON attributes,
+        ///    representing the length of the sound in seconds.
+        /// 2) This method could be improved by dynamically retrieving the actual duration of the sound
+        ///    using a third-party library such as NVorbis, rather than relying on a static value.
+        /// </summary>
+        private void StartSoundDurationCooldown()
         {
-            if (cooldownThreadID == 0 && api != null)
-            {
-                cooldownThreadID = api.Event.RegisterGameTickListener(CooldownTick, 1000);
-            }
-        }
+            if (cooldownActive) return;
 
-        private void CooldownTick(float dt)
-        {
-            time++;
+            cooldownActive = true;
+            isUsable = false;
 
-            if (time >= CooldownTime || time < 0)
-            {
-                api.Event.UnregisterGameTickListener(cooldownThreadID);
-                cooldownThreadID = 0;
-                time = 0;
+            api.World.RegisterCallback((float dt) => {
                 isUsable = true;
-            }
+                cooldownActive = false;
+            }, (int)(soundDuration * 1000));
         }
     }
 }
