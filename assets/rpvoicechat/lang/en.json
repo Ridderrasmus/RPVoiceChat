@@ -91,6 +91,8 @@
   "Command.WallThicknessWeighting.Desc": "Set a value that weighting the wall thickness calculated for muffling",
   "Command.WallThicknessWeighting.Help": "Wall thickness is divided by this weighting to remove gain at the high-frequency limit of the filter, simuling muffling. Values below 1 will increase muffling effect, values upper 1 will reduced it. Default value is <strong>1.5f</strong>",
   "Command.WallThicknessWeighting.Success": "Wall thickness weighting set to {0}",
+  "Command.IntoxicatedEffect.Desc": "Toggles intoxicated effect. See help for more info",
+  "Command.IntoxicatedEffect.Help": "Apply an intoxicated effect on a player's voice when drunk.'",
 
   "Hotkey.ModMenu": "RPVoice: Mod menu",
   "Hotkey.VoiceLevel": "RPVoice: Change voice distance",

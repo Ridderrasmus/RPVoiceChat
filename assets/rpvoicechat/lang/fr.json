@@ -85,6 +85,8 @@
   "Command.WallThicknessWeighting.Desc": "Définissez une valeur qui pondère l'épaisseur de paroi calculée pour l'atténuation",
   "Command.WallThicknessWeighting.Help": "L'épaisseur de la paroi est divisée par cette pondération pour supprimer le gain à la limite haute de fréquence du filtre, simulant ainsi l'étouffement. Les valeurs inférieures à 1 augmenteront l'effet d'étouffement, les valeurs supérieures à 1 le réduiront. La valeur par défaut est <strong>1,5f</strong>",
   "Command.WallThicknessWeighting.Success": "Pondération de l'épaisseur de paroi définie à {0}",
+  "Command.IntoxicatedEffect.Desc": "Active/désactive l'effet d'intoxication. Voir l'aide pour plus d'informations",
+  "Command.IntoxicatedEffect.Help": "Applique un effet d'intoxication sur la voix d'un joueur quand ce dernier est ivre.",
   "Hotkey.ModMenu": "RPVoice: menu du mod",
   "Hotkey.VoiceLevel": "RPVoice : Changer la distance vocale",
   "Hotkey.PTT": "RPVoice: Push-to-talk",
