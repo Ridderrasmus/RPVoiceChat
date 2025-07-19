@@ -45,7 +45,7 @@
   "variantgroups": [
     {
       "code": "metal",
-      "states": [ "blackbronze", "bismuthbronze", "brass", "tinbronze", "copper", "tin", "zinc", "iron", "nickel", "silver", "cupronickel", "gold", "electrum" ]
+      "states": [ "blackbronze", "bismuthbronze", "brass", "tinbronze", "copper", "tin", "zinc", "lead", "bismuth", "silver", "cupronickel", "gold", "electrum" ]
     },
     {
       "code": "v",
