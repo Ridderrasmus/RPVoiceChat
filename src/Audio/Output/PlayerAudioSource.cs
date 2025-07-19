@@ -101,7 +101,7 @@ namespace RPVoiceChat.Audio
             // If the player is on the other side of something to the listener, then the player's voice should be muffled
             bool mufflingEnabled = ClientSettings.Muffling;
             float wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
-            float wallThicknessWeighting = WorldConfig.GetFloat("wallThicknessWeighting");
+            float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");
             if (capi.World.Player.Entity.Swimming)
                 wallThickness += 1.0f;
 
@@ -133,12 +133,11 @@ namespace RPVoiceChat.Audio
                 unstableEffect.Apply();
             }
 
-            // DEACTIVATED : TO BE IMPLEMENTED
             // If the player is drunk, then the player's voice should be affected
-            // Values are temporary currently
             intoxicatedEffect?.Clear();
+            bool intoxicatedEffectToggle = WorldConfig.GetBool("intoxicated-effect");
             float drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
-            if (toBeImplementedToggle && drunkness > 0)
+            if (intoxicatedEffectToggle && drunkness > 0)
             {
                 intoxicatedEffect = intoxicatedEffect ?? new IntoxicatedEffect(source);
                 intoxicatedEffect.SetToxicRate(drunkness);

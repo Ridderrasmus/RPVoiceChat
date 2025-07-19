@@ -1,9 +1,10 @@
+using System;
+using System.Collections.Generic;
+using RPVoiceChat.Audio.Effects;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Server;
 using RPVoiceChat.Systems;
 using RPVoiceChat.Utils;
-using System;
-using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;
 using Vintagestory.API.Server;
@@ -26,6 +27,7 @@ namespace RPVoiceChat
             WorldConfig.Set("encode-audio", WorldConfig.GetBool("encode-audio", true));
             WorldConfig.Set("others-hear-spectators", WorldConfig.GetBool("others-hear-spectators", true));
             WorldConfig.Set("wall-thickness-weighting", WorldConfig.GetFloat("wall-thickness-weighting", 2));
+            WorldConfig.Set("intoxicated-effect", WorldConfig.GetBool("intoxicated-effect", true));
 
             // Register commands
             registerCommands();
@@ -114,6 +116,12 @@ namespace RPVoiceChat
                     .WithAdditionalInformation(UIUtils.I18n("Command.WallThicknessWeighting.Help"))
                     .WithArgs(parsers.Float("weighting"))
                     .HandleWith(SetWallThicknessWeighting)
+                .EndSub()
+                .BeginSub("intoxicated")
+                    .WithDesc(UIUtils.I18n("Command.IntoxicatedEffect.Desc"))
+                    .WithAdditionalInformation(UIUtils.I18n("Command.IntoxicatedEffect.Help"))
+                    .WithArgs(parsers.Bool("state"))
+                    .HandleWith(ToggleIntoxicatedEffect)
                 .EndSub();
         }
 
@@ -167,8 +175,9 @@ namespace RPVoiceChat
             bool forceNameTags = WorldConfig.GetBool("force-render-name-tags");
             bool encoding = WorldConfig.GetBool("encode-audio");
             float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");
+            bool intoxicatedEffect = WorldConfig.GetBool("intoxicated-effect");
 
-            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceNameTags, encoding, wallThicknessWeighting));
+            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceNameTags, encoding, wallThicknessWeighting, intoxicatedEffect));
         }
 
         private TextCommandResult SetWhisperHandler(TextCommandCallingArgs args)
@@ -205,6 +214,17 @@ namespace RPVoiceChat
             WorldConfig.Set("wall-thickness-weighting", weighting);
 
             return TextCommandResult.Success(UIUtils.I18n("Command.WallThicknessWeighting.Success", weighting));
+        }
+
+        private TextCommandResult ToggleIntoxicatedEffect(TextCommandCallingArgs args)
+        {
+            const string i18nPrefix = "Command.IntoxicatedEffect.Success";
+            bool state = (bool)args[0];
+
+            WorldConfig.Set("intoxicated-effect", state);
+
+            string stateAsText = state ? "Enabled" : "Disabled";
+            return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
         }
 
         public override void Dispose()
