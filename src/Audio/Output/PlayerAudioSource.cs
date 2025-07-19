@@ -135,7 +135,6 @@ namespace RPVoiceChat.Audio
                 unstableEffect.Apply();
             }
 
-            // DEACTIVATED : TO BE IMPLEMENTED
             // If the player is drunk, then the player's voice should be affected
             // Values are temporary currently
             intoxicatedEffect?.Clear();
@@ -253,7 +252,13 @@ namespace RPVoiceChat.Audio
                     orderingQueue.RemoveAt(0);
                 }
 
-                if (codec != null) audio.data = codec.Decode(audio.data);
+                if (codec != null)
+                    audio.data = codec.Decode(audio.data);
+
+                float finalGain = GetFinalGain();
+
+                PcmUtils.ApplyGainWithSoftClipping(ref audio.data, audio.format, finalGain);
+                PcmUtils.ApplyCompressor(ref audio.data, audio.format);
 
                 int maxFadeDuration = 2 * audio.frequency / 1000; // 2ms
                 AudioUtils.FadeEdges(audio.data, maxFadeDuration);

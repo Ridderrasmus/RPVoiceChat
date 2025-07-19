@@ -15,7 +15,7 @@
   "attributes": {
     "soundAudibleDistance": 128,
     "soundVolume": 0.6,
-    "cooldownTime": 3,
+    "soundDuration": 3,
     "rightClickSounds": [
       "item/warhorn/warhorn"
     ],
