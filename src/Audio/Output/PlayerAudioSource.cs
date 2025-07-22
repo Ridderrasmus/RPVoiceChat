@@ -103,7 +103,7 @@ namespace RPVoiceChat.Audio
             // If the player is on the other side of something to the listener, then the player's voice should be muffled
             bool mufflingEnabled = ClientSettings.Muffling;
             float wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
-            float wallThicknessWeighting = WorldConfig.GetFloat("wallThicknessWeighting");
+            float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");
             if (capi.World.Player.Entity.Swimming)
                 wallThickness += 1.0f;
 
