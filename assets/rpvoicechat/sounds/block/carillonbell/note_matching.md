@@ -18,8 +18,8 @@ we preferred to rename the sound files of the chime bell by naming them accordin
 | Copper         | E       |
 | Tin            | F       |
 | Zinc           | F#      |
-| Iron           | G       |
-| Nickel         | G#      |
+| Lead           | G       |
+| Bismuth        | G#      |
 | Silver         | A       |
 | Cupronickel    | A#      |
 | Gold           | B       |
