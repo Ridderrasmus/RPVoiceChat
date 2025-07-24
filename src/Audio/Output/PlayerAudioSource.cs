@@ -15,6 +15,9 @@ namespace RPVoiceChat.Audio
 {
     public class PlayerAudioSource : IDisposable
     {
+        public event Action<AudioData> OnAudioDataReceived;
+        public event Action<bool> OnPlayingStateChanged;
+
         public bool IsDisposed = false;
         public bool IsPlaying { get => _IsPlaying(); }
         private const int BufferCount = 20;
@@ -45,6 +48,8 @@ namespace RPVoiceChat.Audio
         };
         private Vec3f lastSpeakerCoords;
         private DateTime? lastSpeakerUpdate;
+
+        public float CurrentGain { get; private set; } = 1.0f;
 
         public PlayerAudioSource(IPlayer player, ICoreClientAPI capi, ClientSettingsRepository clientSettingsRepo)
         {
@@ -164,13 +169,10 @@ namespace RPVoiceChat.Audio
         private bool _IsPlaying()
         {
             return OALW.GetSourceState(source) == ALSourceState.Playing;
-        }
-
-        private float GetFinalGain()
+        }        private float GetFinalGain()
         {
             var globalGain = Math.Min(PlayerListener.gain, 1);
-            var sourceGain = clientSettingsRepo.GetPlayerGain(player.PlayerUID);
-            var finalGain = GameMath.Clamp(globalGain * sourceGain, 0, 1);
+            var finalGain = GameMath.Clamp(globalGain * CurrentGain, 0, 1);
 
             return finalGain;
         }
@@ -258,6 +260,8 @@ namespace RPVoiceChat.Audio
 
                 buffer.QueueAudio(audio.data, audio.format, audio.frequency);
 
+                NotifyAudioDataReceived(audio);
+
                 // The source can stop playing if it finishes everything in queue
                 var state = OALW.GetSourceState(source);
                 if (state != ALSourceState.Playing)
@@ -265,21 +269,42 @@ namespace RPVoiceChat.Audio
             }
         }
 
+        private void NotifyPlayingStateChanged(bool state)
+        {
+            OnPlayingStateChanged?.Invoke(state);
+        }
+
+        private void NotifyAudioDataReceived(AudioData data)
+        {
+            OnAudioDataReceived?.Invoke(data);
+        }
+
         public void StartPlaying()
         {
             OALW.SourcePlay(source);
             PlayerNameTagRenderer.UpdatePlayerNameTag(player, true);
+            NotifyPlayingStateChanged(true);
         }
 
         public void StopPlaying()
         {
             OALW.SourceStop(source);
             OnSourceStop();
+            NotifyPlayingStateChanged(false);
         }
 
         private void OnSourceStop()
         {
             PlayerNameTagRenderer.UpdatePlayerNameTag(player, false);
+        }
+
+        public void UpdateGain(float gain)
+        {
+            CurrentGain = gain;
+            if (source != 0)
+            {
+                OALW.Source(source, ALSourcef.Gain, GetFinalGain());
+            }
         }
 
         public void Dispose()

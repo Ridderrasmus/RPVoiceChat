@@ -1,3 +1,4 @@
+using RPVoiceChat.API;
 using RPVoiceChat.Audio;
 using RPVoiceChat.DB;
 using RPVoiceChat.Utils;
@@ -228,13 +229,13 @@ namespace RPVoiceChat.Gui
     public class ModMenuDialog : ConfigDialog
     {
         private MicrophoneManager audioInputManager;
-        private AudioOutputManager audioOutputManager;
+        private IVoiceChatUI voiceChatUI;
         private GuiManager guiManager;
 
-        public ModMenuDialog(ICoreClientAPI capi, MicrophoneManager _audioInputManager, AudioOutputManager _audioOutputManager, ClientSettingsRepository settingsRepository, GuiManager guiManager) : base(capi)
+        public ModMenuDialog(ICoreClientAPI capi, MicrophoneManager _audioInputManager, IVoiceChatUI voiceChatUI, ClientSettingsRepository settingsRepository, GuiManager guiManager) : base(capi)
         {
             audioInputManager = _audioInputManager;
-            audioOutputManager = _audioOutputManager;
+            this.voiceChatUI = voiceChatUI;
             this.guiManager = guiManager;
             guiManager.audioWizardDialog.GainCalibrationDone += OnAudioWizardClosed;
 
@@ -500,12 +501,10 @@ namespace RPVoiceChat.Gui
         {
             ClientSettings.IsMuted = enabled;
             capi.Event.PushEvent("rpvoicechat:hudUpdate");
-        }
-
-        protected void OnToggleLoopback(bool enabled)
+        }        protected void OnToggleLoopback(bool enabled)
         {
             ClientSettings.Loopback = enabled;
-            audioOutputManager.IsLoopbackEnabled = enabled;
+            voiceChatUI.Loopback = enabled;
         }
 
         private bool SlideOutputGain(int intGain)

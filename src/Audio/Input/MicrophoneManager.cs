@@ -377,18 +377,13 @@ namespace RPVoiceChat.Audio
 
         public VoiceLevel CycleVoiceLevel()
         {
-            if (voiceLevel == VoiceLevel.Talking)
+            voiceLevel = voiceLevel switch
             {
-                voiceLevel = VoiceLevel.Shouting;
-            }
-            else if (voiceLevel == VoiceLevel.Shouting)
-            {
-                voiceLevel = VoiceLevel.Whispering;
-            }
-            else if (voiceLevel == VoiceLevel.Whispering)
-            {
-                voiceLevel = VoiceLevel.Talking;
-            }
+                VoiceLevel.Whispering => VoiceLevel.Talking,
+                VoiceLevel.Talking => VoiceLevel.Shouting,
+                VoiceLevel.Shouting => VoiceLevel.Whispering,
+                _ => VoiceLevel.Talking
+            };
 
             VoiceLevelUpdated?.Invoke(voiceLevel);
             return voiceLevel;

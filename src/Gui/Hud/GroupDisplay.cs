@@ -7,15 +7,16 @@ using System.Drawing;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
+using RPVoiceChat.DB;
 
 namespace RPVoiceChat.Gui
 {
-    internal class GroupDisplay : HudElement
+    public class GroupDisplay : HudElement
     {
         private VoiceGroupManagerClient _voiceGroupManager;
         private AudioOutputManager _audioOutputManager;
 
-        private const float size = 128;
+        private const float size = 200;
         private ElementBounds dialogBounds = new ElementBounds()
         {
             Alignment = EnumDialogArea.RightBottom,
@@ -25,8 +26,6 @@ namespace RPVoiceChat.Gui
             fixedPaddingX = 10,
             fixedPaddingY = 10 * 2 + size
         };
-
-        // TODO: Need to make this work. Putting this off for now as it should at least update on group changes happening.
 
         public GroupDisplay(ICoreClientAPI capi, VoiceGroupManagerClient voiceGroupManager, AudioOutputManager audioOutputManager) : base(capi)
         {
@@ -49,11 +48,12 @@ namespace RPVoiceChat.Gui
             bool shouldDisplay = _voiceGroupManager.CurrentGroup is not null && ClientSettings.ShowHud;
             bool successful = shouldDisplay ? TryOpen() : TryClose();
 
-            if (!successful) UpdateDisplay();
-
+            if (!successful) 
+            {
+                // Retry after a short delay if opening/closing failed
+                capi.Event.EnqueueMainThreadTask(() => UpdateDisplay(), "rpvoicechat:GroupDisplay");
+            }
         }
-
-        // Replace the SetupDisplay method with the following implementation
 
         private void SetupDisplay()
         {
@@ -63,25 +63,37 @@ namespace RPVoiceChat.Gui
                 return;
             }    
             
-            string groupName = _voiceGroupManager.CurrentGroup?.Name ?? "";
-            string[] members = _voiceGroupManager.CurrentGroup?.Members ?? new string[] { "Player1", "Player2" };
+            string groupName = _voiceGroupManager.CurrentGroup?.Name ?? "Unknown Group";
+            string[] members = _voiceGroupManager.CurrentGroup?.Members ?? new string[0];
 
-            if (string.IsNullOrWhiteSpace(groupName))
+            // Calculate dynamic height based on member count
+            float baseHeight = 60; // Height for title and padding
+            float memberHeight = 20;
+            float totalHeight = baseHeight + (members.Length * memberHeight);
+            
+            // Update dialog bounds with calculated height
+            var bounds = new ElementBounds()
             {
-                groupName = "No Group";
-            }
+                Alignment = EnumDialogArea.RightBottom,
+                BothSizing = ElementSizing.Fixed,
+                fixedHeight = totalHeight,
+                fixedWidth = size,
+                fixedPaddingX = 10,
+                fixedPaddingY = 10
+            };
 
             // Calculate bounds for group name and members list
-            float memberStartY = 30;
-            float memberHeight = 20;
-            float memberFontSize = 14;
+            float memberStartY = 35;
+            float memberFontSize = 12;
             float groupNameFontSize = 16;
 
-            var composer = capi.Gui.CreateCompo("rpvcgroupdisplay", dialogBounds)
+            var composer = capi.Gui.CreateCompo("rpvcgroupdisplay", bounds)
+                .AddShadedDialogBG(ElementBounds.Fill, true)
+                .AddDialogTitleBar("Voice Group", OnTitleBarCloseClicked)
                 .AddStaticText(
                     groupName,
                     CairoFont.WhiteDetailText().WithFontSize(groupNameFontSize).WithOrientation(EnumTextOrientation.Center),
-                    ElementBounds.Fixed(0, 0, size, 24)
+                    ElementBounds.Fixed(0, 30, size, 24)
                 );
 
             if (members.Length == 0)
@@ -96,16 +108,40 @@ namespace RPVoiceChat.Gui
             {
                 for (int i = 0; i < members.Length; i++)
                 {
-                    composer.AddInteractiveElement(new GroupMemberElement(capi, ElementBounds.Fixed(10, memberStartY + i * memberHeight, size - 20, memberHeight), members[i], _audioOutputManager));
+                    string memberName = GetPlayerName(members[i]) ?? members[i];
+                    bool isTalking = _audioOutputManager?.IsPlayerTalking(members[i]) ?? false;
+                    
+                    var memberBounds = ElementBounds.Fixed(10, memberStartY + i * memberHeight, size - 20, memberHeight);
+                    
+                    // Add talking indicator and member name
+                    string displayText = isTalking ? "🔊 " + memberName : "   " + memberName;
+                    var textColor = isTalking ? CairoFont.WhiteDetailText().WithColor(GuiStyle.ActiveButtonTextColor) 
+                                              : CairoFont.WhiteDetailText();
+                    
+                    composer.AddStaticText(displayText, textColor.WithFontSize(memberFontSize), memberBounds);
                 }
             }
-
 
             SingleComposer = composer.Compose();
 
             UpdateDisplay();
         }
+
+        private string GetPlayerName(string playerUID)
+        {
+            var player = capi.World.PlayerByUid(playerUID);
+            return player?.PlayerName ?? playerUID;
+        }
+
+        private void OnTitleBarCloseClicked()
+        {
+            TryClose();
+        }
+
+        public override void OnGuiOpened()
+        {
+            base.OnGuiOpened();
+            SetupDisplay(); // Refresh display when opened
+        }
     }
-
-
 }

@@ -1,3 +1,6 @@
+using RPVoiceChat.API;
+using RPVoiceChat.Audio;
+using RPVoiceChat.Audio.Sources;
 using RPVoiceChat.DB;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
@@ -29,17 +32,17 @@ namespace RPVoiceChat.Audio
 
                 if (isLoopbackEnabled)
                 {
-                    localPlayerAudioSource.StartPlaying();
+                    localPlayerAudioSource.Start();
                 }
                 else
                 {
-                    localPlayerAudioSource.StopPlaying();
+                    localPlayerAudioSource.Stop();
                 }
             }
         }
 
         private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
-        private PlayerAudioSource localPlayerAudioSource;
+        private IVoiceSource localPlayerAudioSource;
         private ClientSettingsRepository clientSettingsRepo;
 
         public AudioOutputManager(ICoreClientAPI api, ClientSettingsRepository settingsRepository)
@@ -94,72 +97,58 @@ namespace RPVoiceChat.Audio
         {
             if (!IsLoopbackEnabled) return;
 
-            HandleAudioPacket(packet, localPlayerAudioSource);
+            // Handle loopback through the VoiceChatSystem for local playback
+            VoiceChatSystem.Instance.HandleAudioPacket(packet);
         }
 
         private void ClientLoaded()
         {
-            localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, capi, clientSettingsRepo)
-            {
-                IsLocational = false,
-            };
+            localPlayerAudioSource = VoiceChatSystem.Instance.CreateVoiceSource("localplayer", capi.World.Player.PlayerUID);
 
-            if (!isLoopbackEnabled) return;
-            localPlayerAudioSource.StartPlaying();
+            if (localPlayerAudioSource != null && isLoopbackEnabled)
+            {
+                localPlayerAudioSource.Start();
+            }
         }
 
         private PlayerAudioSource GetOrCreatePlayerSource(string playerId)
         {
-            PlayerAudioSource source;
-            if (playerSources.TryGetValue(playerId, out source) && !source.IsDisposed)
-                return source;
+            // Try to get the voice source from the new system first
+            var voiceSource = VoiceChatSystem.Instance.GetVoiceSource(playerId);
+            
+            if (voiceSource is PlayerVoiceSource playerVoiceSource)
+            {
+                // Return the underlying PlayerAudioSource if available
+                return playerVoiceSource.GetAudioSource();
+            }
 
-            var player = capi.World.PlayerByUid(playerId);
-            if (player == null) return null;
-
-            return CreatePlayerSource(player);
-        }
-
-        private PlayerAudioSource CreatePlayerSource(IPlayer player)
-        {
-            var source = new PlayerAudioSource(player, capi, clientSettingsRepo);
-            playerSources.AddOrUpdate(player.PlayerUID, source, (_, __) => source);
-            source.StartPlaying();
-
-            return source;
+            // Fallback: create a legacy PlayerAudioSource if the new system doesn't have it
+            return playerSources.GetOrAdd(playerId, (id) =>
+            {
+                var player = capi.World.PlayerByUid(id);
+                if (player != null)
+                {
+                    return new PlayerAudioSource(player, capi, clientSettingsRepo);
+                }
+                return null;
+            });
         }
 
         private void PlayerSpawned(IPlayer player)
         {
             if (player.ClientId == capi.World.Player.ClientId) return;
 
-            CreatePlayerSource(player);
+            VoiceChatSystem.Instance.CreateVoiceSource("player", player.PlayerUID);
         }
 
         private void PlayerDespawned(IPlayer player)
         {
-            if (player.ClientId == capi.World.Player.ClientId)
-            {
-                localPlayerAudioSource.Dispose();
-                localPlayerAudioSource = null;
-                return;
-            }
-
-            playerSources.TryGetValue(player.PlayerUID, out var source);
-            source?.Dispose();
-            playerSources.Remove(player.PlayerUID);
+            VoiceChatSystem.Instance.RemoveVoiceSource(player.PlayerUID);
         }
 
         public bool IsPlayerTalking(string playerId)
         {
-            if (playerSources.TryGetValue(playerId, out var source))
-                return source.IsPlaying;
-
-            if (capi.World.Player?.PlayerUID == playerId)
-                return localPlayerAudioSource.IsPlaying;
-
-            Logger.client.Warning($"Could not find player audio source for {playerId}, assuming player isn't talking");
-            return false;
+            return VoiceChatSystem.Instance.IsPlayerTalking(playerId);
         }
 
         public void Dispose()
@@ -167,10 +156,9 @@ namespace RPVoiceChat.Audio
             capi.Event.PlayerEntitySpawn -= PlayerSpawned;
             capi.Event.PlayerEntityDespawn -= PlayerDespawned;
 
+            VoiceChatSystem.Instance.Dispose();
+
             PlayerListener.Dispose();
-            localPlayerAudioSource?.Dispose();
-            foreach (var source in playerSources.Values)
-                source?.Dispose();
         }
     }
 }

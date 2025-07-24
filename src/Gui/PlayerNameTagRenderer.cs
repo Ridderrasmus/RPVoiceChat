@@ -1,3 +1,4 @@
+using RPVoiceChat.API;
 using RPVoiceChat.Audio;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -9,13 +10,13 @@ namespace RPVoiceChat.Gui
     public class PlayerNameTagRenderer
     {
         private static ICoreClientAPI capi;
-        private static AudioOutputManager _audioOutputManager;
+        private static IVoiceChatUI _voiceChatUI;
         private static bool? defaultShowTagOnlyWhenTargeted;
 
-        public PlayerNameTagRenderer(ICoreClientAPI api, AudioOutputManager audioOutputManager)
+        public PlayerNameTagRenderer(ICoreClientAPI api, IVoiceChatUI voicechatui)
         {
             capi = api;
-            _audioOutputManager = audioOutputManager;
+            _voiceChatUI = voicechatui;
         }
 
         public static LoadedTexture GetRenderer(EntityPlayer entity, double[] color = null, TextBackground bg = null)
@@ -35,7 +36,7 @@ namespace RPVoiceChat.Gui
                 BorderWidth = 3,
             };
 
-            bool isTalking = _audioOutputManager.IsPlayerTalking(entity.PlayerUID);
+            bool isTalking = _voiceChatUI.IsPlayerTalking(entity.PlayerUID);
             if (isTalking)
             {
                 textBg.FillColor = ColorUtil.Hex2Doubles("#529F51", 0.75);

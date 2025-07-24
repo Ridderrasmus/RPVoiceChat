@@ -1,3 +1,4 @@
+using RPVoiceChat.API;
 using RPVoiceChat.Audio;
 using RPVoiceChat.Utils;
 using System;
@@ -25,31 +26,28 @@ namespace RPVoiceChat.Gui
         private const int buttonYPadding = 2;
         private const int gainCalibrationDuration = 7000;
         private const int calibrationUpdateInterval = 50;
-        private const int calibrationSteps = gainCalibrationDuration / calibrationUpdateInterval;
-        private MicrophoneManager audioInputManager;
-        private AudioOutputManager audioOutputManager;
+        private const int calibrationSteps = gainCalibrationDuration / calibrationUpdateInterval;        private MicrophoneManager audioInputManager;
+        private IVoiceChatUI voiceChatUI;
         private CancellationTokenSource configurationCTS;
         private GuiDialog doneDialog;
         private float adjustedGain;
         private bool configurationInProcess = false;
 
-        public AudioWizardDialog(ICoreClientAPI capi, MicrophoneManager audioInputManager, AudioOutputManager audioOutputManager) : base(capi)
+        public AudioWizardDialog(ICoreClientAPI capi, MicrophoneManager audioInputManager, IVoiceChatUI voiceChatUI) : base(capi)
         {
             this.audioInputManager = audioInputManager;
-            this.audioOutputManager = audioOutputManager;
+            this.voiceChatUI = voiceChatUI;
             doneDialog = new AudioWizardDoneDialog(capi);
             doneDialog.OnClosed += SaveAndExit;
         }
 
         public override bool TryOpen()
-        {
-            audioInputManager.AudioWizardActive = true;
+        {            audioInputManager.AudioWizardActive = true;
             configurationCTS = new CancellationTokenSource();
             if (ClientSettings.InputGain == 0)
                 audioInputManager.SetGain(1);
             adjustedGain = ClientSettings.InputGain;
-            ClientSettings.Loopback = true;
-            audioOutputManager.IsLoopbackEnabled = true;
+            voiceChatUI.Loopback = true;
             Compose();
             return base.TryOpen();
         }
@@ -147,10 +145,8 @@ namespace RPVoiceChat.Gui
         }
 
         private void SaveAndExit()
-        {
-            audioInputManager.AudioWizardActive = false;
-            ClientSettings.Loopback = false;
-            audioOutputManager.IsLoopbackEnabled = false;
+        {            audioInputManager.AudioWizardActive = false;
+            voiceChatUI.Loopback = false;
             ClientSettings.Save();
             GainCalibrationDone?.Invoke();
         }

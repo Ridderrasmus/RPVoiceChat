@@ -1,27 +1,27 @@
+using RPVoiceChat.API;
 using RPVoiceChat.Audio;
+using RPVoiceChat.Audio.Sources;
 using RPVoiceChat.Client;
 using RPVoiceChat.DB;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Systems;
 using RPVoiceChat.Utils;
-using RPVoiceChat.VoiceGroups.Manager;
 using System;
 using System.Collections.Generic;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
 namespace RPVoiceChat
-{
-    public class RPVoiceChatClient : RPVoiceChatMod
+{    public class RPVoiceChatClient : RPVoiceChatMod
     {
         private ICoreClientAPI capi;
         private ClientSettingsRepository clientSettingsRepository;
         private MicrophoneManager micManager;
-        private AudioOutputManager audioOutputManager;
         private PlayerNetworkClient client;
         private GuiManager guiManager;
-        private VoiceGroupManagerClient voiceGroupManager;
+        private VoiceChatSystem voiceChatSystem;
+        private IVoiceSource localVoiceSource;
         private bool isReady = false;
         private bool mutePressed = false;
         private bool voiceMenuPressed = false;
@@ -30,11 +30,13 @@ namespace RPVoiceChat
         public override bool ShouldLoad(EnumAppSide forSide)
         {
             return forSide == EnumAppSide.Client;
-        }
-
+        }        
+        
         public override void StartClientSide(ICoreClientAPI api)
         {
             capi = api;
+
+            WireNetworkHandler.RegisterClientside(api);
 
             // Sneak in native dlls
             EmbeddedDllClass.ExtractEmbeddedDlls();
@@ -43,12 +45,14 @@ namespace RPVoiceChat
             // Init data repositories
             clientSettingsRepository = new ClientSettingsRepository(capi.Logger);
 
-            // Init microphone and audio output managers
-            micManager = new MicrophoneManager(capi);
-            audioOutputManager = new AudioOutputManager(capi, clientSettingsRepository);
+            // Initialize VoiceChatSystem and register player voice source provider
+            voiceChatSystem = new VoiceChatSystem();
+            voiceChatSystem.Start(api);
+            voiceChatSystem.RegisterVoiceSourceProvider("player", new PlayerVoiceSourceProvider(capi, clientSettingsRepository));
+            voiceChatSystem.RegisterVoiceSourceProvider("localplayer", new LocalPlayerVoiceSourceProvider(capi, clientSettingsRepository));
 
-            // Init voice groups manager
-            voiceGroupManager = new VoiceGroupManagerClient(capi);
+            // Init microphone manager
+            micManager = new MicrophoneManager(capi);
 
             // Init voice chat client
             bool forwardPorts = !config.ManualPortForwarding;
@@ -60,8 +64,11 @@ namespace RPVoiceChat
             };
             client = new PlayerNetworkClient(capi, networkTransports);
 
-            // Initialize gui
-            guiManager = new GuiManager(capi, micManager, audioOutputManager, clientSettingsRepository, voiceGroupManager);
+
+
+
+            // Initialize gui (passing the voice system instance)
+            guiManager = new GuiManager(capi, micManager, clientSettingsRepository);
 
             // Set up keybinds
             capi.Input.RegisterHotKey("voicechatMenu", UIUtils.I18n("Hotkey.ModMenu"), GlKeys.P, HotkeyType.GUIOrOtherControls);
@@ -101,14 +108,18 @@ namespace RPVoiceChat
             });
 
             capi.Event.LevelFinalize += OnLoad;
-        }
-
+        }        
+        
         private void OnLoad()
         {
+            voiceChatSystem.InitializeClient(clientSettingsRepository);
+            // Create local player voice source
+            localVoiceSource = VoiceChatSystem.Instance.CreateVoiceSource("player", capi.World.Player.PlayerUID);
+
             client.OnAudioReceived += OnAudioReceived;
             micManager.OnBufferRecorded += OnBufferRecorded;
             micManager.Launch();
-            audioOutputManager.Launch();
+            localVoiceSource.Start();
             guiManager.firstLaunchDialog.ShowIfNecessary();
             isReady = true;
         }
@@ -125,7 +136,11 @@ namespace RPVoiceChat
         private void OnAudioReceived(AudioPacket packet)
         {
             if (!isReady) return;
-            audioOutputManager.HandleAudioPacket(packet);
+            var voiceSource = VoiceChatSystem.Instance.GetVoiceSource(packet.PlayerId);
+            if (voiceSource != null)
+            {
+                voiceSource.HandleAudioPacket(packet);
+            }
         }
 
         private void OnBufferRecorded(AudioData audioData)
@@ -135,17 +150,17 @@ namespace RPVoiceChat
             string sender = capi.World.Player.PlayerUID;
             var sequenceNumber = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             AudioPacket packet = new AudioPacket(sender, audioData, sequenceNumber);
-            audioOutputManager.HandleLoopback(packet);
+            
+            // Handle loopback through the VoiceChatSystem
+            VoiceChatSystem.Instance.HandleLoopback(packet);
 
             if (micManager.AudioWizardActive) return;
             client.SendAudioToServer(packet);
-        }
-
-        public override void Dispose()
+        }        public override void Dispose()
         {
             ClientSettings.Save();
             micManager?.Dispose();
-            audioOutputManager?.Dispose();
+            VoiceChatSystem.Instance?.Dispose();
             client?.Dispose();
             guiManager?.Dispose();
             clientSettingsRepository?.Dispose();
