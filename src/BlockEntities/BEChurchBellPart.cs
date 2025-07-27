@@ -35,7 +35,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 Renderer = new WeldableRenderer(capi, this);
 
 
-                var assetLoc = new AssetLocation("rpvoicechat", $"shapes/{Block.Shape.Base.Path}-flux.json");
+                var assetLoc = new AssetLocation(RPVoiceChatMod.modID, $"shapes/{Block.Shape.Base.Path}-flux.json");
                 FluxShape = Shape.TryGet(api, assetLoc);
 
 
@@ -51,7 +51,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
         protected override MeshData RenderPart(int numPart)
         {
             ICoreClientAPI capi = Api as ICoreClientAPI;
-            Shape shape = Shape.TryGet(Api, new AssetLocation("rpvoicechat", $"shapes/{Block.Shape.Base.Path}.json"));
+            Shape shape = Shape.TryGet(Api, new AssetLocation(RPVoiceChatMod.modID, $"shapes/{Block.Shape.Base.Path}.json"));
             MeshData meshdata = new MeshData();
             capi.Tesselator.TesselateShape(Block, shape, out meshdata);
             return meshdata.Rotate(new Vec3f(0.5f, 0f, 0.5f), 0, 1.57079633f * (numPart), 0f);

@@ -14,7 +14,7 @@
   "attributes": {
     "soundAudibleDistance": 72,
     "soundVolume": 0.6,
-    "cooldownTime": 3,
+    "soundDuration": 3,
     "rightClickSounds": [
       "item/royalhorn/royalhorn"
     ],

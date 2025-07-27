@@ -61,18 +61,18 @@ namespace RPVoiceChat.Gui
 
         public void SetupIcon()
         {
-            string voiceIcon = new AssetLocation("rpvoicechat", "textures/gui/" + voiceType + ".png");
+            string voiceIcon = new AssetLocation(RPVoiceChatMod.modID, "textures/gui/" + voiceType + ".png");
             IAsset asset = capi.Assets.TryGet(voiceIcon, false);
             if (asset == null) 
             {
                 // Display an icon by default if voiceType not exists. Typically, with custom voice mods.
-                voiceIcon = new AssetLocation("rpvoicechat", "textures/gui/megaphone.png");
+                voiceIcon = new AssetLocation(RPVoiceChatMod.modID, "textures/gui/megaphone.png");
             }
 
             SingleComposer = capi.Gui.CreateCompo("rpvcspeechindicator", dialogBounds)
                 .AddImage(ElementBounds.Fixed(0, 0, size, size), voiceIcon)
                 .AddIf(ClientSettings.IsMuted)
-                .AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation("rpvoicechat", "textures/gui/muted.png"))
+                .AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation(RPVoiceChatMod.modID, "textures/gui/muted.png"))
                 .EndIf()
                 .Compose();
 

@@ -90,7 +90,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
         {
             ICoreClientAPI capi = Api as ICoreClientAPI;
 
-            Shape shape = Shape.TryGet(Api, new AssetLocation("rpvoicechat", $"shapes/{BellLayerSlots[numPart].Itemstack.Block.Shape.Base.Path}.json"));
+            Shape shape = Shape.TryGet(Api, new AssetLocation(RPVoiceChatMod.modID, $"shapes/{BellLayerSlots[numPart].Itemstack.Block.Shape.Base.Path}.json"));
             MeshData meshdata = new MeshData();
             capi.Tesselator.TesselateShape(Block, shape, out meshdata);
 
@@ -105,7 +105,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
         protected override MeshData RenderFlux(int numFlux)
         {
             ICoreClientAPI capi = Api as ICoreClientAPI;
-            var fluxShape = Shape.TryGet(Api, new AssetLocation("rpvoicechat", $"shapes/block/churchbell/{bellLayerNames[numFlux]}-flux.json"));
+            var fluxShape = Shape.TryGet(Api, new AssetLocation(RPVoiceChatMod.modID, $"shapes/block/churchbell/{bellLayerNames[numFlux]}-flux.json"));
             if (fluxShape == null)
                 throw new Exception($"Layer flux shape is null for: {bellLayerNames[numFlux]}");
 

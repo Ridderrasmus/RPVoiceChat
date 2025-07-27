@@ -11,25 +11,16 @@ namespace RPVoiceChat
 
         public static void Patch(Harmony harmony)
         {
-            var OriginalMethod1 = AccessTools.Method(typeof(LoadedSoundNative), nameof(LoadedSoundNative.ChangeOutputDevice));
-            var PostfixMethod1 = AccessTools.Method(typeof(LoadedSoundNativePatch), nameof(ChangeOutputDevice));
-            harmony.Patch(OriginalMethod1, postfix: new HarmonyMethod(PostfixMethod1));
+            var originalChangeDevice = AccessTools.Method(typeof(LoadedSoundNative), nameof(LoadedSoundNative.ChangeOutputDevice));
+            var postfixChangeDevice = AccessTools.Method(typeof(LoadedSoundNativePatch), nameof(ChangeOutputDevicePostfix));
+            harmony.Patch(originalChangeDevice, postfix: new HarmonyMethod(postfixChangeDevice));
 
-            var OriginalMethod2 = AccessTools.PropertyGetter(typeof(LoadedSoundNative), nameof(GlobalVolume));
-            var PostfixMethod2 = AccessTools.Method(typeof(LoadedSoundNativePatch), nameof(GlobalVolume));
-            harmony.Patch(OriginalMethod2, postfix: new HarmonyMethod(PostfixMethod2));
+            // Removed GlobalVolume patch - volume is now fully managed through OpenAL gain settings
         }
 
-        public static void ChangeOutputDevice()
+        public static void ChangeOutputDevicePostfix()
         {
             OnOutputDeviceChange?.Invoke();
-        }
-
-        public static void GlobalVolume(ref float __result)
-        {
-            var globalGain = PlayerListener.gain;
-            if (globalGain < 1) return;
-            __result = __result / globalGain;
         }
     }
 }
