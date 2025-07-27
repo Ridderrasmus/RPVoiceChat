@@ -76,7 +76,7 @@
     },
     "soundAudibleDistance": 256,
     "soundVolume": 0.6,
-    "soundDuration": 1.5, // Shorter than 3 real-time seconds to allow for bell to ring in succession
+    "soundDuration": 0.5, // Shorter than 3 real-time seconds to allow for bell to ring in succession
     "blockInteractSounds": [
       "block/carillonbell/carillonbell_{metal}"
     ]
