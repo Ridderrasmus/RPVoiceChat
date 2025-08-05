@@ -10,6 +10,6 @@
     "RequiredOnClient": true,
     "RequiredOnServer": true,
     "dependencies": {
-        "game": "1.21.0-rc.1"
+        "game": "1.21.0-rc.3"
     }
 }

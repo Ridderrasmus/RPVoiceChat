@@ -23,6 +23,12 @@ namespace RPVoiceChat.Audio
             CheckError($"Error setting source {property}");
         }
 
+        public static void Source(int source, ALSourcei property, int value)
+        {
+            AL.Source(source, property, value);
+            CheckError($"Error setting source {property}");
+        }
+
         public static void Listener(ALListenerf property, float value)
         {
             AL.Listener(property, value);
