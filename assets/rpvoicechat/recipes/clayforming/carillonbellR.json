@@ -1,4 +1,5 @@
 ﻿{
+  "enabled": true,
   "ingredient": {
     "type": "item",
     "code": "game:clay-*",
@@ -233,6 +234,6 @@
   "name": "Carillon Bell mold",
   "output": {
     "type": "block",
-    "code": "carillonbellmold-raw-carillonbell"
+    "code": "carillonbellmold-raw"
   }
 }

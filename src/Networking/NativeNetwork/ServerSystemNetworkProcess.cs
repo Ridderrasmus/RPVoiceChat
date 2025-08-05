@@ -92,7 +92,6 @@ namespace RPVoiceChat.Networking
             return processed;
         }
 
-        private static FieldInfo FromSocketListenerField = AccessTools.Field(typeof(ConnectedClient), "FromSocketListener");
         private static FieldInfo SocketField = AccessTools.Field(typeof(ConnectedClient), "socket");
         private static FieldInfo PlayerField = AccessTools.Field(typeof(ConnectedClient), "Player");
 
@@ -102,9 +101,8 @@ namespace RPVoiceChat.Networking
             {
                 foreach (ConnectedClient connectedClient in ((ServerMain)api.World).Clients.Values.ToList())
                 {
-                    var server = (NetServer)FromSocketListenerField.GetValue(connectedClient);
                     var serverConnection = (NetConnection)SocketField.GetValue(connectedClient);
-                    if (server is TcpNetServer && serverConnection.EqualsConnection(connection))
+                    if (!connectedClient.IsSinglePlayerClient && serverConnection.EqualsConnection(connection))
                         return (IServerPlayer)PlayerField.GetValue(connectedClient);
                 }
             }

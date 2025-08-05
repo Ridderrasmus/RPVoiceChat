@@ -83,9 +83,9 @@ namespace RPVoiceChat.GameContent.Blocks
             foreach (char c in (string)morse)
             {
                 if (c == '.')
-                    capi.Event.EnqueueMainThreadTask(async () => capi.World.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/morse/dot"), Pos.X, Pos.Y, Pos.Z, randomizePitch: false, range: Volume), "PlayMorse");
+                    capi.Event.EnqueueMainThreadTask(async () => capi.World.PlaySoundAt(new AssetLocation(RPVoiceChatMod.modID, "sounds/morse/dot"), Pos.X, Pos.Y, Pos.Z, randomizePitch: false, range: Volume), "PlayMorse");
                 else if (c == '-')
-                    capi.Event.EnqueueMainThreadTask(async () => capi.World.PlaySoundAt(new AssetLocation("rpvoicechat", "sounds/morse/dash"), Pos.X, Pos.Y, Pos.Z, randomizePitch: false, range: Volume), "PlayMorse");
+                    capi.Event.EnqueueMainThreadTask(async () => capi.World.PlaySoundAt(new AssetLocation(RPVoiceChatMod.modID, "sounds/morse/dash"), Pos.X, Pos.Y, Pos.Z, randomizePitch: false, range: Volume), "PlayMorse");
 
                 await Task.Delay(500);
             }

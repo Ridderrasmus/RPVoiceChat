@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>net7.0</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
 		<LangVersion>11</LangVersion>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<OutputPath>bin\$(Configuration)\Mods\mod</OutputPath>
@@ -79,7 +79,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Concentus" Version="1.1.7" />
+		<PackageReference Include="Concentus" Version="2.2.2" />
 		<PackageReference Include="NETStandard.Library" Version="2.0.3" />
+		<PackageReference Include="NVorbis" Version="0.10.5" />
 	</ItemGroup>
 </Project>

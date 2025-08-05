@@ -13,7 +13,7 @@
   "attributes": {
     "soundAudibleDistance": 16,
     "soundVolume": 0.6,
-    "cooldownTime": 1,
+    "soundDuration": 1,
     "blockInteractSounds": [
       "block/callbell/callbell_1",
       "block/callbell/callbell_2",

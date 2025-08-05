@@ -17,6 +17,8 @@ namespace RPVoiceChat.Audio
     {
         public bool IsDisposed = false;
         public bool IsPlaying { get => _IsPlaying(); }
+        public const float MaxGain = 2f;
+
         private const int BufferCount = 20;
         private int source;
         private CircularAudioBuffer buffer;
@@ -25,12 +27,12 @@ namespace RPVoiceChat.Audio
         private object dequeue_audio_lock = new object();
         private int orderingDelay = 100;
         private long lastAudioSequenceNumber = -1;
+
         private IAudioCodec codec;
         private LowpassFilter lowpassFilter;
         private ReverbEffect reverbEffect;
         private IntoxicatedEffect intoxicatedEffect;
         private UnstableEffect unstableEffect;
-
         private ICoreClientAPI capi;
         private IPlayer player;
         private ClientSettingsRepository clientSettingsRepo;
@@ -101,7 +103,7 @@ namespace RPVoiceChat.Audio
             // If the player is on the other side of something to the listener, then the player's voice should be muffled
             bool mufflingEnabled = ClientSettings.Muffling;
             float wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
-            float wallThicknessWeighting = WorldConfig.GetFloat("wallThicknessWeighting");
+            float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");
             if (capi.World.Player.Entity.Swimming)
                 wallThickness += 1.0f;
 
@@ -168,9 +170,9 @@ namespace RPVoiceChat.Audio
 
         private float GetFinalGain()
         {
-            var globalGain = Math.Min(PlayerListener.gain, 1);
+            var globalGain = Math.Clamp(PlayerListener.VoiceGain, 0, MaxGain);
             var sourceGain = clientSettingsRepo.GetPlayerGain(player.PlayerUID);
-            var finalGain = GameMath.Clamp(globalGain * sourceGain, 0, 1);
+            var finalGain = GameMath.Clamp(globalGain * sourceGain, 0, MaxGain);
 
             return finalGain;
         }
@@ -251,7 +253,13 @@ namespace RPVoiceChat.Audio
                     orderingQueue.RemoveAt(0);
                 }
 
-                if (codec != null) audio.data = codec.Decode(audio.data);
+                if (codec != null)
+                    audio.data = codec.Decode(audio.data);
+
+                float finalGain = GetFinalGain();
+
+                PcmUtils.ApplyGainWithSoftClipping(ref audio.data, audio.format, finalGain);
+                PcmUtils.ApplyCompressor(ref audio.data, audio.format);
 
                 int maxFadeDuration = 2 * audio.frequency / 1000; // 2ms
                 AudioUtils.FadeEdges(audio.data, maxFadeDuration);

@@ -1,9 +1,10 @@
+using System;
+using System.Collections.Generic;
+using RPVoiceChat.Audio;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Server;
 using RPVoiceChat.Systems;
 using RPVoiceChat.Utils;
-using System;
-using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;
 using Vintagestory.API.Server;
@@ -14,6 +15,7 @@ namespace RPVoiceChat
     {
         protected ICoreServerAPI sapi;
         private GameServer server;
+
         public override void StartServerSide(ICoreServerAPI api)
         {
             sapi = api;
@@ -51,7 +53,7 @@ namespace RPVoiceChat
         public override void StartPre(ICoreAPI api)
         {
             base.StartPre(api);
-            WorldConfig.Set("extra-content", config.AdditionalContent);
+            WorldConfig.Set("additional-content", config.AdditionalContent);
         }
 
         public override double ExecuteOrder() => 1.02;
@@ -211,5 +213,6 @@ namespace RPVoiceChat
         {
             server?.Dispose();
         }
+
     }
 }
