@@ -50,6 +50,8 @@ namespace RPVoiceChat.Networking
                     NetIncomingMessage msg;
                     while ((msg = TcpNetServerPatch.ReadMessage()) != null)
                     {
+
+
                         var connection = (NetConnection)senderConnectionField.GetValue(msg);
                         var player = ResolveServerPlayer(connection);
                         if (player == null) continue;
