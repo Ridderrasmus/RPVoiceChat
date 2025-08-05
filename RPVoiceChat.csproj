@@ -81,5 +81,6 @@
 	<ItemGroup>
 		<PackageReference Include="Concentus" Version="2.2.2" />
 		<PackageReference Include="NETStandard.Library" Version="2.0.3" />
+		<PackageReference Include="NVorbis" Version="0.10.5" />
 	</ItemGroup>
 </Project>

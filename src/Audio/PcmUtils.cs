@@ -1,4 +1,6 @@
-﻿using System;
+﻿using NVorbis;
+using System;
+using System.IO;
 using OpenTK.Audio.OpenAL;
 
 namespace RPVoiceChat.Audio
@@ -53,6 +55,27 @@ namespace RPVoiceChat.Audio
                 data[i] = (byte)(result & 0xFF);
                 data[i + 1] = (byte)((result >> 8) & 0xFF);
             }
+        }
+
+        public static byte[] LoadOggToPCM(Stream stream, out int sampleRate, out int channels)
+        {
+            using var vorbis = new VorbisReader(stream, false);
+
+            sampleRate = vorbis.SampleRate;
+            channels = vorbis.Channels;
+
+            float[] buffer = new float[vorbis.TotalSamples * channels];
+            int samplesRead = vorbis.ReadSamples(buffer, 0, buffer.Length);
+
+            byte[] pcmData = new byte[samplesRead * sizeof(short)];
+            for (int i = 0; i < samplesRead; i++)
+            {
+                short sample = (short)Math.Clamp(buffer[i] * short.MaxValue, short.MinValue, short.MaxValue);
+                pcmData[i * 2] = (byte)(sample & 0xFF);
+                pcmData[i * 2 + 1] = (byte)((sample >> 8) & 0xFF);
+            }
+
+            return pcmData;
         }
 
         private static float SoftClip(float x)
