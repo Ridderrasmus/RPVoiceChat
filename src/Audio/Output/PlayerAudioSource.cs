@@ -18,6 +18,7 @@ namespace RPVoiceChat.Audio
         public bool IsDisposed = false;
         public bool IsPlaying { get => _IsPlaying(); }
         public const float MaxGain = 2f;
+        private float distanceMultiplier = 1f;
 
         private const int BufferCount = 20;
         private int source;
@@ -73,11 +74,14 @@ namespace RPVoiceChat.Audio
         public void UpdateVoiceLevel(VoiceLevel voiceLevel)
         {
             this.voiceLevel = voiceLevel;
-            float referenceDistance = referenceDistanceByVoiceLevel[voiceLevel];
-            float distanceFactor = GetDistanceFactor();
-            float rolloffFactor = referenceDistance * distanceFactor;
 
-            OALW.Source(source, ALSourcef.ReferenceDistance, referenceDistance);
+            float baseReferenceDistance = referenceDistanceByVoiceLevel[voiceLevel];
+            float adjustedReferenceDistance = baseReferenceDistance * distanceMultiplier;
+
+            float distanceFactor = GetDistanceFactor();
+            float rolloffFactor = adjustedReferenceDistance * distanceFactor;
+
+            OALW.Source(source, ALSourcef.ReferenceDistance, adjustedReferenceDistance);
             OALW.Source(source, ALSourcef.RolloffFactor, rolloffFactor);
         }
 
@@ -300,6 +304,18 @@ namespace RPVoiceChat.Audio
             buffer?.Dispose();
 
             IsDisposed = true;
+        }
+
+        public void ApplyVoiceRangeMultiplier(float multiplier)
+        {
+            distanceMultiplier = multiplier;
+            UpdateVoiceLevel(voiceLevel);
+        }
+
+        public void ResetVoiceRange()
+        {
+            distanceMultiplier = 1f;
+            UpdateVoiceLevel(voiceLevel);
         }
     }
 }

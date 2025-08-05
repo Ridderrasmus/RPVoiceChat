@@ -158,6 +158,36 @@ namespace RPVoiceChat.Audio
             return false;
         }
 
+        public bool ApplyRangeMultiplierToPlayer(string playerId, float multiplier, float boost)
+        {
+            var source = GetOrCreatePlayerSource(playerId);
+            if (source == null) return false;
+
+
+            float finalMultiplier = multiplier * (1f + boost);
+
+            source.ApplyVoiceRangeMultiplier(finalMultiplier);
+
+            return true;
+        }
+
+        public bool ResetRangeForPlayer(string playerId)
+        {
+            var source = GetOrCreatePlayerSource(playerId);
+            if (source == null) return false;
+
+            source.ResetVoiceRange();
+            return true;
+        }
+        public bool SetVoiceLevelForPlayer(string playerId, VoiceLevel voiceLevel)
+        {
+            var source = GetOrCreatePlayerSource(playerId);
+            if (source == null) return false;
+
+            source.UpdateVoiceLevel(voiceLevel);
+            return true;
+        }
+
         public void Dispose()
         {
             capi.Event.PlayerEntitySpawn -= PlayerSpawned;

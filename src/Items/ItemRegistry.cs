@@ -1,3 +1,4 @@
+using RPVoiceChat.Items;
 using Vintagestory.API.Common;
 
 namespace RPVoiceChat.GameContent.Items
@@ -8,6 +9,7 @@ namespace RPVoiceChat.GameContent.Items
         {
             if (WorldConfig.GetBool("additional-content") == false) return;
             api.RegisterItemClass("soundemittingitem", typeof(SoundEmittingItem));
+            api.RegisterItemClass("voiceamplifieritem", typeof(VoiceAmplifierItem));
             api.RegisterItemClass("handheldradio", typeof(RadioItem));
             api.RegisterItemClass("telegraphwire", typeof(TelegraphWireItem));
         }
