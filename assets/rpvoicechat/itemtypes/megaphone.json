@@ -11,7 +11,8 @@
   },
   "attributes": {
     "voiceLevel": "Shouting",
-    "voiceRangeBoost": 100
+    "voiceRangeBoost": 100,
+    "applySoundEffect": "cheapmic"
   },
   "shape": {
     "base": "item/megaphone"

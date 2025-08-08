@@ -22,12 +22,14 @@ namespace RPVoiceChat.Audio
 
         private const int BufferCount = 20;
         private int source;
+        public int SourceId => source;
         private CircularAudioBuffer buffer;
         private SortedList<long, AudioData> orderingQueue = new SortedList<long, AudioData>();
         private object ordering_queue_lock = new object();
         private object dequeue_audio_lock = new object();
         private int orderingDelay = 100;
         private long lastAudioSequenceNumber = -1;
+        private string currentEffectName;
 
         private IAudioCodec codec;
         private LowpassFilter lowpassFilter;
@@ -37,6 +39,7 @@ namespace RPVoiceChat.Audio
         private ICoreClientAPI capi;
         private IPlayer player;
         private ClientSettingsRepository clientSettingsRepo;
+        private SoundEffect currentSoundEffect;
 
         public bool IsLocational { get; set; } = true;
         public VoiceLevel voiceLevel { get; private set; } = VoiceLevel.Talking;
@@ -301,6 +304,7 @@ namespace RPVoiceChat.Audio
             OALW.SourceStop(source);
             OALW.DeleteSource(source);
             buffer.OnEmptyingQueue -= OnSourceStop;
+            currentSoundEffect?.Clear();
             buffer?.Dispose();
 
             IsDisposed = true;
@@ -316,6 +320,26 @@ namespace RPVoiceChat.Audio
         {
             distanceMultiplier = 1f;
             UpdateVoiceLevel(voiceLevel);
+        }
+
+        public void SetSoundEffect(string effectName)
+        {
+            if (string.IsNullOrWhiteSpace(effectName) || currentEffectName == effectName)
+                return;
+
+            currentSoundEffect?.Clear();
+
+            currentSoundEffect = SoundEffect.Create(effectName, source);
+            currentSoundEffect?.Apply();
+
+            currentEffectName = effectName;
+        }
+
+        public void ClearSoundEffect()
+        {
+            currentSoundEffect?.Clear();
+            currentSoundEffect = null;
+            currentEffectName = null;
         }
     }
 }

@@ -25,6 +25,8 @@ namespace RPVoiceChat
         private bool voiceMenuPressed = false;
         private bool voiceLevelPressed = false;
 
+        public static AudioOutputManager AudioOutputManagerInstance { get; private set; }
+
         public override bool ShouldLoad(EnumAppSide forSide)
         {
             return forSide == EnumAppSide.Client;
@@ -46,6 +48,8 @@ namespace RPVoiceChat
             // Init microphone and audio output managers
             micManager = new MicrophoneManager(capi);
             audioOutputManager = new AudioOutputManager(capi, clientSettingsRepository);
+            // Static property for easy access with to apply effects on voice
+            AudioOutputManagerInstance = audioOutputManager;
 
             // Init voice chat client
             bool forwardPorts = !config.ManualPortForwarding;
