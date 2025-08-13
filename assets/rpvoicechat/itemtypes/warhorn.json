@@ -17,7 +17,9 @@
     "soundVolume": 0.6,
     "soundDuration": 3,
     "rightClickSounds": [
-      "item/warhorn/warhorn"
+      "item/warhorn/warhorn_blow_1",
+      "item/warhorn/warhorn_blow_2",
+      "item/warhorn/warhorn_blow_3"
     ],
     "handbook": {
       "extraSections": [
