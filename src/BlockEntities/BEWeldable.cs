@@ -49,45 +49,53 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
             if (api is ICoreClientAPI capi)
             {
+                Renderer = new WeldableRenderer(capi, this);
                 capi.TesselatorManager.GetDefaultBlockMesh(Block).Clear();
             }
         }
 
-
-        public virtual bool TestReadyToMerge(bool triggerMessage = true)
+        public virtual bool TestReadyToMerge()
         {
+            for (int i = 1; i < Inv.Count; i++)
+            {
+                ItemSlot slot = Inv[i];
+                if (slot.Empty) return false;
+                if (slot.Itemstack.Collectible.GetTemperature(Api.World, slot.Itemstack) < WeldingMinTemp)
+                    return false;
+            }
+
+            if (FluxSlot.Empty || FluxSlot.Itemstack.StackSize < FluxNeeded)
+                return false;
+
+            return true;
+        }
+
+        public virtual void ShowReadyToMergeErrors()
+        {
+            if (Api.Side != EnumAppSide.Client) return;
+
+            var capi = Api as ICoreClientAPI;
+
             for (int i = 1; i < Inv.Count; i++)
             {
                 ItemSlot slot = Inv[i];
                 if (slot.Empty)
                 {
-                    if (triggerMessage && Api is ICoreClientAPI capi)
-                    {
-                        capi.TriggerIngameError(capi.World.Player, "missingparts", UIUtils.I18n($"{i18nPrefix}.MissingParts")); //"You need to add all the parts to the weld"
-                    }
-                    return false;
+                    capi.TriggerIngameError(capi.World.Player, "missingparts", UIUtils.I18n($"{i18nPrefix}.MissingParts"));
+                    return;
                 }
 
                 if (slot.Itemstack.Collectible.GetTemperature(Api.World, slot.Itemstack) < WeldingMinTemp)
                 {
-                    if (triggerMessage && Api is ICoreClientAPI capi)
-                    {
-                        capi.TriggerIngameError(capi.World.Player, "toocold", UIUtils.I18n($"{i18nPrefix}.TooCold")); //"Some of the parts are too cold to weld"
-                    }
-                    return false;
+                    capi.TriggerIngameError(capi.World.Player, "toocold", UIUtils.I18n($"{i18nPrefix}.TooCold"));
+                    return;
                 }
             }
 
             if (FluxSlot.Empty || FluxSlot.Itemstack.StackSize < FluxNeeded)
             {
-                if (triggerMessage && Api is ICoreClientAPI capi)
-                {
-                    capi.TriggerIngameError(capi.World.Player, "missingflux", UIUtils.I18n($"{i18nPrefix}.MissingFlux")); //"You need to add enough powdered borax to the weld as flux"
-                }
-                return false;
+                capi.TriggerIngameError(capi.World.Player, "missingflux", UIUtils.I18n($"{i18nPrefix}.MissingFlux"));
             }
-
-            return true;
         }
 
         protected virtual void UpdateMeshRefs()
@@ -128,7 +136,11 @@ namespace RPVoiceChat.GameContent.BlockEntities
         {
 
             {
-                if (!TestReadyToMerge(true)) return;
+                if (!TestReadyToMerge())
+                {
+                    ShowReadyToMergeErrors(); // only client-side
+                    return;
+                }
 
 
                 float temp = 1500;
@@ -144,6 +156,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 if (Api.Side == EnumAppSide.Server)
                 {
                     HammerHits++;
+                    Api.Logger.Debug($"[Welding] OnHammerHitOver called - side: {Api.Side}, hits: {HammerHits}");
                 }
 
                 if (temp > 800)
@@ -160,13 +173,16 @@ namespace RPVoiceChat.GameContent.BlockEntities
                     }
                 }
 
-                if (HammerHits > 11)
+                if (HammerHits >= HammerHitsNeeded)
                 {
                     Block ResultingBlock = Api.World.GetBlock(new AssetLocation(RPVoiceChatMod.modID, ResultingBlockCode));
                     ItemStack ResultingBlockStack = new ItemStack(ResultingBlock);
                     ResultingBlockStack.Collectible.SetTemperature(Api.World, ResultingBlockStack, temp);
                     Api.World.BlockAccessor.SetBlock(ResultingBlock.Id, Pos, ResultingBlockStack);
+             
+                    Api.Logger.Debug($"[Welding] Soudure terminée à {Pos}: {ResultingBlockCode}");
                 }
+
             }
         }
 
@@ -204,7 +220,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 dsc.AppendLine($"{FluxSlot.Itemstack.StackSize} {FluxSlot.Itemstack.GetName()}");
             }
 
-            if (TestReadyToMerge(false))
+            if (TestReadyToMerge())
             {
                 dsc.AppendLine(UIUtils.I18n($"{i18nPrefix}.WeldReady")); //"Ready to weld"
             }

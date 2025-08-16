@@ -57,11 +57,16 @@
     }
   ],
   "shapebytype": {
-    "*-up-*": { "base": "block/carillonbell/carillonbell-floor.json" },
-    "*-down-*": { "base": "block/carillonbell/carillonbell-ceiling_hang.json" }
+    "*-up-*": { "base": "block/carillonbell/carillonbell.json" },
+    "*-down-*": { "base": "block/carillonbell/carillonbell_rope.json" }
   },
   "textures": {
-    "metal": { "base": "game:block/metal/plate/{metal}" }
+    "metal": {
+      "base": "game:block/metal/plate/{metal}"
+    },
+    "rope": {
+      "base": "game:item/resource/rope"
+    }
   },
   "attributes": {
     "handbook": {

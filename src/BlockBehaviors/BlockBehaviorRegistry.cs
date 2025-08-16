@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Vintagestory.API.Common;
 using Vintagestory.API.Util;
+using Vintagestory.GameContent;
 
 namespace RPVoiceChat.GameContent.BlockBehaviors
 {
@@ -10,7 +11,7 @@ namespace RPVoiceChat.GameContent.BlockBehaviors
         public static void RegisterBlockEntityBehaviors(ICoreAPI api)
         {
             api.RegisterBlockBehaviorClass("Ringable", typeof(BehaviorRingable));
-            api.RegisterBlockBehaviorClass("UnstableFallingVariant", typeof(BlockBehaviorUnstableFallingVariant));
+            api.RegisterBlockBehaviorClass("UnstableFallingVariant", typeof(BlockBehaviorUnstableFalling));
         }
 
         public static void AddBehaviors(ICoreAPI api)
