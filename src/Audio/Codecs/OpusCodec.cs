@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using Concentus;
 using Concentus.Enums;
-using Concentus.Native; // nécessaire pour OpusCodecFactory
 using RPVoiceChat.Utils;
 
 namespace RPVoiceChat.Audio

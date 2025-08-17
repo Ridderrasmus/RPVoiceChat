@@ -2,7 +2,6 @@
 using RPVoiceChat.Utils;
 using System;
 using System.Text;
-using System.Transactions;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
@@ -156,7 +155,6 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 if (Api.Side == EnumAppSide.Server)
                 {
                     HammerHits++;
-                    Api.Logger.Debug($"[Welding] OnHammerHitOver called - side: {Api.Side}, hits: {HammerHits}");
                 }
 
                 if (temp > 800)
@@ -179,8 +177,6 @@ namespace RPVoiceChat.GameContent.BlockEntities
                     ItemStack ResultingBlockStack = new ItemStack(ResultingBlock);
                     ResultingBlockStack.Collectible.SetTemperature(Api.World, ResultingBlockStack, temp);
                     Api.World.BlockAccessor.SetBlock(ResultingBlock.Id, Pos, ResultingBlockStack);
-             
-                    Api.Logger.Debug($"[Welding] Soudure terminée à {Pos}: {ResultingBlockCode}");
                 }
 
             }
