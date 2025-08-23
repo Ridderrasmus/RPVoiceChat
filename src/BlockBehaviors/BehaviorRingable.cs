@@ -1,4 +1,6 @@
-﻿using RPVoiceChat.GameContent.BlockEntityBehaviors;
+﻿#nullable enable
+
+using RPVoiceChat.GameContent.BlockEntityBehaviors;
 using System;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;

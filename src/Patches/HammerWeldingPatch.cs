@@ -28,9 +28,10 @@ namespace RPVoiceChat
                 handling = EnumHandHandling.PreventDefault;
 
                 IPlayer byPlayer = (byEntity as EntityPlayer)?.Player;
+                bool wasValid = bew.TestReadyToMerge();
                 bew.OnHammerHitOver(byPlayer, blockSel.HitPosition);
 
-                if (bew.TestReadyToMerge())
+                if (wasValid)
                 {
                     byEntity.World.RegisterCallback((dt) =>
                     {
@@ -39,7 +40,6 @@ namespace RPVoiceChat
                             byPlayer.Entity.World.PlaySoundAt(new AssetLocation("sounds/effect/anvilmergehit"), byPlayer, byPlayer);
                         }
                     }, 464);
-                    return;
                 }
 
                 return;
