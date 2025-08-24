@@ -9,6 +9,8 @@ namespace RPVoiceChat.GameContent.BlockBehaviors
 {
     class BehaviorRingable : BlockBehavior
     {
+        const int BellRingCooldownSeconds = 3;
+
         public BehaviorRingable(Block block) : base(block)
         {
         }
@@ -43,7 +45,7 @@ namespace RPVoiceChat.GameContent.BlockBehaviors
             {
                 // 2) Player rings the bell if a part is attached and cooldown elapsed
                 if (!string.IsNullOrWhiteSpace(ringable.BellPartCode) &&
-                    (ringable.LastRung == null || ringable.LastRung < DateTime.Now.AddSeconds(-5)))
+                    (ringable.LastRung == null || ringable.LastRung < DateTime.Now.AddSeconds(-BellRingCooldownSeconds)))
                 {
                     ringable.LastRung = DateTime.Now;
                     int rand = new Random().Next(1, 3);
