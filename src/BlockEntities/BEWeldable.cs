@@ -28,14 +28,10 @@ namespace RPVoiceChat.GameContent.BlockEntities
         public BEWeldable(int numParts)
         {
             Inv = new InventoryGeneric(numParts + 1, null, null);
-            Renderer = new WeldableRenderer(Api as ICoreClientAPI, this);
             FluxMeshRefs = new MeshRef[numParts];
             PartMeshRefs = new MeshRef[numParts];
 
-            Inv.SlotModified += (i) =>
-            {
-                MarkDirty(true);
-            };
+            Inv.SlotModified += (i) => MarkDirty(true);
         }
 
         public override InventoryBase Inventory => Inv;
@@ -49,7 +45,10 @@ namespace RPVoiceChat.GameContent.BlockEntities
             if (api is ICoreClientAPI capi)
             {
                 Renderer = new WeldableRenderer(capi, this);
-                capi.TesselatorManager.GetDefaultBlockMesh(Block).Clear();
+
+                capi.TesselatorManager.GetDefaultBlockMesh(Block)?.Clear();
+
+                UpdateMeshRefs();
             }
         }
 
@@ -100,91 +99,85 @@ namespace RPVoiceChat.GameContent.BlockEntities
         protected virtual void UpdateMeshRefs()
         {
             var capi = Api as ICoreClientAPI;
+            if (Api.Side == EnumAppSide.Server || capi == null) return;
 
-
-            if (Api.Side == EnumAppSide.Server) return;
-
-
-            // If the inventory contains flux, then we want to render the flux mesh for as many times flux there is
-            // unless there is more flux than there are church bell parts
             for (int i = 0; i < FluxSlot.StackSize; i++)
             {
-                if (Inv[0].Empty) break;
+                if (FluxSlot.Empty) break;
 
                 MeshData meshdata = RenderFlux(i);
-
                 FluxMeshRefs[i] = capi.Render.UploadMesh(meshdata);
             }
 
-            // If the inventory contains the church bell parts, then we want to render the big bell part mesh
             for (int i = 0; i < PartMeshRefs.Length; i++)
             {
                 if (Inv[i + 1].Empty) continue;
 
                 MeshData meshdata = RenderPart(i);
-
                 PartMeshRefs[i] = capi.Render.UploadMesh(meshdata);
             }
         }
 
         protected abstract MeshData RenderPart(int numPart);
-
         protected abstract MeshData RenderFlux(int numFlux);
 
         public virtual void OnHammerHitOver(IPlayer byPlayer, Vec3d hitPosition)
         {
-
+            if (!TestReadyToMerge())
             {
-                if (!TestReadyToMerge())
+                ShowReadyToMergeErrors();
+                return;
+            }
+
+            HammerHits++;
+
+            ItemSlot slot = byPlayer?.InventoryManager?.ActiveHotbarSlot;
+            slot?.Itemstack?.Collectible?.DamageItem(Api.World, byPlayer.Entity, slot);
+
+            float temp = 1500f;
+            for (int i = 1; i < Inv.Count; i++)
+            {
+                ItemSlot partSlot = Inv[i];
+                if (partSlot.Empty)
                 {
-                    ShowReadyToMergeErrors(); // only client-side
                     return;
                 }
+                float partTemp = partSlot.Itemstack.Collectible.GetTemperature(Api.World, partSlot.Itemstack);
+                temp = Math.Min(temp, partTemp);
+            }
 
+            if (temp > 800 && Api.Side == EnumAppSide.Client)
+            {
+                // TODO : set a better position for particle effects because those are currently spawning inside the bell
+                // (because the fake block is small as the anvil)
+                BlockEntityAnvil.bigMetalSparks.MinPos = Pos.ToVec3d().Add(hitPosition.X, hitPosition.Y, hitPosition.Z);
+                BlockEntityAnvil.bigMetalSparks.VertexFlags = (byte)GameMath.Clamp((int)(temp - 700) / 2, 32, 128);
+                Api.World.SpawnParticles(BlockEntityAnvil.bigMetalSparks, byPlayer);
 
-                float temp = 1500;
-                for (int i = 1; i < Inv.Count; i++)
-                {
-                    ItemSlot slot = Inv[i];
-                    if (slot.Empty) return;
+                BlockEntityAnvil.smallMetalSparks.MinPos = Pos.ToVec3d().Add(hitPosition.X, hitPosition.Y, hitPosition.Z);
+                BlockEntityAnvil.smallMetalSparks.VertexFlags = (byte)GameMath.Clamp((int)(temp - 770) / 3, 32, 128);
+                Api.World.SpawnParticles(BlockEntityAnvil.smallMetalSparks, byPlayer);
+            }
 
-                    temp = Math.Min(temp, slot.Itemstack.Collectible.GetTemperature(Api.World, slot.Itemstack));
-                }
+            if (HammerHits >= HammerHitsNeeded && Api.Side == EnumAppSide.Server)
+            {
+                Block resultingBlock = Api.World.GetBlock(new AssetLocation(RPVoiceChatMod.modID, ResultingBlockCode));
 
-                
-                if (Api.Side == EnumAppSide.Server)
-                {
-                    HammerHits++;
-                }
+                ItemStack resultingStack = new ItemStack(resultingBlock);
+                resultingStack.Collectible.SetTemperature(Api.World, resultingStack, temp);
 
-                if (temp > 800)
-                {
-                    if (Api.Side == EnumAppSide.Client)
-                    {
-                        BlockEntityAnvil.bigMetalSparks.MinPos = Pos.ToVec3d().Add(hitPosition.X, hitPosition.Y, hitPosition.Z);
-                        BlockEntityAnvil.bigMetalSparks.VertexFlags = (byte)GameMath.Clamp((int)(temp - 700) / 2, 32, 128);
-                        Api.World.SpawnParticles(BlockEntityAnvil.bigMetalSparks, byPlayer);
-
-                        BlockEntityAnvil.smallMetalSparks.MinPos = Pos.ToVec3d().Add(hitPosition.X, hitPosition.Y, hitPosition.Z);
-                        BlockEntityAnvil.smallMetalSparks.VertexFlags = (byte)GameMath.Clamp((int)(temp - 770) / 3, 32, 128);
-                        Api.World.SpawnParticles(BlockEntityAnvil.smallMetalSparks, byPlayer);
-                    }
-                }
-
-                if (HammerHits >= HammerHitsNeeded)
-                {
-                    Block ResultingBlock = Api.World.GetBlock(new AssetLocation(RPVoiceChatMod.modID, ResultingBlockCode));
-                    ItemStack ResultingBlockStack = new ItemStack(ResultingBlock);
-                    ResultingBlockStack.Collectible.SetTemperature(Api.World, ResultingBlockStack, temp);
-                    Api.World.BlockAccessor.SetBlock(ResultingBlock.Id, Pos, ResultingBlockStack);
-                }
-
+                var accessor = Api.World.GetBlockAccessor(synchronize: true, relight: true, strict: true, debug: false);
+                accessor.SetBlock(resultingBlock.Id, Pos, resultingStack);
             }
         }
+
+
+
 
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
         {
             base.FromTreeAttributes(tree, worldForResolving);
+            HammerHits = tree.GetInt("hammerHits", 0);
 
             if (Api != null)
                 UpdateMeshRefs();
@@ -193,13 +186,13 @@ namespace RPVoiceChat.GameContent.BlockEntities
         public override void ToTreeAttributes(ITreeAttribute tree)
         {
             base.ToTreeAttributes(tree);
+            tree.SetInt("hammerHits", HammerHits);
         }
 
         public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tessThreadTesselator)
         {
             return true;
         }
-
 
         public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
         {
@@ -218,11 +211,11 @@ namespace RPVoiceChat.GameContent.BlockEntities
 
             if (TestReadyToMerge())
             {
-                dsc.AppendLine(UIUtils.I18n($"{i18nPrefix}.WeldReady")); //"Ready to weld"
+                dsc.AppendLine(UIUtils.I18n($"{i18nPrefix}.WeldReady"));
             }
             else
             {
-                dsc.AppendLine(UIUtils.I18n($"{i18nPrefix}.WeldNotReady")); //"Not ready to weld"
+                dsc.AppendLine(UIUtils.I18n($"{i18nPrefix}.WeldNotReady"));
             }
         }
 
@@ -258,7 +251,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
             base.OnBlockUnloaded();
 
             Renderer?.Dispose();
-            
+
             foreach (MeshRef meshRef in FluxMeshRefs)
             {
                 meshRef?.Dispose();
@@ -269,5 +262,6 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 meshRef?.Dispose();
             }
         }
+
     }
 }
