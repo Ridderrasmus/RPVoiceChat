@@ -23,17 +23,37 @@ namespace RPVoiceChat.GameContent.BlockEntityBehaviors
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldAccessForResolve)
         {
             BellPartCode = tree.GetString("bellPartCode") ?? string.Empty;
-            LastRung = tree.GetString("lastRung") != null ? DateTime.Parse(tree.GetString("lastRung")) : null;
+
+            string lastRungStr = tree.GetString("lastRung");
+            if (!string.IsNullOrEmpty(lastRungStr))
+            {
+                if (DateTime.TryParseExact(lastRungStr, "o", null, System.Globalization.DateTimeStyles.RoundtripKind, out var parsed))
+                {
+                    LastRung = parsed;
+                }
+                else
+                {
+                    LastRung = null;
+                }
+            }
+            else
+            {
+                LastRung = null;
+            }
+
             base.FromTreeAttributes(tree, worldAccessForResolve);
         }
+
 
         public override void ToTreeAttributes(ITreeAttribute tree)
         {
             tree.SetString("bellPartCode", BellPartCode);
+
             if (LastRung != null)
-                tree.SetString("lastRung", LastRung?.ToString());
+                tree.SetString("lastRung", LastRung?.ToString("o")); // "o" = ISO 8601
             else if (tree.HasAttribute("lastRung"))
                 tree.RemoveAttribute("lastRung");
+
             base.ToTreeAttributes(tree);
         }
 

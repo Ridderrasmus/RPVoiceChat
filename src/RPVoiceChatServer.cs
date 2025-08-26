@@ -13,7 +13,6 @@ namespace RPVoiceChat
 {
     public class RPVoiceChatServer : RPVoiceChatMod
     {
-        protected ICoreServerAPI sapi;
         private GameServer server;
 
         public override void StartServerSide(ICoreServerAPI api)

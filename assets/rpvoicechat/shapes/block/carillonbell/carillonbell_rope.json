@@ -1,6 +1,6 @@
 {
 	"editor": {
-		"collapsedPaths": "Root/Base/Level2,Root/Base/Level1,Root/middle-part/Level3,Root/middle-part/Level4,Root/Base/Cube2/Cube3,Root/Base/Cube38,Root/Base/Cube59,Root/Base/exterior,Root/Base/exterior/Cube3,Root/Base,Root/middle-part/Level1,Root/Base/Cube63,Root/Base/Cube51,Root/middle-part/Level2,Root/Base/Level4,Root/Base/Level3,Root/Base/Cube2,Root/Base/Cube3,Root/Base/Cube22",
+		"collapsedPaths": "Root/Base/Level2,Root/Base/Level1,Root/middle-part/Level3,Root/middle-part/Level4,Root/Base/rope,Root/base/Level2,Root/base/Level1,Root/Base/handle,Root/Base/Cube38,Root/Base/Cube59,Root/Base/exterior,Root/Base/Cube51,Root/base/handle,Root/Base/Cube2/Cube3,Root/base/Level4,Root/base/Level3,Root/Base/exterior/Cube3,Root/middle-part/Level1,Root/Base/Cube63,Root/middle-part/Level2,Root/Base/Level4,Root/Base/Level3,Root/Base/Cube2,Root/Base/Cube3,Root/Base/Cube22",
 		"allAngles": false,
 		"entityTextureMode": false
 	},
@@ -12,7 +12,7 @@
 	},
 	"elements": [
 		{
-			"name": "Base",
+			"name": "base",
 			"from": [ 4.5, 0.0, 4.5 ],
 			"to": [ 5.5, 1.0, 6.5 ],
 			"rotationOrigin": [ 4.0, 0.0, 5.0 ],
@@ -677,6 +677,80 @@
 								"west": { "texture": "#metal", "uv": [ 0.0, 0.0, 1.0, 0.5 ] },
 								"up": { "texture": "#metal", "uv": [ 0.0, 0.0, 0.5, 1.0 ] },
 								"down": { "texture": "#metal", "uv": [ 0.0, 0.0, 0.5, 1.0 ] }
+							}
+						}
+					]
+				},
+				{
+					"name": "rope",
+					"from": [ 3.15, 10.4, 2.5 ],
+					"to": [ 3.85, 11.1, 4.5 ],
+					"rotationOrigin": [ 3.0, 10.0, 2.0 ],
+					"faces": {
+						"north": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
+						"east": { "texture": "#rope", "uv": [ 0.0, 0.0, 2.0, 0.5 ] },
+						"south": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
+						"west": { "texture": "#rope", "uv": [ 0.0, 0.0, 2.0, 0.5 ] },
+						"up": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 2.0 ] },
+						"down": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 2.0 ] }
+					},
+					"children": [
+						{
+							"name": "Cube5",
+							"from": [ 0.0, 0.35, -0.35 ],
+							"to": [ 0.7, 5.65, 0.35 ],
+							"rotationOrigin": [ 0.0, 1.0, 0.0 ],
+							"faces": {
+								"north": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 5.0 ] },
+								"east": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 5.0 ] },
+								"south": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 5.0 ] },
+								"west": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 5.0 ] },
+								"up": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
+								"down": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 0.5 ] }
+							}
+						},
+						{
+							"name": "Cube6",
+							"from": [ 0.0, 0.36, 1.65 ],
+							"to": [ 0.7, 5.66, 2.35 ],
+							"rotationOrigin": [ 0.0, 0.0, 2.0 ],
+							"faces": {
+								"north": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 5.0 ] },
+								"east": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 5.0 ] },
+								"south": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 5.0 ] },
+								"west": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 5.0 ] },
+								"up": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
+								"down": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 0.5 ] }
+							}
+						},
+						{
+							"name": "Cube10",
+							"from": [ 0.0, 0.3, 0.2 ],
+							"to": [ 0.7, 0.8, 0.7 ],
+							"rotationOrigin": [ 0.0, 1.0, 0.0 ],
+							"rotationX": 45.0,
+							"faces": {
+								"north": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
+								"east": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
+								"south": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
+								"west": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
+								"up": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
+								"down": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 0.5 ] }
+							}
+						},
+						{
+							"name": "Cube11",
+							"from": [ 0.0, 0.3, 2.2 ],
+							"to": [ 0.7, 0.8, 2.7 ],
+							"rotationOrigin": [ 0.0, 1.0, 2.0 ],
+							"rotationX": 45.0,
+							"faces": {
+								"north": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
+								"east": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
+								"south": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
+								"west": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
+								"up": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
+								"down": { "texture": "#rope", "uv": [ 0.0, 0.0, 0.5, 0.5 ] }
 							}
 						}
 					]

@@ -16,11 +16,8 @@ namespace RPVoiceChat.GameContent.Items
         private bool isUsable = true;
         private bool cooldownActive = false;
 
-        private ICoreAPI api;
-
         public override void OnLoaded(ICoreAPI api)
         {
-            this.api = api;
             base.OnLoaded(api);
 
             AudibleDistance = Attributes?["soundAudibleDistance"].AsInt(AudibleDistance) ?? AudibleDistance;
