@@ -101,6 +101,8 @@ namespace RPVoiceChat.GameContent.BlockEntities
             var capi = Api as ICoreClientAPI;
             if (Api.Side == EnumAppSide.Server || capi == null) return;
 
+            // If the inventory contains flux, then we want to render the flux mesh for as many times flux there is
+            // unless there is more flux than there are church bell parts
             for (int i = 0; i < FluxSlot.StackSize; i++)
             {
                 if (FluxSlot.Empty) break;
@@ -109,6 +111,7 @@ namespace RPVoiceChat.GameContent.BlockEntities
                 FluxMeshRefs[i] = capi.Render.UploadMesh(meshdata);
             }
 
+            // If the inventory contains the church bell parts, then we want to render the big bell part mesh
             for (int i = 0; i < PartMeshRefs.Length; i++)
             {
                 if (Inv[i + 1].Empty) continue;

@@ -86,7 +86,6 @@ namespace RPVoiceChat
             if (be != null)
             {
                 be.OnHammerHitOver(fromPlayer, packet.HitPosition);
-                ModApi.Logger.Notification($"[RPVoiceChat] Soudure reçue côté serveur à {packet.Pos}");
             }
         }
     }
