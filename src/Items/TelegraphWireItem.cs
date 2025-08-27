@@ -1,51 +1,54 @@
+using System.Text;
 using RPVoiceChat.GameContent.Blocks;
 using RPVoiceChat.GameContent.Systems;
-using System.Text;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 
 namespace RPVoiceChat.GameContent.Items
 {
     public class TelegraphWireItem : Item
     {
-        private WireConnection connection;
+        private BlockPos firstNodePos;
 
         public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handling)
         {
-            WireNode node = blockSel.Block?.GetBlockEntity<WireNode>(blockSel);
+            if (blockSel == null || byEntity?.World == null)
+                return;
+
+            var node = byEntity.World.BlockAccessor.GetBlockEntity(blockSel.Position) as WireNode;
 
             if (node == null)
+                return;
+
+            handling = EnumHandHandling.PreventDefault;
+
+            // First click
+            if (firstNodePos == null)
             {
-                base.OnHeldInteractStart(slot, byEntity, blockSel, entitySel, firstEvent, ref handling);
+                firstNodePos = blockSel.Position.Copy();
+                (byEntity.World.Api as ICoreClientAPI)?.TriggerChatMessage("Point de départ enregistré.");
                 return;
             }
 
-            if (node is TelegraphBlockEntity telegraph)
-            {
-                handling = EnumHandHandling.PreventDefault;
+            // Second click
+            var firstNode = byEntity.World.BlockAccessor.GetBlockEntity(firstNodePos) as WireNode;
 
-                // Handle connection
-                if (connection == null)
-                {
-                    connection = new WireConnection(telegraph);
-                    node.Connect(connection);
-                }
-                else
-                {
-                    node.Connect(connection);
-                    connection = null;
-                }
+            if (firstNode != null && firstNode != node)
+            {
+                WireConnection connection = new WireConnection(firstNode, node);
+                firstNode.Connect(connection); // Connect() method handles adding to network and fusion
+                (byEntity.World.Api as ICoreClientAPI)?.TriggerChatMessage("Connexion réussie !");
             }
 
+            firstNodePos = null; // Reset
         }
 
         public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
         {
-            if (connection != null)
+            if (firstNodePos != null)
             {
-                dsc.AppendLine();
-                dsc.AppendLine("Connections:");
-                dsc.AppendLine($"Node1 - {((connection.Node1 != null) ? connection.Node1.Pos : "null")}");
-                dsc.AppendLine($"Node2 - {((connection.Node2 != null) ? connection.Node2.Pos : "null")}");
+                dsc.AppendLine($"Connexion en attente depuis : {firstNodePos}");
             }
             base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
         }
