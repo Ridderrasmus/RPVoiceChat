@@ -1,0 +1,20 @@
+{
+  "code": "megaphone",
+  "class": "voiceamplifieritem",
+  "enabled": true,
+  "maxStackSize": 1,
+  "creativeinventory": {
+    "general": [ "*" ],
+    "items": [ "*" ],
+    "tools": [ "*" ],
+    "rpvoicechat": [ "*" ]
+  },
+  "attributes": {
+    "voiceLevel": "Shouting",
+    "voiceRangeBoost": 100,
+    "applySoundEffect": "cheapmic"
+  },
+  "shape": {
+    "base": "item/megaphone"
+  }
+}

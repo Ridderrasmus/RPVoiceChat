@@ -5,7 +5,7 @@ namespace RPVoiceChat.Audio.Effects
 {
     public class UnstableEffect : SoundEffect
     {
-        public UnstableEffect(int source) : base(source) { }
+        public UnstableEffect(int source) : base("unstable", source) { }
 
         protected override int GenerateEffect()
         {

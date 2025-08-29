@@ -399,6 +399,15 @@ namespace RPVoiceChat.Audio
             return voiceLevel;
         }
 
+        public void SetVoiceLevel(VoiceLevel newLevel)
+        {
+            if (voiceLevel != newLevel)
+            {
+                voiceLevel = newLevel;
+                VoiceLevelUpdated?.Invoke(voiceLevel);
+            }
+        }
+
         public void SetInputDevice(string deviceId)
         {
             capture = CreateNewCapture(deviceId);

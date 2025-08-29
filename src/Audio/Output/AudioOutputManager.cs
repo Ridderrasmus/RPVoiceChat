@@ -13,6 +13,10 @@ namespace RPVoiceChat.Audio
     {
         ICoreClientAPI capi;
         private bool isLoopbackEnabled;
+        private string appliedEffectName = null;
+
+        private ConcurrentDictionary<string, string> playerEffects = new();
+
         public bool IsLoopbackEnabled
         {
             get => isLoopbackEnabled;
@@ -158,6 +162,36 @@ namespace RPVoiceChat.Audio
             return false;
         }
 
+        public bool ApplyRangeMultiplierToPlayer(string playerId, float multiplier, float boost)
+        {
+            var source = GetOrCreatePlayerSource(playerId);
+            if (source == null) return false;
+
+
+            float finalMultiplier = multiplier * (1f + boost);
+
+            source.ApplyVoiceRangeMultiplier(finalMultiplier);
+
+            return true;
+        }
+
+        public bool ResetRangeForPlayer(string playerId)
+        {
+            var source = GetOrCreatePlayerSource(playerId);
+            if (source == null) return false;
+
+            source.ResetVoiceRange();
+            return true;
+        }
+        public bool SetVoiceLevelForPlayer(string playerId, VoiceLevel voiceLevel)
+        {
+            var source = GetOrCreatePlayerSource(playerId);
+            if (source == null) return false;
+
+            source.UpdateVoiceLevel(voiceLevel);
+            return true;
+        }
+
         public void Dispose()
         {
             capi.Event.PlayerEntitySpawn -= PlayerSpawned;
@@ -167,6 +201,29 @@ namespace RPVoiceChat.Audio
             localPlayerAudioSource?.Dispose();
             foreach (var source in playerSources.Values)
                 source?.Dispose();
+        }
+
+        public bool ApplyEffectToPlayer(string playerId, string effectName)
+        {
+            var source = GetOrCreatePlayerSource(playerId);
+            if (source == null) return false;
+
+            source.SetSoundEffect(effectName);
+            playerEffects[playerId] = effectName;
+
+            return true;
+        }
+
+        public bool ClearEffectForPlayer(string playerId)
+        {
+            if (playerEffects.TryRemove(playerId, out _))
+            {
+                var source = GetOrCreatePlayerSource(playerId);
+                source?.ClearSoundEffect();
+                return true;
+            }
+
+            return false;
         }
     }
 }
