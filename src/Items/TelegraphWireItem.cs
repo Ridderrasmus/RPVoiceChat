@@ -9,6 +9,7 @@ namespace RPVoiceChat.GameContent.Items
 {
     public class TelegraphWireItem : Item
     {
+        private const int MaxConnectionDistance = 20;
         private BlockPos firstNodePos;
 
         public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handling)
@@ -27,7 +28,7 @@ namespace RPVoiceChat.GameContent.Items
             if (firstNodePos == null)
             {
                 firstNodePos = blockSel.Position.Copy();
-                (byEntity.World.Api as ICoreClientAPI)?.TriggerChatMessage("Point de départ enregistré.");
+                (byEntity.World.Api as ICoreClientAPI)?.TriggerChatMessage("Starting point recorded.");
                 return;
             }
 
@@ -36,9 +37,17 @@ namespace RPVoiceChat.GameContent.Items
 
             if (firstNode != null && firstNode != node)
             {
-                WireConnection connection = new WireConnection(firstNode, node);
-                firstNode.Connect(connection); // Connect() method handles adding to network and fusion
-                (byEntity.World.Api as ICoreClientAPI)?.TriggerChatMessage("Connexion réussie !");
+                double dist = firstNodePos.DistanceTo(node.Pos);
+                if (dist > MaxConnectionDistance)
+                {
+                    (byEntity.Api as ICoreClientAPI)?.TriggerChatMessage($"Too far! Max distance is {MaxConnectionDistance} blocks.");
+                }
+                else
+                {
+                    WireConnection connection = new WireConnection(firstNode, node);
+                    firstNode.Connect(connection); // Connect() method handles adding to network and fusion
+                    (byEntity.Api as ICoreClientAPI)?.TriggerChatMessage("Connection successful!");
+                }
             }
 
             firstNodePos = null; // Reset
@@ -48,7 +57,7 @@ namespace RPVoiceChat.GameContent.Items
         {
             if (firstNodePos != null)
             {
-                dsc.AppendLine($"Connexion en attente depuis : {firstNodePos}");
+                dsc.AppendLine($"Connection pending since:  {firstNodePos}");
             }
             base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
         }

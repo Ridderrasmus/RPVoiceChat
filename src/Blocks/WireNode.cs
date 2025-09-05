@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using RPVoiceChat.GameContent.Renderers;
 using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Systems;
 using Vintagestory.API.Client;
@@ -19,15 +20,29 @@ namespace RPVoiceChat.GameContent.Blocks
 
         private readonly List<WireConnection> Connections = new();
         private List<BlockPos> pendingConnectionPositions = new();
+        private IRenderer renderer;
 
         protected EventHandler<string> OnReceivedSignalEvent { get; set; }
+
+        public event Action? OnConnectionsChanged;
 
         public override void Initialize(ICoreAPI api)
         {
             base.Initialize(api);
 
-            if (Api.Side == EnumAppSide.Client)
+            if (api.Side == EnumAppSide.Client)
             {
+                var capi = api as ICoreClientAPI;
+                var wireRenderer = new WireNodeRenderer(this, capi);
+                renderer = wireRenderer;
+                capi.Event.RegisterRenderer(renderer, EnumRenderStage.Opaque, "wirenode");
+
+                this.OnConnectionsChanged += () =>
+                {
+                    // Force mesh rebuild on connection change
+                    wireRenderer.MarkNeedsRebuild();
+                };
+
                 WireNetworkHandler.ClientSideMessageReceived += OnReceivedMessage;
             }
 
@@ -70,7 +85,17 @@ namespace RPVoiceChat.GameContent.Blocks
                 }
             }
 
+            if (Connections.Count > 0)
+            {
+                OnConnectionsChanged?.Invoke();
+            }
+
             pendingConnectionPositions.Clear();
+        }
+
+        public IReadOnlyList<WireConnection> GetConnections()
+        {
+            return Connections;
         }
 
         public void Connect(WireConnection connection)
@@ -91,7 +116,8 @@ namespace RPVoiceChat.GameContent.Blocks
             connection.Node1.MarkDirty(true);
             connection.Node2.MarkDirty(true);
 
-            // Gérer la connexion côté serveur (réseau logique)
+            OnConnectionsChanged?.Invoke();
+
             if (Api.Side == EnumAppSide.Server)
             {
                 WireNode node1 = connection.Node1;
@@ -242,7 +268,21 @@ namespace RPVoiceChat.GameContent.Blocks
 
             WireNetwork network = WireNetworkHandler.GetNetwork(NetworkUID);
             dsc.AppendLine($"Network ID: {network.networkID}");
-            dsc.AppendLine($"[DEBUG] Client sees {Connections.Count} connections.");
+
+            // Temporary reload of connections if empty 
+            if (Connections.Count == 0 && pendingConnectionPositions.Count > 0)
+            {
+                foreach (var otherPos in pendingConnectionPositions)
+                {
+                    var otherBe = Api.World.BlockAccessor.GetBlockEntity(otherPos) as WireNode;
+                    if (otherBe != null)
+                    {
+                        var connection = new WireConnection(this, otherBe);
+                        if (!Connections.Contains(connection))
+                            Connections.Add(connection);
+                    }
+                }
+            }
 
             if (Connections.Count > 0)
             {
