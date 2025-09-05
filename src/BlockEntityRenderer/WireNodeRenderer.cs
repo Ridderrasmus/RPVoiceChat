@@ -62,7 +62,7 @@ namespace RPVoiceChat.GameContent.Renderers
                 )
                 .Values;
 
-            int texId = capi.Render.GetOrLoadTexture(new AssetLocation("game:block/metal/ingot/copper")); //TODO not working (keep black texture)
+            int texId = capi.Render.GetOrLoadTexture(new AssetLocation("game:block/metal/ingot/copper")); //TODO not working (keep black texture))
             capi.Render.BindTexture2d(texId);
 
             prog.Use();

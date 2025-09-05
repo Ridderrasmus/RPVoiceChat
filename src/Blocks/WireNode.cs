@@ -187,12 +187,31 @@ namespace RPVoiceChat.GameContent.Blocks
             base.OnBlockRemoved();
 
             if (Api.Side == EnumAppSide.Client)
+            {
+                if (renderer != null)
+                {
+                    var capi = Api as ICoreClientAPI;
+                    capi?.Event.UnregisterRenderer(renderer, EnumRenderStage.Opaque);
+                    if (renderer is IDisposable disposable)
+                    {
+                        disposable.Dispose();
+                    }
+                    renderer = null;
+                }
+
+                Connections.Clear();
+
+                OnConnectionsChanged?.Invoke();
+
                 return;
+            }
 
             foreach (var connection in new List<WireConnection>(Connections))
             {
                 WireNode other = connection.GetOtherNode(this);
                 other?.Connections.Remove(connection);
+
+                other?.MarkDirty(true);
             }
 
             Connections.Clear();
@@ -202,6 +221,15 @@ namespace RPVoiceChat.GameContent.Blocks
                 var network = WireNetworkHandler.GetNetwork(NetworkUID);
                 network?.RemoveNode(this);
             }
+
+            MarkDirty(true);
+        }
+
+        public override void OnBlockBroken(IPlayer byPlayer)
+        {
+            base.OnBlockBroken(byPlayer);
+
+            this.OnBlockRemoved();
         }
 
         public override void OnBlockUnloaded()
