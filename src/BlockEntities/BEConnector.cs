@@ -3,14 +3,13 @@ using RPVoiceChat.GameContent.Blocks;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 
-public class BEConnector : WireNode
+public class BEConnector : WireNode, IWireConnectable
 {
 
     public override void Initialize(ICoreAPI api)
     {
         base.Initialize(api);
-        api.Logger.Notification($"[BEConnector] Initialized at {Pos}");
-        // Can be assigned by WireItem ?
+        // Can be assigned by WireItem
     }
 
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldAccessForResolve)

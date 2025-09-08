@@ -80,16 +80,6 @@ namespace RPVoiceChat.GameContent.Blocks
 
             ICoreClientAPI capi = (ICoreClientAPI)Api;
 
-            /*var playerPos = capi.World.Player.Entity.Pos.XYZ;
-            var blockPos = Pos.ToVec3d();
-
-            double distance = playerPos.DistanceTo(blockPos);
-
-            if (distance > 5.0) 
-            {
-                return;
-            }*/
-
             IsPlaying = true;
 
             capi.SendChatMessage($"Transmitting: {morse}");

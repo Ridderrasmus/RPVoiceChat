@@ -17,7 +17,7 @@ namespace RPVoiceChat.GameContent.Items
             if (blockSel == null || byEntity?.World == null)
                 return;
 
-            var node = byEntity.World.BlockAccessor.GetBlockEntity(blockSel.Position) as WireNode;
+            var node = byEntity.World.BlockAccessor.GetBlockEntity(blockSel.Position) as IWireConnectable;
 
             if (node == null)
                 return;
@@ -37,7 +37,7 @@ namespace RPVoiceChat.GameContent.Items
 
             if (firstNode != null && firstNode != node)
             {
-                double dist = firstNodePos.DistanceTo(node.Pos);
+                double dist = firstNodePos.DistanceTo(node.Position);
                 if (dist > MaxConnectionDistance)
                 {
                     (byEntity.Api as ICoreClientAPI)?.TriggerChatMessage($"Too far! Max distance is {MaxConnectionDistance} blocks.");
