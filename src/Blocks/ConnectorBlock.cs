@@ -1,11 +1,15 @@
 ﻿using Vintagestory.API.Common;
 
-namespace RPVoiceChat.GameContent.Blocks
+public class ConnectorBlock : Block
 {
-    public class ConnectorBlock : Block
+    public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
     {
-        // TODO : Create connector block that can connect TelegraphWires to extend networks' length without adding another node
-        // maybe with using only NetwokUID and not a full WireNode BE ?
+        if (byPlayer.InventoryManager.ActiveHotbarSlot?.Itemstack?.Collectible?.Code.ToShortString() == "rpvoicechat:telegraphwire")
+        {
+            // Don't interfere with WireItem interaction
+            return false;
+        }
 
+        return base.OnBlockInteractStart(world, byPlayer, blockSel);
     }
 }

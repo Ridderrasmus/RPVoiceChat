@@ -2,6 +2,7 @@
   "code": "connector",
   "enabled": true,
   "class": "connectorblock",
+  "entityClass": "BEConnector",
   "creativeinventory": {
     "general": [ "*" ],
     "rpvoicechat": [ "*" ]
