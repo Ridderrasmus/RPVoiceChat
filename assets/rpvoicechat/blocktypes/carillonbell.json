@@ -7,13 +7,12 @@
       "name": "HorizontalUpDownOrientable"
     },
     {
-      "name": "UnstableFallingVariant",
+      "name": "UnstableFalling",
       "properties": {
         "attachableFaces": [ "up", "down" ],
         "impactDamageMul": 10,
         "fallSound": "block/carillonbell/carillonbell_{metal}",
         "dustIntensity": 1,
-        "variantAfterFalling": "carillonbell-{metal}-up-north",
         "attachmentAreas": {
           "up": {
             "x1": 4.5,

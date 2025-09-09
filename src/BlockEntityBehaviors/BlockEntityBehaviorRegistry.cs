@@ -16,27 +16,47 @@ namespace RPVoiceChat.GameContent.BlockEntityBehaviors
 
         public static void AddBlockEntityBehaviors(ICoreAPI api)
         {
-            // If block has "Door" behaviour on it add the Ringable behaviour
-            foreach (Block block in api.World.Blocks.Where(x => x != null && x.Code != null && x.BlockBehaviors.Any(behaviour => behaviour.GetType().Name == "BlockBehaviorDoor" || behaviour.GetType().Name == "BlockBehaviorTrapDoor")))
+            foreach (Block block in api.World.Blocks)
             {
-                
-                // Add the BEBehaviourRingable behaviour to the block
-                BlockEntityBehaviorType behaviour = new BlockEntityBehaviorType()
+                // Skip null or malformed blocks
+                if (block == null || block.Code == null) continue;
+
+                // Target only blocks that have the Door or TrapDoor behaviors
+                bool isDoor = block.BlockBehaviors?.Any(behav => behav.GetType().Name == "BlockBehaviorDoor") == true;
+                bool isTrapDoor = block.BlockBehaviors?.Any(behav => behav.GetType().Name == "BlockBehaviorTrapDoor") == true;
+
+                if (!isDoor && !isTrapDoor) continue;
+
+                // Skip if the block already has the BERingable behavior (prevent double injection)
+                if (block.BlockEntityBehaviors?.Any(b => b.Name == "BERingable") == true) continue;
+
+                // Clone existing behaviors or start with an empty list
+                var newBehaviors = (block.BlockEntityBehaviors ?? new BlockEntityBehaviorType[0]).ToList();
+
+                // Prepare custom properties (add whatever extra config you need here)
+                var jsonProps = new JsonObject(new JObject());
+                if (block.Attributes?["bellPartCode"]?.Exists == true)
                 {
-                    Name = "BERingable"
-                };
-                behaviour.properties = new JsonObject(new JObject());
-
-                behaviour.properties.Token["bellPartCode"] = (block.Attributes["bellPartCode"].Exists) ? block.Attributes["bellPartCode"].AsString() : JToken.FromObject("");
-
-                block.BlockEntityBehaviors = block.BlockEntityBehaviors.Append(behaviour).Reverse().ToArray();
-
-                if (block.EntityClass == null)
-                {
-                    block.EntityClass = "Generic";
+                    jsonProps.Token["bellPartCode"] = block.Attributes["bellPartCode"].AsString();
                 }
 
+                // Create the new behavior type entry
+                var ringableBehavior = new BlockEntityBehaviorType()
+                {
+                    Name = "BERingable",
+                    properties = jsonProps
+                };
+
+                // Add your behavior to the end of the list (to avoid initialization order issues)
+                newBehaviors.Add(ringableBehavior);
+                block.BlockEntityBehaviors = newBehaviors.ToArray();
+
+                // Important: do NOT override the EntityClass unless absolutely required.
+                // Many vanilla blocks (like doors) have logic that depends on their specific BlockEntity (like BEBehaviorDoorBarLock) type.
+                // So we leave it untouched unless you're injecting into a purely generic block.
             }
         }
+
+
     }
 }
