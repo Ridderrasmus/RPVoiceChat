@@ -7,14 +7,25 @@
     "general": [ "*" ],
     "rpvoicechat": [ "*" ]
   },
+  "maxstacksize": 1,
   "blockmaterial": "Metal",
   "resistance": 1,
   "sounds": {
     "place": "game:block/anvil",
-    "walk": "game:block/anvil"
+    "walk": "game:walk/stone"
   },
   "drawtype": "Cube",
   "textures": {
     "all": { "base": "game:block/wood-generic" }
+  },
+  "attributes": {
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-telegraph.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-telegraph.Text"
+        }
+      ]
+    }
   }
 }

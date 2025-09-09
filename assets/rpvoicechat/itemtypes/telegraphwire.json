@@ -7,7 +7,18 @@
     "items": [ "*" ],
     "rpvoicechat": [ "*" ]
   },
+  "maxstacksize": 16,
   "texture": {
-    "base": "item/handbell"
+    "base": "game:ingot-copper"
+  },
+  "attributes": {
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.item-telegraphwire.Title",
+          "text": "rpvoicechat:Handbook.Usage.item-telegraphwire.Text"
+        }
+      ]
+    }
   }
 }

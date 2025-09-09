@@ -1,0 +1,28 @@
+{
+  "name": "connector",
+  "ingredientPattern": "_G_,GIG,_S_",
+  "ingredients": {
+    "G": {
+      "type": "block",
+      "code": "game:glass-*",
+      "name": "glass",
+      "quantity": 1
+    },
+    "I": {
+      "type": "item",
+      "code": "game:ingot-copper",
+      "quantity": 1
+    },
+    "S": {
+      "type": "block",
+      "code": "game:cobblestoneslab-*",
+      "quantity": 1
+    }
+  },
+  "width": 3,
+  "height": 3,
+  "output": {
+    "type": "block",
+    "code": "connector-{glass}"
+  }
+}

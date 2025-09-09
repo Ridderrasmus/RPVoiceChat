@@ -187,6 +187,12 @@
   "Handbook.Usage.block-carillonbell-electrum.Text": "This is a carillon bell. Hanging from the ceiling, right-clicking it will ring it, playing the note C(8va) over a distance of 256 blocks.",
   "Handbook.Usage.item-warhorn.Title": "Usage",
   "Handbook.Usage.item-warhorn.Text": "This is a warhorn, made of genuine goat horn. When held in your hand, right-clicking it causes you to blow into it. Its sound can be clearly heard up to 128 blocks away.",
+  "Handbook.Usage.block-connector.Title": "Usage",
+  "Handbook.Usage.block-connector.Text": "",
+  "Handbook.Usage.block-telegraph.Title": "Usage",
+  "Handbook.Usage.block-telegraph.Text": "",
+  "Handbook.Usage.item-telegraphwire.Title": "Usage",
+  "Handbook.Usage.item-telegraphwire.Text": "",
 
   "starterguide-title": "RP Voice Chat - Starter Guide",
   "starterguide-text": "<strong>RP Voice Chat - Starter Guide</strong><br /><i>Shout at your enemies, talk with your friends, conspire with your allies.</i><br /><br />This mod implements VoIP to allow people on a server together to talk using microphones in-game based on proximity. It includes also a bunch of in-game communication tools !<br /><br /><strong>About VoIP</strong><br />To open the configuration menu you can press the keybind which by default is set to \"P\". Make sure to double check the keybinds. They're under user interface and have the prefix \"RPVoice\".<br />You cycle between the following speech levels with a keybind defined in your settings.<br /><br />These dictate how far your voice can be heard.<br/><icon name=wpCircle></icon>Whispering: Reaches max 5 blocks<br/><icon name=wpCircle></icon>Talking: Reaches max 15 blocks<br/><icon name=wpCircle></icon>Shouting: Reaches max 25 blocks<br /><br />The above distances can be set per world using chat commands. Using these commands require server control privileges.<br />The commands are all subcommands of \"/rpvc\" so just use \"/help rpvc\" and you should get more information.<br /><br /><strong>Audio effecys</strong><br />TO DO<br /><br /><strong>Communication tools</strong> <br />RP Voice Chat includes more than VoIP. You will find items and blocks that will give you new ways to communicate. For example :<br/><icon name=wpCircle></icon><a href=\"handbook://rpvoicechat:horns\">Horns</a><br/><icon name=wpCircle></icon><a href=\"handbook://rpvoicechat:bells\">Bells</a>",

@@ -7,14 +7,45 @@
     "general": [ "*" ],
     "rpvoicechat": [ "*" ]
   },
+  "maxstacksize": 16,
+  "behaviors": [
+    {
+      "name": "OmniAttachable"
+    }
+  ],
   "blockmaterial": "Metal",
+  "variantgroups": [
+    {
+      "code": "glass",
+      "states": [ "plain", "quartz", "green", "blue", "violet", "red", "yellow", "brown", "vintage" ]
+    }
+  ],
   "resistance": 1,
   "sounds": {
     "place": "game:block/anvil",
-    "walk": "game:block/anvil"
+    "walk": "game:walk/stone"
   },
   "drawtype": "Cube",
   "textures": {
-    "all": { "base": "game:block/wood-generic" }
+    "metal": {
+      "base": "game:block/metal/plate/copper"
+    },
+    "glass": {
+      "base": "game:block/glass/{glass}"
+    },
+    "stone": {
+      "base": "game:block/stone-generic"
+    }
+  },
+  "attributes": {
+    "handbook": {
+      "groupBy": [ "connector-*" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-connector.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-connector.Text"
+        }
+      ]
+    }
   }
 }
