@@ -23,6 +23,7 @@
   "height": 3,
   "output": {
     "type": "block",
-    "code": "connector-{glass}"
+    "code": "connector-{glass}-up",
+    "quantity": 2
   }
 }

@@ -47,6 +47,9 @@ namespace RPVoiceChat.GameContent.Items
                     WireConnection connection = new WireConnection(firstNode, node);
                     firstNode.Connect(connection); // Connect() method handles adding to network and fusion
                     (byEntity.Api as ICoreClientAPI)?.TriggerChatMessage("Connection successful!");
+
+                    slot.TakeOut(1);
+                    slot.MarkDirty();
                 }
             }
 

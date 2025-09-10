@@ -4,37 +4,75 @@
   "class": "connectorblock",
   "entityClass": "BEConnector",
   "creativeinventory": {
-    "general": [ "*" ],
-    "rpvoicechat": [ "*" ]
+    "general": [ "*-up" ],
+    "rpvoicechat": [ "*-up" ]
   },
   "maxstacksize": 16,
   "behaviors": [
     {
-      "name": "OmniAttachable"
+      "name": "OmniAttachable",
+      "properties": {
+        "facingCode": "orientation",
+        "rotateSides": "true"
+      }
     }
   ],
-  "blockmaterial": "Metal",
+  "blockmaterial": "glass",
   "variantgroups": [
     {
       "code": "glass",
-      "states": [ "plain", "quartz", "green", "blue", "violet", "red", "yellow", "brown", "vintage" ]
+      "states": [ "plain", "quartz", "green", "blue", "violet", "red", "yellow", "brown", "vintage", "pink", "smoky" ]
+    },
+    {
+      "code": "orientation",
+      "loadFromPropertiesCombine": [ "abstract/horizontalorientation", "abstract/verticalorientation" ]
     }
   ],
+  "rainPermeable": true,
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "lightAbsorption": 0,
   "resistance": 1,
   "sounds": {
-    "place": "game:block/anvil",
+    "place": "game:block/glass",
     "walk": "game:walk/stone"
   },
-  "drawtype": "Cube",
-  "textures": {
-    "metal": {
-      "base": "game:block/metal/plate/copper"
+  "shapebytype": {
+    "*-up": { "base": "block/connector/connector" },
+    "*-down": {
+      "base": "block/connector/connector",
+      "rotateZ": 180
     },
+    "*-north": {
+      "base": "block/connector/connector_wall",
+      "rotateY": 90
+    },
+    "*-east": {
+      "base": "block/connector/connector_wall",
+      "rotateY": 0
+    },
+    "*-south": {
+      "base": "block/connector/connector_wall",
+      "rotateY": 270
+    },
+    "*-west": {
+      "base": "block/connector/connector_wall",
+      "rotateY": 180
+    }
+  },
+  "textures": {
     "glass": {
       "base": "game:block/glass/{glass}"
     },
+    "metal": {
+      "base": "game:block/metal/plate/copper"
+    },
     "stone": {
-      "base": "game:block/stone-generic"
+      "base": "game:block/stone/flint"
     }
   },
   "attributes": {

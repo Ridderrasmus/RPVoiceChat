@@ -9,7 +9,7 @@
   },
   "maxstacksize": 16,
   "texture": {
-    "base": "game:ingot-copper"
+    "base": "game:block/metal/plate/copper"
   },
   "attributes": {
     "handbook": {
