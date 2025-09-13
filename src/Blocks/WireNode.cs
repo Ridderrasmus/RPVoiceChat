@@ -45,9 +45,14 @@ public class WireNode : BlockEntity, IWireConnectable
 
         if (Api.Side == EnumAppSide.Server)
         {
+            // Ne crée un nouveau réseau QUE si c'est un TelegraphBlock et NetworkUID == 0
             if (NetworkUID == 0)
             {
-                WireNetworkHandler.AddNewNetwork(this);
+                if (Block is TelegraphBlock)
+                {
+                    WireNetworkHandler.AddNewNetwork(this);
+                }
+                // Sinon networkUID sera assigné plus tard via connexion
             }
             else
             {
@@ -55,10 +60,14 @@ public class WireNode : BlockEntity, IWireConnectable
                 if (existing != null)
                 {
                     existing.AddNode(this);
+                    WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(this, existing);
                 }
                 else
                 {
-                    WireNetworkHandler.AddNewNetwork(this);
+                    if (Block is TelegraphBlock)
+                    {
+                        WireNetworkHandler.AddNewNetwork(this);
+                    }
                 }
             }
         }
@@ -119,7 +128,7 @@ public class WireNode : BlockEntity, IWireConnectable
         if (connections.Count >= MaxConnections || HasConnection(connection))
             return;
 
-        // Add connection on two nodes
+        // Ajoute la connexion sur les deux noeuds
         if (!connection.Node1.HasConnection(connection))
             connection.Node1.AddConnection(connection);
 
@@ -139,30 +148,57 @@ public class WireNode : BlockEntity, IWireConnectable
             WireNetwork net1 = WireNetworkHandler.GetNetwork(node1.NetworkUID);
             WireNetwork net2 = WireNetworkHandler.GetNetwork(node2.NetworkUID);
 
-            // Create a new network if no networks exist
-            if (net1 == null && net2 == null)
+            bool node1IsTelegraph = node1.Block is TelegraphBlock;
+            bool node2IsTelegraph = node2.Block is TelegraphBlock;
+
+            bool node1HasNetwork = net1 != null;
+            bool node2HasNetwork = net2 != null;
+
+            // Cas où aucun des deux n'a de réseau ET aucun n'est Telegraph -> pas de création de réseau
+            if (!node1HasNetwork && !node2HasNetwork && !node1IsTelegraph && !node2IsTelegraph)
             {
-                var newNet = WireNetworkHandler.AddNewNetwork(node1);
-                newNet.AddNode(node2);
+                // Connexion possible, mais pas de création de réseau
+                // Les deux NetworkUID restent à 0
+                return;
             }
-            else if (net1 != null && net2 == null)
+
+            // Sinon, on doit gérer la création/fusion/propagation réseau
+
+            if (!node1HasNetwork && !node2HasNetwork)
+            {
+                // Crée un nouveau réseau à partir du Telegraph, ou du node qui est Telegraph sinon n'importe lequel
+                WireNode networkRoot = node1IsTelegraph ? node1 : node2IsTelegraph ? node2 : node1;
+                var newNet = WireNetworkHandler.AddNewNetwork(networkRoot);
+                newNet.AddNode(node1IsTelegraph ? node2 : node1);
+                WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(networkRoot, newNet);
+            }
+            else if (node1HasNetwork && !node2HasNetwork)
             {
                 net1.AddNode(node2);
+                WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(node2, net1);
             }
-            else if (net2 != null && net1 == null)
+            else if (!node1HasNetwork && node2HasNetwork)
             {
                 net2.AddNode(node1);
+                WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(node1, net2);
             }
-            else if (net1 != null && net2 != null && net1 != net2)
+            else if (node1HasNetwork && node2HasNetwork && net1 != net2)
             {
-                // Merge networks if different
+                // Fusion réseaux avec propagation complète
                 if (net1.Nodes.Count >= net2.Nodes.Count)
+                {
                     net1.MergeFrom(net2);
+                    WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(node1, net1);
+                }
                 else
+                {
                     net2.MergeFrom(net1);
+                    WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(node2, net2);
+                }
             }
         }
     }
+
 
     private void OnReceivedMessage(object sender, WireNetworkMessage e)
     {
@@ -317,7 +353,6 @@ public class WireNode : BlockEntity, IWireConnectable
         WireNetwork network = WireNetworkHandler.GetNetwork(NetworkUID);
         dsc.AppendLine($"Network ID: {network.networkID}");
 
-        // Temporary reload of connections if empty 
         if (connections.Count == 0 && pendingConnectionPositions.Count > 0)
         {
             foreach (var otherPos in pendingConnectionPositions)

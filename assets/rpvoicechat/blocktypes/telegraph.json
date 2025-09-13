@@ -2,7 +2,7 @@
   "code": "telegraph",
   "enabled": true,
   "class": "telegraphblock",
-  "entityClass": "TelegraphBlockEntity",
+  "entityClass": "BlockEntityTelegraph",
   "creativeinventory": {
     "general": [ "*" ],
     "rpvoicechat": [ "*" ]

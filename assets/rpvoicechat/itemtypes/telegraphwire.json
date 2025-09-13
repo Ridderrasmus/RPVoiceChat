@@ -8,8 +8,14 @@
     "rpvoicechat": [ "*" ]
   },
   "maxstacksize": 16,
-  "texture": {
-    "base": "game:block/metal/plate/copper"
+  "shape": { "base": "item/telegraphwire" },
+  "textures": {
+    "wire": {
+      "base": "game:block/metal/plate/copper"
+    },
+    "wood": {
+      "base": "game:block/wood-generic"
+    }
   },
   "attributes": {
     "handbook": {

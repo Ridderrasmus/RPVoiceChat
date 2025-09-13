@@ -1,6 +1,6 @@
 ﻿using System;
 using HarmonyLib;
-using RPVoiceChat.GameContent.BlockEntities;
+using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.src.Networking.Packets;
 using Vintagestory.API.Common;
 using Vintagestory.GameContent;

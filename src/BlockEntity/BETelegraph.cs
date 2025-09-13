@@ -1,22 +1,26 @@
-﻿using RPVoiceChat.Gui;
-using RPVoiceChat.GameContent.Systems;
-using RPVoiceChat.Systems;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using RPVoiceChat.GameContent.Systems;
+using RPVoiceChat.Gui;
+using RPVoiceChat.Systems;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.MathTools;
-using Vintagestory.GameContent;
+using Vintagestory.API.Datastructures;
 
-namespace RPVoiceChat.GameContent.Blocks
+namespace RPVoiceChat.GameContent.BlockEntity
 {
-    public class TelegraphBlockEntity : WireNode
+    public class BlockEntityTelegraph : WireNode
     {
         TelegraphMenuDialog dialog;
 
         public bool IsPlaying { get; private set; }
         public int Volume { get; set; } = 8;
+        private string sentMessage = "";
+        private string receivedMessage = "";
+        private Queue<char> pendingSignals = new Queue<char>();
+        private const int MaxMessageLength = 100;
 
-        public TelegraphBlockEntity() : base()
+        public BlockEntityTelegraph() : base()
         {
         }
 
@@ -31,6 +35,8 @@ namespace RPVoiceChat.GameContent.Blocks
             if (api.Side == EnumAppSide.Client)
             {
                 dialog = new TelegraphMenuDialog((ICoreClientAPI)api, this);
+                dialog.UpdateSentText(sentMessage);
+                dialog.UpdateReceivedText(receivedMessage);
             }
         }
 
@@ -40,6 +46,23 @@ namespace RPVoiceChat.GameContent.Blocks
 
             OnReceivedSignal(message[0]);
         }
+
+        public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
+        {
+            base.FromTreeAttributes(tree, worldForResolving);
+            sentMessage = tree.GetString("sentMessage");
+            receivedMessage = tree.GetString("receivedMessage");
+            NetworkUID = tree.GetLong("rpvc:networkUID");
+        }
+
+        public override void ToTreeAttributes(ITreeAttribute tree)
+        {
+            base.ToTreeAttributes(tree);
+            tree.SetString("sentMessage", sentMessage);
+            tree.SetString("receivedMessage", receivedMessage);
+            tree.SetLong("rpvc:networkUID", NetworkUID);
+        }
+
 
         public bool OnInteract()
         {
@@ -58,8 +81,30 @@ namespace RPVoiceChat.GameContent.Blocks
             if (Api is not ICoreClientAPI clientApi)
                 return;
 
+            if (sentMessage.Length >= MaxMessageLength)
+                return; // On arrête si le message est trop long
+
+            pendingSignals.Enqueue(keyChar);
+            sentMessage += keyChar;
+            MarkDirty();
+            dialog?.UpdateSentText(sentMessage);
+
             clientApi.Network.GetChannel(WireNetworkHandler.NetworkChannel)
                 .SendPacket(new WireNetworkMessage() { NetworkUID = NetworkUID, Message = $"{keyChar}", SenderPos = Pos });
+
+            if (!IsPlaying)
+            {
+                _ = ProcessNextSignalAsync();
+            }
+        }
+
+        private async Task ProcessNextSignalAsync()
+        {
+            while (pendingSignals.Count > 0)
+            {
+                char next = pendingSignals.Dequeue();
+                await PlayMorseAsync(ConvertKeyCodeToMorse(next));
+            }
         }
 
         public void OnReceivedSignal(char keyChar)
@@ -67,9 +112,14 @@ namespace RPVoiceChat.GameContent.Blocks
             if (Api.Side != EnumAppSide.Client)
                 return;
 
-            Api.Logger.Debug($"Received signal: {keyChar}");
+            if (Api is ICoreClientAPI clientApi)
+            {
+                receivedMessage += keyChar;
+                MarkDirty();
+                dialog?.UpdateReceivedText(receivedMessage);
+            }
 
-            // Lance la lecture morse asynchrone sans bloquer
+            // Lecture morse asynchrone
             Task.Run(() => PlayMorseAsync(ConvertKeyCodeToMorse(keyChar)));
         }
 
@@ -82,7 +132,7 @@ namespace RPVoiceChat.GameContent.Blocks
 
             IsPlaying = true;
 
-            capi.SendChatMessage($"Transmitting: {morse}");
+            //capi.SendChatMessage($"Transmitting: {morse}");
 
             foreach (char c in morse)
             {
@@ -99,6 +149,27 @@ namespace RPVoiceChat.GameContent.Blocks
             }
 
             IsPlaying = false;
+        }
+
+        public string GetSentMessage()
+        {
+            return sentMessage;
+        }
+
+        public string GetReceivedMessage()
+        {
+            return receivedMessage;
+        }
+
+
+        public void ClearMessages()
+        {
+            sentMessage = "";
+            receivedMessage = "";
+            MarkDirty();
+            pendingSignals.Clear();
+            dialog?.UpdateSentText("");
+            dialog?.UpdateReceivedText("");
         }
 
         private static string ConvertKeyCodeToMorse(char keyChar)
@@ -147,17 +218,17 @@ namespace RPVoiceChat.GameContent.Blocks
         }
     }
 
-    public class TelegraphBlock : Block
+    /*public class TelegraphBlock : Block
     {
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
             if (byPlayer.InventoryManager.ActiveHotbarSlot?.Itemstack?.Collectible.Code.ToShortString() == "rpvoicechat:telegraphwire")
-                return false; // Don't open the menu if the player is holding a telegraph wire
+                return false; // Ne pas ouvrir le menu si joueur tient un câble télégraphe
 
-            TelegraphBlockEntity telegraph = world.BlockAccessor.GetBlockEntity(blockSel.Position) as TelegraphBlockEntity;
+            BlockEntityTelegraph telegraph = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityTelegraph;
             telegraph?.OnInteract();
 
             return true;
         }
-    }
+    }*/
 }

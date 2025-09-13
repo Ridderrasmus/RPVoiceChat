@@ -1,20 +1,22 @@
-﻿using RPVoiceChat.GameContent.Blocks;
-using System;
+﻿using RPVoiceChat.GameContent;
+using RPVoiceChat.GameContent.BlockEntity;
 using Vintagestory.API.Client;
-using Vintagestory.API.Common;
-using Vintagestory.API.MathTools;
 
 namespace RPVoiceChat.Gui
 {
     public class TelegraphMenuDialog : GuiDialog
     {
-        private TelegraphBlockEntity telegraphBlock;
+        private BlockEntityTelegraph telegraphBlock;
 
         // Pour anti-spam : temps du dernier envoi
         private long lastKeySentMs = 0;
         private const int MinDelayBetweenKeysMs = 200; // 200 ms entre deux touches max
 
-        public TelegraphMenuDialog(ICoreClientAPI capi, TelegraphBlockEntity telegraphBlock) : base(capi)
+        // Champs d'affichage du texte envoyé/reçu
+        private GuiElementDynamicText sentTextElem;
+        private GuiElementDynamicText receivedTextElem;
+
+        public TelegraphMenuDialog(ICoreClientAPI capi, BlockEntityTelegraph telegraphBlock) : base(capi)
         {
             this.telegraphBlock = telegraphBlock;
         }
@@ -22,29 +24,69 @@ namespace RPVoiceChat.Gui
         public override void OnGuiOpened()
         {
             base.OnGuiOpened();
-            SingleComposer = capi.Gui.CreateCompo("telegraphmenu", ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.CenterMiddle));
+
+            ElementBounds dialogBounds = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.CenterMiddle);
+
+            ElementBounds sentTextBounds = ElementBounds.Fixed(0, 40, 360, 30);
+            ElementBounds receivedTextBounds = ElementBounds.Fixed(0, 80, 360, 30);
+            ElementBounds clearButtonBounds = ElementBounds.Fixed(0, 120, 100, 30);
+
+            ElementBounds bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
+            bgBounds.BothSizing = ElementSizing.FitToChildren;
+            bgBounds.WithChildren(sentTextBounds, receivedTextBounds);
+
+            SingleComposer = capi.Gui.CreateCompo("telegraphmenu", dialogBounds)
+                .AddShadedDialogBG(bgBounds)
+                .AddDialogTitleBar("Télégraphe", OnTitleBarCloseClicked)
+                .AddDynamicText("Envoyé :", CairoFont.WhiteSmallText(), sentTextBounds, key: "sentText")
+                .AddDynamicText("Reçu :", CairoFont.WhiteSmallText(), receivedTextBounds, key: "receivedText")
+                .AddButton("Effacer", OnClearClicked, clearButtonBounds)
+                .Compose();
+
+            sentTextElem = SingleComposer.GetDynamicText("sentText");
+            receivedTextElem = SingleComposer.GetDynamicText("receivedText");
+
+            UpdateSentText(telegraphBlock.GetSentMessage());
+            UpdateReceivedText(telegraphBlock.GetReceivedMessage());
+        }
+
+
+        private void OnTitleBarCloseClicked()
+        {
+            TryClose();
+        }
+
+        private bool OnClearClicked()
+        {
+            telegraphBlock.ClearMessages();
+            return true;
+        }
+
+        public void UpdateSentText(string text)
+        {
+            sentTextElem?.SetNewText($"Envoyé : {text}");
+        }
+
+        public void UpdateReceivedText(string text)
+        {
+            receivedTextElem?.SetNewText($"Reçu : {text}");
         }
 
         public override void OnKeyPress(KeyEvent args)
         {
-            // Gestion de la fermeture avec Escape
             if (args.KeyCode == (int)GlKeys.Escape)
             {
                 TryClose();
                 return;
             }
 
-            // Pas d’envoi si on est en train de jouer un son
             if (telegraphBlock.IsPlaying)
-            {
                 return;
-            }
 
-            // Anti-spam simple : on ne traite pas les touches trop rapprochées
             long nowMs = capi.World.ElapsedMilliseconds;
-            if (nowMs - lastKeySentMs < MinDelayBetweenKeysMs) return;
+            if (nowMs - lastKeySentMs < MinDelayBetweenKeysMs)
+                return;
 
-            // Envoi du signal avec le caractère tapé
             if (args.KeyChar != '\0')
             {
                 telegraphBlock.SendSignal(args.KeyChar);
