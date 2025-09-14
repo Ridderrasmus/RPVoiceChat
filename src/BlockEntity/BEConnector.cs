@@ -17,16 +17,23 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldAccessForResolve)
         {
             base.FromTreeAttributes(tree, worldAccessForResolve);
-            NetworkUID = tree.GetLong("rpvc:networkUID");
         }
 
         public override void ToTreeAttributes(ITreeAttribute tree)
         {
             base.ToTreeAttributes(tree);
-            tree.SetLong("rpvc:networkUID", NetworkUID);
         }
 
         public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
+        {
+            // Custom network status display
+            DisplayNetworkStatus(forPlayer, dsc);
+
+            // Display connections (legacy)
+            DisplayConnections(forPlayer, dsc);
+        }
+
+        protected override void DisplayNetworkStatus(IPlayer forPlayer, StringBuilder dsc)
         {
             if (NetworkUID > 0)
             {
@@ -36,7 +43,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
             {
                 dsc.AppendLine(UIUtils.I18n("RelayNode.NoNetwork"));
             }
-            base.GetBlockInfo(forPlayer, dsc);
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Text;
 using RPVoiceChat.GameContent.Renderers;
 using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Systems;
+using RPVoiceChat.Utils;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
@@ -23,10 +24,18 @@ public class WireNode : BlockEntity, IWireConnectable
 
     protected EventHandler<string> OnReceivedSignalEvent { get; set; }
     public event Action OnConnectionsChanged;
+    public Vec3f WireAttachmentOffset { get; protected set; } = new Vec3f(0.5f, 0.5f, 0.5f);
+
+    protected virtual void SetWireAttachmentOffset()
+    {
+        // by default : block center
+        WireAttachmentOffset = new Vec3f(0.5f, 0.5f, 0.5f);
+    }
 
     public override void Initialize(ICoreAPI api)
     {
         base.Initialize(api);
+        SetWireAttachmentOffset();
 
         if (api.Side == EnumAppSide.Client)
         {
@@ -45,14 +54,14 @@ public class WireNode : BlockEntity, IWireConnectable
 
         if (Api.Side == EnumAppSide.Server)
         {
-            // Ne crée un nouveau réseau QUE si c'est un TelegraphBlock et NetworkUID == 0
+            // Only create a new network if it is a TelegraphBlock and NetworkUID == 0
             if (NetworkUID == 0)
             {
                 if (Block is TelegraphBlock)
                 {
                     WireNetworkHandler.AddNewNetwork(this);
                 }
-                // Sinon networkUID sera assigné plus tard via connexion
+                // Otherwise, networkUID will be assigned later via connection
             }
             else
             {
@@ -93,7 +102,7 @@ public class WireNode : BlockEntity, IWireConnectable
 
     public void MarkForUpdate()
     {
-        MarkDirty(true);
+        base.MarkDirty(true);
     }
 
     public IReadOnlyList<WireConnection> GetConnections()
@@ -128,7 +137,7 @@ public class WireNode : BlockEntity, IWireConnectable
         if (connections.Count >= MaxConnections || HasConnection(connection))
             return;
 
-        // Ajoute la connexion sur les deux noeuds
+        // Adds the connection on both nodes
         if (!connection.Node1.HasConnection(connection))
             connection.Node1.AddConnection(connection);
 
@@ -154,19 +163,18 @@ public class WireNode : BlockEntity, IWireConnectable
             bool node1HasNetwork = net1 != null;
             bool node2HasNetwork = net2 != null;
 
-            // Cas où aucun des deux n'a de réseau ET aucun n'est Telegraph -> pas de création de réseau
+            // Cases where neither has a network AND neither is Telegraph -> no network creation
             if (!node1HasNetwork && !node2HasNetwork && !node1IsTelegraph && !node2IsTelegraph)
             {
-                // Connexion possible, mais pas de création de réseau
-                // Les deux NetworkUID restent à 0
+                // Connection possible, but no network creation
+                // Both NetworkUIDs remain at 0
                 return;
             }
 
-            // Sinon, on doit gérer la création/fusion/propagation réseau
-
+            // Otherwise, we have to manage network creation/merging/propagation
             if (!node1HasNetwork && !node2HasNetwork)
             {
-                // Crée un nouveau réseau à partir du Telegraph, ou du node qui est Telegraph sinon n'importe lequel
+                // Creates a new network from Telegraph, or from the node that is Telegraph, otherwise any node
                 WireNode networkRoot = node1IsTelegraph ? node1 : node2IsTelegraph ? node2 : node1;
                 var newNet = WireNetworkHandler.AddNewNetwork(networkRoot);
                 newNet.AddNode(node1IsTelegraph ? node2 : node1);
@@ -184,7 +192,7 @@ public class WireNode : BlockEntity, IWireConnectable
             }
             else if (node1HasNetwork && node2HasNetwork && net1 != net2)
             {
-                // Fusion réseaux avec propagation complète
+                // Network merging with full propagation
                 if (net1.Nodes.Count >= net2.Nodes.Count)
                 {
                     net1.MergeFrom(net2);
@@ -299,7 +307,29 @@ public class WireNode : BlockEntity, IWireConnectable
     {
         base.FromTreeAttributes(tree, worldAccessForResolve);
 
+        long oldNetworkUID = NetworkUID;
         NetworkUID = tree.GetLong("rpvc:networkUID");
+
+        // On the client side, create the network if it does not exist
+        if (Api?.Side == EnumAppSide.Client && NetworkUID != 0)
+        {
+            var existingNetwork = WireNetworkHandler.GetNetwork(NetworkUID);
+            if (existingNetwork == null)
+            {
+                // Create the client-side network
+                var clientNetwork = new WireNetwork { networkID = NetworkUID };
+                WireNetworkHandler.AddNetwork(clientNetwork);
+                clientNetwork.AddNode(this);
+            }
+            else
+            {
+                // Add this node to the existing network
+                if (!existingNetwork.Nodes.Contains(this))
+                {
+                    existingNetwork.AddNode(this);
+                }
+            }
+        }
 
         connections.Clear();
         pendingConnectionPositions.Clear();
@@ -344,15 +374,47 @@ public class WireNode : BlockEntity, IWireConnectable
 
     public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
     {
-        if (NetworkUID == 0 || WireNetworkHandler.GetNetwork(NetworkUID) == null)
+        // Virtual method for displaying network status (can be overridden)
+        DisplayNetworkStatus(forPlayer, dsc);
+
+        // Display connections (common to all)
+        DisplayConnections(forPlayer, dsc);
+    }
+
+    protected virtual void DisplayNetworkStatus(IPlayer forPlayer, StringBuilder dsc)
+    {
+        if (NetworkUID == 0)
         {
-            dsc.AppendLine("Not connected to any network.");
+            if (Block is TelegraphBlock && Api?.Side == EnumAppSide.Client)
+            {
+                dsc.AppendLine(UIUtils.I18n("Network.connecting"));
+            }
+            else
+            {
+                dsc.AppendLine(UIUtils.I18n("Network.NoNetwork"));
+            }
             return;
         }
 
-        WireNetwork network = WireNetworkHandler.GetNetwork(NetworkUID);
-        dsc.AppendLine($"Network ID: {network.networkID}");
+        // Default display
+        if (Api?.Side == EnumAppSide.Client)
+        {
+            dsc.AppendLine(UIUtils.I18n("Network.NetworkId", NetworkUID));
+        }
+        else
+        {
+            WireNetwork network = WireNetworkHandler.GetNetwork(NetworkUID);
+            if (network == null)
+            {
+                dsc.AppendLine(UIUtils.I18n("Network.NoNetwork"));
+                return;
+            }
+            dsc.AppendLine(UIUtils.I18n("Network.NetworkId", NetworkUID));
+        }
+    }
 
+    protected void DisplayConnections(IPlayer forPlayer, StringBuilder dsc)
+    {
         if (connections.Count == 0 && pendingConnectionPositions.Count > 0)
         {
             foreach (var otherPos in pendingConnectionPositions)
@@ -368,18 +430,16 @@ public class WireNode : BlockEntity, IWireConnectable
 
         if (connections.Count > 0)
         {
-            dsc.AppendLine("Connections:");
+            dsc.AppendLine(UIUtils.I18n("Network.Connections"));
             foreach (WireConnection connection in connections)
             {
-                dsc.AppendLine("Connection:");
-                dsc.AppendLine($"Node1 - {(connection.Node1?.Position?.ToString() ?? "null")}");
-                dsc.AppendLine($"Node2 - {(connection.Node2?.Position?.ToString() ?? "null")}");
-                dsc.AppendLine();
+                dsc.AppendLine(UIUtils.I18n("Network.ConnectionBetween", connection.Node1?.Position?.ToString(), connection.Node2?.Position?.ToString()));
             }
+            dsc.AppendLine();
         }
         else
         {
-            dsc.AppendLine("No connections.");
+            dsc.AppendLine(UIUtils.I18n("Network.NoConnections"));
         }
     }
 }

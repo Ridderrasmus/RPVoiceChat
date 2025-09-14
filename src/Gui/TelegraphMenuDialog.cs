@@ -1,6 +1,9 @@
 ﻿using RPVoiceChat.GameContent;
 using RPVoiceChat.GameContent.BlockEntity;
+using RPVoiceChat.Networking;
+using RPVoiceChat.Utils;
 using Vintagestory.API.Client;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace RPVoiceChat.Gui
 {
@@ -8,11 +11,11 @@ namespace RPVoiceChat.Gui
     {
         private BlockEntityTelegraph telegraphBlock;
 
-        // Pour anti-spam : temps du dernier envoi
+        // For anti-spam: time of last sending
         private long lastKeySentMs = 0;
-        private const int MinDelayBetweenKeysMs = 200; // 200 ms entre deux touches max
+        private const int MinDelayBetweenKeysMs = 200; // 200 ms between two keystrokes max
 
-        // Champs d'affichage du texte envoyé/reçu
+        // Display fields for sent/received text
         private GuiElementDynamicText sentTextElem;
         private GuiElementDynamicText receivedTextElem;
 
@@ -29,18 +32,18 @@ namespace RPVoiceChat.Gui
 
             ElementBounds sentTextBounds = ElementBounds.Fixed(0, 40, 360, 30);
             ElementBounds receivedTextBounds = ElementBounds.Fixed(0, 80, 360, 30);
-            ElementBounds clearButtonBounds = ElementBounds.Fixed(0, 120, 100, 30);
+            ElementBounds clearButtonBounds = ElementBounds.Fixed(130, 130, 100, 30); // Centré
 
             ElementBounds bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
             bgBounds.BothSizing = ElementSizing.FitToChildren;
-            bgBounds.WithChildren(sentTextBounds, receivedTextBounds);
+            bgBounds.WithChildren(sentTextBounds, receivedTextBounds, clearButtonBounds); // Inclure le bouton dans le fond
 
             SingleComposer = capi.Gui.CreateCompo("telegraphmenu", dialogBounds)
                 .AddShadedDialogBG(bgBounds)
-                .AddDialogTitleBar("Télégraphe", OnTitleBarCloseClicked)
-                .AddDynamicText("Envoyé :", CairoFont.WhiteSmallText(), sentTextBounds, key: "sentText")
-                .AddDynamicText("Reçu :", CairoFont.WhiteSmallText(), receivedTextBounds, key: "receivedText")
-                .AddButton("Effacer", OnClearClicked, clearButtonBounds)
+                .AddDialogTitleBar(UIUtils.I18n("Telegraph.Gui.Title"), OnTitleBarCloseClicked)
+                .AddDynamicText(UIUtils.I18n("Telegraph.Gui.Sent", ' '), CairoFont.WhiteSmallText(), sentTextBounds, key: "sentText") // TODO: not long enough / no wrapword
+                .AddDynamicText(UIUtils.I18n("Telegraph.Gui.Received", ' '), CairoFont.WhiteSmallText(), receivedTextBounds, key: "receivedText") // TODO: not long enough / no wrapword
+                .AddButton(UIUtils.I18n("Telegraph.Gui.Delete"), OnClearClicked, clearButtonBounds)
                 .Compose();
 
             sentTextElem = SingleComposer.GetDynamicText("sentText");
@@ -64,12 +67,12 @@ namespace RPVoiceChat.Gui
 
         public void UpdateSentText(string text)
         {
-            sentTextElem?.SetNewText($"Envoyé : {text}");
+            sentTextElem?.SetNewText(UIUtils.I18n("Telegraph.Gui.Sent", text));
         }
 
         public void UpdateReceivedText(string text)
         {
-            receivedTextElem?.SetNewText($"Reçu : {text}");
+            receivedTextElem?.SetNewText(UIUtils.I18n("Telegraph.Gui.Received", text));
         }
 
         public override void OnKeyPress(KeyEvent args)

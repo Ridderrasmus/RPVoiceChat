@@ -62,7 +62,7 @@ namespace RPVoiceChat.GameContent.Renderers
                 )
                 .Values;
 
-            int texId = capi.Render.GetOrLoadTexture(new AssetLocation("game:block/metal/plate/copper")); //TODO ajuster texture
+            int texId = capi.Render.GetOrLoadTexture(new AssetLocation("game:block/metal/plate/copper")); //TODO texture not working
             capi.Render.BindTexture2d(texId);
 
             prog.Use();
@@ -78,9 +78,7 @@ namespace RPVoiceChat.GameContent.Renderers
             var connections = node.GetConnections();
             if (connections == null || connections.Count == 0) return;
 
-            // Origin fixed in centre of block
-            // TODO : add parameter to offset origin within block
-            Vec3f origin = node.Pos.ToVec3f().Add(0.5f, 0.5f, 0.5f);
+            Vec3f origin = node.Pos.ToVec3f().Add(node.WireAttachmentOffset);
             meshOrigin = origin;
 
             // Combined MeshData to render all wires at once
@@ -92,8 +90,8 @@ namespace RPVoiceChat.GameContent.Renderers
                 var other = conn.GetOtherNode(node);
                 if (other == null || other.Pos == null) continue;
 
-                Vec3f startLocal = origin - origin; // always (0,0,0)
-                Vec3f endLocal = other.Pos.ToVec3f().Add(0.5f, 0.5f, 0.5f) - origin;
+                Vec3f startLocal = origin - origin; // always (0,0,0) in local space
+                Vec3f endLocal = other.Pos.ToVec3f().Add(other.WireAttachmentOffset) - origin;
 
                 MeshData wireMesh = WireMesh.MakeWireMesh(startLocal, endLocal, 0.05f);
 

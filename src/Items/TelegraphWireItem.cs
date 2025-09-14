@@ -1,6 +1,6 @@
 using System.Text;
-using RPVoiceChat.GameContent.Blocks;
 using RPVoiceChat.GameContent.Systems;
+using RPVoiceChat.Utils;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
@@ -28,7 +28,7 @@ namespace RPVoiceChat.GameContent.Items
             if (firstNodePos == null)
             {
                 firstNodePos = blockSel.Position.Copy();
-                (byEntity.World.Api as ICoreClientAPI)?.TriggerChatMessage("Starting point recorded.");
+                (byEntity.World.Api as ICoreClientAPI)?.TriggerChatMessage(UIUtils.I18n("Wire.StartConnection"));
                 return;
             }
 
@@ -40,13 +40,13 @@ namespace RPVoiceChat.GameContent.Items
                 double dist = firstNodePos.DistanceTo(node.Position);
                 if (dist > MaxConnectionDistance)
                 {
-                    (byEntity.Api as ICoreClientAPI)?.TriggerChatMessage($"Too far! Max distance is {MaxConnectionDistance} blocks.");
+                    (byEntity.Api as ICoreClientAPI)?.TriggerChatMessage(UIUtils.I18n("Wire.ConnectionTooFar", MaxConnectionDistance));
                 }
                 else
                 {
                     WireConnection connection = new WireConnection(firstNode, node);
                     firstNode.Connect(connection); // Connect() method handles adding to network and fusion
-                    (byEntity.Api as ICoreClientAPI)?.TriggerChatMessage("Connection successful!");
+                    (byEntity.Api as ICoreClientAPI)?.TriggerChatMessage(UIUtils.I18n("Wire.ConnectionSuccess"));
 
                     slot.TakeOut(1);
                     slot.MarkDirty();
@@ -58,9 +58,10 @@ namespace RPVoiceChat.GameContent.Items
 
         public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
         {
+            // TODO: not working
             if (firstNodePos != null)
             {
-                dsc.AppendLine($"Connection pending since:  {firstNodePos}");
+                dsc.AppendLine(UIUtils.I18n("Wire.Pending", firstNodePos));
             }
             base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
         }

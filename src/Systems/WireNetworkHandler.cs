@@ -53,7 +53,10 @@ namespace RPVoiceChat.Systems
             AddNetwork(network);
             network.AddNode(wireNode);
 
-            // Propagation sur tous les noeuds connectés (utile si wireNode a déjà des connexions)
+            wireNode.NetworkUID = networkId;
+            wireNode.MarkForUpdate();
+
+            // Propagation to all connected nodes (useful if wireNode already has connections)
             PropagateNetworkUIDToConnectedNodes(wireNode, network);
 
             return network;
@@ -85,7 +88,7 @@ namespace RPVoiceChat.Systems
         }
 
         /// <summary>
-        /// Met à jour récursivement le NetworkUID de tous les noeuds connectés à partir d’un noeud de départ
+        /// Recursively updates the NetworkUID of all nodes connected from a starting node
         /// </summary>
         public static void PropagateNetworkUIDToConnectedNodes(WireNode startNode, WireNetwork network)
         {
@@ -104,6 +107,7 @@ namespace RPVoiceChat.Systems
                 if (current.NetworkUID != network.networkID)
                 {
                     current.NetworkUID = network.networkID;
+                    network.AddNode(current);
                     current.MarkForUpdate();
                 }
 
@@ -114,6 +118,7 @@ namespace RPVoiceChat.Systems
                     {
                         visited.Add(other);
                         queue.Enqueue(other);
+                        other.MarkForUpdate();
                     }
                 }
             }
