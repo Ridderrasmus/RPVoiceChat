@@ -9,15 +9,39 @@
   },
   "maxstacksize": 1,
   "blockmaterial": "Metal",
-  "resistance": 1,
   "sounds": {
-    "place": "game:block/anvil",
+    "place": "game:block/planks",
     "walk": "game:walk/stone"
   },
-  "drawtype": "Cube",
-  "textures": {
-    "all": { "base": "game:block/wood-generic" }
+  "collisionBox": {
+    "x1": 0,
+    "y1": 0,
+    "z1": 0,
+    "x2": 1,
+    "y2": 0.5,
+    "z2": 1
   },
+  "shape": { "base": "block/telegraphkey" },
+  "textures": {
+    "wood": { "base": "game:block/wood-generic" },
+    "gold": { "base": "game:block/metal/plate/gold" },
+    "copper": { "base": "game:block/metal/plate/copper" },
+    "bakelite": { "base": "game:block/coal/bituminous" }
+  },
+  "rainPermeable": false,
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "north": true,
+    "east": true,
+    "south": true,
+    "west": true,
+    "up": true,
+    "down": false
+  },
+  "lightAbsorption": 15,
+  "resistance": 1,
   "attributes": {
     "handbook": {
       "extraSections": [

@@ -33,7 +33,12 @@
     "all": false
   },
   "sideopaque": {
-    "all": false
+    "north": true,
+    "east": true,
+    "south": true,
+    "west": true,
+    "up": true,
+    "down": false
   },
   "lightAbsorption": 0,
   "resistance": 1,

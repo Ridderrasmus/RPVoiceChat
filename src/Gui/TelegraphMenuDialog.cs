@@ -1,9 +1,6 @@
-﻿using RPVoiceChat.GameContent;
-using RPVoiceChat.GameContent.BlockEntity;
-using RPVoiceChat.Networking;
+﻿using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.Utils;
 using Vintagestory.API.Client;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace RPVoiceChat.Gui
 {
@@ -52,7 +49,6 @@ namespace RPVoiceChat.Gui
             UpdateSentText(telegraphBlock.GetSentMessage());
             UpdateReceivedText(telegraphBlock.GetReceivedMessage());
         }
-
 
         private void OnTitleBarCloseClicked()
         {
