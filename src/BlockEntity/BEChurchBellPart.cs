@@ -3,9 +3,8 @@ using RPVoiceChat.Utils;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
-using Vintagestory.API.Server;
 
-namespace RPVoiceChat.GameContent.BlockEntities
+namespace RPVoiceChat.GameContent.BlockEntity
 {
     public class BlockEntityChurchBellPart : BEWeldable
     {

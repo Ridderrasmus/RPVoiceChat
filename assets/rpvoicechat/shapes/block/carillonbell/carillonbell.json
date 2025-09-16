@@ -12,10 +12,10 @@
 	},
 	"elements": [
 		{
-			"name": "Base",
-			"from": [ 4.5, 5.0, 4.5 ],
-			"to": [ 5.5, 6.0, 6.5 ],
-			"rotationOrigin": [ 4.0, 5.0, 5.0 ],
+			"name": "base",
+			"from": [ 4.5, 0.0, 4.5 ],
+			"to": [ 5.5, 1.0, 6.5 ],
+			"rotationOrigin": [ 4.0, 0.0, 5.0 ],
 			"faces": {
 				"north": { "texture": "#metal", "uv": [ 0.0, 0.0, 1.0, 1.0 ] },
 				"east": { "texture": "#metal", "uv": [ 0.0, 0.0, 2.0, 1.0 ] },

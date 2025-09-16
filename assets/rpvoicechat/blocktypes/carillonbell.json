@@ -7,13 +7,12 @@
       "name": "HorizontalUpDownOrientable"
     },
     {
-      "name": "UnstableFallingVariant",
+      "name": "UnstableFalling",
       "properties": {
         "attachableFaces": [ "up", "down" ],
         "impactDamageMul": 10,
         "fallSound": "block/carillonbell/carillonbell_{metal}",
         "dustIntensity": 1,
-        "variantAfterFalling": "carillonbell-{metal}-up-north",
         "attachmentAreas": {
           "up": {
             "x1": 4.5,
@@ -57,11 +56,16 @@
     }
   ],
   "shapebytype": {
-    "*-up-*": { "base": "block/carillonbell/carillonbell-floor.json" },
-    "*-down-*": { "base": "block/carillonbell/carillonbell-ceiling_hang.json" }
+    "*-up-*": { "base": "block/carillonbell/carillonbell.json" },
+    "*-down-*": { "base": "block/carillonbell/carillonbell_rope.json" }
   },
   "textures": {
-    "metal": { "base": "game:block/metal/plate/{metal}" }
+    "metal": {
+      "base": "game:block/metal/plate/{metal}"
+    },
+    "rope": {
+      "base": "game:item/resource/rope"
+    }
   },
   "attributes": {
     "handbook": {

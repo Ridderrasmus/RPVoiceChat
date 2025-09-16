@@ -14,7 +14,6 @@ namespace RPVoiceChat
 {
     public class RPVoiceChatClient : RPVoiceChatMod
     {
-        private ICoreClientAPI capi;
         private ClientSettingsRepository clientSettingsRepository;
         private MicrophoneManager micManager;
         private AudioOutputManager audioOutputManager;

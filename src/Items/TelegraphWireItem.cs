@@ -1,51 +1,74 @@
-using RPVoiceChat.GameContent.Blocks;
-using RPVoiceChat.GameContent.Systems;
 using System.Text;
+using RPVoiceChat.GameContent.Systems;
+using RPVoiceChat.Utils;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 
 namespace RPVoiceChat.GameContent.Items
 {
     public class TelegraphWireItem : Item
     {
-        private WireConnection connection;
+        private const int MaxConnectionDistance = 20;
+        private BlockPos firstNodePos;
 
         public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handling)
         {
-            WireNode node = blockSel.Block?.GetBlockEntity<WireNode>(blockSel);
-
-            if (node == null)
+            if (blockSel == null || byEntity?.World == null)
             {
+                // Let base behaviors execute (like GroundStorable)
                 base.OnHeldInteractStart(slot, byEntity, blockSel, entitySel, firstEvent, ref handling);
                 return;
             }
 
-            if (node is TelegraphBlockEntity telegraph)
+            var node = byEntity.World.BlockAccessor.GetBlockEntity(blockSel.Position) as IWireConnectable;
+            if (node == null)
             {
-                handling = EnumHandHandling.PreventDefault;
+                // No node detected, let base behaviors execute
+                base.OnHeldInteractStart(slot, byEntity, blockSel, entitySel, firstEvent, ref handling);
+                return;
+            }
 
-                // Handle connection
-                if (connection == null)
+            handling = EnumHandHandling.PreventDefault;
+
+            // First click
+            if (firstNodePos == null)
+            {
+                firstNodePos = blockSel.Position.Copy();
+                (byEntity.World.Api as ICoreClientAPI)?.TriggerChatMessage(UIUtils.I18n("Wire.StartConnection"));
+                return;
+            }
+
+            // Second click
+            var firstNode = byEntity.World.BlockAccessor.GetBlockEntity(firstNodePos) as WireNode;
+
+            if (firstNode != null && firstNode != node)
+            {
+                double dist = firstNodePos.DistanceTo(node.Position);
+                if (dist > MaxConnectionDistance)
                 {
-                    connection = new WireConnection(telegraph);
-                    node.Connect(connection);
+                    (byEntity.Api as ICoreClientAPI)?.TriggerChatMessage(UIUtils.I18n("Wire.ConnectionTooFar", MaxConnectionDistance));
                 }
                 else
                 {
-                    node.Connect(connection);
-                    connection = null;
+                    WireConnection connection = new WireConnection(firstNode, node);
+                    firstNode.Connect(connection); // Connect() method handles adding to network and fusion
+                    (byEntity.Api as ICoreClientAPI)?.TriggerChatMessage(UIUtils.I18n("Wire.ConnectionSuccess"));
+
+                    slot.TakeOut(1);
+                    slot.MarkDirty();
                 }
             }
 
+            firstNodePos = null; // Reset
         }
 
         public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
         {
-            if (connection != null)
+            // TODO: not working
+            if (firstNodePos != null)
             {
-                dsc.AppendLine();
-                dsc.AppendLine("Connections:");
-                dsc.AppendLine($"Node1 - {((connection.Node1 != null) ? connection.Node1.Pos : "null")}");
-                dsc.AppendLine($"Node2 - {((connection.Node2 != null) ? connection.Node2.Pos : "null")}");
+                dsc.AppendLine(UIUtils.I18n("Wire.Pending", firstNodePos));
             }
             base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
         }

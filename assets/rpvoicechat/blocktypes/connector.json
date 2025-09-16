@@ -1,0 +1,110 @@
+{
+  "code": "connector",
+  "enabled": true,
+  "class": "connectorblock",
+  "entityClass": "BlockEntityConnector",
+  "creativeinventory": {
+    "general": [ "*-up" ],
+    "rpvoicechat": [ "*-up" ]
+  },
+  "maxstacksize": 16,
+  "behaviors": [
+    {
+      "name": "OmniAttachable",
+      "properties": {
+        "facingCode": "orientation",
+        "rotateSides": "true"
+      }
+    }
+  ],
+  "blockmaterial": "glass",
+  "variantgroups": [
+    {
+      "code": "glass",
+      "states": [ "plain", "quartz", "green", "blue", "violet", "red", "yellow", "brown", "vintage", "pink", "smoky" ]
+    },
+    {
+      "code": "orientation",
+      "loadFromPropertiesCombine": [ "abstract/horizontalorientation", "abstract/verticalorientation" ]
+    }
+  ],
+  "rainPermeable": true,
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "north": true,
+    "east": true,
+    "south": true,
+    "west": true,
+    "up": true,
+    "down": false
+  },
+  "lightAbsorption": 0,
+  "resistance": 1,
+  "sounds": {
+    "place": "game:block/glass",
+    "walk": "game:block/glass"
+  },
+  "collisionBox": {
+    "x1": 0.25,
+    "y1": 0,
+    "z1": 0.25,
+    "x2": 0.75,
+    "y2": 0.75,
+    "z2": 0.75
+  },
+  "selectionBox": {
+    "x1": 0.25,
+    "y1": 0,
+    "z1": 0.25,
+    "x2": 0.75,
+    "y2": 0.75,
+    "z2": 0.75
+  },
+  "shapebytype": {
+    "*-up": { "base": "block/connector/connector" },
+    "*-down": {
+      "base": "block/connector/connector",
+      "rotateZ": 180
+    },
+    "*-north": {
+      "base": "block/connector/connector_wall",
+      "rotateY": 90
+    },
+    "*-east": {
+      "base": "block/connector/connector_wall",
+      "rotateY": 0
+    },
+    "*-south": {
+      "base": "block/connector/connector_wall",
+      "rotateY": 270
+    },
+    "*-west": {
+      "base": "block/connector/connector_wall",
+      "rotateY": 180
+    }
+  },
+  "textures": {
+    "glass": {
+      "base": "game:block/glass/{glass}"
+    },
+    "metal": {
+      "base": "game:block/metal/plate/copper"
+    },
+    "stone": {
+      "base": "game:block/stone/flint"
+    }
+  },
+  "attributes": {
+    "handbook": {
+      "groupBy": [ "connector-*" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-connector.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-connector.Text"
+        }
+      ]
+    }
+  }
+}
