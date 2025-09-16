@@ -1,13 +1,60 @@
 {
   "code": "telegraphwire",
   "class": "telegraphwire",
-  "enabled": false,
+  "enabled": true,
+  "behaviors": [
+    {
+      "name": "GroundStorable",
+      "properties": {
+        "layout": "Quadrants",
+        "collisionBox": {
+          "x1": 0,
+          "y1": 0,
+          "z1": 0,
+          "x2": 1,
+          "y2": 0.5,
+          "z2": 1
+        },
+        "placeRemoveSound": "game:block/planks"
+      }
+    }
+  ],
   "creativeinventory": {
     "general": [ "*" ],
     "items": [ "*" ],
     "rpvoicechat": [ "*" ]
   },
-  "texture": {
-    "base": "item/handbell"
+  "maxStackSize": 16,
+  "shape": { "base": "item/telegraphwire" },
+  "textures": {
+    "metal": {
+      "base": "item/coilwire"
+    },
+    "wood": {
+      "base": "game:block/wood-generic"
+    }
+  },
+  "attributes": {
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.item-telegraphwire.Title",
+          "text": "rpvoicechat:Handbook.Usage.item-telegraphwire.Text"
+        }
+      ]
+    }
+  },
+  "guiTransform": {
+    "translation": {
+      "x": 5,
+      "y": 10,
+      "z": 0
+    },
+    "rotation": {
+      "x": -40,
+      "y": 0,
+      "z": 35
+    },
+    "scale": 1.27
   }
 }

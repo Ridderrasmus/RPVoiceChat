@@ -8,7 +8,7 @@ using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
 
-namespace RPVoiceChat.GameContent.BlockEntities
+namespace RPVoiceChat.GameContent.BlockEntity
 {
     public abstract class BEWeldable : BlockEntityContainer
     {

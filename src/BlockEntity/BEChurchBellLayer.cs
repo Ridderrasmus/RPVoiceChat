@@ -7,7 +7,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.Util;
 
-namespace RPVoiceChat.GameContent.BlockEntities
+namespace RPVoiceChat.GameContent.BlockEntity
 {
     public class BlockEntityChurchBellLayer : BEWeldable
     {
