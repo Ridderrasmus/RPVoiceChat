@@ -15,12 +15,19 @@ namespace RPVoiceChat.GameContent.Items
         public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handling)
         {
             if (blockSel == null || byEntity?.World == null)
+            {
+                // Let base behaviors execute (like GroundStorable)
+                base.OnHeldInteractStart(slot, byEntity, blockSel, entitySel, firstEvent, ref handling);
                 return;
+            }
 
             var node = byEntity.World.BlockAccessor.GetBlockEntity(blockSel.Position) as IWireConnectable;
-
             if (node == null)
+            {
+                // No node detected, let base behaviors execute
+                base.OnHeldInteractStart(slot, byEntity, blockSel, entitySel, firstEvent, ref handling);
                 return;
+            }
 
             handling = EnumHandHandling.PreventDefault;
 

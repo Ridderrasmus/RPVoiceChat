@@ -44,7 +44,23 @@
   "resistance": 1,
   "sounds": {
     "place": "game:block/glass",
-    "walk": "game:walk/stone"
+    "walk": "game:block/glass"
+  },
+  "collisionBox": {
+    "x1": 0.25,
+    "y1": 0,
+    "z1": 0.25,
+    "x2": 0.75,
+    "y2": 0.75,
+    "z2": 0.75
+  },
+  "selectionBox": {
+    "x1": 0.25,
+    "y1": 0,
+    "z1": 0.25,
+    "x2": 0.75,
+    "y2": 0.75,
+    "z2": 0.75
   },
   "shapebytype": {
     "*-up": { "base": "block/connector/connector" },

@@ -21,6 +21,14 @@
     "y2": 0.5,
     "z2": 1
   },
+  "selectionBox": {
+    "x1": 0,
+    "y1": 0,
+    "z1": 0,
+    "x2": 1,
+    "y2": 0.5,
+    "z2": 1
+  },
   "shape": { "base": "block/telegraphkey" },
   "textures": {
     "wood": { "base": "game:block/wood-generic" },
@@ -51,5 +59,18 @@
         }
       ]
     }
+  },
+  "guiTransform": {
+    "translation": {
+      "x": 0,
+      "y": -10,
+      "z": 0
+    },
+    "rotation": {
+      "x": -22.6,
+      "y": -45,
+      "z": 0
+    },
+    "scale": 1.16
   }
 }
