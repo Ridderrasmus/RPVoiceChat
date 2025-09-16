@@ -11,7 +11,7 @@ namespace RPVoiceChat.GameContent.BlockEntityBehaviors
         public string BellPartCode { get; set; } = string.Empty;
         public DateTime? LastRung { get; set; }
 
-        public BEBehaviorRingable(BlockEntity blockentity) : base(blockentity)
+        public BEBehaviorRingable(Vintagestory.API.Common.BlockEntity blockEntity) : base(blockEntity)
         {
         }
 

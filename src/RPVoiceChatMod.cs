@@ -1,5 +1,5 @@
 using RPVoiceChat.GameContent.BlockBehaviors;
-using RPVoiceChat.GameContent.BlockEntities;
+using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.GameContent.BlockEntityBehaviors;
 using RPVoiceChat.GameContent.Blocks;
 using RPVoiceChat.GameContent.Items;

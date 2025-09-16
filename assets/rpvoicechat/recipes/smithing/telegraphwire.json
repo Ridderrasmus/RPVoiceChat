@@ -1,5 +1,5 @@
 ﻿{
-  "enabled": false,
+  "enabled": true,
   "ingredient": {
     "type": "item",
     "code": "game:ingot-copper"
@@ -20,6 +20,7 @@
   "name": "Telegraph Wire",
   "output": {
     "type": "item",
-    "code": "telegraphwire"
+    "code": "telegraphwire",
+    "quantity": 3
   }
 }

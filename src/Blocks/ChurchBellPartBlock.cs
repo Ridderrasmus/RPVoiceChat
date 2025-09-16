@@ -1,4 +1,4 @@
-﻿using RPVoiceChat.GameContent.BlockEntities;
+﻿using RPVoiceChat.GameContent.BlockEntity;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 
