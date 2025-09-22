@@ -18,7 +18,6 @@ namespace RPVoiceChat.Audio
         public bool IsDisposed = false;
         public bool IsPlaying { get => _IsPlaying(); }
         public const float MaxGain = 2f;
-        private float distanceMultiplier = 1f;
 
         private const int BufferCount = 20;
         private int source;
@@ -51,6 +50,7 @@ namespace RPVoiceChat.Audio
         };
         private Vec3f lastSpeakerCoords;
         private DateTime? lastSpeakerUpdate;
+        private AudioData currentAudio; // Store current audio data for distance factor calculation
 
         public PlayerAudioSource(IPlayer player, ICoreClientAPI capi, ClientSettingsRepository clientSettingsRepo)
         {
@@ -79,12 +79,10 @@ namespace RPVoiceChat.Audio
             this.voiceLevel = voiceLevel;
 
             float baseReferenceDistance = referenceDistanceByVoiceLevel[voiceLevel];
-            float adjustedReferenceDistance = baseReferenceDistance * distanceMultiplier;
-
             float distanceFactor = GetDistanceFactor();
-            float rolloffFactor = adjustedReferenceDistance * distanceFactor;
+            float rolloffFactor = baseReferenceDistance * distanceFactor;
 
-            OALW.Source(source, ALSourcef.ReferenceDistance, adjustedReferenceDistance);
+            OALW.Source(source, ALSourcef.ReferenceDistance, baseReferenceDistance);
             OALW.Source(source, ALSourcef.RolloffFactor, rolloffFactor);
         }
 
@@ -186,12 +184,11 @@ namespace RPVoiceChat.Audio
 
         private float GetDistanceFactor()
         {
-            // Distance in blocks at which audio source normally considered quiet.
             const float quietDistance = 10;
+            
             float maxHearingDistance = WorldConfig.GetInt(voiceLevel);
             var exponent = quietDistance < maxHearingDistance ? 2 : -0.33;
             var distanceFactor = Math.Pow(quietDistance / maxHearingDistance, exponent);
-
             return (float)distanceFactor;
         }
 
@@ -260,6 +257,12 @@ namespace RPVoiceChat.Audio
                     orderingQueue.RemoveAt(0);
                 }
 
+                // Store current audio for distance factor calculation
+                currentAudio = audio;
+
+                // Update voice level with new effective range
+                UpdateVoiceLevel(audio.voiceLevel);
+
                 if (codec != null)
                     audio.data = codec.Decode(audio.data);
 
@@ -308,18 +311,6 @@ namespace RPVoiceChat.Audio
             buffer?.Dispose();
 
             IsDisposed = true;
-        }
-
-        public void ApplyVoiceRangeMultiplier(float multiplier)
-        {
-            distanceMultiplier = multiplier;
-            UpdateVoiceLevel(voiceLevel);
-        }
-
-        public void ResetVoiceRange()
-        {
-            distanceMultiplier = 1f;
-            UpdateVoiceLevel(voiceLevel);
         }
 
         public void SetSoundEffect(string effectName)

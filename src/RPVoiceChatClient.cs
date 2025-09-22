@@ -15,7 +15,7 @@ namespace RPVoiceChat
     public class RPVoiceChatClient : RPVoiceChatMod
     {
         private ClientSettingsRepository clientSettingsRepository;
-        private MicrophoneManager micManager;
+        private MicrophoneManager microphoneManager;
         private AudioOutputManager audioOutputManager;
         private PlayerNetworkClient client;
         private GuiManager guiManager;
@@ -25,6 +25,7 @@ namespace RPVoiceChat
         private bool voiceLevelPressed = false;
 
         public static AudioOutputManager AudioOutputManagerInstance { get; private set; }
+        public static MicrophoneManager MicrophoneManagerInstance { get; private set; }
 
         public override bool ShouldLoad(EnumAppSide forSide)
         {
@@ -45,9 +46,10 @@ namespace RPVoiceChat
             clientSettingsRepository = new ClientSettingsRepository(capi.Logger);
 
             // Init microphone and audio output managers
-            micManager = new MicrophoneManager(capi);
+            microphoneManager = new MicrophoneManager(capi);
             audioOutputManager = new AudioOutputManager(capi, clientSettingsRepository);
             // Static property for easy access with to apply effects on voice
+            MicrophoneManagerInstance = microphoneManager;
             AudioOutputManagerInstance = audioOutputManager;
 
             // Init voice chat client
@@ -61,7 +63,7 @@ namespace RPVoiceChat
             client = new PlayerNetworkClient(capi, networkTransports);
 
             // Initialize gui
-            guiManager = new GuiManager(capi, micManager, audioOutputManager, clientSettingsRepository);
+            guiManager = new GuiManager(capi, microphoneManager, audioOutputManager, clientSettingsRepository);
 
             // Set up keybinds
             capi.Input.RegisterHotKey("voicechatMenu", UIUtils.I18n("Hotkey.ModMenu"), GlKeys.P, HotkeyType.GUIOrOtherControls);
@@ -85,7 +87,7 @@ namespace RPVoiceChat
                 if (voiceLevelPressed) return true;
                 voiceLevelPressed = true;
 
-                micManager.CycleVoiceLevel();
+                microphoneManager.CycleVoiceLevel();
                 return true;
             });
 
@@ -106,8 +108,8 @@ namespace RPVoiceChat
         private void OnLoad()
         {
             client.OnAudioReceived += OnAudioReceived;
-            micManager.OnBufferRecorded += OnBufferRecorded;
-            micManager.Launch();
+            microphoneManager.OnBufferRecorded += OnBufferRecorded;
+            microphoneManager.Launch();
             audioOutputManager.Launch();
             guiManager.firstLaunchDialog.ShowIfNecessary();
             isReady = true;
@@ -137,14 +139,14 @@ namespace RPVoiceChat
             AudioPacket packet = new AudioPacket(sender, audioData, sequenceNumber);
             audioOutputManager.HandleLoopback(packet);
 
-            if (micManager.AudioWizardActive) return;
+            if (microphoneManager.AudioWizardActive) return;
             client.SendAudioToServer(packet);
         }
 
         public override void Dispose()
         {
             ClientSettings.Save();
-            micManager?.Dispose();
+            microphoneManager?.Dispose();
             audioOutputManager?.Dispose();
             client?.Dispose();
             guiManager?.Dispose();

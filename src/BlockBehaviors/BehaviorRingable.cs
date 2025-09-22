@@ -9,7 +9,7 @@ namespace RPVoiceChat.GameContent.BlockBehaviors
 {
     class BehaviorRingable : BlockBehavior
     {
-        const int BellRingCooldownSeconds = 3;
+        const double BellRingCooldownSeconds = 1.5;
 
         public BehaviorRingable(Block block) : base(block)
         {
@@ -49,7 +49,7 @@ namespace RPVoiceChat.GameContent.BlockBehaviors
                 {
                     ringable.LastRung = DateTime.Now;
                     int rand = new Random().Next(1, 3);
-                    float volume = ClientSettings.OutputBlock != 0 ? ClientSettings.OutputBlock : 0.6f;
+                    float volume = (world.Side == EnumAppSide.Client && ClientSettings.OutputBlock != 0) ? ClientSettings.OutputBlock : 0.6f;
 
                     world.PlaySoundAt(
                         new AssetLocation(RPVoiceChatMod.modID, $"sounds/block/callbell/callbell_{rand}.ogg"),

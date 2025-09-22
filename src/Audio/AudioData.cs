@@ -11,6 +11,8 @@ namespace RPVoiceChat.Audio
         public double amplitude;
         public VoiceLevel voiceLevel;
         public string codec;
+        public int transmissionRangeBlocks;
+        public int effectiveRange;
 
         public AudioData() { }
 
@@ -23,6 +25,10 @@ namespace RPVoiceChat.Audio
                 format = audioPacket.Format,
                 voiceLevel = audioPacket.VoiceLevel,
                 codec = audioPacket.Codec,
+                transmissionRangeBlocks = audioPacket.TransmissionRangeBlocks,
+                effectiveRange = audioPacket.TransmissionRangeBlocks > 0
+                    ? audioPacket.TransmissionRangeBlocks
+                    : WorldConfig.GetInt(audioPacket.VoiceLevel)
             };
         }
     }

@@ -1,4 +1,3 @@
-using RPVoiceChat.Items;
 using Vintagestory.API.Common;
 
 namespace RPVoiceChat.GameContent.Items

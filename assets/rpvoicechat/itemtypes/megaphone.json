@@ -10,8 +10,7 @@
     "rpvoicechat": [ "*" ]
   },
   "attributes": {
-    "voiceLevel": "Shouting",
-    "voiceRangeBoost": 100,
+    "voiceRangeBlocks": 100,
     "applySoundEffect": "cheapmic"
   },
   "shape": {

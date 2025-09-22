@@ -38,7 +38,7 @@ namespace RPVoiceChat.Audio
         private List<float> recentGainLimits = new List<float>();
         private ConcurrentQueue<float> recentGainLimitsQueue = new ConcurrentQueue<float>();
 
-        // Aplication interface/audio management
+        // Application interface/audio management
         public double Amplitude { get; private set; }
         public bool IsDenoisingAvailable = false;
         public bool Transmitting = false;
@@ -51,6 +51,9 @@ namespace RPVoiceChat.Audio
         private double inputThreshold;
         private double maxInputThreshold = _maxVolume / 2;
         private List<double> recentAmplitudes = new List<double>();
+
+        // Transmission range management (separate from voice level)
+        private int customTransmissionRange = 0; // 0 = use default from VoiceLevel
 
         public MicrophoneManager(ICoreClientAPI capi)
         {
@@ -99,6 +102,24 @@ namespace RPVoiceChat.Audio
         public void SetDenoisingStrength(float strength)
         {
             denoiser?.SetVoiceDenoisingStrength(strength);
+        }
+
+        // New transmission range methods
+        public void SetTransmissionRange(int rangeBlocks)
+        {
+            customTransmissionRange = Math.Max(0, rangeBlocks);
+            Logger.client.Debug($"Transmission range set to: {customTransmissionRange} blocks");
+        }
+
+        public int GetTransmissionRange()
+        {
+            return customTransmissionRange;
+        }
+
+        public void ResetTransmissionRange()
+        {
+            customTransmissionRange = 0;
+            Logger.client.Debug("Transmission range reset to default (use VoiceLevel)");
         }
 
         public List<float> GetRecentGainLimits()
@@ -226,6 +247,7 @@ namespace RPVoiceChat.Audio
                 amplitude = amplitude,
                 voiceLevel = voiceLevel,
                 codec = codec.Name,
+                transmissionRangeBlocks = customTransmissionRange
             };
         }
 

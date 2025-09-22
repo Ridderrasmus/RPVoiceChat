@@ -15,6 +15,8 @@ namespace RPVoiceChat.Networking
         public ALFormat Format { get; set; }
         public long SequenceNumber { get; set; }
         public string Codec { get; set; }
+        public int TransmissionRangeBlocks { get; set; } = 0;
+        public int EffectiveRange { get; set; } = 0;
         protected override PacketType Code { get => PacketType.Audio; }
 
         public AudioPacket() { }
@@ -29,6 +31,7 @@ namespace RPVoiceChat.Networking
             Format = audioData.format;
             SequenceNumber = sequenceNumber;
             Codec = audioData.codec;
+            TransmissionRangeBlocks = audioData.transmissionRangeBlocks;
         }
     }
 }
