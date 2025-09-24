@@ -11,6 +11,8 @@
   "item-smallbellparts-silver": "Small Bell Parts",
   "item-perfectgoathorn": "Perfect goat horn",
   "item-warhorn": "Warhorn",
+  "item-megaphone": "Megaphone",
+  "item-enhancedmegaphone": "Enhanced Megaphone",
 
   "itemdesc-handbell": "A small handbell. The silver of the bell seems to have a weird purplep shimmer to it...",
   "itemdesc-smallbellparts-silver": "The more intricate parts of a small bell",
@@ -19,6 +21,8 @@
   "itemdesc-warhorn": "A rustic war horn, used to rally even the most distant allies.",
   "itemdesc-royalhornhead-blackbronze": "A bell (head) for a royal horn, made of black bronze.",
   "itemdesc-telegraphwire": "A spool of wire. Its simplistic design allows it to be used only for creating a telegraph network.",
+  "itemdesc-megaphone": "A megaphone that allows you to carry your voice far. Beware of walls blocking the sound!",
+  "itemdesc-enhancedmegaphone": "This extremely rare megaphone has the unique ability to carry sound across distances and through matter.",
 
   "block-churchbellmold-raw-part-brass-bottom": "Raw Bottom Churchbell Part Mold",
   "block-churchbellmold-raw-part-brass-middle": "Raw Middle Churchbell Part Mold",
@@ -226,6 +230,10 @@
   "Handbook.Usage.block-telegraph.Text": "The telegraph key allows sending and receiving messages. Right-click on it to use it. It emits an audible sound code within a maximum radius of 5 blocks. Messages are currently stored during the session, but in the future they will be deleted after 10 seconds and can be saved using a printer.",
   "Handbook.Usage.item-telegraphwire.Title": "Usage",
   "Handbook.Usage.item-telegraphwire.Text": "This telegraph wire spool allows extending a network over a maximum distance of 20 blocks, by right-clicking on the first then the second element to connect. To cover greater distances, insulators (relays) are necessary to extend the network.",
+  "Handbook.Usage.item-megaphone.Title": "Usage",
+  "Handbook.Usage.item-megaphone.Text": "The rarity of the components used makes this tool valuable for long-distance communications and emergency situations. Hold down the right click to activate voice amplification.",
+  "Handbook.Usage.item-enhancedmegaphone.Title": "Usage",
+  "Handbook.Usage.item-enhancedmegaphone.Text": "An exceptional megaphone commissioned by the Administrator and forged by the renowned scientist Jonas. A symbol of power and administrative authority, only a privileged few possess such equipment. Hold down the right click to activate voice amplification over long distances and through matter (natively 100 000 blocks).",
 
   "starterguide-title": "RP Voice Chat - Starter Guide",
   "starterguide-text": "<strong>RP Voice Chat - Starter Guide</strong><br /><i>Shout at your enemies, talk with your friends, conspire with your allies.</i><br /><br />This mod implements VoIP to allow people on a server together to talk using microphones in-game based on proximity. It includes also a bunch of in-game communication tools !<br /><br /><strong>About VoIP</strong><br />To open the configuration menu you can press the keybind which by default is set to \"P\". Make sure to double check the keybinds. They're under user interface and have the prefix \"RPVoice\".<br />You cycle between the following speech levels with a keybind defined in your settings.<br /><br />These dictate how far your voice can be heard.<br/><icon name=wpCircle></icon>Whispering: Reaches max 5 blocks<br/><icon name=wpCircle></icon>Talking: Reaches max 15 blocks<br/><icon name=wpCircle></icon>Shouting: Reaches max 25 blocks<br /><br />The above distances can be set per world using chat commands. Using these commands require server control privileges.<br />The commands are all subcommands of \"/rpvc\" so just use \"/help rpvc\" and you should get more information.<br /><br /><strong>Audio effecys</strong><br />TO DO<br /><br /><strong>Communication tools</strong> <br />RP Voice Chat includes more than VoIP. You will find items and blocks that will give you new ways to communicate. For example :<br/><icon name=wpCircle></icon><a href=\"handbook://rpvoicechat:horns\">Horns</a><br/><icon name=wpCircle></icon><a href=\"handbook://rpvoicechat:bells\">Bells</a><br/><icon name=wpCircle></icon><a href=\"handbook://rpvoicechat:telegraph\">Telegraph</a>",
@@ -234,5 +242,7 @@
   "bells-title": "RP Voice Chat - Bells",
   "bells-text": "<strong>RP Voice Chat - Bells</strong><br /><br />Bells have always announced victories, defeats, festivities or deaths. You will find a bell for each use:<br /><br /><icon name=wpCircle></icon><a href=\"handbooksearch://handbell\">Handbell</a>: short-range hand bell<br /><icon name=wpCircle></icon><a href=\"handbooksearch://callbell\">Callbell</a>: counter bell to alert of its presence<br /><icon name=wpCircle></icon><a href=\"handbooksearch://Small bell parts\">Small bell parts</a>: element used for the first two items but usable on doors<br /><icon name=wpCircle></icon><a href=\"handbooksearch://Carillon bell\">Carillon bell</a>: bell emitting a different tone depending on the metal used<br /><icon name=wpCircle></icon><a href=\"handbooksearch://Church bell\">Church bell</a>: bell so big that it has to be welded<br />",
   "telegraph-title": "RP Voice Chat - Telegraph",
-  "telegraph-text": "<strong>RP Voice Chat - Telegraph</strong><br /><br />The telegraph system allows transmitting coded messages over long distances through a network of wires and specialized equipment. This revolutionary technology enables you to communicate silently with your allies over great distances, perfect for coordinating strategies or transmitting sensitive information.<br /><br />The telegraph works through an audible sound code within a limited radius around the device.<br /><br /><icon name=wpCircle></icon><a href=\"handbooksearch://Telegraph key\">Telegraph key</a>: main device for sending and receiving coded messages<br /><icon name=wpCircle></icon><a href=\"handbooksearch://Telegraph wire\">Telegraph wire</a>: spool allowing connection of equipment<br /><icon name=wpCircle></icon><a href=\"handbooksearch://Insulator\">Insulator</a>: essential connector for extending and structuring your telegraph network"
+  "telegraph-text": "<strong>RP Voice Chat - Telegraph</strong><br /><br />The telegraph system allows transmitting coded messages over long distances through a network of wires and specialized equipment. This revolutionary technology enables you to communicate silently with your allies over great distances, perfect for coordinating strategies or transmitting sensitive information.<br /><br />The telegraph works through an audible sound code within a limited radius around the device.<br /><br /><icon name=wpCircle></icon><a href=\"handbooksearch://Telegraph key\">Telegraph key</a>: main device for sending and receiving coded messages<br /><icon name=wpCircle></icon><a href=\"handbooksearch://Telegraph wire\">Telegraph wire</a>: spool allowing connection of equipment<br /><icon name=wpCircle></icon><a href=\"handbooksearch://Insulator\">Insulator</a>: essential connector for extending and structuring your telegraph network",
+  "megaphone-title": "RP Voice Chat - Megaphones",
+  "megaphone-text": ""
 }

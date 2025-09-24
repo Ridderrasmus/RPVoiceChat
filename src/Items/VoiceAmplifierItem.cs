@@ -8,14 +8,18 @@ public class VoiceAmplifierItem : Item
     private bool isAmplifierActive = false;
     private VoiceLevel originalVoiceLevel;
     private int originalTransmissionRange;
+    private bool ignoreDistanceReduction = false;
+    private float wallThicknessOverride = -1f; // -1 = pas d'override
 
     public override void OnLoaded(ICoreAPI api)
     {
         base.OnLoaded(api);
         var attr = Attributes;
-        if (attr != null && attr["applySoundEffect"]?.Exists == true)
+        if (attr != null)
         {
-            soundEffectName = attr["applySoundEffect"].AsString(null);
+            soundEffectName = attr["applySoundEffect"]?.AsString(null);
+            ignoreDistanceReduction = attr["ignoreDistanceReduction"]?.AsBool(false) ?? false;
+            wallThicknessOverride = attr["wallThicknessOverride"]?.AsFloat(-1f) ?? -1f;
         }
     }
 
@@ -30,6 +34,8 @@ public class VoiceAmplifierItem : Item
         if (byEntity.Api is ICoreClientAPI capi && byEntity == capi.World.Player.Entity)
         {
             var microphoneManager = RPVoiceChatClient.MicrophoneManagerInstance;
+            var audioOutputManager = RPVoiceChatClient.AudioOutputManagerInstance;
+
             if (microphoneManager != null)
             {
                 // Save original state
@@ -48,15 +54,24 @@ public class VoiceAmplifierItem : Item
                     microphoneManager.SetTransmissionRange(rangeBlocks);
                 }
 
+                if (ignoreDistanceReduction)
+                {
+                    microphoneManager.SetIgnoreDistanceReduction(true);
+                }
+
+                if (wallThicknessOverride >= 0f)
+                {
+                    microphoneManager.SetWallThicknessOverride(wallThicknessOverride);
+                }
+
                 isAmplifierActive = true;
             }
 
             // Apply sound effect
-            if (!string.IsNullOrEmpty(soundEffectName))
+            if (!string.IsNullOrEmpty(soundEffectName) && audioOutputManager != null)
             {
-                var audioOutputManager = RPVoiceChatClient.AudioOutputManagerInstance;
                 string playerUID = capi.World.Player.PlayerUID;
-                audioOutputManager?.ApplyEffectToPlayer(playerUID, soundEffectName);
+                audioOutputManager.ApplyEffectToPlayer(playerUID, soundEffectName);
             }
         }
 
@@ -70,19 +85,24 @@ public class VoiceAmplifierItem : Item
         if (byEntity.Api is ICoreClientAPI capi && byEntity == capi.World.Player.Entity)
         {
             var microphoneManager = RPVoiceChatClient.MicrophoneManagerInstance;
+            var audioOutputManager = RPVoiceChatClient.AudioOutputManagerInstance;
+
             if (microphoneManager != null)
             {
                 // Restore original state
                 microphoneManager.SetVoiceLevel(originalVoiceLevel);
                 microphoneManager.SetTransmissionRange(originalTransmissionRange);
+
+                // Reset to default settings
+                microphoneManager.SetIgnoreDistanceReduction(false);
+                microphoneManager.ResetWallThicknessOverride();
             }
 
             // Clear sound effect
-            if (!string.IsNullOrEmpty(soundEffectName))
+            if (!string.IsNullOrEmpty(soundEffectName) && audioOutputManager != null)
             {
-                var audioOutputManager = RPVoiceChatClient.AudioOutputManagerInstance;
                 string playerUID = capi.World.Player.PlayerUID;
-                audioOutputManager?.ClearEffectForPlayer(playerUID);
+                audioOutputManager.ClearEffectForPlayer(playerUID);
             }
 
             isAmplifierActive = false;

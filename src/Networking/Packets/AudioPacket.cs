@@ -17,6 +17,8 @@ namespace RPVoiceChat.Networking
         public string Codec { get; set; }
         public int TransmissionRangeBlocks { get; set; } = 0;
         public int EffectiveRange { get; set; } = 0;
+        public bool IgnoreDistanceReduction { get; set; } = false;
+        public float WallThicknessOverride { get; set; } = -1f;
         protected override PacketType Code { get => PacketType.Audio; }
 
         public AudioPacket() { }
@@ -32,6 +34,8 @@ namespace RPVoiceChat.Networking
             SequenceNumber = sequenceNumber;
             Codec = audioData.codec;
             TransmissionRangeBlocks = audioData.transmissionRangeBlocks;
+            IgnoreDistanceReduction = audioData.ignoreDistanceReduction;
+            WallThicknessOverride = audioData.wallThicknessOverride;
         }
     }
 }

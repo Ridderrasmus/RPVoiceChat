@@ -97,7 +97,7 @@ namespace RPVoiceChat.Audio
                 _ => null
             };
         }
-
+        
         public void UpdatePlayer()
         {
             EntityPos speakerPos = player.Entity?.SidedPos;
@@ -107,13 +107,24 @@ namespace RPVoiceChat.Audio
 
             // If the player is on the other side of something to the listener, then the player's voice should be muffled
             bool mufflingEnabled = ClientSettings.Muffling;
-            float wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
+            float wallThickness = 0f;
+
+            // Check if the current audio has a wall thickness override
+            if (currentAudio?.wallThicknessOverride >= 0f)
+            {
+                wallThickness = currentAudio.wallThicknessOverride;
+            }
+            else
+            {
+                wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
+            }
+
             float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");
             if (capi.World.Player.Entity.Swimming)
                 wallThickness += 1.0f;
 
             lowpassFilter?.Stop();
-            if (mufflingEnabled && wallThickness != 0)
+            if (mufflingEnabled && wallThickness > 0)
             {
                 lowpassFilter = lowpassFilter ?? new LowpassFilter(source);
                 lowpassFilter.Start();
@@ -184,8 +195,14 @@ namespace RPVoiceChat.Audio
 
         private float GetDistanceFactor()
         {
+            // If the current audio ignores distance reduction, return 0 (no reduction)
+            if (currentAudio?.ignoreDistanceReduction == true)
+            {
+                return 0f;
+            }
+
             const float quietDistance = 10;
-            
+
             float maxHearingDistance = WorldConfig.GetInt(voiceLevel);
             var exponent = quietDistance < maxHearingDistance ? 2 : -0.33;
             var distanceFactor = Math.Pow(quietDistance / maxHearingDistance, exponent);

@@ -1,5 +1,5 @@
 {
-  "code": "megaphone",
+  "code": "enhancedmegaphone",
   "class": "voiceamplifieritem",
   "enabled": true,
   "maxStackSize": 1,
@@ -10,8 +10,10 @@
     "rpvoicechat": [ "*" ]
   },
   "attributes": {
-    "voiceRangeBlocks": 125,
-    "applySoundEffect": "cheapmic"
+    "voiceRangeBlocks": 100000,
+    "applySoundEffect": "cheapmic",
+    "ignoreDistanceReduction": true,
+    "wallThicknessOverride": 0
   },
   "shape": {
     "base": "item/megaphone"
@@ -19,8 +21,8 @@
   "handbook": {
     "extraSections": [
       {
-        "title": "rpvoicechat:Handbook.Usage.item-megaphone.Title",
-        "text": "rpvoicechat:Handbook.Usage.item-megaphone.Text"
+        "title": "rpvoicechat:Handbook.Usage.item-enhancedmegaphone.Title",
+        "text": "rpvoicechat:Handbook.Usage.item-enhancedmegaphone.Text"
       }
     ]
   }
