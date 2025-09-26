@@ -1,15 +1,15 @@
 {
   "enabled": false,
-  "ingredientPattern": "___,___,___",
+  "ingredientPattern": "_C_,POP,_H_",
   "ingredients": {
-    "S": {
-      "type": "item",
-      "code": "game:stick",
+    "O": {
+      "type": "block",
+      "code": "game:hopper",
       "quantity": 1
     },
     "P": {
-      "type": "item",
-      "code": "game:metalplate-silver",
+      "type": "block",
+      "code": "game:metal-parts",
       "quantity": 1
     },
     "H": {
@@ -18,9 +18,9 @@
       "isTool": true,
       "toolDurabilityCost": 2
     },
-    "B": {
+    "C": {
       "type": "item",
-      "code": "game:metalbit-silver",
+      "code": "game:jonasparts-connector01",
       "quantity": 1
     }
   },

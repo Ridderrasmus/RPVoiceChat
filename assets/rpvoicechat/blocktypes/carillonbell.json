@@ -61,7 +61,7 @@
   },
   "textures": {
     "metal": {
-      "base": "game:block/metal/plate/{metal}"
+      "base": "game:block/metal/sheet/{metal}1"
     },
     "rope": {
       "base": "game:item/resource/rope"

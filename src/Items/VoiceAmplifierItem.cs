@@ -9,7 +9,7 @@ public class VoiceAmplifierItem : Item
     private VoiceLevel originalVoiceLevel;
     private int originalTransmissionRange;
     private bool ignoreDistanceReduction = false;
-    private float wallThicknessOverride = -1f; // -1 = pas d'override
+    private float wallThicknessOverride = -1f; // -1 = no override
 
     public override void OnLoaded(ICoreAPI api)
     {
