@@ -7,7 +7,7 @@ namespace RPVoiceChat.Audio.Effects
     {
         protected float toxicRate;
 
-        public IntoxicatedEffect(int source) : base(source) {}
+        public IntoxicatedEffect(int source) : base("intoxicated", source) { }
 
         protected override int GenerateEffect()
         {

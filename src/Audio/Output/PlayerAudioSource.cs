@@ -21,12 +21,14 @@ namespace RPVoiceChat.Audio
 
         private const int BufferCount = 20;
         private int source;
+        public int SourceId => source;
         private CircularAudioBuffer buffer;
         private SortedList<long, AudioData> orderingQueue = new SortedList<long, AudioData>();
         private object ordering_queue_lock = new object();
         private object dequeue_audio_lock = new object();
         private int orderingDelay = 100;
         private long lastAudioSequenceNumber = -1;
+        private string currentEffectName;
 
         private IAudioCodec codec;
         private LowpassFilter lowpassFilter;
@@ -36,6 +38,7 @@ namespace RPVoiceChat.Audio
         private ICoreClientAPI capi;
         private IPlayer player;
         private ClientSettingsRepository clientSettingsRepo;
+        private SoundEffect currentSoundEffect;
 
         public bool IsLocational { get; set; } = true;
         public VoiceLevel voiceLevel { get; private set; } = VoiceLevel.Talking;
@@ -47,6 +50,7 @@ namespace RPVoiceChat.Audio
         };
         private Vec3f lastSpeakerCoords;
         private DateTime? lastSpeakerUpdate;
+        private AudioData currentAudio; // Store current audio data for distance factor calculation
 
         public PlayerAudioSource(IPlayer player, ICoreClientAPI capi, ClientSettingsRepository clientSettingsRepo)
         {
@@ -73,11 +77,12 @@ namespace RPVoiceChat.Audio
         public void UpdateVoiceLevel(VoiceLevel voiceLevel)
         {
             this.voiceLevel = voiceLevel;
-            float referenceDistance = referenceDistanceByVoiceLevel[voiceLevel];
-            float distanceFactor = GetDistanceFactor();
-            float rolloffFactor = referenceDistance * distanceFactor;
 
-            OALW.Source(source, ALSourcef.ReferenceDistance, referenceDistance);
+            float baseReferenceDistance = referenceDistanceByVoiceLevel[voiceLevel];
+            float distanceFactor = GetDistanceFactor();
+            float rolloffFactor = baseReferenceDistance * distanceFactor;
+
+            OALW.Source(source, ALSourcef.ReferenceDistance, baseReferenceDistance);
             OALW.Source(source, ALSourcef.RolloffFactor, rolloffFactor);
         }
 
@@ -92,7 +97,7 @@ namespace RPVoiceChat.Audio
                 _ => null
             };
         }
-
+        
         public void UpdatePlayer()
         {
             EntityPos speakerPos = player.Entity?.SidedPos;
@@ -102,13 +107,24 @@ namespace RPVoiceChat.Audio
 
             // If the player is on the other side of something to the listener, then the player's voice should be muffled
             bool mufflingEnabled = ClientSettings.Muffling;
-            float wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
+            float wallThickness = 0f;
+
+            // Check if the current audio has a wall thickness override
+            if (currentAudio?.wallThicknessOverride >= 0f)
+            {
+                wallThickness = currentAudio.wallThicknessOverride;
+            }
+            else
+            {
+                wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
+            }
+
             float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");
             if (capi.World.Player.Entity.Swimming)
                 wallThickness += 1.0f;
 
             lowpassFilter?.Stop();
-            if (mufflingEnabled && wallThickness != 0)
+            if (mufflingEnabled && wallThickness > 0)
             {
                 lowpassFilter = lowpassFilter ?? new LowpassFilter(source);
                 lowpassFilter.Start();
@@ -179,12 +195,17 @@ namespace RPVoiceChat.Audio
 
         private float GetDistanceFactor()
         {
-            // Distance in blocks at which audio source normally considered quiet.
+            // If the current audio ignores distance reduction, return 0 (no reduction)
+            if (currentAudio?.ignoreDistanceReduction == true)
+            {
+                return 0f;
+            }
+
             const float quietDistance = 10;
+
             float maxHearingDistance = WorldConfig.GetInt(voiceLevel);
             var exponent = quietDistance < maxHearingDistance ? 2 : -0.33;
             var distanceFactor = Math.Pow(quietDistance / maxHearingDistance, exponent);
-
             return (float)distanceFactor;
         }
 
@@ -253,6 +274,12 @@ namespace RPVoiceChat.Audio
                     orderingQueue.RemoveAt(0);
                 }
 
+                // Store current audio for distance factor calculation
+                currentAudio = audio;
+
+                // Update voice level with new effective range
+                UpdateVoiceLevel(audio.voiceLevel);
+
                 if (codec != null)
                     audio.data = codec.Decode(audio.data);
 
@@ -297,9 +324,30 @@ namespace RPVoiceChat.Audio
             OALW.SourceStop(source);
             OALW.DeleteSource(source);
             buffer.OnEmptyingQueue -= OnSourceStop;
+            currentSoundEffect?.Clear();
             buffer?.Dispose();
 
             IsDisposed = true;
+        }
+
+        public void SetSoundEffect(string effectName)
+        {
+            if (string.IsNullOrWhiteSpace(effectName) || currentEffectName == effectName)
+                return;
+
+            currentSoundEffect?.Clear();
+
+            currentSoundEffect = SoundEffect.Create(effectName, source);
+            currentSoundEffect?.Apply();
+
+            currentEffectName = effectName;
+        }
+
+        public void ClearSoundEffect()
+        {
+            currentSoundEffect?.Clear();
+            currentSoundEffect = null;
+            currentEffectName = null;
         }
     }
 }

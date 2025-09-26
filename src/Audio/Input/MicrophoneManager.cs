@@ -38,7 +38,7 @@ namespace RPVoiceChat.Audio
         private List<float> recentGainLimits = new List<float>();
         private ConcurrentQueue<float> recentGainLimitsQueue = new ConcurrentQueue<float>();
 
-        // Aplication interface/audio management
+        // Application interface/audio management
         public double Amplitude { get; private set; }
         public bool IsDenoisingAvailable = false;
         public bool Transmitting = false;
@@ -51,6 +51,11 @@ namespace RPVoiceChat.Audio
         private double inputThreshold;
         private double maxInputThreshold = _maxVolume / 2;
         private List<double> recentAmplitudes = new List<double>();
+
+        // Megaphone management (separate from voice level)
+        private int customTransmissionRange = 0; // 0 = use default from VoiceLevel
+        private bool ignoreDistanceReduction = false;
+        private float wallThicknessOverride = -1f;
 
         public MicrophoneManager(ICoreClientAPI capi)
         {
@@ -101,6 +106,21 @@ namespace RPVoiceChat.Audio
             denoiser?.SetVoiceDenoisingStrength(strength);
         }
 
+        public void SetTransmissionRange(int rangeBlocks)
+        {
+            customTransmissionRange = Math.Max(0, rangeBlocks);
+        }
+
+        public int GetTransmissionRange()
+        {
+            return customTransmissionRange;
+        }
+
+        public void ResetTransmissionRange()
+        {
+            customTransmissionRange = 0;
+        }
+
         public List<float> GetRecentGainLimits()
         {
             var recentGainLimits = new List<float>();
@@ -111,6 +131,31 @@ namespace RPVoiceChat.Audio
                     recentGainLimits.Add(gainLimit);
 
             return recentGainLimits;
+        }
+
+        public void SetIgnoreDistanceReduction(bool ignore)
+        {
+            ignoreDistanceReduction = ignore;
+        }
+
+        public bool GetIgnoreDistanceReduction()
+        {
+            return ignoreDistanceReduction;
+        }
+
+        public void SetWallThicknessOverride(float thickness)
+        {
+            wallThicknessOverride = thickness;
+        }
+
+        public float GetWallThicknessOverride()
+        {
+            return wallThicknessOverride;
+        }
+
+        public void ResetWallThicknessOverride()
+        {
+            wallThicknessOverride = -1f;
         }
 
         private void CaptureAudio(object cancellationToken)
@@ -226,6 +271,9 @@ namespace RPVoiceChat.Audio
                 amplitude = amplitude,
                 voiceLevel = voiceLevel,
                 codec = codec.Name,
+                transmissionRangeBlocks = customTransmissionRange,
+                ignoreDistanceReduction = this.ignoreDistanceReduction,
+                wallThicknessOverride = this.wallThicknessOverride
             };
         }
 
@@ -397,6 +445,15 @@ namespace RPVoiceChat.Audio
         public VoiceLevel GetVoiceLevel()
         {
             return voiceLevel;
+        }
+
+        public void SetVoiceLevel(VoiceLevel newLevel)
+        {
+            if (voiceLevel != newLevel)
+            {
+                voiceLevel = newLevel;
+                VoiceLevelUpdated?.Invoke(voiceLevel);
+            }
         }
 
         public void SetInputDevice(string deviceId)

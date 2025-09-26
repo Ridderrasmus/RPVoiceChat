@@ -1,0 +1,78 @@
+{
+  "code": "enhancedmegaphone",
+  "class": "voiceamplifieritem",
+  "enabled": true,
+  "maxStackSize": 1,
+  "creativeinventory": {
+    "general": [ "*" ],
+    "items": [ "*" ],
+    "tools": [ "*" ],
+    "rpvoicechat": [ "*" ]
+  },
+  "attributes": {
+    "voiceRangeBlocks": 100000,
+    "ignoreDistanceReduction": true,
+    "wallThicknessOverride": 0
+  },
+  "drawtype": "json",
+  "shape": {
+    "base": "item/enhancedmegaphone"
+  },
+  "textures": {
+    "blue": {
+      "base": "game:block/glass/blue"
+    },
+    "electrum1": {
+      "base": "game:block/metal/sheet/electrum1"
+    },
+    "gold1": {
+      "base": "game:block/metal/sheet/gold1"
+    },
+    "cupronickel1": {
+      "base": "game:block/metal/sheet/cupronickel1"
+    },
+    "bakelite": { "base": "game:block/coal/bituminous" },
+    "wire": {
+      "base": "item/coilwire"
+    }
+  },
+  "guiTransform": {
+    "translation": {
+      "x": -2,
+      "y": -15,
+      "z": 0
+    },
+    "rotation": {
+      "x": -77,
+      "y": 1,
+      "z": 44
+    },
+    "scale": 1.51
+  },
+  "tpHandTransform": {
+    "translation": {
+      "x": -1,
+      "y": -0.2,
+      "z": -0.8
+    },
+    "rotation": {
+      "x": -20,
+      "y": -113,
+      "z": 23
+    },
+    "origin": {
+      "x": 0.5,
+      "y": -0.5,
+      "z": 0.5
+    },
+    "scale": 0.7
+  },
+  "handbook": {
+    "extraSections": [
+      {
+        "title": "rpvoicechat:Handbook.Usage.item-enhancedmegaphone.Title",
+        "text": "rpvoicechat:Handbook.Usage.item-enhancedmegaphone.Text"
+      }
+    ]
+  }
+}
