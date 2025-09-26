@@ -4,7 +4,7 @@ namespace RPVoiceChat.Audio.Effects
 {
     public class ReverbEffect : SoundEffect
     {
-        public ReverbEffect(int source) : base(source) {}
+        public ReverbEffect(int source) : base("reverb", source) { }
 
         protected override int GenerateEffect()
         {

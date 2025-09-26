@@ -1,0 +1,33 @@
+{
+  "enabled": true,
+  "ingredientPattern": "_C_,POP,_H_",
+  "ingredients": {
+    "O": {
+      "type": "block",
+      "code": "game:hopper",
+      "quantity": 1
+    },
+    "P": {
+      "type": "block",
+      "code": "game:metal-parts",
+      "quantity": 1
+    },
+    "H": {
+      "type": "item",
+      "code": "game:hammer-*",
+      "isTool": true,
+      "toolDurabilityCost": 2
+    },
+    "C": {
+      "type": "item",
+      "code": "game:jonasparts-connector01",
+      "quantity": 1
+    }
+  },
+  "width": 3,
+  "height": 3,
+  "output": {
+    "type": "item",
+    "code": "megaphone"
+  }
+}

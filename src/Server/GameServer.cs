@@ -54,8 +54,14 @@ namespace RPVoiceChat.Server
         {
             var transmittingPlayer = api.World.PlayerByUid(packet.PlayerId);
             bool transmittingIsSpectator = transmittingPlayer?.WorldData.CurrentGameMode == EnumGameMode.Spectator;
-            int distance = WorldConfig.GetInt(packet.VoiceLevel);
-            int squareDistance = distance * distance;
+
+            int effectiveDistance = packet.TransmissionRangeBlocks > 0
+                ? packet.TransmissionRangeBlocks
+                : WorldConfig.GetInt(packet.VoiceLevel);
+
+            packet.EffectiveRange = effectiveDistance;
+
+            float squareDistance = effectiveDistance * effectiveDistance;
 
             foreach (IServerPlayer player in api.World.AllOnlinePlayers)
             {

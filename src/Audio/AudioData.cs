@@ -11,6 +11,10 @@ namespace RPVoiceChat.Audio
         public double amplitude;
         public VoiceLevel voiceLevel;
         public string codec;
+        public int transmissionRangeBlocks;
+        public int effectiveRange;
+        public bool ignoreDistanceReduction { get; set; } = false;
+        public float wallThicknessOverride { get; set; } = -1f; // -1 = pas d'override
 
         public AudioData() { }
 
@@ -23,6 +27,12 @@ namespace RPVoiceChat.Audio
                 format = audioPacket.Format,
                 voiceLevel = audioPacket.VoiceLevel,
                 codec = audioPacket.Codec,
+                transmissionRangeBlocks = audioPacket.TransmissionRangeBlocks,
+                effectiveRange = audioPacket.TransmissionRangeBlocks > 0
+                    ? audioPacket.TransmissionRangeBlocks
+                    : WorldConfig.GetInt(audioPacket.VoiceLevel),
+                ignoreDistanceReduction = audioPacket.IgnoreDistanceReduction,
+                wallThicknessOverride = audioPacket.WallThicknessOverride
             };
         }
     }
