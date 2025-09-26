@@ -9,19 +9,12 @@
     "tools": [ "*" ],
     "rpvoicechat": [ "*" ]
   },
-  "rainPermeable": true,
-  "sidesolid": {
-    "all": false
-  },
-  "sideopaque": {
-    "all": false
-  },
-  "lightAbsorption": 16,
   "attributes": {
     "voiceRangeBlocks": 100000,
     "ignoreDistanceReduction": true,
     "wallThicknessOverride": 0
   },
+  "drawtype": "json",
   "shape": {
     "base": "item/enhancedmegaphone"
   },

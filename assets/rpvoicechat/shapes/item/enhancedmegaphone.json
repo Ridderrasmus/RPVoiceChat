@@ -586,10 +586,10 @@
 					"to": [ 1.0, 3.0, -4.1 ],
 					"rotationOrigin": [ -4.0, 0.0, -5.0 ],
 					"faces": {
-						"north": { "texture": "#bakelite", "uv": [ 0.0, 0.0, 5.0, 3.0 ] },
-						"east": { "texture": "#wire", "uv": [ 0.0, 0.0, 0.5, 3.0 ] },
-						"south": { "texture": "#bakelite", "uv": [ 0.0, 0.0, 5.0, 3.0 ] },
-						"west": { "texture": "#wire", "uv": [ 0.0, 0.0, 0.5, 3.0 ] },
+						"north": { "texture": "#wire", "uv": [ 0.0, 0.0, 5.0, 3.0 ] },
+						"east": { "texture": "#bakelite", "uv": [ 0.0, 0.0, 0.5, 3.0 ] },
+						"south": { "texture": "#wire", "uv": [ 0.0, 0.0, 5.0, 3.0 ] },
+						"west": { "texture": "#bakelite", "uv": [ 0.0, 0.0, 0.5, 3.0 ] },
 						"up": { "texture": "#wire", "uv": [ 0.0, 0.0, 5.0, 0.5 ] },
 						"down": { "texture": "#wire", "uv": [ 0.0, 0.0, 5.0, 0.5 ] }
 					}

@@ -1,5 +1,5 @@
 {
-  "enabled": false,
+  "enabled": true,
   "ingredientPattern": "_C_,POP,_H_",
   "ingredients": {
     "O": {

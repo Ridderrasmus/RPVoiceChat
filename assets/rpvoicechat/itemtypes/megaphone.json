@@ -9,18 +9,11 @@
     "tools": [ "*" ],
     "rpvoicechat": [ "*" ]
   },
-  "rainPermeable": true,
-  "sidesolid": {
-    "all": false
-  },
-  "sideopaque": {
-    "all": false
-  },
-  "lightAbsorption": 16,
   "attributes": {
     "voiceRangeBlocks": 125,
     "applySoundEffect": "cheapmic"
   },
+  "drawtype": "json",
   "shape": {
     "base": "item/megaphone"
   },
