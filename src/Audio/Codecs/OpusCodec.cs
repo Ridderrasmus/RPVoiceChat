@@ -16,6 +16,10 @@ namespace RPVoiceChat.Audio
         private IOpusEncoder encoder;
         private IOpusDecoder decoder;
 
+        // Default bitrates
+        private const int NormalBitrate = 40 * 1024; // 40 kbps
+        private const int BroadcastBitrate = 16 * 1024; // 16 kbps 
+
         public OpusCodec(int frequency, int channelCount)
         {
             SampleRate = frequency;
@@ -25,7 +29,12 @@ namespace RPVoiceChat.Audio
             encoder = OpusCodecFactory.CreateEncoder(SampleRate, Channels, OpusApplication.OPUS_APPLICATION_VOIP);
             decoder = OpusCodecFactory.CreateDecoder(SampleRate, Channels);
 
-            encoder.Bitrate = 40 * 1024;
+            SetNormalQuality();
+        }
+
+        private void SetNormalQuality()
+        {
+            encoder.Bitrate = NormalBitrate;
             encoder.Complexity = 10;
             encoder.SignalType = OpusSignal.OPUS_SIGNAL_VOICE;
             encoder.ForceMode = OpusMode.MODE_SILK_ONLY;
@@ -34,8 +43,35 @@ namespace RPVoiceChat.Audio
             encoder.UseVBR = true;
         }
 
+        private void SetBroadcastQuality()
+        {
+            encoder.Bitrate = BroadcastBitrate;
+            encoder.Complexity = 5; // Reduce complexity to improve performance
+            encoder.SignalType = OpusSignal.OPUS_SIGNAL_VOICE;
+            encoder.ForceMode = OpusMode.MODE_SILK_ONLY;
+            encoder.UseDTX = true; // Enable DTX to save bandwidth (Discontinuous transmission)
+            encoder.UseInbandFEC = false;
+            encoder.UseVBR = true; // Variable bitrate
+        }
+
         public byte[] Encode(short[] pcmData)
         {
+            return EncodeInternal(pcmData, false);
+        }
+
+        public byte[] EncodeForBroadcast(short[] pcmData)
+        {
+            return EncodeInternal(pcmData, true);
+        }
+
+        private byte[] EncodeInternal(short[] pcmData, bool isBroadcast)
+        {
+            // Apply appropriate quality settings
+            if (isBroadcast)
+                SetBroadcastQuality();
+            else
+                SetNormalQuality();
+
             const int maxPacketSize = 1276;
             byte[] encodedBuffer = new byte[maxPacketSize];
             var encoded = new MemoryStream();
@@ -46,11 +82,9 @@ namespace RPVoiceChat.Audio
                 {
                     var pcmSpan = new Span<short>(pcmData, pcmOffset, FrameSize);
                     var encodedSpan = new Span<byte>(encodedBuffer);
-
                     int encodedLength = encoder.Encode(pcmSpan, FrameSize / Channels, encodedSpan, encodedBuffer.Length);
 
                     byte[] packetSize = BitConverter.GetBytes(encodedLength);
-
                     encoded.Write(packetSize, 0, packetSize.Length);
                     encoded.Write(encodedBuffer, 0, encodedLength);
                 }
@@ -68,6 +102,7 @@ namespace RPVoiceChat.Audio
             short[] decodedBuffer = new short[FrameSize];
             var decoded = new MemoryStream();
             var stream = new MemoryStream(encodedData);
+
             using (var reader = new BinaryReader(stream))
             {
                 try
@@ -76,13 +111,11 @@ namespace RPVoiceChat.Audio
                     {
                         int packetSize = reader.ReadInt32();
                         byte[] encodedPacket = reader.ReadBytes(packetSize);
-
                         var encodedSpan = new ReadOnlySpan<byte>(encodedPacket);
                         var decodedSpan = new Span<short>(decodedBuffer);
-
                         int decodedLength = decoder.Decode(encodedSpan, decodedSpan, FrameSize / Channels, false);
-                        byte[] decodedPacket = AudioUtils.ShortsToBytes(decodedBuffer, 0, decodedLength);
 
+                        byte[] decodedPacket = AudioUtils.ShortsToBytes(decodedBuffer, 0, decodedLength);
                         decoded.Write(decodedPacket, 0, decodedPacket.Length);
                     }
                 }

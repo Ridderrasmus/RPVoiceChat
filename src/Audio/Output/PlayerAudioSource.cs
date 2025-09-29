@@ -97,7 +97,7 @@ namespace RPVoiceChat.Audio
                 _ => null
             };
         }
-        
+
         public void UpdatePlayer()
         {
             EntityPos speakerPos = player.Entity?.SidedPos;
@@ -105,23 +105,30 @@ namespace RPVoiceChat.Audio
             if (speakerPos == null || listenerPos == null)
                 return;
 
+            // For global broadcasts, disable muffling and positioning
+            bool isGlobalBroadcast = currentAudio?.isGlobalBroadcast == true;
+
             // If the player is on the other side of something to the listener, then the player's voice should be muffled
-            bool mufflingEnabled = ClientSettings.Muffling;
+            bool mufflingEnabled = ClientSettings.Muffling && !isGlobalBroadcast; // Désactiver muffling pour global broadcast
             float wallThickness = 0f;
 
-            // Check if the current audio has a wall thickness override
-            if (currentAudio?.wallThicknessOverride >= 0f)
-            {
-                wallThickness = currentAudio.wallThicknessOverride;
-            }
-            else
-            {
-                wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
-            }
-
             float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");
-            if (capi.World.Player.Entity.Swimming)
-                wallThickness += 1.0f;
+
+            if (!isGlobalBroadcast)
+            {
+                // Check if the current audio has a wall thickness override
+                if (currentAudio?.wallThicknessOverride >= 0f)
+                {
+                    wallThickness = currentAudio.wallThicknessOverride;
+                }
+                else
+                {
+                    wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
+                }
+
+                if (capi.World.Player.Entity.Swimming)
+                    wallThickness += 1.0f;
+            }
 
             lowpassFilter?.Stop();
             if (mufflingEnabled && wallThickness > 0)
@@ -135,7 +142,7 @@ namespace RPVoiceChat.Audio
             // DEACTIVATED : TO BE IMPLEMENTED
             // If the player is in a reverberated area, then the player's voice should be reverberated
             reverbEffect?.Clear();
-            if (toBeImplementedToggle && LocationUtils.IsReverbArea(capi, speakerPos))
+            if (toBeImplementedToggle && !isGlobalBroadcast && LocationUtils.IsReverbArea(capi, speakerPos))
             {
                 reverbEffect = reverbEffect ?? new ReverbEffect(source);
                 reverbEffect.Apply();
@@ -145,7 +152,7 @@ namespace RPVoiceChat.Audio
             // If the player has a temporal stability of less than 0.5, then the player's voice should be distorted
             // Values are temporary currently
             unstableEffect?.Clear();
-            if (toBeImplementedToggle && player.Entity.WatchedAttributes.GetDouble("temporalStability") < 0.5)
+            if (toBeImplementedToggle && !isGlobalBroadcast && player.Entity.WatchedAttributes.GetDouble("temporalStability") < 0.5)
             {
                 unstableEffect = unstableEffect ?? new UnstableEffect(source);
                 unstableEffect.Apply();
@@ -156,7 +163,7 @@ namespace RPVoiceChat.Audio
             // Values are temporary currently
             intoxicatedEffect?.Clear();
             float drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
-            if (toBeImplementedToggle && drunkness > 0)
+            if (toBeImplementedToggle && !isGlobalBroadcast && drunkness > 0)
             {
                 intoxicatedEffect = intoxicatedEffect ?? new IntoxicatedEffect(source);
                 intoxicatedEffect.SetToxicRate(drunkness);
@@ -166,7 +173,11 @@ namespace RPVoiceChat.Audio
             float gain = GetFinalGain();
             var sourcePosition = new Vec3f();
             var velocity = new Vec3f();
-            if (IsLocational)
+
+            // For global broadcasts, disable audio positioning
+            bool useLocationalAudio = IsLocational && !isGlobalBroadcast;
+
+            if (useLocationalAudio)
             {
                 sourcePosition = GetRelativeSourcePosition(speakerPos, listenerPos);
                 velocity = GetRelativeVelocity(speakerPos, listenerPos, sourcePosition);
@@ -195,6 +206,12 @@ namespace RPVoiceChat.Audio
 
         private float GetDistanceFactor()
         {
+            //  If it is a global broadcast, completely disable distance reduction
+            if (currentAudio?.isGlobalBroadcast == true)
+            {
+                return 0f;
+            }
+
             // If the current audio ignores distance reduction, return 0 (no reduction)
             if (currentAudio?.ignoreDistanceReduction == true)
             {
@@ -269,27 +286,44 @@ namespace RPVoiceChat.Audio
                 AudioData audio;
                 lock (ordering_queue_lock)
                 {
+                    if (orderingQueue.Count == 0) return;
+
                     lastAudioSequenceNumber = orderingQueue.Keys[0];
                     audio = orderingQueue[lastAudioSequenceNumber];
                     orderingQueue.RemoveAt(0);
                 }
 
-                // Store current audio for distance factor calculation
                 currentAudio = audio;
-
-                // Update voice level with new effective range
                 UpdateVoiceLevel(audio.voiceLevel);
 
                 if (codec != null)
                     audio.data = codec.Decode(audio.data);
+
+                if (audio.data == null || audio.data.Length == 0)
+                {
+                    Logger.client.Warning("Received empty audio data, skipping");
+                    return;
+                }
 
                 float finalGain = GetFinalGain();
 
                 PcmUtils.ApplyGainWithSoftClipping(ref audio.data, audio.format, finalGain);
                 PcmUtils.ApplyCompressor(ref audio.data, audio.format);
 
-                int maxFadeDuration = 2 * audio.frequency / 1000; // 2ms
-                AudioUtils.FadeEdges(audio.data, maxFadeDuration);
+                // SKIP FADE for global broadcasts
+                // Opus codec already handles transitions cleanly.
+                if (!audio.isGlobalBroadcast)
+                {
+                    int maxFadeDuration = Math.Min(
+                        2 * audio.frequency / 1000,
+                        audio.data.Length / 4
+                    );
+
+                    if (audio.data.Length > maxFadeDuration * 2)
+                    {
+                        AudioUtils.FadeEdges(audio.data, maxFadeDuration);
+                    }
+                }
 
                 buffer.QueueAudio(audio.data, audio.format, audio.frequency);
 

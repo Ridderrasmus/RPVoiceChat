@@ -39,33 +39,69 @@ namespace RPVoiceChat.Utils
 
         public static void FadeEdges(byte[] data, int maxFadeDuration)
         {
-            FadeEdge(data, maxFadeDuration, false);
-            FadeEdge(data, maxFadeDuration, true);
+            if (data == null || data.Length == 0)
+                return;
+
+            int sampleCount = data.Length / sizeof(short);
+            // S'assurer que le fade ne dépasse pas la moitié des données disponibles
+            int safeFadeDuration = Math.Min(maxFadeDuration, sampleCount / 2);
+
+            if (safeFadeDuration <= 0)
+                return;
+
+            FadeEdge(data, safeFadeDuration, false);
+            FadeEdge(data, safeFadeDuration, true);
         }
 
         public static void FadeEdge(byte[] data, int maxFadeDuration, bool isRightEdge)
         {
+            if (data == null || data.Length < sizeof(short))
+                return;
+
             int sampleCount = data.Length / sizeof(short);
+
+            // Protection : ensure that maxFadeDuration does not exceed the number of samples.
+            if (maxFadeDuration > sampleCount)
+            {
+                maxFadeDuration = sampleCount;
+            }
+
             int startIndex = 0;
             int endIndex = maxFadeDuration;
             TransformDelegate transform = e => e;
+
             if (isRightEdge)
             {
-                startIndex = sampleCount - maxFadeDuration - 1;
+                startIndex = Math.Max(0, sampleCount - maxFadeDuration);
                 endIndex = sampleCount - 1;
                 transform = e => 1 - e;
             }
 
+            // Final security check
+            if (startIndex < 0 || startIndex >= sampleCount || endIndex >= sampleCount || startIndex >= endIndex)
+            {
+                Logger.client.Warning($"Invalid fade indices: start={startIndex}, end={endIndex}, sampleCount={sampleCount}");
+                return;
+            }
+
             int zeroCrossingIndex = -1;
             double? lastPcm = null;
+
             for (var i = startIndex; i < endIndex; i++)
             {
-                var pcm = (double)BitConverter.ToInt16(data, i * sizeof(short));
+                // Additional protection when accessing bytes
+                int byteIndex = i * sizeof(short);
+                if (byteIndex + sizeof(short) > data.Length)
+                    break;
+
+                var pcm = (double)BitConverter.ToInt16(data, byteIndex);
+
                 if (lastPcm == null || pcm * lastPcm > 0)
                 {
                     lastPcm = pcm;
                     continue;
                 }
+
                 zeroCrossingIndex = i;
                 if (!isRightEdge) break;
                 lastPcm = pcm;
@@ -80,11 +116,16 @@ namespace RPVoiceChat.Utils
 
             var silenceFrom = 0;
             var silenceTo = zeroCrossingIndex * sizeof(short);
+
             if (isRightEdge)
             {
                 silenceFrom = zeroCrossingIndex * sizeof(short);
                 silenceTo = sampleCount * sizeof(short);
             }
+
+            // Protection : verify that the silence indices are valid
+            if (silenceFrom < 0 || silenceTo > data.Length || silenceFrom >= silenceTo)
+                return;
 
             var silenceBytes = silenceTo - silenceFrom;
             var silence = new byte[silenceBytes];

@@ -9,7 +9,8 @@ public class VoiceAmplifierItem : Item
     private VoiceLevel originalVoiceLevel;
     private int originalTransmissionRange;
     private bool ignoreDistanceReduction = false;
-    private float wallThicknessOverride = -1f; // -1 = no override
+    private float wallThicknessOverride = -1f;
+    private bool globalBroadcast = false;
 
     public override void OnLoaded(ICoreAPI api)
     {
@@ -20,6 +21,7 @@ public class VoiceAmplifierItem : Item
             soundEffectName = attr["applySoundEffect"]?.AsString(null);
             ignoreDistanceReduction = attr["ignoreDistanceReduction"]?.AsBool(false) ?? false;
             wallThicknessOverride = attr["wallThicknessOverride"]?.AsFloat(-1f) ?? -1f;
+            globalBroadcast = attr["globalBroadcast"]?.AsBool(false) ?? false;
         }
     }
 
@@ -38,16 +40,13 @@ public class VoiceAmplifierItem : Item
 
             if (microphoneManager != null)
             {
-                // Save original state
                 originalVoiceLevel = microphoneManager.GetVoiceLevel();
                 originalTransmissionRange = microphoneManager.GetTransmissionRange();
 
                 var attr = slot?.Itemstack?.Collectible?.Attributes;
 
-                // Set voice level (audio quality)
                 microphoneManager.SetVoiceLevel(VoiceLevel.Shouting);
 
-                // Set transmission range (distance)
                 if (attr != null && attr["voiceRangeBlocks"]?.Exists == true)
                 {
                     int rangeBlocks = attr["voiceRangeBlocks"].AsInt(50);
@@ -64,10 +63,14 @@ public class VoiceAmplifierItem : Item
                     microphoneManager.SetWallThicknessOverride(wallThicknessOverride);
                 }
 
+                if (globalBroadcast)
+                {
+                    microphoneManager.SetGlobalBroadcast(true);
+                }
+
                 isAmplifierActive = true;
             }
 
-            // Apply sound effect
             if (!string.IsNullOrEmpty(soundEffectName) && audioOutputManager != null)
             {
                 string playerUID = capi.World.Player.PlayerUID;
@@ -89,16 +92,13 @@ public class VoiceAmplifierItem : Item
 
             if (microphoneManager != null)
             {
-                // Restore original state
                 microphoneManager.SetVoiceLevel(originalVoiceLevel);
                 microphoneManager.SetTransmissionRange(originalTransmissionRange);
-
-                // Reset to default settings
                 microphoneManager.SetIgnoreDistanceReduction(false);
                 microphoneManager.ResetWallThicknessOverride();
+                microphoneManager.ResetGlobalBroadcast();
             }
 
-            // Clear sound effect
             if (!string.IsNullOrEmpty(soundEffectName) && audioOutputManager != null)
             {
                 string playerUID = capi.World.Player.PlayerUID;
@@ -111,13 +111,11 @@ public class VoiceAmplifierItem : Item
 
     public override bool OnHeldInteractStep(float secondsUsed, ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel)
     {
-        // Continue interaction as long as the amplifier is active
         return isAmplifierActive;
     }
 
     public override void OnHeldIdle(ItemSlot slot, EntityAgent byEntity)
     {
-        // If amplifier is active but interaction is no longer maintained, deactivate
         if (isAmplifierActive)
         {
             OnHeldInteractStop(0f, slot, byEntity, null, null);

@@ -8,5 +8,6 @@ namespace RPVoiceChat.Audio
         public int FrameSize { get; }
         public byte[] Encode(short[] pcmData);
         public byte[] Decode(byte[] encodedData);
+        byte[] EncodeForBroadcast(short[] pcmData) => Encode(pcmData);
     }
 }
