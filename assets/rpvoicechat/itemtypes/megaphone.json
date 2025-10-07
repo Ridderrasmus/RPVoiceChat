@@ -11,7 +11,15 @@
   },
   "attributes": {
     "voiceRangeBlocks": 125,
-    "applySoundEffect": "cheapmic"
+    "applySoundEffect": "cheapmic",
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.item-megaphone.Title",
+          "text": "rpvoicechat:Handbook.Usage.item-megaphone.Text"
+        }
+      ]
+    }
   },
   "drawtype": "json",
   "shape": {
@@ -61,13 +69,5 @@
       "z": 0.5
     },
     "scale": 0.7
-  },
-  "handbook": {
-    "extraSections": [
-      {
-        "title": "rpvoicechat:Handbook.Usage.item-megaphone.Title",
-        "text": "rpvoicechat:Handbook.Usage.item-megaphone.Text"
-      }
-    ]
   }
 }

@@ -61,14 +61,25 @@ namespace RPVoiceChat.Server
 
             packet.EffectiveRange = effectiveDistance;
 
-            float squareDistance = effectiveDistance * effectiveDistance;
+            // Check if it is a global broadcast via the dedicated flag
+            bool isGlobalBroadcast = packet.IsGlobalBroadcast;
+
+            float squareDistance = 0f;
+            if (!isGlobalBroadcast)
+            {
+                squareDistance = effectiveDistance * effectiveDistance;
+            }
 
             foreach (IServerPlayer player in api.World.AllOnlinePlayers)
             {
                 if (player == transmittingPlayer ||
                     player.Entity == null ||
                     player.ConnectionState != EnumClientState.Playing ||
-                    (!WorldConfig.GetBool("others-hear-spectators", true) && transmittingIsSpectator && player.WorldData.CurrentGameMode != EnumGameMode.Spectator) ||
+                    (!WorldConfig.GetBool("others-hear-spectators", true) && transmittingIsSpectator && player.WorldData.CurrentGameMode != EnumGameMode.Spectator))
+                    continue;
+
+                // Skip distance calculation if it is a global broadcast
+                if (!isGlobalBroadcast &&
                     transmittingPlayer.Entity.Pos.SquareDistanceTo(player.Entity.Pos.XYZ) > squareDistance)
                     continue;
 

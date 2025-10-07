@@ -56,6 +56,7 @@ namespace RPVoiceChat.Audio
         private int customTransmissionRange = 0; // 0 = use default from VoiceLevel
         private bool ignoreDistanceReduction = false;
         private float wallThicknessOverride = -1f;
+        private bool isGlobalBroadcast = false;
 
         public MicrophoneManager(ICoreClientAPI capi)
         {
@@ -158,12 +159,30 @@ namespace RPVoiceChat.Audio
             wallThicknessOverride = -1f;
         }
 
+        public void SetGlobalBroadcast(bool enabled)
+        {
+            isGlobalBroadcast = enabled;
+        }
+
+        public bool GetGlobalBroadcast()
+        {
+            return isGlobalBroadcast;
+        }
+
+        public void ResetGlobalBroadcast()
+        {
+            isGlobalBroadcast = false;
+        }
+
+
         private void CaptureAudio(object cancellationToken)
         {
             CancellationToken ct = (CancellationToken)cancellationToken;
             while (audioCaptureThread.IsAlive && !ct.IsCancellationRequested)
             {
-                Thread.Sleep(100);
+                // Reduce CPU usage by sleeping between checks when broadcasting globally
+                int sleepMs = isGlobalBroadcast ? 200 : 100;
+                Thread.Sleep(sleepMs);
                 UpdateCaptureAudioSamples();
             }
         }
@@ -261,7 +280,15 @@ namespace RPVoiceChat.Audio
             var amplitude = Math.Sqrt(sampleSquareSum / pcmCount);
 
             // Encode audio
-            byte[] encodedAudio = codec.Encode(pcms);
+            byte[] encodedAudio;
+            if (isGlobalBroadcast && codec is OpusCodec opusCodec)
+            {
+                encodedAudio = opusCodec.EncodeForBroadcast(pcms);
+            }
+            else
+            {
+                encodedAudio = codec.Encode(pcms);
+            }
 
             return new AudioData()
             {
@@ -273,7 +300,8 @@ namespace RPVoiceChat.Audio
                 codec = codec.Name,
                 transmissionRangeBlocks = customTransmissionRange,
                 ignoreDistanceReduction = this.ignoreDistanceReduction,
-                wallThicknessOverride = this.wallThicknessOverride
+                wallThicknessOverride = this.wallThicknessOverride,
+                isGlobalBroadcast = this.isGlobalBroadcast
             };
         }
 
