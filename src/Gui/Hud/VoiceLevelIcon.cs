@@ -1,4 +1,5 @@
 using RPVoiceChat.Audio;
+using RPVoiceChat.Config;
 using System;
 using System.Collections.Generic;
 using Vintagestory.API.Client;
@@ -58,7 +59,7 @@ namespace RPVoiceChat.Gui
 
         private void UpdateDisplay()
         {
-            bool shouldDisplay = ClientSettings.ShowHud;
+            bool shouldDisplay = ModConfig.ClientConfig.ShowHud;
             bool successful = shouldDisplay ? TryOpen() : TryClose();
 
             if (!successful) bindToMainThread(UpdateDisplay)();

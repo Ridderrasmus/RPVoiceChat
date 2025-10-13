@@ -1,4 +1,5 @@
 using RPVoiceChat.Audio;
+using RPVoiceChat.Config;
 using System;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -53,7 +54,7 @@ namespace RPVoiceChat.Gui
         private void UpdateDisplay()
         {
             bool isTalking = audioInputManager.Transmitting;
-            bool shouldDisplay = (ClientSettings.IsMuted || isTalking) && ClientSettings.ShowHud;
+            bool shouldDisplay = (ModConfig.ClientConfig.IsMuted || isTalking) && ModConfig.ClientConfig.ShowHud;
             bool successful = shouldDisplay ? TryOpen() : TryClose();
 
             if (!successful) bindToMainThread(UpdateDisplay)();
@@ -71,7 +72,7 @@ namespace RPVoiceChat.Gui
 
             SingleComposer = capi.Gui.CreateCompo("rpvcspeechindicator", dialogBounds)
                 .AddImage(ElementBounds.Fixed(0, 0, size, size), voiceIcon)
-                .AddIf(ClientSettings.IsMuted)
+                .AddIf(ModConfig.ClientConfig.IsMuted)
                 .AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation(RPVoiceChatMod.modID, "textures/gui/muted.png"))
                 .EndIf()
                 .Compose();

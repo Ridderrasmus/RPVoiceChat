@@ -1,6 +1,7 @@
-﻿using Vintagestory.API.Common;
+﻿using RPVoiceChat.Config;
+using Vintagestory.API.Common;
 
-namespace RPVoiceChat.GameContent.Blocks
+namespace RPVoiceChat.GameContent.Block
 {
     public class BlockRegistry
     {

@@ -1,4 +1,5 @@
 using OpenTK.Audio.OpenAL;
+using RPVoiceChat.Config;
 using Vintagestory.API.Client;
 
 namespace RPVoiceChat.Audio
@@ -15,9 +16,9 @@ namespace RPVoiceChat.Audio
         {
             capi = api;
 
-            VoiceGain = ClientSettings.OutputVoice;
-            BlockGain = ClientSettings.OutputBlock;
-            ItemGain = ClientSettings.OutputItem;
+            VoiceGain = ModConfig.ClientConfig.OutputVoice;
+            BlockGain = ModConfig.ClientConfig.OutputBlock;
+            ItemGain = ModConfig.ClientConfig.OutputItem;
         }
 
         public static void SetVoiceGain(float gain)

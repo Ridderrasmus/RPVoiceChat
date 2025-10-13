@@ -1,3 +1,4 @@
+using RPVoiceChat.Config;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
 using System;

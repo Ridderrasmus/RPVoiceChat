@@ -1,5 +1,6 @@
 using RPVoiceChat.Audio;
 using RPVoiceChat.Client;
+using RPVoiceChat.Config;
 using RPVoiceChat.DB;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Networking;
@@ -53,7 +54,7 @@ namespace RPVoiceChat
             AudioOutputManagerInstance = audioOutputManager;
 
             // Init voice chat client
-            bool forwardPorts = !config.ManualPortForwarding;
+            bool forwardPorts = !ModConfig.ServerConfig.ManualPortForwarding;
             var networkTransports = new List<INetworkClient>()
             {
                 new UDPNetworkClient(forwardPorts),
@@ -96,9 +97,9 @@ namespace RPVoiceChat
                 if (mutePressed) return true;
                 mutePressed = true;
 
-                ClientSettings.IsMuted = !ClientSettings.IsMuted;
+                ModConfig.ClientConfig.IsMuted = !ModConfig.ClientConfig.IsMuted;
                 capi.Event.PushEvent("rpvoicechat:hudUpdate");
-                ClientSettings.Save();
+                ModConfig.SaveClient(capi);
                 return true;
             });
 
@@ -145,7 +146,7 @@ namespace RPVoiceChat
 
         public override void Dispose()
         {
-            ClientSettings.Save();
+            ModConfig.SaveClient(capi);
             microphoneManager?.Dispose();
             audioOutputManager?.Dispose();
             client?.Dispose();
