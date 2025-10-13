@@ -42,9 +42,6 @@
     "bakelite": { "base": "game:block/coal/bituminous" },
     "wire": {
       "base": "item/coilwire"
-    },
-    "blackwire": {
-      "base": "item/blackcoilwire"
     }
   },
   "guiTransform": {

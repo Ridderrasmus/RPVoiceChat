@@ -1,5 +1,6 @@
 using OpenTK.Audio.OpenAL;
 using RPVoiceChat.Audio.Effects;
+using RPVoiceChat.Config;
 using RPVoiceChat.DB;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Utils;
@@ -109,7 +110,7 @@ namespace RPVoiceChat.Audio
             bool isGlobalBroadcast = currentAudio?.isGlobalBroadcast == true;
 
             // If the player is on the other side of something to the listener, then the player's voice should be muffled
-            bool mufflingEnabled = ClientSettings.Muffling && !isGlobalBroadcast; // Désactiver muffling pour global broadcast
+            bool mufflingEnabled = ModConfig.ClientConfig.Muffling && !isGlobalBroadcast; // Disable muffling for global broadcast
             float wallThickness = 0f;
 
             float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");

@@ -1,3 +1,5 @@
+
+using RPVoiceChat.Config;
 using RPVoiceChat.Utils;
 using Vintagestory.API.Client;
 
@@ -24,12 +26,12 @@ namespace RPVoiceChat.Gui
 
         public void ShowIfNecessary()
         {
-            if (ClientSettings.ModUsedFirstTime == false) return;
+            if (ModConfig.ClientConfig.FirstTimeUse == false) return;
 
             Compose();
             TryOpen();
-            ClientSettings.ModUsedFirstTime = false;
-            ClientSettings.Save();
+            ModConfig.ClientConfig.FirstTimeUse = false;
+            ModConfig.SaveClient(capi);
         }
 
         private void Compose()

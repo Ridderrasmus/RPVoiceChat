@@ -1,3 +1,4 @@
+using RPVoiceChat.Config;
 using RPVoiceChat.DB;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
@@ -43,7 +44,7 @@ namespace RPVoiceChat.Audio
 
         public AudioOutputManager(ICoreClientAPI api, ClientSettingsRepository settingsRepository)
         {
-            IsLoopbackEnabled = ClientSettings.Loopback;
+            IsLoopbackEnabled = ModConfig.ClientConfig.Loopback;
             capi = api;
             clientSettingsRepo = settingsRepository;
         }

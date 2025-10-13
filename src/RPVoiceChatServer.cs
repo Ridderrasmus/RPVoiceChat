@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using RPVoiceChat.Audio;
+using RPVoiceChat.Config;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Server;
 using RPVoiceChat.Systems;
@@ -34,15 +34,15 @@ namespace RPVoiceChat
 
             WireNetworkHandler.RegisterServerside(api);
 
-            bool forwardPorts = !config.ManualPortForwarding;
+            bool forwardPorts = !ModConfig.ServerConfig.ManualPortForwarding;
             var networkTransports = new List<INetworkServer>()
             {
                 new NativeNetworkServer(api)
             };
-            if (config.UseCustomNetworkServers)
+            if (ModConfig.ServerConfig.UseCustomNetworkServers)
             {
-                networkTransports.Insert(0, new UDPNetworkServer(config.ServerPort, config.ServerIP, forwardPorts));
-                networkTransports.Insert(1, new TCPNetworkServer(config.ServerPort, config.ServerIP, forwardPorts));
+                networkTransports.Insert(0, new UDPNetworkServer(ModConfig.ServerConfig.ServerPort, ModConfig.ServerConfig.ServerIP, forwardPorts));
+                networkTransports.Insert(1, new TCPNetworkServer(ModConfig.ServerConfig.ServerPort, ModConfig.ServerConfig.ServerIP, forwardPorts));
             }
 
             server = new GameServer(sapi, networkTransports);
@@ -52,7 +52,7 @@ namespace RPVoiceChat
         public override void StartPre(ICoreAPI api)
         {
             base.StartPre(api);
-            WorldConfig.Set("additional-content", config.AdditionalContent);
+            WorldConfig.Set("additional-content", ModConfig.ServerConfig.AdditionalContent);
         }
 
         public override double ExecuteOrder() => 1.02;

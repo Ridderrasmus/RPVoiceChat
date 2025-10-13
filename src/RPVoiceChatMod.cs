@@ -1,7 +1,6 @@
-using RPVoiceChat.GameContent.BlockBehaviors;
+using RPVoiceChat.Config;
 using RPVoiceChat.GameContent.BlockEntity;
-using RPVoiceChat.GameContent.BlockEntityBehaviors;
-using RPVoiceChat.GameContent.Blocks;
+using RPVoiceChat.GameContent.Block;
 using RPVoiceChat.GameContent.Items;
 using RPVoiceChat.src.Networking.Packets;
 using RPVoiceChat.Utils;
@@ -14,23 +13,20 @@ namespace RPVoiceChat
     public abstract class RPVoiceChatMod : ModSystem
     {
         public static readonly string modID = "rpvoicechat";
-
         internal static ICoreAPI ModApi;
         internal static ICoreClientAPI capi;
         internal static ICoreServerAPI sapi;
-
         internal static IClientNetworkChannel ClientChannel;
         internal static IServerNetworkChannel ServerChannel;
 
-        protected RPVoiceChatConfig config;
         private PatchManager patchManager;
 
         public override void StartPre(ICoreAPI api)
         {
-            ClientSettings.Init(api);
-            ModConfig.ReadConfig(api);
-            config = ModConfig.Config;
+            ModConfig.Init(api);
+
             WorldConfig.Init(api);
+
             new Logger(api);
         }
 
@@ -60,7 +56,6 @@ namespace RPVoiceChat
             BlockEntityRegistry.RegisterBlockEntities(api);
             BlockBehaviorRegistry.RegisterBlockEntityBehaviors(api);
             BlockEntityBehaviorRegistry.RegisterBlockEntityBehaviors(api);
-
         }
 
         public override void AssetsFinalize(ICoreAPI api)
@@ -82,7 +77,6 @@ namespace RPVoiceChat
         private void OnWeldingHitReceived(IPlayer fromPlayer, WeldingHitPacket packet)
         {
             var be = fromPlayer.Entity.World.BlockAccessor.GetBlockEntity(packet.Pos) as BEWeldable;
-
             if (be != null)
             {
                 be.OnHammerHitOver(fromPlayer, packet.HitPosition);
