@@ -1,4 +1,5 @@
 using RPVoiceChat.Audio;
+using RPVoiceChat.Config;
 using RPVoiceChat.DB;
 using RPVoiceChat.Utils;
 using System;
@@ -102,7 +103,7 @@ namespace RPVoiceChat.Gui
             isSetup = true;
             hoverTextElements = new List<GuiElementHoverText>();
 
-            var activeTab = ConfigTabs[ClientSettings.ActiveConfigTab];
+            var activeTab = ConfigTabs[ModConfig.ClientConfig.ActiveConfigTab];
             var displayedOptions = ConfigOptions.FindAll(e => e.Tab == activeTab && e.Enabled);
             double maxTextWidth = displayedOptions.DefaultIfEmpty().Max(e => e?.TextWidth ?? 0);
             double maxTabWidth = ConfigTabs.DefaultIfEmpty().Max(e => e?.TextWidth ?? 0);
@@ -192,7 +193,7 @@ namespace RPVoiceChat.Gui
 
         public override bool TryClose()
         {
-            ClientSettings.Save();
+            ModConfig.SaveClient(capi);
             return base.TryClose();
         }
 
@@ -215,7 +216,7 @@ namespace RPVoiceChat.Gui
 
         private void OnTabClicked(int dataIntOrIndex, GuiTab _)
         {
-            ClientSettings.ActiveConfigTab = dataIntOrIndex;
+            ModConfig.ClientConfig.ActiveConfigTab = dataIntOrIndex;
             SetupDialog();
             RefreshValues();
         }
@@ -456,31 +457,31 @@ namespace RPVoiceChat.Gui
             if (!IsOpened())
                 return;
 
-            var outputVoice = ClientSettings.OutputVoice * 100;
-            var outputBlock = ClientSettings.OutputBlock * 100;
-            var outputItem = ClientSettings.OutputItem * 100;
-            var inputGainDBS = AudioUtils.FactorToDBs(ClientSettings.InputGain) * 10;
-            var inputThreshold = ClientSettings.InputThreshold * 100;
-            var denoisingSensitivity = ClientSettings.BackgroundNoiseThreshold * 100;
-            var denoisingStrength = ClientSettings.VoiceDenoisingStrength * 100;
-            SetValue("configTabs", ClientSettings.ActiveConfigTab);
-            capi.Logger.Debug($"ActiveConfigTab: {ClientSettings.ActiveConfigTab}");
-            SetValue("inputDevice", ClientSettings.CurrentInputDevice ?? "Default");
-            SetValue("togglePushToTalk", ClientSettings.PushToTalkEnabled);
-            SetValue("muteMicrophone", ClientSettings.IsMuted);
-            SetValue("loopback", ClientSettings.Loopback);
+            var outputVoice = ModConfig.ClientConfig.OutputVoice * 100;
+            var outputBlock = ModConfig.ClientConfig.OutputBlock * 100;
+            var outputItem = ModConfig.ClientConfig.OutputItem * 100;
+            var inputGainDBS = AudioUtils.FactorToDBs(ModConfig.ClientConfig.InputGain) * 10;
+            var inputThreshold = ModConfig.ClientConfig.InputThreshold * 100;
+            var denoisingSensitivity = ModConfig.ClientConfig.DenoisingSensitivity * 100;
+            var denoisingStrength = ModConfig.ClientConfig.DenoisingStrength * 100;
+            SetValue("configTabs", ModConfig.ClientConfig.ActiveConfigTab);
+            capi.Logger.Debug($"ActiveConfigTab: {ModConfig.ClientConfig.ActiveConfigTab}");
+            SetValue("inputDevice", ModConfig.ClientConfig.InputDevice ?? "Default");
+            SetValue("togglePushToTalk", ModConfig.ClientConfig.PushToTalkEnabled);
+            SetValue("muteMicrophone", ModConfig.ClientConfig.IsMuted);
+            SetValue("loopback", ModConfig.ClientConfig.Loopback);
             SetValue("outputVoice", new dynamic[] { outputVoice, 0, 200, 1, "%" });
             SetValue("inputGain", new dynamic[] { inputGainDBS, -200, 200, 1, "" });
             SetValue("outputBlock", new dynamic[] { outputBlock, 0, 200, 1, "%" });
             SetValue("outputItem", new dynamic[] { outputItem, 0, 200, 1, "%" });
             SetValue("inputThreshold", new dynamic[] { inputThreshold, 0, 100, 1, "" });
-            SetValue("toggleHUD", ClientSettings.ShowHud);
-            SetValue("toggleMuffling", ClientSettings.Muffling);
-            SetValue("toggleDenoising", ClientSettings.Denoising);
+            SetValue("toggleHUD", ModConfig.ClientConfig.ShowHud);
+            SetValue("toggleMuffling", ModConfig.ClientConfig.Muffling);
+            SetValue("toggleDenoising", ModConfig.ClientConfig.Denoising);
             SetValue("denoisingSensitivity", new dynamic[] { denoisingSensitivity, 0, 100, 1, "%" });
             SetValue("denoisingStrength", new dynamic[] { denoisingStrength, 0, 100, 1, "%" });
             SetValue("playerList", null);
-            SetValue("toggleChannelGuessing", ClientSettings.ChannelGuessing);
+            SetValue("toggleChannelGuessing", ModConfig.ClientConfig.ChannelGuessing);
 
             if (audioInputManager.AudioWizardActive) DisableHoverText();
         }
@@ -512,30 +513,30 @@ namespace RPVoiceChat.Gui
         private void OnChangeInputDevice(string value, bool selected)
         {
             audioInputManager.SetInputDevice(value);
-            SetValue("inputDevice", ClientSettings.CurrentInputDevice ?? "Default");
+            SetValue("inputDevice", ModConfig.ClientConfig.InputDevice ?? "Default");
         }
 
         private void OnTogglePushToTalk(bool enabled)
         {
-            ClientSettings.PushToTalkEnabled = enabled;
+            ModConfig.ClientConfig.PushToTalkEnabled = enabled;
         }
 
         private void OnToggleMuted(bool enabled)
         {
-            ClientSettings.IsMuted = enabled;
+            ModConfig.ClientConfig.IsMuted = enabled;
             capi.Event.PushEvent("rpvoicechat:hudUpdate");
         }
 
         protected void OnToggleLoopback(bool enabled)
         {
-            ClientSettings.Loopback = enabled;
+            ModConfig.ClientConfig.Loopback = enabled;
             audioOutputManager.IsLoopbackEnabled = enabled;
         }
 
         private bool SlideOutputVoice(int intGain)
         {
             float gain = intGain / 100f;
-            ClientSettings.OutputVoice = gain;
+            ModConfig.ClientConfig.OutputVoice = gain;
             PlayerListener.SetVoiceGain(gain);
 
             return true;
@@ -544,7 +545,7 @@ namespace RPVoiceChat.Gui
         private bool SlideOutputBlock(int intGain)
         {
             float gain = intGain / 100f;
-            ClientSettings.OutputBlock = gain;
+            ModConfig.ClientConfig.OutputBlock = gain;
             PlayerListener.SetBlockGain(gain);
 
             return true;
@@ -553,7 +554,7 @@ namespace RPVoiceChat.Gui
         private bool SlideOutputItem(int intGain)
         {
             float gain = intGain / 100f;
-            ClientSettings.OutputItem = gain;
+            ModConfig.ClientConfig.OutputItem = gain;
             PlayerListener.SetItemGain(gain);
 
             return true;
@@ -564,7 +565,7 @@ namespace RPVoiceChat.Gui
             float dBGain = (float)intDBGain / 10;
             float gain = AudioUtils.DBsToFactor(dBGain);
             if (intDBGain == -200) gain = 0;
-            ClientSettings.InputGain = gain;
+            ModConfig.ClientConfig.InputGain = gain;
             audioInputManager.SetGain(gain);
 
             return true;
@@ -588,7 +589,7 @@ namespace RPVoiceChat.Gui
         private bool SlideInputThreshold(int intThreshold)
         {
             float threshold = (float)intThreshold / 100;
-            ClientSettings.InputThreshold = threshold;
+            ModConfig.ClientConfig.InputThreshold = threshold;
             audioInputManager.SetThreshold(threshold);
 
             return true;
@@ -605,24 +606,24 @@ namespace RPVoiceChat.Gui
 
         private void OnToggleHUD(bool enabled)
         {
-            ClientSettings.ShowHud = enabled;
+            ModConfig.ClientConfig.ShowHud = enabled;
             capi.Event.PushEvent("rpvoicechat:hudUpdate");
         }
 
         private void OnToggleMuffling(bool enabled)
         {
-            ClientSettings.Muffling = enabled;
+            ModConfig.ClientConfig.Muffling = enabled;
         }
 
         private void OnToggleDenoising(bool enabled)
         {
-            ClientSettings.Denoising = enabled;
+            ModConfig.ClientConfig.Denoising = enabled;
         }
 
         private bool SlideDenoisingSensitivity(int intSensitivity)
         {
             float sensitivity = (float)intSensitivity / 100;
-            ClientSettings.BackgroundNoiseThreshold = sensitivity;
+            ModConfig.ClientConfig.DenoisingSensitivity = sensitivity;
             audioInputManager.SetDenoisingSensitivity(sensitivity);
 
             return true;
@@ -631,7 +632,7 @@ namespace RPVoiceChat.Gui
         private bool SlideDenoisingStrength(int intStrength)
         {
             float strength = (float)intStrength / 100;
-            ClientSettings.VoiceDenoisingStrength = strength;
+            ModConfig.ClientConfig.DenoisingStrength = strength;
             audioInputManager.SetDenoisingStrength(strength);
 
             return true;
@@ -639,7 +640,7 @@ namespace RPVoiceChat.Gui
 
         private void OnToggleChannelGuessing(bool enabled)
         {
-            ClientSettings.ChannelGuessing = enabled;
+            ModConfig.ClientConfig.ChannelGuessing = enabled;
         }
     }
 }

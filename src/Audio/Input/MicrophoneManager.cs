@@ -1,5 +1,6 @@
 using OpenTK.Audio.OpenAL;
 using RPVoiceChat.Audio.Effects;
+using RPVoiceChat.Config;
 using RPVoiceChat.Utils;
 using System;
 using System.Collections.Concurrent;
@@ -56,17 +57,18 @@ namespace RPVoiceChat.Audio
         private int customTransmissionRange = 0; // 0 = use default from VoiceLevel
         private bool ignoreDistanceReduction = false;
         private float wallThicknessOverride = -1f;
+        private bool isGlobalBroadcast = false;
 
         public MicrophoneManager(ICoreClientAPI capi)
         {
             audioCaptureThread = new Thread(CaptureAudio);
             audioCaptureCTS = new CancellationTokenSource();
             this.capi = capi;
-            SetThreshold(ClientSettings.InputThreshold);
-            SetGain(ClientSettings.InputGain);
+            SetThreshold(ModConfig.ClientConfig.InputThreshold);
+            SetGain(ModConfig.ClientConfig.InputGain);
             SetOutputFormat(ALFormat.Mono16);
             SetCodec(OpusCodec._Name);
-            capture = CreateNewCapture(ClientSettings.CurrentInputDevice);
+            capture = CreateNewCapture(ModConfig.ClientConfig.InputDevice);
             denoiser = TryLoadDenoiser();
         }
 
@@ -158,12 +160,30 @@ namespace RPVoiceChat.Audio
             wallThicknessOverride = -1f;
         }
 
+        public void SetGlobalBroadcast(bool enabled)
+        {
+            isGlobalBroadcast = enabled;
+        }
+
+        public bool GetGlobalBroadcast()
+        {
+            return isGlobalBroadcast;
+        }
+
+        public void ResetGlobalBroadcast()
+        {
+            isGlobalBroadcast = false;
+        }
+
+
         private void CaptureAudio(object cancellationToken)
         {
             CancellationToken ct = (CancellationToken)cancellationToken;
             while (audioCaptureThread.IsAlive && !ct.IsCancellationRequested)
             {
-                Thread.Sleep(100);
+                // Reduce CPU usage by sleeping between checks when broadcasting globally
+                int sleepMs = isGlobalBroadcast ? 200 : 100;
+                Thread.Sleep(sleepMs);
                 UpdateCaptureAudioSamples();
             }
         }
@@ -188,7 +208,7 @@ namespace RPVoiceChat.Audio
             var sampleBuffer = new byte[bufferLength];
             capture.ReadSamples(sampleBuffer, samplesToRead);
 
-            bool isMuted = ClientSettings.IsMuted;
+            bool isMuted = ModConfig.ClientConfig.IsMuted;
             bool isSleeping = clientEntity.AnimManager.IsAnimationActive("sleep");
             bool canSkipProcessing = isMuted || isSleeping || !clientEntity.Alive;
             bool forceProcessing = AudioWizardActive;
@@ -248,7 +268,7 @@ namespace RPVoiceChat.Audio
             float volumeAmplification = Math.Min(maxSafeGain, recentGainLimits.Average());
 
             // Denoise audio if applicable
-            if (ClientSettings.Denoising && denoiser?.SupportsFormat(Frequency, OutputChannelCount, SampleSize * 8) == true)
+            if (ModConfig.ClientConfig.Denoising && denoiser?.SupportsFormat(Frequency, OutputChannelCount, SampleSize * 8) == true)
                 denoiser.Denoise(ref pcms);
 
             // Amplify volume and calculate amplitude
@@ -261,7 +281,15 @@ namespace RPVoiceChat.Audio
             var amplitude = Math.Sqrt(sampleSquareSum / pcmCount);
 
             // Encode audio
-            byte[] encodedAudio = codec.Encode(pcms);
+            byte[] encodedAudio;
+            if (isGlobalBroadcast && codec is OpusCodec opusCodec)
+            {
+                encodedAudio = opusCodec.EncodeForBroadcast(pcms);
+            }
+            else
+            {
+                encodedAudio = codec.Encode(pcms);
+            }
 
             return new AudioData()
             {
@@ -273,7 +301,8 @@ namespace RPVoiceChat.Audio
                 codec = codec.Name,
                 transmissionRangeBlocks = customTransmissionRange,
                 ignoreDistanceReduction = this.ignoreDistanceReduction,
-                wallThicknessOverride = this.wallThicknessOverride
+                wallThicknessOverride = this.wallThicknessOverride,
+                isGlobalBroadcast = this.isGlobalBroadcast
             };
         }
 
@@ -287,7 +316,7 @@ namespace RPVoiceChat.Audio
             // Check if activation conditions are met
             bool isPTTKeyPressed = capi.Input.KeyboardKeyState[capi.Input.GetHotKeyByCode("voicechatPTT").CurrentMapping.KeyCode];
             bool isAboveInputThreshold = Amplitude >= inputThreshold;
-            Transmitting = ClientSettings.PushToTalkEnabled ? isPTTKeyPressed : isAboveInputThreshold;
+            Transmitting = ModConfig.ClientConfig.PushToTalkEnabled ? isPTTKeyPressed : isAboveInputThreshold;
 
             // Apply deactivation timeout
             stepsSinceLastTransmission++;
@@ -325,7 +354,7 @@ namespace RPVoiceChat.Audio
                 Logger.client.Error($"Could not create audio capture device {deviceName} in {format} format:\n{e}");
             }
             SetInputFormat(format);
-            ClientSettings.CurrentInputDevice = deviceName ?? "Default";
+            ModConfig.ClientConfig.InputDevice = deviceName ?? "Default";
 
             return newCapture;
         }
@@ -347,7 +376,7 @@ namespace RPVoiceChat.Audio
             IDenoiser denoiser = null;
             try
             {
-                denoiser = new RNNoiseDenoiser(ClientSettings.BackgroundNoiseThreshold, ClientSettings.VoiceDenoisingStrength);
+                denoiser = new RNNoiseDenoiser(ModConfig.ClientConfig.InputThreshold, ModConfig.ClientConfig.DenoisingStrength);
                 IsDenoisingAvailable = true;
             }
             catch (DllNotFoundException)
@@ -405,7 +434,7 @@ namespace RPVoiceChat.Audio
                 }
             }
 
-            bool guessUsedChannels = ClientSettings.ChannelGuessing;
+            bool guessUsedChannels = ModConfig.ClientConfig.ChannelGuessing;
             for (var channelIndex = 0; channelIndex < InputChannelCount; channelIndex++)
             {
                 var averageSampleValue = sampleSums[channelIndex] / depth;

@@ -1,4 +1,5 @@
 using RPVoiceChat.Audio;
+using RPVoiceChat.Config;
 using RPVoiceChat.Utils;
 using System;
 using System.Collections.Generic;
@@ -45,10 +46,10 @@ namespace RPVoiceChat.Gui
         {
             audioInputManager.AudioWizardActive = true;
             configurationCTS = new CancellationTokenSource();
-            if (ClientSettings.InputGain == 0)
+            if (ModConfig.ClientConfig.InputGain == 0)
                 audioInputManager.SetGain(1);
-            adjustedGain = ClientSettings.InputGain;
-            ClientSettings.Loopback = true;
+            adjustedGain = ModConfig.ClientConfig.InputGain;
+            ModConfig.ClientConfig.Loopback = true;
             audioOutputManager.IsLoopbackEnabled = true;
             Compose();
             return base.TryOpen();
@@ -59,7 +60,7 @@ namespace RPVoiceChat.Gui
             configurationCTS.Cancel();
             configurationCTS.Dispose();
             configurationInProcess = false;
-            ClientSettings.InputGain = adjustedGain;
+            ModConfig.ClientConfig.InputGain = adjustedGain;
             audioInputManager.SetGain(adjustedGain);
             if (doneDialog.IsOpened() == false) SaveAndExit();
             return base.TryClose();
@@ -103,7 +104,7 @@ namespace RPVoiceChat.Gui
             progressBar.SetValues(0, 0, calibrationSteps);
             progressBar.SetLineInterval(calibrationSteps / 10);
             var inputDeviceDropdown = SingleComposer.GetDropDown("inputDevice");
-            inputDeviceDropdown.SetSelectedValue(ClientSettings.CurrentInputDevice ?? "Default");
+            inputDeviceDropdown.SetSelectedValue(ModConfig.ClientConfig.InputDevice ?? "Default");
         }
 
         private bool OnStartButtonClick()
@@ -149,9 +150,9 @@ namespace RPVoiceChat.Gui
         private void SaveAndExit()
         {
             audioInputManager.AudioWizardActive = false;
-            ClientSettings.Loopback = false;
+            ModConfig.ClientConfig.Loopback = false;
             audioOutputManager.IsLoopbackEnabled = false;
-            ClientSettings.Save();
+            ModConfig.SaveClient(capi);
             GainCalibrationDone?.Invoke();
         }
 
@@ -159,7 +160,7 @@ namespace RPVoiceChat.Gui
         {
             audioInputManager.SetInputDevice(value);
             var dropdown = SingleComposer.GetDropDown("inputDevice");
-            dropdown.SetSelectedValue(ClientSettings.CurrentInputDevice ?? "Default");
+            dropdown.SetSelectedValue(ModConfig.ClientConfig.InputDevice ?? "Default");
         }
 
         public override string ToggleKeyCombinationCode => null;

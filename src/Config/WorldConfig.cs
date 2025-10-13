@@ -1,15 +1,14 @@
 using System.Collections.Generic;
-using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Server;
 
-namespace RPVoiceChat
+namespace RPVoiceChat.Config
 {
     static class WorldConfig
     {
         private const string modPrefix = "rpvoicechat";
         private static ICoreAPI api;
-        private static Dictionary<VoiceLevel, string> configKeyByVoiceLevel = new Dictionary<VoiceLevel, string>
+
+        private static readonly Dictionary<VoiceLevel, string> configKeyByVoiceLevel = new Dictionary<VoiceLevel, string>
         {
             { VoiceLevel.Whispering, "distance-whisper" },
             { VoiceLevel.Talking, "distance-talk" },
@@ -18,65 +17,82 @@ namespace RPVoiceChat
 
         public static void Init(ICoreAPI api)
         {
-            if (api is ICoreClientAPI && WorldConfig.api is ICoreServerAPI) return;
+            if (WorldConfig.api != null && api.Side == EnumAppSide.Client) return;
             WorldConfig.api = api;
         }
 
         public static void Set(VoiceLevel voiceLevel, int distance)
         {
-            configKeyByVoiceLevel.TryGetValue(voiceLevel, out string key);
-
-            Set(key, distance);
+            if (configKeyByVoiceLevel.TryGetValue(voiceLevel, out string key))
+            {
+                Set(key, distance);
+            }
         }
 
         public static void Set(string key, int value)
         {
-            api.World.Config.SetInt(Key(key), value);
+            api?.World.Config.SetInt(Key(key), value);
         }
 
         public static void Set(string key, bool value)
         {
-            api.World.Config.SetBool(Key(key), value);
+            api?.World.Config.SetBool(Key(key), value);
         }
 
         public static void Set(string key, float value)
         {
-            api.World.Config.SetFloat(Key(key), value);
+            api?.World.Config.SetFloat(Key(key), value);
         }
 
         public static void Set(string key, string value)
         {
-            api.World.Config.SetString(Key(key), value);
+            api?.World.Config.SetString(Key(key), value);
         }
 
-        public static int GetInt(VoiceLevel voiceLevel)
+        public static int GetInt(VoiceLevel voiceLevel, int? defaultValue = null)
         {
-            configKeyByVoiceLevel.TryGetValue(voiceLevel, out string key);
-
-            return GetInt(key, (int)voiceLevel);
+            if (configKeyByVoiceLevel.TryGetValue(voiceLevel, out string key))
+            {
+                int fallbackDefault = defaultValue ?? (int)voiceLevel;
+                return GetInt(key, fallbackDefault);
+            }
+            return defaultValue ?? (int)voiceLevel;
         }
 
-        public static int GetInt(string key, int? defaultValue = null)
+        public static int GetInt(string key, int defaultValue = 0)
         {
-            if (defaultValue != null) return api.World.Config.GetInt(Key(key), (int)defaultValue);
-            return api.World.Config.GetInt(Key(key));
+            if (api?.World.Config.HasAttribute(Key(key)) == true)
+            {
+                return api.World.Config.GetInt(Key(key));
+            }
+            return defaultValue;
         }
 
-        public static bool GetBool(string key, bool? defaultValue = null)
+        public static bool GetBool(string key, bool defaultValue = false)
         {
-            if (defaultValue != null) return api.World.Config.GetBool(Key(key), (bool)defaultValue);
-            return api.World.Config.GetBool(Key(key));
+            if (api?.World.Config.HasAttribute(Key(key)) == true)
+            {
+                return api.World.Config.GetBool(Key(key));
+            }
+            return defaultValue;
         }
 
-        public static float GetFloat(string key, float? defaultValue = null)
+        public static float GetFloat(string key, float defaultValue = 0f)
         {
-            if (defaultValue != null) return api.World.Config.GetFloat(Key(key), (float)defaultValue);
-            return api.World.Config.GetFloat(Key(key));
+            if (api?.World.Config.HasAttribute(Key(key)) == true)
+            {
+                return api.World.Config.GetFloat(Key(key));
+            }
+            return defaultValue;
         }
 
         public static string GetString(string key, string defaultValue = null)
         {
-            return api.World.Config.GetString(Key(key), defaultValue);
+            if (api?.World.Config.HasAttribute(Key(key)) == true)
+            {
+                return api.World.Config.GetString(Key(key));
+            }
+            return defaultValue;
         }
 
         private static string Key(string key)

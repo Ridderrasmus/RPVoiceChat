@@ -20,6 +20,7 @@ namespace RPVoiceChat.Networking
         public bool IgnoreDistanceReduction { get; set; } = false;
         public float WallThicknessOverride { get; set; } = -1f;
         protected override PacketType Code { get => PacketType.Audio; }
+        public bool IsGlobalBroadcast { get; set; } = false;
 
         public AudioPacket() { }
 
@@ -36,6 +37,7 @@ namespace RPVoiceChat.Networking
             TransmissionRangeBlocks = audioData.transmissionRangeBlocks;
             IgnoreDistanceReduction = audioData.ignoreDistanceReduction;
             WallThicknessOverride = audioData.wallThicknessOverride;
+            IsGlobalBroadcast = audioData.isGlobalBroadcast;
         }
     }
 }

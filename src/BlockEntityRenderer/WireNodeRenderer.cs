@@ -1,5 +1,5 @@
 ﻿using System;
-using RPVoiceChat.GameContent.Blocks;
+using RPVoiceChat.GameContent.Block;
 using RPVoiceChat.GameContent.Systems;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;

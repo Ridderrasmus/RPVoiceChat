@@ -10,9 +10,17 @@
     "rpvoicechat": [ "*" ]
   },
   "attributes": {
-    "voiceRangeBlocks": 100000,
+    "globalBroadcast": true,
     "ignoreDistanceReduction": true,
-    "wallThicknessOverride": 0
+    "wallThicknessOverride": 0,
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.item-enhancedmegaphone.Title",
+          "text": "rpvoicechat:Handbook.Usage.item-enhancedmegaphone.Text"
+        }
+      ]
+    }
   },
   "drawtype": "json",
   "shape": {
@@ -66,13 +74,5 @@
       "z": 0.5
     },
     "scale": 0.7
-  },
-  "handbook": {
-    "extraSections": [
-      {
-        "title": "rpvoicechat:Handbook.Usage.item-enhancedmegaphone.Title",
-        "text": "rpvoicechat:Handbook.Usage.item-enhancedmegaphone.Text"
-      }
-    ]
   }
 }

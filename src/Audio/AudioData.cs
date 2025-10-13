@@ -1,4 +1,5 @@
 using OpenTK.Audio.OpenAL;
+using RPVoiceChat.Config;
 using RPVoiceChat.Networking;
 
 namespace RPVoiceChat.Audio
@@ -15,6 +16,7 @@ namespace RPVoiceChat.Audio
         public int effectiveRange;
         public bool ignoreDistanceReduction { get; set; } = false;
         public float wallThicknessOverride { get; set; } = -1f; // -1 = pas d'override
+        public bool isGlobalBroadcast { get; set; } = false;
 
         public AudioData() { }
 
@@ -32,7 +34,8 @@ namespace RPVoiceChat.Audio
                     ? audioPacket.TransmissionRangeBlocks
                     : WorldConfig.GetInt(audioPacket.VoiceLevel),
                 ignoreDistanceReduction = audioPacket.IgnoreDistanceReduction,
-                wallThicknessOverride = audioPacket.WallThicknessOverride
+                wallThicknessOverride = audioPacket.WallThicknessOverride,
+                isGlobalBroadcast = audioPacket.IsGlobalBroadcast
             };
         }
     }
