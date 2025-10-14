@@ -179,12 +179,27 @@ namespace RPVoiceChat.Audio
         private void CaptureAudio(object cancellationToken)
         {
             CancellationToken ct = (CancellationToken)cancellationToken;
-            while (audioCaptureThread.IsAlive && !ct.IsCancellationRequested)
+            while (!ct.IsCancellationRequested)
             {
-                // Reduce CPU usage by sleeping between checks when broadcasting globally
-                int sleepMs = isGlobalBroadcast ? 200 : 100;
-                Thread.Sleep(sleepMs);
-                UpdateCaptureAudioSamples();
+                try
+                {
+                    // Use WaitHandle instead of Thread.Sleep for proper cancellation
+                    int sleepMs = isGlobalBroadcast ? 200 : 100;
+                    ct.WaitHandle.WaitOne(sleepMs);
+                    if (ct.IsCancellationRequested) break;
+                    
+                    UpdateCaptureAudioSamples();
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                catch (Exception e)
+                {
+                    Logger.client.Warning($"Error in audio capture thread: {e.Message}");
+                    // Continue running unless cancellation is requested
+                    if (ct.IsCancellationRequested) break;
+                }
             }
         }
 

@@ -178,8 +178,28 @@ namespace RPVoiceChat.Server
 
         public void Dispose()
         {
-            foreach (var server in activeServers)
-                server.Dispose();
+            try
+            {
+                foreach (var server in activeServers)
+                    server.Dispose();
+            }
+            catch (Exception e)
+            {
+                Logger.server.Warning($"Error disposing servers: {e.Message}");
+            }
+            finally
+            {
+                // Always unsubscribe from events, even if disposal fails
+                try
+                {
+                    api.Event.PlayerNowPlaying -= PlayerJoined;
+                    api.Event.PlayerDisconnect -= PlayerLeft;
+                }
+                catch (Exception e)
+                {
+                    Logger.server.Warning($"Error unsubscribing server events: {e.Message}");
+                }
+            }
         }
     }
 }

@@ -177,13 +177,30 @@ namespace RPVoiceChat.Audio
 
         public void Dispose()
         {
-            capi.Event.PlayerEntitySpawn -= PlayerSpawned;
-            capi.Event.PlayerEntityDespawn -= PlayerDespawned;
-
-            PlayerListener.Dispose();
-            localPlayerAudioSource?.Dispose();
-            foreach (var source in playerSources.Values)
-                source?.Dispose();
+            try
+            {
+                PlayerListener.Dispose();
+                localPlayerAudioSource?.Dispose();
+                foreach (var source in playerSources.Values)
+                    source?.Dispose();
+            }
+            catch (Exception e)
+            {
+                Logger.client.Warning($"Error disposing audio output manager: {e.Message}");
+            }
+            finally
+            {
+                // Always unsubscribe from events, even if disposal fails
+                try
+                {
+                    capi.Event.PlayerEntitySpawn -= PlayerSpawned;
+                    capi.Event.PlayerEntityDespawn -= PlayerDespawned;
+                }
+                catch (Exception e)
+                {
+                    Logger.client.Warning($"Error unsubscribing audio output events: {e.Message}");
+                }
+            }
         }
 
         public bool ApplyEffectToPlayer(string playerId, string effectName)

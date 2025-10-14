@@ -146,15 +146,32 @@ namespace RPVoiceChat
 
         public override void Dispose()
         {
-            ModConfig.SaveClient(capi);
-            microphoneManager?.Dispose();
-            audioOutputManager?.Dispose();
-            client?.Dispose();
-            guiManager?.Dispose();
-            clientSettingsRepository?.Dispose();
-
-            capi.Event.KeyUp -= this.Event_KeyUp;
-            capi.Event.LevelFinalize -= OnLoad;
+            try
+            {
+                ModConfig.SaveClient(capi);
+                microphoneManager?.Dispose();
+                audioOutputManager?.Dispose();
+                client?.Dispose();
+                guiManager?.Dispose();
+                clientSettingsRepository?.Dispose();
+            }
+            catch (Exception e)
+            {
+                Logger.client.Warning($"Error during disposal: {e.Message}");
+            }
+            finally
+            {
+                // Always unsubscribe from events, even if disposal fails
+                try
+                {
+                    capi.Event.KeyUp -= Event_KeyUp;
+                    capi.Event.LevelFinalize -= OnLoad;
+                }
+                catch (Exception e)
+                {
+                    Logger.client.Warning($"Error unsubscribing events: {e.Message}");
+                }
+            }
         }
     }
 }
