@@ -49,8 +49,27 @@ namespace RPVoiceChat.Audio
             {
                 var currentBuffer = availableBuffers.PopOne();
                 OALW.ClearError();
+                
+                // Check for errors after BufferData
                 OALW.BufferData(currentBuffer, format, audio, frequency);
+                var bufferError = OALW.GetError();
+                if (bufferError != ALError.NoError)
+                {
+                    Logger.client.Warning($"OpenAL error while setting buffer data: {bufferError}");
+                    availableBuffers.Add(currentBuffer); // Return buffer to available pool
+                    return;
+                }
+                
+                // Check for errors after SourceQueueBuffer
                 OALW.SourceQueueBuffer(source, currentBuffer);
+                var queueError = OALW.GetError();
+                if (queueError != ALError.NoError)
+                {
+                    Logger.client.Warning($"OpenAL error while queuing buffer: {queueError}");
+                    availableBuffers.Add(currentBuffer); // Return buffer to available pool
+                    return;
+                }
+                
                 queuedBuffers.Add(currentBuffer);
             }
         }
@@ -101,6 +120,14 @@ namespace RPVoiceChat.Audio
 
             while (buffer != 0 && safetyCounter < maxIterations)
             {
+                // Check for OpenAL errors before processing buffer
+                var error = OALW.GetError();
+                if (error != ALError.NoError)
+                {
+                    Logger.client.Warning($"OpenAL error while dequeuing buffer: {error}");
+                    break;
+                }
+
                 queuedBuffers.Remove(buffer);
                 availableBuffers.Add(buffer);
                 buffer = OALW.SourceUnqueueBuffer(source);

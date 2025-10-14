@@ -275,63 +275,70 @@ namespace RPVoiceChat.Audio
                 orderingQueue.Add(sequenceNumber, audio);
             }
 
-            DequeueAudio();
+            _ = DequeueAudio(); // Fire and forget - we don't need to await this
         }
 
-        public async void DequeueAudio()
+        public async Task DequeueAudio()
         {
-            await Task.Delay(orderingDelay);
-
-            lock (dequeue_audio_lock)
+            try
             {
-                AudioData audio;
-                lock (ordering_queue_lock)
+                await Task.Delay(orderingDelay);
+
+                lock (dequeue_audio_lock)
                 {
-                    if (orderingQueue.Count == 0) return;
-
-                    lastAudioSequenceNumber = orderingQueue.Keys[0];
-                    audio = orderingQueue[lastAudioSequenceNumber];
-                    orderingQueue.RemoveAt(0);
-                }
-
-                currentAudio = audio;
-                UpdateVoiceLevel(audio.voiceLevel);
-
-                if (codec != null)
-                    audio.data = codec.Decode(audio.data);
-
-                if (audio.data == null || audio.data.Length == 0)
-                {
-                    Logger.client.Warning("Received empty audio data, skipping");
-                    return;
-                }
-
-                float finalGain = GetFinalGain();
-
-                PcmUtils.ApplyGainWithSoftClipping(ref audio.data, audio.format, finalGain);
-                PcmUtils.ApplyCompressor(ref audio.data, audio.format);
-
-                // SKIP FADE for global broadcasts
-                // Opus codec already handles transitions cleanly.
-                if (!audio.isGlobalBroadcast)
-                {
-                    int maxFadeDuration = Math.Min(
-                        2 * audio.frequency / 1000,
-                        audio.data.Length / 4
-                    );
-
-                    if (audio.data.Length > maxFadeDuration * 2)
+                    AudioData audio;
+                    lock (ordering_queue_lock)
                     {
-                        AudioUtils.FadeEdges(audio.data, maxFadeDuration);
+                        if (orderingQueue.Count == 0) return;
+
+                        lastAudioSequenceNumber = orderingQueue.Keys[0];
+                        audio = orderingQueue[lastAudioSequenceNumber];
+                        orderingQueue.RemoveAt(0);
                     }
+
+                    currentAudio = audio;
+                    UpdateVoiceLevel(audio.voiceLevel);
+
+                    if (codec != null)
+                        audio.data = codec.Decode(audio.data);
+
+                    if (audio.data == null || audio.data.Length == 0)
+                    {
+                        Logger.client.Warning("Received empty audio data, skipping");
+                        return;
+                    }
+
+                    float finalGain = GetFinalGain();
+
+                    PcmUtils.ApplyGainWithSoftClipping(ref audio.data, audio.format, finalGain);
+                    PcmUtils.ApplyCompressor(ref audio.data, audio.format);
+
+                    // SKIP FADE for global broadcasts
+                    // Opus codec already handles transitions cleanly.
+                    if (!audio.isGlobalBroadcast)
+                    {
+                        int maxFadeDuration = Math.Min(
+                            2 * audio.frequency / 1000,
+                            audio.data.Length / 4
+                        );
+
+                        if (audio.data.Length > maxFadeDuration * 2)
+                        {
+                            AudioUtils.FadeEdges(audio.data, maxFadeDuration);
+                        }
+                    }
+
+                    buffer.QueueAudio(audio.data, audio.format, audio.frequency);
+
+                    // The source can stop playing if it finishes everything in queue
+                    var state = OALW.GetSourceState(source);
+                    if (state != ALSourceState.Playing)
+                        StartPlaying();
                 }
-
-                buffer.QueueAudio(audio.data, audio.format, audio.frequency);
-
-                // The source can stop playing if it finishes everything in queue
-                var state = OALW.GetSourceState(source);
-                if (state != ALSourceState.Playing)
-                    StartPlaying();
+            }
+            catch (Exception e)
+            {
+                Logger.client.Warning($"Error in DequeueAudio: {e.Message}");
             }
         }
 
