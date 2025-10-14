@@ -34,8 +34,8 @@ namespace RPVoiceChat.Audio
         private ALFormat OutputFormat;
         private int OutputChannelCount;
         private float gain;
-        private const double _maxVolume = 0.8;
-        private const short maxSampleValue = (short)(_maxVolume * short.MaxValue);
+        private double _maxVolume => ServerConfigManager.MaxVolumeLimit;
+        private short maxSampleValue;
         private List<float> recentGainLimits = new List<float>();
         private ConcurrentQueue<float> recentGainLimitsQueue = new ConcurrentQueue<float>();
 
@@ -50,7 +50,7 @@ namespace RPVoiceChat.Audio
         private ICoreClientAPI capi;
         private VoiceLevel voiceLevel = VoiceLevel.Talking;
         private double inputThreshold;
-        private double maxInputThreshold = _maxVolume / 2;
+        private double maxInputThreshold;
         private List<double> recentAmplitudes = new List<double>();
 
         // Megaphone management (separate from voice level)
@@ -64,6 +64,8 @@ namespace RPVoiceChat.Audio
             audioCaptureThread = new Thread(CaptureAudio);
             audioCaptureCTS = new CancellationTokenSource();
             this.capi = capi;
+            maxSampleValue = (short)(_maxVolume * short.MaxValue);
+            maxInputThreshold = _maxVolume / 2;
             SetThreshold(ModConfig.ClientConfig.InputThreshold);
             SetGain(ModConfig.ClientConfig.InputGain);
             SetOutputFormat(ALFormat.Mono16);
@@ -179,12 +181,27 @@ namespace RPVoiceChat.Audio
         private void CaptureAudio(object cancellationToken)
         {
             CancellationToken ct = (CancellationToken)cancellationToken;
-            while (audioCaptureThread.IsAlive && !ct.IsCancellationRequested)
+            while (!ct.IsCancellationRequested)
             {
-                // Reduce CPU usage by sleeping between checks when broadcasting globally
-                int sleepMs = isGlobalBroadcast ? 200 : 100;
-                Thread.Sleep(sleepMs);
-                UpdateCaptureAudioSamples();
+                try
+                {
+                    // Use WaitHandle instead of Thread.Sleep for proper cancellation
+                    int sleepMs = isGlobalBroadcast ? 200 : 100;
+                    ct.WaitHandle.WaitOne(sleepMs);
+                    if (ct.IsCancellationRequested) break;
+                    
+                    UpdateCaptureAudioSamples();
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                catch (Exception e)
+                {
+                    Logger.client.Warning($"Error in audio capture thread: {e.Message}");
+                    // Continue running unless cancellation is requested
+                    if (ct.IsCancellationRequested) break;
+                }
             }
         }
 

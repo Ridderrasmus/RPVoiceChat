@@ -21,11 +21,13 @@ namespace RPVoiceChat.Config
 
         // UI Settings
         public bool ShowHud { get; set; } = true;
+        public bool IsMinimalHud { get; set; } = false;
         public int ActiveConfigTab { get; set; } = 0;
 
         // Behavior Settings
         public bool PushToTalkEnabled { get; set; } = false;
         public bool IsMuted { get; set; } = false;
+        public bool IsMonoMode { get; set; } = false;
         public bool Loopback { get; set; } = false;
         public bool Muffling { get; set; } = true;
         public bool ChannelGuessing { get; set; } = true;
@@ -52,10 +54,12 @@ namespace RPVoiceChat.Config
             DenoisingStrength = previousConfig.DenoisingStrength;
 
             ShowHud = previousConfig.ShowHud;
+            IsMinimalHud = previousConfig.IsMinimalHud;
             ActiveConfigTab = previousConfig.ActiveConfigTab;
 
             PushToTalkEnabled = previousConfig.PushToTalkEnabled;
             IsMuted = previousConfig.IsMuted;
+            IsMonoMode = previousConfig.IsMonoMode;
             Loopback = previousConfig.Loopback;
             Muffling = previousConfig.Muffling;
             ChannelGuessing = previousConfig.ChannelGuessing;

@@ -1,4 +1,5 @@
 ﻿using RPVoiceChat;
+using RPVoiceChat.Config;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
@@ -49,7 +50,8 @@ public class VoiceAmplifierItem : Item
 
                 if (attr != null && attr["voiceRangeBlocks"]?.Exists == true)
                 {
-                    int rangeBlocks = attr["voiceRangeBlocks"].AsInt(50);
+                    int defaultRangeBlocks = attr["voiceRangeBlocks"].AsInt(50);
+                    int rangeBlocks = GetConfiguredVoiceRange(api, defaultRangeBlocks);
                     microphoneManager.SetTransmissionRange(rangeBlocks);
                 }
 
@@ -120,5 +122,36 @@ public class VoiceAmplifierItem : Item
         {
             OnHeldInteractStop(0f, slot, byEntity, null, null);
         }
+    }
+
+    private int GetConfiguredVoiceRange(ICoreAPI api, int defaultRange)
+    {
+        // Only on server side, use server configurations
+        if (api.Side != EnumAppSide.Server) return defaultRange;
+
+        // Use the item class to determine the appropriate configuration
+        string itemClass = GetType().Name.ToLower();
+        
+        switch (itemClass)
+        {
+            case "voiceamplifieritem":
+                return GetVoiceAmplifierItemRange();
+            default:
+                return defaultRange;
+        }
+    }
+
+    private int GetVoiceAmplifierItemRange()
+    {
+        // Identify the specific megaphone type by its code
+        string itemCode = Code?.ToString()?.ToLower() ?? "";
+        
+        if (itemCode.Contains("enhancedmegaphone"))
+            return ServerConfigManager.EnhancedMegaphoneAudibleDistance;
+        else if (itemCode.Contains("megaphone"))
+            return ServerConfigManager.MegaphoneAudibleDistance;
+        
+        // Default value if no match found
+        return Attributes?["voiceRangeBlocks"].AsInt(125) ?? 125;
     }
 }

@@ -20,13 +20,16 @@ namespace RPVoiceChat.Gui
             fixedPaddingY = 10
         };
         private string voiceType;
+        private VoiceLevel currentVoiceLevel;
 
         public SpeechIndicator(ICoreClientAPI capi, MicrophoneManager microphoneManager) : base(capi)
         {
             audioInputManager = microphoneManager;
+            currentVoiceLevel = microphoneManager.GetVoiceLevel();
 
             GuiDialogCreateCharacterPatch.OnCharacterSelection += bindToMainThread(UpdateVoiceType);
             microphoneManager.TransmissionStateChanged += bindToMainThread(UpdateDisplay);
+            microphoneManager.VoiceLevelUpdated += OnVoiceLevelUpdated;
             capi.Event.RegisterEventBusListener(OnHudUpdate, 0.5, "rpvoicechat:hudUpdate");
         }
 
@@ -39,6 +42,12 @@ namespace RPVoiceChat.Gui
         {
             voiceType = capi.World.Player?.Entity.talkUtil.soundName.GetName() ?? voiceType;
             SetupIcon();
+        }
+
+        private void OnVoiceLevelUpdated(VoiceLevel voiceLevel)
+        {
+            currentVoiceLevel = voiceLevel;
+            bindToMainThread(SetupIcon)();
         }
 
         private Action bindToMainThread(Action function)
@@ -54,7 +63,19 @@ namespace RPVoiceChat.Gui
         private void UpdateDisplay()
         {
             bool isTalking = audioInputManager.Transmitting;
-            bool shouldDisplay = (ModConfig.ClientConfig.IsMuted || isTalking) && ModConfig.ClientConfig.ShowHud;
+            bool shouldDisplay;
+            
+            if (ModConfig.ClientConfig.IsMinimalHud)
+            {
+                // In minimal mode, only show when talking (or muted)
+                shouldDisplay = (ModConfig.ClientConfig.IsMuted || isTalking) && ModConfig.ClientConfig.ShowHud;
+            }
+            else
+            {
+                // In normal mode, show when talking or when muted
+                shouldDisplay = (ModConfig.ClientConfig.IsMuted || isTalking) && ModConfig.ClientConfig.ShowHud;
+            }
+            
             bool successful = shouldDisplay ? TryOpen() : TryClose();
 
             if (!successful) bindToMainThread(UpdateDisplay)();
@@ -62,20 +83,43 @@ namespace RPVoiceChat.Gui
 
         public void SetupIcon()
         {
-            string voiceIcon = new AssetLocation(RPVoiceChatMod.modID, "textures/gui/" + voiceType + ".png");
-            IAsset asset = capi.Assets.TryGet(voiceIcon, false);
-            if (asset == null) 
+            // In minimal mode, always show the minimal indicator
+            if (ModConfig.ClientConfig.IsMinimalHud)
             {
-                // Display an icon by default if voiceType not exists. Typically, with custom voice mods.
-                voiceIcon = new AssetLocation(RPVoiceChatMod.modID, "textures/gui/megaphone.png");
-            }
+                // Choose color based on microphone manager voice level
+                string colorIcon = currentVoiceLevel switch
+                {
+                    VoiceLevel.Whispering => "minimal-blue.png",
+                    VoiceLevel.Talking => "minimal-green.png", 
+                    VoiceLevel.Shouting => "minimal-red.png",
+                    _ => "minimal-green.png" // Default to green for talk
+                };
 
-            SingleComposer = capi.Gui.CreateCompo("rpvcspeechindicator", dialogBounds)
-                .AddImage(ElementBounds.Fixed(0, 0, size, size), voiceIcon)
-                .AddIf(ModConfig.ClientConfig.IsMuted)
-                .AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation(RPVoiceChatMod.modID, "textures/gui/muted.png"))
-                .EndIf()
-                .Compose();
+                SingleComposer = capi.Gui.CreateCompo("rpvcspeechindicator", dialogBounds)
+                    .AddImage(ElementBounds.Fixed(16, 16, 32, 32), new AssetLocation(RPVoiceChatMod.modID, "textures/gui/" + colorIcon))
+                    .AddIf(ModConfig.ClientConfig.IsMuted)
+                    .AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation(RPVoiceChatMod.modID, "textures/gui/muted.png"))
+                    .EndIf()
+                    .Compose();
+            }
+            else
+            {
+                // Normal mode - show voice type icons
+                string voiceIcon = new AssetLocation(RPVoiceChatMod.modID, "textures/gui/" + voiceType + ".png");
+                IAsset asset = capi.Assets.TryGet(voiceIcon, false);
+                if (asset == null) 
+                {
+                    // Display an icon by default if voiceType not exists. Typically, with custom voice mods.
+                    voiceIcon = new AssetLocation(RPVoiceChatMod.modID, "textures/gui/megaphone.png");
+                }
+
+                SingleComposer = capi.Gui.CreateCompo("rpvcspeechindicator", dialogBounds)
+                    .AddImage(ElementBounds.Fixed(0, 0, size, size), voiceIcon)
+                    .AddIf(ModConfig.ClientConfig.IsMuted)
+                    .AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation(RPVoiceChatMod.modID, "textures/gui/muted.png"))
+                    .EndIf()
+                    .Compose();
+            }
 
             UpdateDisplay();
         }

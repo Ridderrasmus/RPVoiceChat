@@ -1,4 +1,5 @@
-﻿using RPVoiceChat.GameContent.BlockEntity;
+﻿using RPVoiceChat.Config;
+using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.Utils;
 using Vintagestory.API.Client;
 
@@ -10,7 +11,7 @@ namespace RPVoiceChat.Gui
 
         // For anti-spam: time of last sending
         private long lastKeySentMs = 0;
-        private const int MinDelayBetweenKeysMs = 200; // 200 ms between two keystrokes max
+        private int MinDelayBetweenKeysMs => ServerConfigManager.TelegraphMinDelayBetweenKeysMs; // ms between two keystrokes max
 
         // Display fields for sent/received text
         private GuiElementDynamicText sentTextElem;

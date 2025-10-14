@@ -22,6 +22,8 @@ namespace RPVoiceChat
         private GuiManager guiManager;
         private bool isReady = false;
         private bool mutePressed = false;
+        private bool monoPressed = false;
+        private bool minimalPressed = false;
         private bool voiceMenuPressed = false;
         private bool voiceLevelPressed = false;
 
@@ -71,6 +73,8 @@ namespace RPVoiceChat
             capi.Input.RegisterHotKey("voicechatVoiceLevel", UIUtils.I18n("Hotkey.VoiceLevel"), GlKeys.Tab, HotkeyType.GUIOrOtherControls, false, false, true);
             capi.Input.RegisterHotKey("voicechatPTT", UIUtils.I18n("Hotkey.PTT"), GlKeys.CapsLock, HotkeyType.GUIOrOtherControls);
             capi.Input.RegisterHotKey("voicechatMute", UIUtils.I18n("Hotkey.Mute"), GlKeys.N, HotkeyType.GUIOrOtherControls);
+            capi.Input.RegisterHotKey("voicechatMono", UIUtils.I18n("Hotkey.Mono"), GlKeys.M, HotkeyType.GUIOrOtherControls);
+            capi.Input.RegisterHotKey("voicechatMinimal", UIUtils.I18n("Hotkey.Minimal"), GlKeys.B, HotkeyType.GUIOrOtherControls);
             capi.Event.KeyUp += this.Event_KeyUp;
 
             // Set up keybind event handlers
@@ -103,6 +107,28 @@ namespace RPVoiceChat
                 return true;
             });
 
+            capi.Input.SetHotKeyHandler("voicechatMono", _ =>
+            {
+                if (monoPressed) return true;
+                monoPressed = true;
+
+                ModConfig.ClientConfig.IsMonoMode = !ModConfig.ClientConfig.IsMonoMode;
+                capi.Event.PushEvent("rpvoicechat:hudUpdate");
+                ModConfig.SaveClient(capi);
+                return true;
+            });
+
+            capi.Input.SetHotKeyHandler("voicechatMinimal", _ =>
+            {
+                if (minimalPressed) return true;
+                minimalPressed = true;
+
+                ModConfig.ClientConfig.IsMinimalHud = !ModConfig.ClientConfig.IsMinimalHud;
+                capi.Event.PushEvent("rpvoicechat:hudUpdate");
+                ModConfig.SaveClient(capi);
+                return true;
+            });
+
             capi.Event.LevelFinalize += OnLoad;
         }
 
@@ -123,6 +149,8 @@ namespace RPVoiceChat
             if (e.KeyCode == HotkeyCode("voicechatMenu")) voiceMenuPressed = false;
             if (e.KeyCode == HotkeyCode("voicechatVoiceLevel")) voiceLevelPressed = false;
             if (e.KeyCode == HotkeyCode("voicechatMute")) mutePressed = false;
+            if (e.KeyCode == HotkeyCode("voicechatMono")) monoPressed = false;
+            if (e.KeyCode == HotkeyCode("voicechatMinimal")) minimalPressed = false;
         }
 
         private void OnAudioReceived(AudioPacket packet)
@@ -146,15 +174,32 @@ namespace RPVoiceChat
 
         public override void Dispose()
         {
-            ModConfig.SaveClient(capi);
-            microphoneManager?.Dispose();
-            audioOutputManager?.Dispose();
-            client?.Dispose();
-            guiManager?.Dispose();
-            clientSettingsRepository?.Dispose();
-
-            capi.Event.KeyUp -= this.Event_KeyUp;
-            capi.Event.LevelFinalize -= OnLoad;
+            try
+            {
+                ModConfig.SaveClient(capi);
+                microphoneManager?.Dispose();
+                audioOutputManager?.Dispose();
+                client?.Dispose();
+                guiManager?.Dispose();
+                clientSettingsRepository?.Dispose();
+            }
+            catch (Exception e)
+            {
+                Logger.client.Warning($"Error during disposal: {e.Message}");
+            }
+            finally
+            {
+                // Always unsubscribe from events, even if disposal fails
+                try
+                {
+                    capi.Event.KeyUp -= Event_KeyUp;
+                    capi.Event.LevelFinalize -= OnLoad;
+                }
+                catch (Exception e)
+                {
+                    Logger.client.Warning($"Error unsubscribing events: {e.Message}");
+                }
+            }
         }
     }
 }

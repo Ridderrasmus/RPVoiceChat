@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using RPVoiceChat.Config;
 using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Systems;
@@ -16,11 +17,13 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public bool IsPlaying { get; private set; }
         public int Volume { get; set; } = 8;
-        public bool GenuineMorseCharacters { get; set; } = false; // TODO fix message received : different when true (want same, obviously)
-        private const int MaxMessageLength = 100;
+        public bool GenuineMorseCharacters => ServerConfigManager.TelegraphGenuineMorseCharacters;
+        private int MaxMessageLength => ServerConfigManager.TelegraphMaxMessageLength;
 
         private string sentMessage = "";
         private string receivedMessage = "";
+        private string sentMessageOriginal = ""; // Store original latin characters
+        private string receivedMessageOriginal = ""; // Store original latin characters
         private Queue<char> pendingSignals = new Queue<char>();
 
         public BlockEntityTelegraph() : base()
@@ -38,6 +41,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (api.Side == EnumAppSide.Client)
             {
                 dialog = new TelegraphMenuDialog((ICoreClientAPI)api, this);
+                UpdateDisplayMessages();
                 dialog.UpdateSentText(sentMessage);
                 dialog.UpdateReceivedText(receivedMessage);
             }
@@ -46,15 +50,16 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
         {
             base.FromTreeAttributes(tree, worldForResolving);
-            sentMessage = tree.GetString("sentMessage");
-            receivedMessage = tree.GetString("receivedMessage");
+            sentMessageOriginal = tree.GetString("sentMessage");
+            receivedMessageOriginal = tree.GetString("receivedMessage");
+            UpdateDisplayMessages();
         }
 
         public override void ToTreeAttributes(ITreeAttribute tree)
         {
             base.ToTreeAttributes(tree);
-            tree.SetString("sentMessage", sentMessage);
-            tree.SetString("receivedMessage", receivedMessage);
+            tree.SetString("sentMessage", sentMessageOriginal);
+            tree.SetString("receivedMessage", receivedMessageOriginal);
         }
 
         protected override void SetWireAttachmentOffset()
@@ -67,6 +72,12 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (Api.Side == EnumAppSide.Server)
                 return true;
 
+            // Update display messages before opening dialog
+            UpdateDisplayMessages();
+            MarkDirty(); // Mark as dirty after updating display messages
+            dialog?.UpdateSentText(sentMessage);
+            dialog?.UpdateReceivedText(receivedMessage);
+            
             dialog.TryOpen();
             return true;
         }
@@ -84,20 +95,10 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             pendingSignals.Enqueue(keyChar);
 
-            string messageToSend;
-            string displayPart;
+            string messageToSend = keyChar.ToString(); // Always send latin characters on network
+            string displayPart = GenuineMorseCharacters ? ConvertKeyCodeToMorse(keyChar) : keyChar.ToString();
 
-            if (GenuineMorseCharacters)
-            {
-                messageToSend = ConvertKeyCodeToMorse(keyChar);
-                displayPart = messageToSend + " ";
-            }
-            else
-            {
-                messageToSend = keyChar.ToString();
-                displayPart = keyChar.ToString();
-            }
-
+            sentMessageOriginal += keyChar.ToString(); // Store original latin character
             sentMessage += displayPart;
             MarkDirty();
             dialog?.UpdateSentText(sentMessage);
@@ -135,7 +136,10 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             if (Api is ICoreClientAPI clientApi)
             {
-                receivedMessage += GenuineMorseCharacters ? ConvertKeyCodeToMorse(keyChar) + " " : keyChar.ToString();
+                string displayChar = GenuineMorseCharacters ? ConvertKeyCodeToMorse(keyChar) : keyChar.ToString();
+                
+                receivedMessageOriginal += keyChar.ToString(); // Store original latin character
+                receivedMessage += displayChar;
 
                 MarkDirty();
                 dialog?.UpdateReceivedText(receivedMessage);
@@ -148,7 +152,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
             if (string.IsNullOrEmpty(message)) return;
 
-            OnReceivedSignal(message[0]);
+            // Always receive latin characters on network, convert to morse for display if needed
+            char keyChar = message[0];
+            OnReceivedSignal(keyChar);
         }
 
         private async Task PlayMorseAsync(string morse)
@@ -191,10 +197,29 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
             sentMessage = "";
             receivedMessage = "";
+            sentMessageOriginal = "";
+            receivedMessageOriginal = "";
             MarkDirty();
             pendingSignals.Clear();
             dialog?.UpdateSentText("");
             dialog?.UpdateReceivedText("");
+        }
+
+        private void UpdateDisplayMessages()
+        {
+            // Convert original messages to display format based on current mode
+            sentMessage = "";
+            receivedMessage = "";
+            
+            foreach (char c in sentMessageOriginal)
+            {
+                sentMessage += GenuineMorseCharacters ? ConvertKeyCodeToMorse(c) : c.ToString();
+            }
+            
+            foreach (char c in receivedMessageOriginal)
+            {
+                receivedMessage += GenuineMorseCharacters ? ConvertKeyCodeToMorse(c) : c.ToString();
+            }
         }
 
         private static string ConvertKeyCodeToMorse(char keyChar)
@@ -241,5 +266,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 default: return "";
             }
         }
+
     }
 }
