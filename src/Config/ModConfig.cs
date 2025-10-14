@@ -16,10 +16,16 @@ namespace RPVoiceChat.Config
             if (api.Side == EnumAppSide.Client)
             {
                 ClientConfig = ReadConfig<RPVoiceChatClientConfig>(api, ClientConfigName);
+                // Also load server config on client side for shared settings (needed for singleplayer)
+                ServerConfig = ReadConfig<RPVoiceChatServerConfig>(api, ServerConfigName);
+                // Validate server configuration after loading
+                ServerConfigManager.ValidateConfig();
             }
             else
             {
                 ServerConfig = ReadConfig<RPVoiceChatServerConfig>(api, ServerConfigName);
+                // Validate server configuration after loading
+                ServerConfigManager.ValidateConfig();
             }
         }
 
@@ -55,8 +61,7 @@ namespace RPVoiceChat.Config
                 }
                 else
                 {
-                    GenerateConfig(api, jsonConfig, config);
-                    config = LoadConfig<T>(api, jsonConfig);
+                    // Config loaded successfully, no migration needed
                 }
             }
             catch (Exception e)
@@ -72,22 +77,56 @@ namespace RPVoiceChat.Config
 
         private static void WriteConfig<T>(ICoreAPI api, string jsonConfig, T config) where T : class, IModConfig
         {
-            GenerateConfig(api, jsonConfig, config);
+            try
+            {
+                GenerateConfig(api, jsonConfig, config);
+                api.Logger.Debug($"[RPVoiceChat] Successfully saved {typeof(T).Name}");
+            }
+            catch (Exception e)
+            {
+                api.Logger.Error($"[RPVoiceChat] Failed to save {typeof(T).Name}: {e.Message}");
+            }
         }
 
         private static T LoadConfig<T>(ICoreAPI api, string jsonConfig) where T : class, IModConfig
         {
-            return api.LoadModConfig<T>(jsonConfig);
+            try
+            {
+                return api.LoadModConfig<T>(jsonConfig);
+            }
+            catch (Exception e)
+            {
+                api.Logger.Warning($"[RPVoiceChat] Failed to load {jsonConfig}: {e.Message}");
+                return null;
+            }
         }
 
         private static void GenerateConfig<T>(ICoreAPI api, string jsonConfig, T previousConfig = null) where T : class, IModConfig
         {
-            api.StoreModConfig(CloneConfig<T>(api, previousConfig), jsonConfig);
+            try
+            {
+                var configToSave = CloneConfig<T>(api, previousConfig);
+                api.StoreModConfig(configToSave, jsonConfig);
+            }
+            catch (Exception e)
+            {
+                api.Logger.Error($"[RPVoiceChat] Failed to generate {jsonConfig}: {e.Message}");
+                throw;
+            }
         }
 
         private static T CloneConfig<T>(ICoreAPI api, T config = null) where T : class, IModConfig
         {
-            return (T)Activator.CreateInstance(typeof(T), new object[] { api, config });
+            try
+            {
+                return (T)Activator.CreateInstance(typeof(T), new object[] { api, config });
+            }
+            catch (Exception e)
+            {
+                api.Logger.Error($"[RPVoiceChat] Failed to clone config {typeof(T).Name}: {e.Message}");
+                // Fallback to default constructor
+                return (T)Activator.CreateInstance(typeof(T));
+            }
         }
     }
 }

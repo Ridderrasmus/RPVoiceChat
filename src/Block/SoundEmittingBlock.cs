@@ -1,6 +1,7 @@
 ﻿using System;
 using RPVoiceChat;
 using RPVoiceChat.Audio;
+using RPVoiceChat.Config;
 using Vintagestory.API.Common;
 
 public class SoundEmittingBlock : Block
@@ -20,9 +21,47 @@ public class SoundEmittingBlock : Block
     {
         base.OnLoaded(api);
 
-        AudibleDistance = Attributes?["soundAudibleDistance"].AsInt(AudibleDistance) ?? AudibleDistance;
-        DefaultVolume = Attributes?["soundVolume"].AsFloat(DefaultVolume) ?? DefaultVolume;
+        // Default values from JSON assets
+        int defaultDistance = Attributes?["soundAudibleDistance"].AsInt(AudibleDistance) ?? AudibleDistance;
+        float defaultVolume = Attributes?["soundVolume"].AsFloat(DefaultVolume) ?? DefaultVolume;
         soundDuration = Attributes?["soundDuration"].AsFloat(soundDuration) ?? soundDuration;
+
+        // Override with server configurations if available
+        AudibleDistance = GetConfiguredAudibleDistance(api, defaultDistance);
+        DefaultVolume = defaultVolume;
+    }
+
+    private int GetConfiguredAudibleDistance(ICoreAPI api, int defaultDistance)
+    {
+        // Only on server side, use server configurations
+        if (api.Side != EnumAppSide.Server) return defaultDistance;
+
+        // Use the block class to determine the appropriate configuration
+        string blockClass = GetType().Name.ToLower();
+        
+        switch (blockClass)
+        {
+            case "soundemittingblock":
+                return GetSoundEmittingBlockDistance();
+            default:
+                return defaultDistance;
+        }
+    }
+
+    private int GetSoundEmittingBlockDistance()
+    {
+        // Identify the specific sound block type by its code
+        string blockCode = Code?.ToString()?.ToLower() ?? "";
+        
+        if (blockCode.Contains("callbell"))
+            return ServerConfigManager.CallbellAudibleDistance;
+        else if (blockCode.Contains("carillonbell"))
+            return ServerConfigManager.CarillonbellAudibleDistance;
+        else if (blockCode.Contains("churchbell"))
+            return ServerConfigManager.ChurchbellAudibleDistance;
+        
+        // Default value if no match found
+        return Attributes?["soundAudibleDistance"].AsInt(16) ?? 16;
     }
 
     public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)

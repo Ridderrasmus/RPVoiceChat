@@ -59,7 +59,8 @@ namespace RPVoiceChat.Gui
 
         private void UpdateDisplay()
         {
-            bool shouldDisplay = ModConfig.ClientConfig.ShowHud;
+            // Hide in minimal mode, show only in normal mode
+            bool shouldDisplay = ModConfig.ClientConfig.ShowHud && !ModConfig.ClientConfig.IsMinimalHud;
             bool successful = shouldDisplay ? TryOpen() : TryClose();
 
             if (!successful) bindToMainThread(UpdateDisplay)();

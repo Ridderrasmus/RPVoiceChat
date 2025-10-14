@@ -296,6 +296,16 @@ namespace RPVoiceChat.Gui
 
             RegisterOption(new ConfigOption
             {
+                Key = "monoMode",
+                Type = ElementType.Switch,
+                Label = true,
+                Tooltip = true,
+                Tab = audioOutputTab,
+                ToggleAction = OnToggleMonoMode
+            });
+
+            RegisterOption(new ConfigOption
+            {
                 Key = "outputVoice",
                 Type = ElementType.Slider,
                 Label = true,
@@ -373,6 +383,16 @@ namespace RPVoiceChat.Gui
                 Tooltip = true,
                 Tab = interfaceTab,
                 ToggleAction = OnToggleHUD
+            });
+
+            RegisterOption(new ConfigOption
+            {
+                Key = "minimalHUD",
+                Type = ElementType.Switch,
+                Label = true,
+                Tooltip = true,
+                Tab = interfaceTab,
+                ToggleAction = OnToggleMinimalHUD
             });
 
             RegisterOption(new ConfigOption
@@ -470,12 +490,14 @@ namespace RPVoiceChat.Gui
             SetValue("togglePushToTalk", ModConfig.ClientConfig.PushToTalkEnabled);
             SetValue("muteMicrophone", ModConfig.ClientConfig.IsMuted);
             SetValue("loopback", ModConfig.ClientConfig.Loopback);
+            SetValue("monoMode", ModConfig.ClientConfig.IsMonoMode);
             SetValue("outputVoice", new dynamic[] { outputVoice, 0, 200, 1, "%" });
             SetValue("inputGain", new dynamic[] { inputGainDBS, -200, 200, 1, "" });
             SetValue("outputBlock", new dynamic[] { outputBlock, 0, 200, 1, "%" });
             SetValue("outputItem", new dynamic[] { outputItem, 0, 200, 1, "%" });
             SetValue("inputThreshold", new dynamic[] { inputThreshold, 0, 100, 1, "" });
             SetValue("toggleHUD", ModConfig.ClientConfig.ShowHud);
+            SetValue("minimalHUD", ModConfig.ClientConfig.IsMinimalHud);
             SetValue("toggleMuffling", ModConfig.ClientConfig.Muffling);
             SetValue("toggleDenoising", ModConfig.ClientConfig.Denoising);
             SetValue("denoisingSensitivity", new dynamic[] { denoisingSensitivity, 0, 100, 1, "%" });
@@ -531,6 +553,18 @@ namespace RPVoiceChat.Gui
         {
             ModConfig.ClientConfig.Loopback = enabled;
             audioOutputManager.IsLoopbackEnabled = enabled;
+        }
+
+        protected void OnToggleMonoMode(bool enabled)
+        {
+            ModConfig.ClientConfig.IsMonoMode = enabled;
+            capi.Event.PushEvent("rpvoicechat:hudUpdate");
+        }
+
+        protected void OnToggleMinimalHUD(bool enabled)
+        {
+            ModConfig.ClientConfig.IsMinimalHud = enabled;
+            capi.Event.PushEvent("rpvoicechat:hudUpdate");
         }
 
         private bool SlideOutputVoice(int intGain)

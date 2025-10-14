@@ -7,7 +7,7 @@ using Vintagestory.API.MathTools;
 
 class BehaviorRingable : BlockBehavior
 {
-    const double BellRingCooldownSeconds = 1.5;
+    double BellRingCooldownSeconds => ServerConfigManager.BellRingCooldownSeconds;
 
     public BehaviorRingable(Block block) : base(block)
     {

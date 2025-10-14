@@ -18,7 +18,7 @@ namespace RPVoiceChat.Audio
     {
         public bool IsDisposed = false;
         public bool IsPlaying { get => _IsPlaying(); }
-        public const float MaxGain = 2f;
+        public float MaxGain => ServerConfigManager.MaxAudioGain;
 
         private const int BufferCount = 20;
         private int source;
@@ -176,12 +176,19 @@ namespace RPVoiceChat.Audio
             var velocity = new Vec3f();
 
             // For global broadcasts, disable audio positioning
-            bool useLocationalAudio = IsLocational && !isGlobalBroadcast;
+            bool useLocationalAudio = IsLocational && !isGlobalBroadcast && !ModConfig.ClientConfig.IsMonoMode;
 
             if (useLocationalAudio)
             {
                 sourcePosition = GetRelativeSourcePosition(speakerPos, listenerPos);
                 velocity = GetRelativeVelocity(speakerPos, listenerPos, sourcePosition);
+            }
+            else if (ModConfig.ClientConfig.IsMonoMode && !isGlobalBroadcast)
+            {
+                // In mono mode, preserve distance but center the audio (no stereo positioning)
+                float distance = (float)speakerPos.DistanceTo(listenerPos);
+                sourcePosition = new Vec3f(0, 0, distance); // Position in front of listener at correct distance
+                velocity = new Vec3f(); // No velocity in mono mode
             }
 
             OALW.ClearError();
