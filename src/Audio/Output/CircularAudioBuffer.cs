@@ -52,7 +52,7 @@ namespace RPVoiceChat.Audio
                 
                 // Check for errors after BufferData
                 OALW.BufferData(currentBuffer, format, audio, frequency);
-                var bufferError = OALW.GetError();
+                var bufferError = AL.GetError();
                 if (bufferError != ALError.NoError)
                 {
                     Logger.client.Warning($"OpenAL error while setting buffer data: {bufferError}");
@@ -62,7 +62,7 @@ namespace RPVoiceChat.Audio
                 
                 // Check for errors after SourceQueueBuffer
                 OALW.SourceQueueBuffer(source, currentBuffer);
-                var queueError = OALW.GetError();
+                var queueError = AL.GetError();
                 if (queueError != ALError.NoError)
                 {
                     Logger.client.Warning($"OpenAL error while queuing buffer: {queueError}");
@@ -113,15 +113,14 @@ namespace RPVoiceChat.Audio
 
             if (buffersProcessed == 0) return;
 
-            // Add safety counter to prevent infinite loop if OpenAL fails
-            var buffer = OALW.SourceUnqueueBuffer(source);
-            int safetyCounter = 0;
-            const int maxIterations = 100; // Protection against infinite loop
-
-            while (buffer != 0 && safetyCounter < maxIterations)
+            // Only dequeue the exact number of processed buffers
+            for (int i = 0; i < buffersProcessed && queuedBuffers.Count > 0; i++)
             {
-                // Check for OpenAL errors before processing buffer
-                var error = OALW.GetError();
+                var buffer = OALW.SourceUnqueueBuffer(source);
+                if (buffer == 0) break; // No more buffers to dequeue
+
+                // Check for OpenAL errors after dequeuing
+                var error = AL.GetError();
                 if (error != ALError.NoError)
                 {
                     Logger.client.Warning($"OpenAL error while dequeuing buffer: {error}");
@@ -130,14 +129,6 @@ namespace RPVoiceChat.Audio
 
                 queuedBuffers.Remove(buffer);
                 availableBuffers.Add(buffer);
-                buffer = OALW.SourceUnqueueBuffer(source);
-                safetyCounter++;
-            }
-
-            // Log if we hit the safety limit
-            if (safetyCounter >= maxIterations)
-            {
-                Logger.client.Warning($"CircularAudioBuffer: Hit max iterations while dequeuing buffers");
             }
         }
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using RPVoiceChat;
 using RPVoiceChat.Audio;
+using RPVoiceChat.Config;
 using Vintagestory.API.Common;
 
 public class SoundEmittingBlock : Block

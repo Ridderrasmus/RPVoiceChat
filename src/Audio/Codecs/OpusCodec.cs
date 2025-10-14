@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Concentus;
 using Concentus.Enums;
+using RPVoiceChat.Config;
 using RPVoiceChat.Utils;
 
 namespace RPVoiceChat.Audio

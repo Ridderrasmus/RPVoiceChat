@@ -1,4 +1,5 @@
-﻿using RPVoiceChat.GameContent.BlockEntity;
+﻿using RPVoiceChat.Config;
+using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.Utils;
 using Vintagestory.API.Client;
 

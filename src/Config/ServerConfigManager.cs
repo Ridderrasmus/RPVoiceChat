@@ -1,4 +1,5 @@
 using Vintagestory.API.Common;
+using RPVoiceChat.Utils;
 
 namespace RPVoiceChat.Config
 {

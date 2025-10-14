@@ -35,7 +35,7 @@ namespace RPVoiceChat.Audio
         private int OutputChannelCount;
         private float gain;
         private double _maxVolume => ServerConfigManager.MaxVolumeLimit;
-        private const short maxSampleValue = (short)(_maxVolume * short.MaxValue);
+        private short maxSampleValue;
         private List<float> recentGainLimits = new List<float>();
         private ConcurrentQueue<float> recentGainLimitsQueue = new ConcurrentQueue<float>();
 
@@ -50,7 +50,7 @@ namespace RPVoiceChat.Audio
         private ICoreClientAPI capi;
         private VoiceLevel voiceLevel = VoiceLevel.Talking;
         private double inputThreshold;
-        private double maxInputThreshold = _maxVolume / 2;
+        private double maxInputThreshold;
         private List<double> recentAmplitudes = new List<double>();
 
         // Megaphone management (separate from voice level)
@@ -64,6 +64,8 @@ namespace RPVoiceChat.Audio
             audioCaptureThread = new Thread(CaptureAudio);
             audioCaptureCTS = new CancellationTokenSource();
             this.capi = capi;
+            maxSampleValue = (short)(_maxVolume * short.MaxValue);
+            maxInputThreshold = _maxVolume / 2;
             SetThreshold(ModConfig.ClientConfig.InputThreshold);
             SetGain(ModConfig.ClientConfig.InputGain);
             SetOutputFormat(ALFormat.Mono16);

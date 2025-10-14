@@ -1,4 +1,5 @@
 using System.Text;
+using RPVoiceChat.Config;
 using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Utils;
 using Vintagestory.API.Client;

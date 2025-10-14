@@ -1,5 +1,6 @@
 ﻿using System;
 using RPVoiceChat.Audio;
+using RPVoiceChat.Config;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 

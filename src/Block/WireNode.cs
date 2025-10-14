@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using RPVoiceChat.Config;
 using RPVoiceChat.GameContent.Renderers;
 using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Systems;
