@@ -11,7 +11,7 @@ namespace RPVoiceChat.Networking
         public event Action<AudioPacket> OnAudioReceived;
         public event Action<bool, IExtendedNetworkClient> OnConnectionLost;
 
-        private const int maxConnectionAttempts = 5;
+        private int maxConnectionAttempts => ServerConfigManager.MaxConnectionAttempts;
         private int connectionAttempt = 0;
         private IPEndPoint serverEndpoint;
         private TCPConnection connection;

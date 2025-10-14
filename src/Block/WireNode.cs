@@ -16,7 +16,7 @@ public class WireNode : BlockEntity, IWireConnectable
     public long NetworkUID { get; set; } = 0;
     public BlockPos Position => Pos;
     public string NodeUID => Pos.ToString();
-    private const int MaxConnections = 4;
+    private int MaxConnections => ServerConfigManager.TelegraphMaxConnectionsPerNode;
 
     private readonly List<WireConnection> connections = new();
     private List<BlockPos> pendingConnectionPositions = new();

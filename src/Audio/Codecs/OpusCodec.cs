@@ -17,8 +17,8 @@ namespace RPVoiceChat.Audio
         private IOpusDecoder decoder;
 
         // Default bitrates
-        private const int NormalBitrate = 40 * 1024; // 40 kbps
-        private const int BroadcastBitrate = 16 * 1024; // 16 kbps 
+        private int NormalBitrate => ServerConfigManager.NormalBitrate; // 40 kbps
+        private int BroadcastBitrate => ServerConfigManager.BroadcastBitrate; // 16 kbps 
 
         public OpusCodec(int frequency, int channelCount)
         {

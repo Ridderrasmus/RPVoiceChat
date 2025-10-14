@@ -18,7 +18,7 @@ namespace RPVoiceChat.Audio
     {
         public bool IsDisposed = false;
         public bool IsPlaying { get => _IsPlaying(); }
-        public const float MaxGain = 2f;
+        public float MaxGain => ServerConfigManager.MaxAudioGain;
 
         private const int BufferCount = 20;
         private int source;

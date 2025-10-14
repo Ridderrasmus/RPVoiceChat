@@ -9,7 +9,7 @@ namespace RPVoiceChat.GameContent.Items
 {
     public class TelegraphWireItem : Item
     {
-        private const int MaxConnectionDistance = 20;
+        private int MaxConnectionDistance => ServerConfigManager.TelegraphMaxConnectionDistance;
         private BlockPos firstNodePos;
 
         public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handling)

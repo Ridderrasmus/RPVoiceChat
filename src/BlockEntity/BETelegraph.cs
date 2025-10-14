@@ -16,8 +16,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public bool IsPlaying { get; private set; }
         public int Volume { get; set; } = 8;
-        public bool GenuineMorseCharacters { get; set; } = false; // TODO fix message received : different when true (want same, obviously)
-        private const int MaxMessageLength = 100;
+        public bool GenuineMorseCharacters => ServerConfigManager.TelegraphGenuineMorseCharacters;
+        private int MaxMessageLength => ServerConfigManager.TelegraphMaxMessageLength;
 
         private string sentMessage = "";
         private string receivedMessage = "";

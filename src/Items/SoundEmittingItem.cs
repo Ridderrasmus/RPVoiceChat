@@ -20,9 +20,47 @@ namespace RPVoiceChat.GameContent.Items
         {
             base.OnLoaded(api);
 
-            AudibleDistance = Attributes?["soundAudibleDistance"].AsInt(AudibleDistance) ?? AudibleDistance;
-            DefaultVolume = Attributes?["soundVolume"].AsFloat(DefaultVolume) ?? DefaultVolume;
+            // Default values from JSON assets
+            int defaultDistance = Attributes?["soundAudibleDistance"].AsInt(AudibleDistance) ?? AudibleDistance;
+            float defaultVolume = Attributes?["soundVolume"].AsFloat(DefaultVolume) ?? DefaultVolume;
             soundDuration = Attributes?["soundDuration"].AsFloat(soundDuration) ?? soundDuration;
+
+            // Override with server configurations if available
+            AudibleDistance = GetConfiguredAudibleDistance(api, defaultDistance);
+            DefaultVolume = defaultVolume;
+        }
+
+        private int GetConfiguredAudibleDistance(ICoreAPI api, int defaultDistance)
+        {
+            // Only on server side, use server configurations
+            if (api.Side != EnumAppSide.Server) return defaultDistance;
+
+            // Use the item class to determine the appropriate configuration
+            string itemClass = GetType().Name.ToLower();
+            
+            switch (itemClass)
+            {
+                case "soundemittingitem":
+                    return GetSoundEmittingItemDistance();
+                default:
+                    return defaultDistance;
+            }
+        }
+
+        private int GetSoundEmittingItemDistance()
+        {
+            // Identify the specific sound item type by its code
+            string itemCode = Code?.ToString()?.ToLower() ?? "";
+            
+            if (itemCode.Contains("handbell"))
+                return ServerConfigManager.HandbellAudibleDistance;
+            else if (itemCode.Contains("royalhorn"))
+                return ServerConfigManager.RoyalhornAudibleDistance;
+            else if (itemCode.Contains("warhorn"))
+                return ServerConfigManager.WarhornAudibleDistance;
+            
+            // Default value if no match found
+            return Attributes?["soundAudibleDistance"].AsInt(16) ?? 16;
         }
 
         public override void OnAttackingWith(IWorldAccessor world, Entity byEntity, Entity attackedEntity, ItemSlot slot)
