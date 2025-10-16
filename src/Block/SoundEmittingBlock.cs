@@ -53,11 +53,11 @@ public class SoundEmittingBlock : Block
         // Identify the specific sound block type by its code
         string blockCode = Code?.ToString()?.ToLower() ?? "";
         
-        if (blockCode.Contains("callbell"))
+        if (blockCode == "callbell")
             return ServerConfigManager.CallbellAudibleDistance;
-        else if (blockCode.Contains("carillonbell"))
+        else if (blockCode == "carillonbell")
             return ServerConfigManager.CarillonbellAudibleDistance;
-        else if (blockCode.Contains("churchbell"))
+        else if (blockCode == "churchbell")
             return ServerConfigManager.ChurchbellAudibleDistance;
         
         // Default value if no match found

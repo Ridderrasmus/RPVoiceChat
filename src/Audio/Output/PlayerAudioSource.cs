@@ -200,6 +200,7 @@ namespace RPVoiceChat.Audio
 
         private bool _IsPlaying()
         {
+            if (source <= 0) return false; // Source is invalid
             return OALW.GetSourceState(source) == ALSourceState.Playing;
         }
 
@@ -338,9 +339,12 @@ namespace RPVoiceChat.Audio
                     buffer.QueueAudio(audio.data, audio.format, audio.frequency);
 
                     // The source can stop playing if it finishes everything in queue
-                    var state = OALW.GetSourceState(source);
-                    if (state != ALSourceState.Playing)
-                        StartPlaying();
+                    if (source > 0) // Check if source is still valid
+                    {
+                        var state = OALW.GetSourceState(source);
+                        if (state != ALSourceState.Playing)
+                            StartPlaying();
+                    }
                 }
             }
             catch (Exception e)
@@ -351,12 +355,14 @@ namespace RPVoiceChat.Audio
 
         public void StartPlaying()
         {
+            if (source <= 0) return; // Source is invalid
             OALW.SourcePlay(source);
             PlayerNameTagRenderer.UpdatePlayerNameTag(player, true);
         }
 
         public void StopPlaying()
         {
+            if (source <= 0) return; // Source is invalid
             OALW.SourceStop(source);
             OnSourceStop();
         }
@@ -372,6 +378,7 @@ namespace RPVoiceChat.Audio
 
             OALW.SourceStop(source);
             OALW.DeleteSource(source);
+            source = 0; // Mark source as invalid
             buffer.OnEmptyingQueue -= OnSourceStop;
             currentSoundEffect?.Clear();
             buffer?.Dispose();
@@ -383,6 +390,13 @@ namespace RPVoiceChat.Audio
         {
             if (string.IsNullOrWhiteSpace(effectName) || currentEffectName == effectName)
                 return;
+
+            // Check if source is still valid before creating effects
+            if (source <= 0)
+            {
+                Logger.client.Warning("Cannot apply sound effect: source is invalid");
+                return;
+            }
 
             currentSoundEffect?.Clear();
 

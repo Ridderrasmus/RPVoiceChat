@@ -53,11 +53,11 @@ namespace RPVoiceChat.GameContent.Items
             // Identify the specific sound item type by its code
             string itemCode = Code?.ToString()?.ToLower() ?? "";
             
-            if (itemCode.Contains("handbell"))
+            if (itemCode == "handbell")
                 return ServerConfigManager.HandbellAudibleDistance;
-            else if (itemCode.Contains("royalhorn"))
+            else if (itemCode == "royalhorn")
                 return ServerConfigManager.RoyalhornAudibleDistance;
-            else if (itemCode.Contains("warhorn"))
+            else if (itemCode == "warhorn")
                 return ServerConfigManager.WarhornAudibleDistance;
             
             // Default value if no match found

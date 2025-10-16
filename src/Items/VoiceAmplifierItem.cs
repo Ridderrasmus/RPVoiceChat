@@ -146,9 +146,7 @@ public class VoiceAmplifierItem : Item
         // Identify the specific megaphone type by its code
         string itemCode = Code?.ToString()?.ToLower() ?? "";
         
-        if (itemCode.Contains("enhancedmegaphone"))
-            return ServerConfigManager.EnhancedMegaphoneAudibleDistance;
-        else if (itemCode.Contains("megaphone"))
+        if (itemCode == "megaphone")
             return ServerConfigManager.MegaphoneAudibleDistance;
         
         // Default value if no match found

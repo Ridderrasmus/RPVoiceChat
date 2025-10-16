@@ -38,7 +38,6 @@ namespace RPVoiceChat.Config
         public int CarillonbellAudibleDistance { get; set; } = 256;
         public int ChurchbellAudibleDistance { get; set; } = 832;
         public int MegaphoneAudibleDistance { get; set; } = 125;
-        public int EnhancedMegaphoneAudibleDistance { get; set; } = 0; // 0 = global broadcast
 
         public RPVoiceChatServerConfig() { }
 
@@ -80,7 +79,6 @@ namespace RPVoiceChat.Config
             CarillonbellAudibleDistance = previousConfig.CarillonbellAudibleDistance;
             ChurchbellAudibleDistance = previousConfig.ChurchbellAudibleDistance;
             MegaphoneAudibleDistance = previousConfig.MegaphoneAudibleDistance;
-            EnhancedMegaphoneAudibleDistance = previousConfig.EnhancedMegaphoneAudibleDistance;
         }
     }
 }
