@@ -1,5 +1,6 @@
 using RPVoiceChat.Config;
 using RPVoiceChat.DB;
+using RPVoiceChat.Gui;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Utils;
 using System;
@@ -108,8 +109,9 @@ namespace RPVoiceChat.Audio
                 IsLocational = false,
             };
 
-            if (!isLoopbackEnabled) return;
-            localPlayerAudioSource.StartPlaying();
+            // Don't start playing immediately - wait for audio data to be queued
+            // if (!isLoopbackEnabled) return;
+            // localPlayerAudioSource.StartPlaying();
         }
 
         private PlayerAudioSource GetOrCreatePlayerSource(string playerId)
@@ -128,7 +130,7 @@ namespace RPVoiceChat.Audio
         {
             var source = new PlayerAudioSource(player, capi, clientSettingsRepo);
             playerSources.AddOrUpdate(player.PlayerUID, source, (_, __) => source);
-            source.StartPlaying();
+            // Don't start playing immediately - wait for audio data to be queued
 
             return source;
         }
@@ -152,6 +154,9 @@ namespace RPVoiceChat.Audio
             playerSources.TryGetValue(player.PlayerUID, out var source);
             source?.Dispose();
             playerSources.Remove(player.PlayerUID);
+            
+            // Clean up cached name tag textures for this player
+            PlayerNameTagRenderer.CleanupPlayerCache(player.PlayerUID);
         }
 
         public bool IsPlayerTalking(string playerId)
@@ -183,6 +188,9 @@ namespace RPVoiceChat.Audio
                 localPlayerAudioSource?.Dispose();
                 foreach (var source in playerSources.Values)
                     source?.Dispose();
+                
+                // Clean up all cached name tag textures
+                PlayerNameTagRenderer.CleanupAllCache();
             }
             catch (Exception e)
             {
