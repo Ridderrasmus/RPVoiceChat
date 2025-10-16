@@ -64,13 +64,28 @@ namespace RPVoiceChat.Audio.Effects
             if (string.IsNullOrWhiteSpace(name))
                 return null;
 
+            // Check if source is valid before creating effect
+            if (source <= 0)
+            {
+                Console.WriteLine($"[RPVoiceChat] Cannot create SoundEffect \"{name}\": invalid source ID {source}");
+                return null;
+            }
+
             var key = name.ToLowerInvariant();
 
             if (registry.TryGetValue(key, out var factory))
             {
-                var effect = factory(source);
-                // Ensure the name is properly set on the created instance
-                return effect;
+                try
+                {
+                    var effect = factory(source);
+                    // Ensure the name is properly set on the created instance
+                    return effect;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"[RPVoiceChat] Error creating SoundEffect \"{name}\": {e.Message}");
+                    return null;
+                }
             }
 
             Console.WriteLine($"[RPVoiceChat] SoundEffect \"{name}\" not found in registry.");

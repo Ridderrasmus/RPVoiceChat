@@ -46,12 +46,14 @@ namespace RPVoiceChat.Audio
         public static void GetSource(int source, ALGetSourcei property, out int value)
         {
             AL.GetSource(source, property, out value);
-            CheckError($"Error getting source {property}");
+            CheckError($"Error getting source {property}", ALError.InvalidValue);
         }
 
         public static ALSourceState GetSourceState(int source)
         {
             GetSource(source, ALGetSourcei.SourceState, out var state);
+            // Ignore InvalidValue errors as the source might have been deleted
+            CheckError("Error getting source state", ALError.InvalidValue);
 
             return (ALSourceState)state;
         }
@@ -79,7 +81,7 @@ namespace RPVoiceChat.Audio
         public static void SourceStop(int source)
         {
             AL.SourceStop(source);
-            CheckError("Error stop playing source");
+            CheckError("Error stop playing source", ALError.InvalidValue);
         }
 
         public static void DeleteSource(int source)
@@ -89,7 +91,7 @@ namespace RPVoiceChat.Audio
                 AL.DeleteSource(source);
             }
             catch { }
-            CheckError("Error deleting source");
+            CheckError("Error deleting source", ALError.InvalidValue);
         }
 
         public static int[] GenBuffers(int bufferCount)
