@@ -1,0 +1,65 @@
+{
+  "code": "printer",
+  "enabled": true,
+  "class": "printerblock",
+  "entityClass": "BlockEntityPrinter",
+  "creativeinventory": {
+    "general": [ "*" ],
+    "rpvoicechat": [ "*" ]
+  },
+  "maxstacksize": 1,
+  "blockmaterial": "Metal",
+  "sounds": {
+    "place": "game:block/planks",
+    "walk": "game:walk/stone"
+  },
+  "collisionBox": {
+    "x1": 0,
+    "y1": 0,
+    "z1": 0,
+    "x2": 1,
+    "y2": 1,
+    "z2": 1
+  },
+  "selectionBox": {
+    "x1": 0,
+    "y1": 0,
+    "z1": 0,
+    "x2": 1,
+    "y2": 1,
+    "z2": 1
+  },
+  "shape": { "base": "block/printer" },
+  "rainPermeable": false,
+  "sidesolid": {
+    "all": true
+  },
+  "sideopaque": {
+    "all": true
+  },
+  "lightAbsorption": 15,
+  "resistance": 1,
+  "attributes": {
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-printer.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-printer.Text"
+        }
+      ]
+    }
+  },
+  "guiTransform": {
+    "translation": {
+      "x": 0,
+      "y": -10,
+      "z": 0
+    },
+    "rotation": {
+      "x": -22.6,
+      "y": -45,
+      "z": 0
+    },
+    "scale": 1.16
+  }
+}

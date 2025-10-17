@@ -1,6 +1,7 @@
 {
   "game:tabname-rpvoicechat": "RPVoiceChat",
-  "item-handbell": "Clochette",
+  "item-paperslip": "Papier",
+  "item-telegram": "Télégramme",
   "item-royalhorn": "Corne royale",
   "item-royalhornhandle": "Poignée de corne royale",
   "item-royalhornhead-blackbronze": "Pavillon de corne royale",
@@ -21,7 +22,9 @@
   "itemdesc-telegraphwire": "Une bobine de fil. Sa conception simpliste n'en permet l'usage que pour concevoir un réseau télégraphique.",
   "itemdesc-megaphone": "Un mégaphone permettant de porter sa voix au loin. Attention aux murs bloquant le son !",
   "itemdesc-enhancedmegaphone": "Ce mégaphone rarissime à la particularité de faire porter la voix à travers les distances et la matière.",
-  "block-churchbellmold-raw-part-brass-bottom": "Moule brut de la partie inférieure de la cloche d'église",
+  "itemdesc-paperslip": "Un morceau de papier utilisé pour imprimer des télégrammes.",
+  "itemdesc-telegram": "Un télégramme imprimé contenant un message télégraphique.",
+  "block-printer": "Imprimante",
   "block-churchbellmold-raw-part-brass-middle": "Moule brut de la partie intermédiaire de la cloche d'église",
   "block-churchbellmold-raw-part-brass-top": "Moule brut de la partie supérieure de la cloche d'église",
   "block-churchbellmold-raw-layer-brass-topmost": "Moule brut d'une couche du sommet de la cloche d'église",
@@ -108,8 +111,6 @@
   "Hotkey.VoiceLevel": "RPVoice : Changer la distance vocale",
   "Hotkey.PTT": "RPVoice: Push-to-talk",
   "Hotkey.Mute": "RPVoice: Activer/désactiver le son",
-  "Hotkey.Mono": "RPVoice: Activer/désactiver le mode mono",
-  "Hotkey.Minimal": "RPVoice: Activer/désactiver le HUD minimal",
   "Gui.AudioWizardDialog.TitleBar": "Assistant audio",
   "Gui.AudioWizardDialog.FirstParagraph": "Bienvenue dans l'assistant de configuration audio, il vous aidera à configurer votre périphérique d'entrée. Vous devriez être en mesure de vous entendre dès maintenant. Si ce n'est pas le cas, assurez-vous que c'est votre appareil :",
   "Gui.AudioWizardDialog.SecondParagraph": "Configurons votre volume d'enregistrement. Appuyez sur le bouton ci-dessous et commencez à parler comme vous le feriez normalement. Continuez à parler jusqu'à ce que la barre de progression soit remplie. Ne vous inquiétez pas : les autres joueurs ne peuvent pas vous entendre pour le moment.",
@@ -237,5 +238,11 @@
   "telegraph-title": "RP Voice Chat - Télégraphe",
   "telegraph-text": "<strong>RP Voice Chat - Télégraphe</strong><br /><br />Le système télégraphique permet de transmettre des messages codés à distance grâce à un réseau de fils et d'équipements spécialisés. Cette technologie révolutionnaire vous permet de communiquer silencieusement avec vos alliés sur de longues distances, parfait pour coordonner des stratégies ou transmettre des informations sensibles.<br /><br />Le télégraphe fonctionne grâce à un code sonore audible dans un rayon limité autour de l'appareil. <br /><br /><icon name=wpCircle></icon><a href=\"handbooksearch://Clé télégraphique\">Clé télégraphique</a> : appareil principal pour envoyer et recevoir des messages codés<br /><icon name=wpCircle></icon><a href=\"handbooksearch://Fil télégraphique\">Fil télégraphique</a> : bobine permettant de relier les équipements<br /><icon name=wpCircle></icon><a href=\"handbooksearch://Isolateur\">Isolateur</a> : connecteur essentiel pour étendre et structurer votre réseau télégraphique",
   "megaphones-title": "RP Voice Chat - Mégaphones",
-  "megaphones-text": "Bientôt !"
+  "megaphones-text": "Bientôt !",
+  "Handbook.Usage.item-paperslip.Title": "Utilisation",
+  "Handbook.Usage.item-paperslip.Text": "Un morceau de papier utilisé par l'imprimante pour créer des télégrammes. Placez-le dans l'imprimante pour permettre l'impression automatique des messages télégraphiques.",
+  "Handbook.Usage.item-telegram.Title": "Utilisation",
+  "Handbook.Usage.item-telegram.Text": "Un télégramme imprimé contenant un message télégraphique complet. Chaque télégramme contient un message unique et peut être conservé comme preuve de communication.",
+  "Handbook.Usage.block-printer.Title": "Utilisation",
+  "Handbook.Usage.block-printer.Text": "Une imprimante télégraphique qui peut être placée sous une clé télégraphique. Elle stocke automatiquement les messages reçus sur des télégrammes après 10 secondes d'inactivité. Placez des papiers dans l'emplacement supérieur et récupérez les télégrammes imprimés dans l'emplacement inférieur."
 } 

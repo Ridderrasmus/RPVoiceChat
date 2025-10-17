@@ -10,6 +10,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             api.RegisterBlockEntityClass("ChurchBellLayer", typeof(BlockEntityChurchBellLayer));
             api.RegisterBlockEntityClass("BlockEntityTelegraph", typeof(BlockEntityTelegraph));
             api.RegisterBlockEntityClass("BlockEntityConnector", typeof(BlockEntityConnector));
+            api.RegisterBlockEntityClass("BlockEntityPrinter", typeof(BlockEntityPrinter));
         }
     }
 }

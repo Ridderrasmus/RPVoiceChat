@@ -25,6 +25,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private string sentMessageOriginal = ""; // Store original latin characters
         private string receivedMessageOriginal = ""; // Store original latin characters
         private Queue<char> pendingSignals = new Queue<char>();
+        
+        // Printer functionality
+        private BlockEntityPrinter connectedPrinter;
+        private long lastActivityTime;
+        private const int AUTO_SAVE_DELAY_SECONDS = 10;
 
         public BlockEntityTelegraph() : base()
         {
@@ -35,6 +40,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             base.Initialize(api);
 
             IsPlaying = false;
+            lastActivityTime = api.World.Calendar.TotalDays;
 
             OnReceivedSignalEvent += HandleReceivedSignal;
 
@@ -45,6 +51,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 dialog.UpdateSentText(sentMessage);
                 dialog.UpdateReceivedText(receivedMessage);
             }
+            
+            // Check for printer below
+            CheckForPrinterBelow();
         }
 
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
@@ -82,6 +91,16 @@ namespace RPVoiceChat.GameContent.BlockEntity
             return true;
         }
 
+
+        private async Task ProcessNextSignalAsync()
+        {
+            while (pendingSignals.Count > 0)
+            {
+                char next = pendingSignals.Dequeue();
+                await PlayMorseAsync(ConvertKeyCodeToMorse(next));
+            }
+        }
+
         public void SendSignal(char keyChar)
         {
             if (Api.Side != EnumAppSide.Client)
@@ -93,6 +112,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (sentMessage.Length >= MaxMessageLength)
                 return; // Stop if message is too long
 
+            UpdateActivityTime();
             pendingSignals.Enqueue(keyChar);
 
             string messageToSend = keyChar.ToString(); // Always send latin characters on network
@@ -120,19 +140,12 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
         }
 
-        private async Task ProcessNextSignalAsync()
-        {
-            while (pendingSignals.Count > 0)
-            {
-                char next = pendingSignals.Dequeue();
-                await PlayMorseAsync(ConvertKeyCodeToMorse(next));
-            }
-        }
-
         public void OnReceivedSignal(char keyChar)
         {
             if (Api.Side != EnumAppSide.Client)
                 return;
+
+            UpdateActivityTime();
 
             if (Api is ICoreClientAPI clientApi)
             {
@@ -147,6 +160,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             Task.Run(() => PlayMorseAsync(ConvertKeyCodeToMorse(keyChar)));
         }
+
 
         private void HandleReceivedSignal(object sender, string message)
         {
@@ -264,6 +278,100 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 case '9': return "----.";
                 case '.': return ".-.-.-";
                 default: return "";
+            }
+        }
+
+        // Printer functionality methods
+        private void CheckForPrinterBelow()
+        {
+            if (Api?.World?.BlockAccessor == null) return;
+
+            BlockPos belowPos = Pos.DownCopy();
+            BlockEntity belowEntity = Api.World.BlockAccessor.GetBlockEntity(belowPos);
+            
+            if (belowEntity is BlockEntityPrinter printer)
+            {
+                ConnectToPrinter(printer);
+            }
+        }
+
+        private void ConnectToPrinter(BlockEntityPrinter printer)
+        {
+            connectedPrinter = printer;
+            
+            // Register with printer system for auto-save functionality
+            if (Api.Side == EnumAppSide.Server)
+            {
+                var printerSystem = Api.ModLoader.GetModSystem<PrinterSystem>();
+                printerSystem?.RegisterTelegraphWithPrinter(this);
+            }
+        }
+
+        public void SetPrinter(BlockEntityPrinter printer)
+        {
+            connectedPrinter = printer;
+        }
+
+        private void UpdateActivityTime()
+        {
+            lastActivityTime = Api.World.Calendar.TotalDays;
+        }
+
+        public override void OnBlockPlaced(ItemStack byItemStack = null)
+        {
+            base.OnBlockPlaced(byItemStack);
+            CheckForPrinterBelow();
+        }
+
+        public override void OnBlockRemoved()
+        {
+            base.OnBlockRemoved();
+            DisconnectFromPrinter();
+        }
+
+        private void DisconnectFromPrinter()
+        {
+            if (connectedPrinter != null)
+            {
+                // Unregister from printer system
+                if (Api.Side == EnumAppSide.Server)
+                {
+                    var printerSystem = Api.ModLoader.GetModSystem<PrinterSystem>();
+                    printerSystem?.UnregisterTelegraphWithPrinter(this);
+                }
+                
+                connectedPrinter = null;
+            }
+        }
+
+        public override void OnBlockUnloaded()
+        {
+            base.OnBlockUnloaded();
+            DisconnectFromPrinter();
+        }
+
+
+        // Auto-save functionality
+        public void CheckAutoSave()
+        {
+            if (connectedPrinter == null) return;
+
+            long currentTime = Api.World.Calendar.TotalDays;
+            long timeSinceLastActivity = currentTime - lastActivityTime;
+
+            // Convert days to seconds (assuming 24 hours per day)
+            double secondsSinceLastActivity = timeSinceLastActivity * 24 * 60 * 60;
+
+            if (secondsSinceLastActivity >= AUTO_SAVE_DELAY_SECONDS && !string.IsNullOrEmpty(receivedMessageOriginal))
+            {
+                // Auto-save the received message
+                connectedPrinter.CreateTelegram(receivedMessageOriginal);
+                
+                // Clear the message after saving
+                receivedMessage = "";
+                receivedMessageOriginal = "";
+                MarkDirty();
+                dialog?.UpdateReceivedText("");
             }
         }
 

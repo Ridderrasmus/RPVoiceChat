@@ -1,7 +1,8 @@
 {
   "game:tabname-rpvoicechat": "RPVoiceChat",
 
-  "item-handbell": "Handbell",
+  "item-paperslip": "Paper Slip",
+  "item-telegram": "Telegram",
   "item-royalhorn": "Royal Horn",
   "item-royalhornhandle": "Royal Horn Handle",
   "item-royalhornhead-blackbronze": "Royal Horn Head",
@@ -23,6 +24,8 @@
   "itemdesc-telegraphwire": "A spool of wire. Its simplistic design allows it to be used only for creating a telegraph network.",
   "itemdesc-megaphone": "A megaphone that allows you to carry your voice far. Beware of walls blocking the sound!",
   "itemdesc-enhancedmegaphone": "This extremely rare megaphone has the unique ability to carry sound across distances and through matter.",
+  "itemdesc-paperslip": "A piece of paper used for printing telegrams.",
+  "itemdesc-telegram": "A printed telegram containing a telegraphic message.",
 
   "block-churchbellmold-raw-part-brass-bottom": "Raw Bottom Churchbell Part Mold",
   "block-churchbellmold-raw-part-brass-middle": "Raw Middle Churchbell Part Mold",
@@ -62,6 +65,7 @@
   "block-carillonbell-gold-*": "Gold Carillon Bell",
   "block-carillonbell-electrum-*": "Electrum Carillon Bell",
   "blockdesc-carillonbell-*": "A carillon bell that can ring a melody for an entire village.",
+  "block-printer": "Printer",
   "block-telegraph": "Telegraph Key",
   "blockdesc-telegraph": "Also called a Morse key, this switching device allows an operator to send signals over a wired telegraph network.",
   "block-connector-plain-*": "Insulator",
@@ -116,8 +120,6 @@
   "Hotkey.VoiceLevel": "RPVoice: Change voice distance",
   "Hotkey.PTT": "RPVoice: Push to talk",
   "Hotkey.Mute": "RPVoice: Toggle mute",
-  "Hotkey.Mono": "RPVoice: Toggle mono mode",
-  "Hotkey.Minimal": "RPVoice: Toggle minimal HUD",
 
   "Gui.AudioWizardDialog.TitleBar": "Audio Wizard",
   "Gui.AudioWizardDialog.FirstParagraph": "Welcome to audio configuration wizard, it will help you configure your input device. You should be able to hear yourself right now, if that's not the case make sure that this is your device:",
@@ -250,5 +252,11 @@
   "telegraph-title": "RP Voice Chat - Telegraph",
   "telegraph-text": "<strong>RP Voice Chat - Telegraph</strong><br /><br />The telegraph system allows transmitting coded messages over long distances through a network of wires and specialized equipment. This revolutionary technology enables you to communicate silently with your allies over great distances, perfect for coordinating strategies or transmitting sensitive information.<br /><br />The telegraph works through an audible sound code within a limited radius around the device.<br /><br /><icon name=wpCircle></icon><a href=\"handbooksearch://Telegraph key\">Telegraph key</a>: main device for sending and receiving coded messages<br /><icon name=wpCircle></icon><a href=\"handbooksearch://Telegraph wire\">Telegraph wire</a>: spool allowing connection of equipment<br /><icon name=wpCircle></icon><a href=\"handbooksearch://Insulator\">Insulator</a>: essential connector for extending and structuring your telegraph network",
   "megaphones-title": "RP Voice Chat - Megaphones",
-  "megaphones-text": "Soon !"
+  "megaphones-text": "Soon !",
+  "Handbook.Usage.item-paperslip.Title": "Usage",
+  "Handbook.Usage.item-paperslip.Text": "A piece of paper used by the printer to create telegrams. Place it in the printer to enable automatic printing of telegraphic messages.",
+  "Handbook.Usage.item-telegram.Title": "Usage",
+  "Handbook.Usage.item-telegram.Text": "A printed telegram containing a complete telegraphic message. Each telegram contains a unique message and can be kept as proof of communication.",
+  "Handbook.Usage.block-printer.Title": "Usage",
+  "Handbook.Usage.block-printer.Text": "A telegraph printer that can be placed under a telegraph key. It automatically stores received messages on telegrams after 10 seconds of inactivity. Place papers in the top slot and retrieve printed telegrams from the bottom slot."
 }

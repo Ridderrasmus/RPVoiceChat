@@ -1,0 +1,7 @@
+{
+  "texture": "item/telegram",
+  "textureSize": [16, 16],
+  "textureSizes": {
+    "item/telegram": [16, 16]
+  }
+}
