@@ -55,7 +55,6 @@ namespace RPVoiceChat
             //     "RPVoiceChat Settings"
             // );
 
-            api.Logger.Debug("[RPVoiceChat] ConfigLib integration registered.");
         }
     }
 }

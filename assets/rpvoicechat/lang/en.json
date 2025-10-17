@@ -115,9 +115,9 @@
   "Command.WallThicknessWeighting.Desc": "Set a value that weighting the wall thickness calculated for muffling",
   "Command.WallThicknessWeighting.Help": "Wall thickness is divided by this weighting to remove gain at the high-frequency limit of the filter, simuling muffling. Values below 1 will increase muffling effect, values upper 1 will reduced it. Default value is <strong>1.5f</strong>",
   "Command.WallThicknessWeighting.Success": "Wall thickness weighting set to {0}",
-  "Command.PrinterDelay.Desc": "Sets the automatic telegraph message deletion delay in seconds",
-  "Command.PrinterDelay.Help": "Sets the delay in seconds before a telegraph message is automatically deleted. If a printer is connected, the message will be saved before deletion. Default value is <strong>10</strong> seconds. Accepted values: 1 to 300 seconds",
-  "Command.PrinterDelay.Success": "Automatic message deletion delay set to {0} seconds",
+  "Command.MessageDelay.Desc": "Sets the automatic telegraph message deletion delay in seconds",
+  "Command.MessageDelay.Help": "Sets the delay in seconds before a telegraph message is automatically deleted. If a printer is connected, the message will be saved before deletion. Default value is <strong>10</strong> seconds. Accepted values: 1 to 300 seconds",
+  "Command.MessageDelay.Success": "Automatic message deletion delay set to {0} seconds",
 
   "Hotkey.ModMenu": "RPVoice: Mod menu",
   "Hotkey.VoiceLevel": "RPVoice: Change voice distance",

@@ -3,6 +3,16 @@
   "enabled": true,
   "class": "printerblock",
   "entityClass": "BlockEntityPrinter",
+  "attributes": {
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-printer.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-printer.Text"
+        }
+      ]
+    }
+  },
   "creativeinventory": {
     "general": [ "*" ],
     "rpvoicechat": [ "*" ]
@@ -30,6 +40,11 @@
     "z2": 1
   },
   "shape": { "base": "block/printer" },
+  "textures": {
+    "all": {
+      "base": "game:block/planks/oak"
+    }
+  },
   "rainPermeable": false,
   "sidesolid": {
     "all": true
@@ -39,16 +54,6 @@
   },
   "lightAbsorption": 15,
   "resistance": 1,
-  "attributes": {
-    "handbook": {
-      "extraSections": [
-        {
-          "title": "rpvoicechat:Handbook.Usage.block-printer.Title",
-          "text": "rpvoicechat:Handbook.Usage.block-printer.Text"
-        }
-      ]
-    }
-  },
   "guiTransform": {
     "translation": {
       "x": 0,

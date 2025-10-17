@@ -1,13 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using RPVoiceChat.Config;
 using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Systems;
+using RPVoiceChat.Networking.Packets;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
+using Vintagestory.API.Server;
 
 namespace RPVoiceChat.GameContent.BlockEntity
 {
@@ -29,7 +32,10 @@ namespace RPVoiceChat.GameContent.BlockEntity
         // Printer functionality
         private BlockEntityPrinter connectedPrinter;
         private long lastActivityTime;
-        private int AutoSaveDelaySeconds => ServerConfigManager.PrinterAutoSaveDelaySeconds;
+        private int MessageDeletionDelaySeconds => ServerConfigManager.TelegraphMessageDeletionDelaySeconds;
+        private bool isCountdownActive = false;
+        private int countdownSeconds = 0;
+        private long countdownEndTime = 0; // Time when countdown reached 0
 
         public BlockEntityTelegraph() : base()
         {
@@ -40,7 +46,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             base.Initialize(api);
 
             IsPlaying = false;
-            lastActivityTime = api.World.Calendar.TotalDays;
+            lastActivityTime = api.World.ElapsedMilliseconds;
 
             OnReceivedSignalEvent += HandleReceivedSignal;
 
@@ -50,6 +56,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 UpdateDisplayMessages();
                 dialog.UpdateSentText(sentMessage);
                 dialog.UpdateReceivedText(receivedMessage);
+                
+                // Register client-side countdown update timer
+                api.Event.RegisterGameTickListener(OnClientGameTick, 1000); // Every second
             }
             
             // Check for printer below
@@ -62,6 +71,13 @@ namespace RPVoiceChat.GameContent.BlockEntity
             sentMessageOriginal = tree.GetString("sentMessage");
             receivedMessageOriginal = tree.GetString("receivedMessage");
             UpdateDisplayMessages();
+            
+            // Update dialog if it exists
+            if (Api?.Side == EnumAppSide.Client)
+            {
+                dialog?.UpdateSentText(sentMessage);
+                dialog?.UpdateReceivedText(receivedMessage);
+            }
         }
 
         public override void ToTreeAttributes(ITreeAttribute tree)
@@ -197,6 +213,23 @@ namespace RPVoiceChat.GameContent.BlockEntity
             IsPlaying = false;
         }
 
+        public void ProcessPrintPacket(string message)
+        {
+            // Trigger message printing/deletion
+            if (connectedPrinter != null)
+            {
+                connectedPrinter.CreateTelegram(message, NetworkUID.ToString());
+            }
+            
+            // Clear the message
+            receivedMessage = "";
+            receivedMessageOriginal = "";
+            isCountdownActive = false;
+            countdownSeconds = 0;
+            countdownEndTime = 0;
+            MarkDirty();
+        }
+
         public string GetSentMessage()
         {
             return sentMessage;
@@ -287,7 +320,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (Api?.World?.BlockAccessor == null) return;
 
             BlockPos belowPos = Pos.DownCopy();
-            BlockEntity belowEntity = Api.World.BlockAccessor.GetBlockEntity(belowPos);
+            Vintagestory.API.Common.BlockEntity belowEntity = Api.World.BlockAccessor.GetBlockEntity(belowPos);
             
             if (belowEntity is BlockEntityPrinter printer)
             {
@@ -314,7 +347,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         private void UpdateActivityTime()
         {
-            lastActivityTime = Api.World.Calendar.TotalDays;
+            lastActivityTime = Api.World.ElapsedMilliseconds;
         }
 
         public override void OnBlockPlaced(ItemStack byItemStack = null)
@@ -351,28 +384,119 @@ namespace RPVoiceChat.GameContent.BlockEntity
         }
 
 
+        // Client-side countdown update
+        private void OnClientGameTick(float dt)
+        {
+            if (Api.Side != EnumAppSide.Client) return;
+            
+            long currentTime = Api.World.ElapsedMilliseconds;
+            long timeSinceLastActivity = currentTime - lastActivityTime;
+            double secondsSinceLastActivity = timeSinceLastActivity / 1000.0;
+
+            // Start countdown if message is complete and countdown not already active
+            if (!string.IsNullOrEmpty(receivedMessageOriginal) && !isCountdownActive && secondsSinceLastActivity >= 2.0)
+            {
+                StartCountdown();
+            }
+
+            // Update countdown if active
+            if (isCountdownActive)
+            {
+                UpdateCountdown();
+            }
+        }
+
         // Auto-save functionality
         public void CheckAutoSave()
         {
-            long currentTime = Api.World.Calendar.TotalDays;
+            long currentTime = Api.World.ElapsedMilliseconds;
             long timeSinceLastActivity = currentTime - lastActivityTime;
 
-            // Convert days to seconds (assuming 24 hours per day)
-            double secondsSinceLastActivity = timeSinceLastActivity * 24 * 60 * 60;
+            // Convert milliseconds to seconds
+            double secondsSinceLastActivity = timeSinceLastActivity / 1000.0;
 
-            if (secondsSinceLastActivity >= AutoSaveDelaySeconds && !string.IsNullOrEmpty(receivedMessageOriginal))
+            // Start countdown if message is complete and countdown not already active
+            if (!string.IsNullOrEmpty(receivedMessageOriginal) && !isCountdownActive && secondsSinceLastActivity >= 2.0)
+            {
+                StartCountdown();
+            }
+
+            // Update countdown if active
+            if (isCountdownActive)
+            {
+                UpdateCountdown();
+            }
+
+            if (secondsSinceLastActivity >= MessageDeletionDelaySeconds + 2 && !string.IsNullOrEmpty(receivedMessageOriginal))
             {
                 // If printer is connected, save the message before clearing
                 if (connectedPrinter != null)
                 {
-                    connectedPrinter.CreateTelegram(receivedMessageOriginal);
+                    connectedPrinter.CreateTelegram(receivedMessageOriginal, NetworkUID.ToString());
                 }
                 
                 // Always clear the message after the delay (with or without printer)
                 receivedMessage = "";
                 receivedMessageOriginal = "";
+                isCountdownActive = false;
+                countdownSeconds = 0;
+                countdownEndTime = 0;
                 MarkDirty();
                 dialog?.UpdateReceivedText("");
+                dialog?.UpdateCountdown(-1); // Hide countdown completely
+            }
+        }
+
+        private void StartCountdown()
+        {
+            isCountdownActive = true;
+            countdownSeconds = MessageDeletionDelaySeconds; // Start from the delay (e.g., 10 seconds)
+            dialog?.UpdateCountdown(countdownSeconds);
+        }
+
+        private void UpdateCountdown()
+        {
+            long currentTime = Api.World.ElapsedMilliseconds;
+            long timeSinceLastActivity = currentTime - lastActivityTime;
+            double secondsSinceLastActivity = timeSinceLastActivity / 1000.0;
+            
+            // Calculate countdown: starts 2 seconds after last activity, counts down for 10 seconds
+            // So at 2 seconds: countdown = 10, at 12 seconds: countdown = 0
+            int newCountdown = Math.Max(0, MessageDeletionDelaySeconds - (int)secondsSinceLastActivity + 2);
+            
+            if (newCountdown != countdownSeconds)
+            {
+                countdownSeconds = newCountdown;
+                dialog?.UpdateCountdown(countdownSeconds);
+                
+                // If countdown just reached 0, record the time
+                if (countdownSeconds == 0 && countdownEndTime == 0)
+                {
+                    countdownEndTime = currentTime;
+                    
+                    // Send packet to server to trigger printing
+                    if (Api.Side == EnumAppSide.Client)
+                    {
+                        var packet = new TelegraphPrintPacket
+                        {
+                            Message = receivedMessageOriginal,
+                            TelegraphPos = Pos
+                        };
+                        RPVoiceChatMod.TelegraphPrintClientChannel.SendPacket(packet);
+                    }
+                }
+            }
+            
+            // Hide countdown 2 seconds after it reached 0
+            if (countdownSeconds == 0 && countdownEndTime > 0)
+            {
+                double timeSinceCountdownEnd = (currentTime - countdownEndTime) / 1000.0;
+                if (timeSinceCountdownEnd >= 2.0)
+                {
+                    dialog?.UpdateCountdown(-1); // Hide countdown
+                    isCountdownActive = false;
+                    countdownEndTime = 0;
+                }
             }
         }
 

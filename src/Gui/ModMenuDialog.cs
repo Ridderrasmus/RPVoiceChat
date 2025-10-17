@@ -485,7 +485,6 @@ namespace RPVoiceChat.Gui
             var denoisingSensitivity = ModConfig.ClientConfig.DenoisingSensitivity * 100;
             var denoisingStrength = ModConfig.ClientConfig.DenoisingStrength * 100;
             SetValue("configTabs", ModConfig.ClientConfig.ActiveConfigTab);
-            capi.Logger.Debug($"ActiveConfigTab: {ModConfig.ClientConfig.ActiveConfigTab}");
             SetValue("inputDevice", ModConfig.ClientConfig.InputDevice ?? "Default");
             SetValue("togglePushToTalk", ModConfig.ClientConfig.PushToTalkEnabled);
             SetValue("muteMicrophone", ModConfig.ClientConfig.IsMuted);

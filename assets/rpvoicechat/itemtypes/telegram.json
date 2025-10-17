@@ -1,6 +1,6 @@
 {
   "code": "telegram",
-  "class": "Item",
+  "class": "telegram",
   "enabled": true,
   "maxstacksize": 1,
   "creativeinventory": {
@@ -12,6 +12,7 @@
     "base": "item/telegram"
   },
   "attributes": {
+    "readable": true,
     "handbook": {
       "extraSections": [
         {

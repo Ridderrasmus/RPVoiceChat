@@ -12,6 +12,6 @@
       },
       "fixedweight": true
     },
-    "file": "game:entities/land/hooved/goat.json"
+    "file": "game:entities/animal/mammal/hooved/goat-adult.json"
   }
 ]

@@ -12,6 +12,7 @@ namespace RPVoiceChat.GameContent.Items
             api.RegisterItemClass("voiceamplifieritem", typeof(VoiceAmplifierItem));
             api.RegisterItemClass("handheldradio", typeof(RadioItem));
             api.RegisterItemClass("telegraphwire", typeof(TelegraphWireItem));
+            api.RegisterItemClass("telegram", typeof(ItemTelegram));
         }
     }
 }

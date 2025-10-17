@@ -16,6 +16,7 @@ namespace RPVoiceChat.Gui
         // Display fields for sent/received text
         private GuiElementDynamicText sentTextElem;
         private GuiElementDynamicText receivedTextElem;
+        private GuiElementDynamicText countdownTextElem;
 
         public TelegraphMenuDialog(ICoreClientAPI capi, BlockEntityTelegraph telegraphBlock) : base(capi)
         {
@@ -30,22 +31,23 @@ namespace RPVoiceChat.Gui
 
             ElementBounds sentTextBounds = ElementBounds.Fixed(0, 40, 360, 30);
             ElementBounds receivedTextBounds = ElementBounds.Fixed(0, 80, 360, 30);
-            ElementBounds clearButtonBounds = ElementBounds.Fixed(130, 130, 100, 30); // Centré
+            ElementBounds countdownTextBounds = ElementBounds.Fixed(0, 120, 360, 30);
 
             ElementBounds bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
             bgBounds.BothSizing = ElementSizing.FitToChildren;
-            bgBounds.WithChildren(sentTextBounds, receivedTextBounds, clearButtonBounds); // Inclure le bouton dans le fond
+            bgBounds.WithChildren(sentTextBounds, receivedTextBounds, countdownTextBounds); // Inclure les textes et le décompte
 
             SingleComposer = capi.Gui.CreateCompo("telegraphmenu", dialogBounds)
                 .AddShadedDialogBG(bgBounds)
                 .AddDialogTitleBar(UIUtils.I18n("Telegraph.Gui.Title"), OnTitleBarCloseClicked)
                 .AddDynamicText(UIUtils.I18n("Telegraph.Gui.Sent", ' '), CairoFont.WhiteSmallText(), sentTextBounds, key: "sentText") // TODO: not long enough / no wrapword
                 .AddDynamicText(UIUtils.I18n("Telegraph.Gui.Received", ' '), CairoFont.WhiteSmallText(), receivedTextBounds, key: "receivedText") // TODO: not long enough / no wrapword
-                .AddButton(UIUtils.I18n("Telegraph.Gui.Delete"), OnClearClicked, clearButtonBounds)
+                .AddDynamicText("", CairoFont.WhiteSmallText(), countdownTextBounds, key: "countdownText")
                 .Compose();
 
             sentTextElem = SingleComposer.GetDynamicText("sentText");
             receivedTextElem = SingleComposer.GetDynamicText("receivedText");
+            countdownTextElem = SingleComposer.GetDynamicText("countdownText");
 
             UpdateSentText(telegraphBlock.GetSentMessage());
             UpdateReceivedText(telegraphBlock.GetReceivedMessage());
@@ -56,11 +58,6 @@ namespace RPVoiceChat.Gui
             TryClose();
         }
 
-        private bool OnClearClicked()
-        {
-            telegraphBlock.ClearMessages();
-            return true;
-        }
 
         public void UpdateSentText(string text)
         {
@@ -70,6 +67,18 @@ namespace RPVoiceChat.Gui
         public void UpdateReceivedText(string text)
         {
             receivedTextElem?.SetNewText(UIUtils.I18n("Telegraph.Gui.Received", text));
+        }
+
+        public void UpdateCountdown(int seconds)
+        {
+            if (seconds > 0)
+            {
+                countdownTextElem?.SetNewText($"Suppression dans {seconds} secondes...");
+            }
+            else
+            {
+                countdownTextElem?.SetNewText("");
+            }
         }
 
         public override void OnKeyPress(KeyEvent args)

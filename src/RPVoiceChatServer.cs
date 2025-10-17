@@ -117,11 +117,11 @@ namespace RPVoiceChat
                     .WithArgs(parsers.Float("weighting"))
                     .HandleWith(SetWallThicknessWeighting)
                 .EndSub()
-                .BeginSub("printerdelay")
-                    .WithDesc(UIUtils.I18n("Command.PrinterDelay.Desc"))
-                    .WithAdditionalInformation(UIUtils.I18n("Command.PrinterDelay.Help"))
+                .BeginSub("msgdelay")
+                    .WithDesc(UIUtils.I18n("Command.MessageDelay.Desc"))
+                    .WithAdditionalInformation(UIUtils.I18n("Command.MessageDelay.Help"))
                     .WithArgs(parsers.Int("seconds"))
-                    .HandleWith(SetPrinterDelay)
+                    .HandleWith(SetMessageDelay)
                 .EndSub();
         }
 
@@ -175,9 +175,9 @@ namespace RPVoiceChat
             bool forceNameTags = WorldConfig.GetBool("force-render-name-tags");
             bool encoding = WorldConfig.GetBool("encode-audio");
             float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");
-            int printerDelay = ServerConfigManager.PrinterAutoSaveDelaySeconds;
+            int messageDeletionDelay = ServerConfigManager.TelegraphMessageDeletionDelaySeconds;
 
-            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceNameTags, encoding, wallThicknessWeighting, printerDelay));
+            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceNameTags, encoding, wallThicknessWeighting, messageDeletionDelay));
         }
 
         private TextCommandResult SetWhisperHandler(TextCommandCallingArgs args)
@@ -216,20 +216,20 @@ namespace RPVoiceChat
             return TextCommandResult.Success(UIUtils.I18n("Command.WallThicknessWeighting.Success", weighting));
         }
 
-        private TextCommandResult SetPrinterDelay(TextCommandCallingArgs args)
+        private TextCommandResult SetMessageDelay(TextCommandCallingArgs args)
         {
             int seconds = (int)args[0];
 
             // Validate the input
             if (seconds < 1 || seconds > 300)
             {
-                return TextCommandResult.Error("Printer delay must be between 1 and 300 seconds.");
+                return TextCommandResult.Error("Message deletion delay must be between 1 and 300 seconds.");
             }
 
-            ModConfig.ServerConfig.PrinterAutoSaveDelaySeconds = seconds;
+            ModConfig.ServerConfig.TelegraphMessageDeletionDelaySeconds = seconds;
             ModConfig.SaveServer(sapi);
 
-            return TextCommandResult.Success(UIUtils.I18n("Command.PrinterDelay.Success", seconds));
+            return TextCommandResult.Success(UIUtils.I18n("Command.MessageDelay.Success", seconds));
         }
 
         public override void Dispose()

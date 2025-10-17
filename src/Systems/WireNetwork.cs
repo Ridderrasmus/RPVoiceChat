@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using RPVoiceChat.Systems;
+using Vintagestory.API.Common;
 
 namespace RPVoiceChat.GameContent.Systems
 {
@@ -20,7 +21,17 @@ namespace RPVoiceChat.GameContent.Systems
 
             Nodes.Add(node);
             node.NetworkUID = networkID;
-            node.MarkDirty(true);
+            
+            // Ensure MarkDirty is called on the main thread to avoid texture upload errors
+            if (node.Api?.Side == EnumAppSide.Client)
+            {
+                ((Vintagestory.API.Client.ICoreClientAPI)node.Api).Event.EnqueueMainThreadTask(() => 
+                    node.MarkDirty(true), "MarkDirty");
+            }
+            else
+            {
+                node.MarkDirty(true);
+            }
         }
 
         public void RemoveNode(WireNode node)
@@ -30,7 +41,17 @@ namespace RPVoiceChat.GameContent.Systems
 
             Nodes.Remove(node);
             node.NetworkUID = 0;
-            node.MarkDirty(true);
+            
+            // Ensure MarkDirty is called on the main thread to avoid texture upload errors
+            if (node.Api?.Side == EnumAppSide.Client)
+            {
+                ((Vintagestory.API.Client.ICoreClientAPI)node.Api).Event.EnqueueMainThreadTask(() => 
+                    node.MarkDirty(true), "MarkDirty");
+            }
+            else
+            {
+                node.MarkDirty(true);
+            }
 
             if (Nodes.Count == 0)
             {

@@ -3,6 +3,7 @@ using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.GameContent.Block;
 using RPVoiceChat.GameContent.Items;
 using RPVoiceChat.src.Networking.Packets;
+using RPVoiceChat.Networking.Packets;
 using RPVoiceChat.Utils;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -18,6 +19,8 @@ namespace RPVoiceChat
         internal static ICoreServerAPI sapi;
         internal static IClientNetworkChannel ClientChannel;
         internal static IServerNetworkChannel ServerChannel;
+        internal static IClientNetworkChannel TelegraphPrintClientChannel;
+        internal static IServerNetworkChannel TelegraphPrintServerChannel;
 
         private PatchManager patchManager;
 
@@ -39,6 +42,9 @@ namespace RPVoiceChat
                 capi = api as ICoreClientAPI;
                 ClientChannel = capi.Network.RegisterChannel("welding")
                     .RegisterMessageType<WeldingHitPacket>();
+                    
+                TelegraphPrintClientChannel = capi.Network.RegisterChannel("telegraphprint")
+                    .RegisterMessageType<TelegraphPrintPacket>();
             }
             else if (api.Side == EnumAppSide.Server)
             {
@@ -46,6 +52,10 @@ namespace RPVoiceChat
                 ServerChannel = sapi.Network.RegisterChannel("welding")
                     .RegisterMessageType<WeldingHitPacket>()
                     .SetMessageHandler<WeldingHitPacket>(OnWeldingHitReceived);
+                    
+                TelegraphPrintServerChannel = sapi.Network.RegisterChannel("telegraphprint")
+                    .RegisterMessageType<TelegraphPrintPacket>()
+                    .SetMessageHandler<TelegraphPrintPacket>(OnTelegraphPrintPacket);
             }
 
             patchManager = new PatchManager(modID);
@@ -80,6 +90,20 @@ namespace RPVoiceChat
             if (be != null)
             {
                 be.OnHammerHitOver(fromPlayer, packet.HitPosition);
+            }
+        }
+
+        private void OnTelegraphPrintPacket(IServerPlayer player, TelegraphPrintPacket packet)
+        {
+            // Find the telegraph block entity
+            var telegraph = sapi.World.BlockAccessor.GetBlockEntity(packet.TelegraphPos) as BlockEntityTelegraph;
+            if (telegraph != null)
+            {
+                telegraph.ProcessPrintPacket(packet.Message);
+            }
+            else
+            {
+                sapi.Logger.Warning($"Telegraph at {packet.TelegraphPos} not found for print packet");
             }
         }
     }

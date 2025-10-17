@@ -5,9 +5,11 @@ public class PrinterBlock : Block
 {
     public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
     {
-        BlockEntityPrinter printer = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityPrinter;
-        printer?.OnInteract(byPlayer);
-
-        return true;
+        BlockEntityPrinter bePrinter = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityPrinter;
+        if (bePrinter != null)
+        {
+            return bePrinter.OnPlayerRightClick(byPlayer, blockSel);
+        }
+        return false;
     }
 }

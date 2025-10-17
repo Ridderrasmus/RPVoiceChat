@@ -80,7 +80,6 @@ namespace RPVoiceChat.Config
             try
             {
                 GenerateConfig(api, jsonConfig, config);
-                api.Logger.Debug($"[RPVoiceChat] Successfully saved {typeof(T).Name}");
             }
             catch (Exception e)
             {
