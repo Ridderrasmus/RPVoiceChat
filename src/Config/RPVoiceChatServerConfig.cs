@@ -29,6 +29,7 @@ namespace RPVoiceChat.Config
         public int TelegraphMinDelayBetweenKeysMs { get; set; } = 200;
         public double BellRingCooldownSeconds { get; set; } = 1.5;
         public bool TelegraphGenuineMorseCharacters { get; set; } = false;
+        public int PrinterAutoSaveDelaySeconds { get; set; } = 10;
 
         // Sound Emitting Objects Range Settings
         public int HandbellAudibleDistance { get; set; } = 16;

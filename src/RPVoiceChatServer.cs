@@ -110,11 +110,18 @@ namespace RPVoiceChat
                     .WithAdditionalInformation(UIUtils.I18n("Command.OthersHearSpectators.Help"))
                     .WithArgs(parsers.Bool("state"))
                     .HandleWith(ToggleOthersHearSpectators)
+                .EndSub()
                 .BeginSub("wtw")
                     .WithDesc(UIUtils.I18n("Command.WallThicknessWeighting.Desc"))
                     .WithAdditionalInformation(UIUtils.I18n("Command.WallThicknessWeighting.Help"))
                     .WithArgs(parsers.Float("weighting"))
                     .HandleWith(SetWallThicknessWeighting)
+                .EndSub()
+                .BeginSub("printerdelay")
+                    .WithDesc(UIUtils.I18n("Command.PrinterDelay.Desc"))
+                    .WithAdditionalInformation(UIUtils.I18n("Command.PrinterDelay.Help"))
+                    .WithArgs(parsers.Int("seconds"))
+                    .HandleWith(SetPrinterDelay)
                 .EndSub();
         }
 
@@ -168,8 +175,9 @@ namespace RPVoiceChat
             bool forceNameTags = WorldConfig.GetBool("force-render-name-tags");
             bool encoding = WorldConfig.GetBool("encode-audio");
             float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");
+            int printerDelay = ServerConfigManager.PrinterAutoSaveDelaySeconds;
 
-            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceNameTags, encoding, wallThicknessWeighting));
+            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceNameTags, encoding, wallThicknessWeighting, printerDelay));
         }
 
         private TextCommandResult SetWhisperHandler(TextCommandCallingArgs args)
@@ -206,6 +214,22 @@ namespace RPVoiceChat
             WorldConfig.Set("wall-thickness-weighting", weighting);
 
             return TextCommandResult.Success(UIUtils.I18n("Command.WallThicknessWeighting.Success", weighting));
+        }
+
+        private TextCommandResult SetPrinterDelay(TextCommandCallingArgs args)
+        {
+            int seconds = (int)args[0];
+
+            // Validate the input
+            if (seconds < 1 || seconds > 300)
+            {
+                return TextCommandResult.Error("Printer delay must be between 1 and 300 seconds.");
+            }
+
+            ModConfig.ServerConfig.PrinterAutoSaveDelaySeconds = seconds;
+            ModConfig.SaveServer(sapi);
+
+            return TextCommandResult.Success(UIUtils.I18n("Command.PrinterDelay.Success", seconds));
         }
 
         public override void Dispose()

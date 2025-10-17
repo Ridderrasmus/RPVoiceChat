@@ -29,7 +29,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         // Printer functionality
         private BlockEntityPrinter connectedPrinter;
         private long lastActivityTime;
-        private const int AUTO_SAVE_DELAY_SECONDS = 10;
+        private int AutoSaveDelaySeconds => ServerConfigManager.PrinterAutoSaveDelaySeconds;
 
         public BlockEntityTelegraph() : base()
         {
@@ -362,7 +362,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             // Convert days to seconds (assuming 24 hours per day)
             double secondsSinceLastActivity = timeSinceLastActivity * 24 * 60 * 60;
 
-            if (secondsSinceLastActivity >= AUTO_SAVE_DELAY_SECONDS && !string.IsNullOrEmpty(receivedMessageOriginal))
+            if (secondsSinceLastActivity >= AutoSaveDelaySeconds && !string.IsNullOrEmpty(receivedMessageOriginal))
             {
                 // Auto-save the received message
                 connectedPrinter.CreateTelegram(receivedMessageOriginal);
