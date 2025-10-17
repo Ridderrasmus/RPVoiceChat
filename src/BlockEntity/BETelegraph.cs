@@ -354,8 +354,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
         // Auto-save functionality
         public void CheckAutoSave()
         {
-            if (connectedPrinter == null) return;
-
             long currentTime = Api.World.Calendar.TotalDays;
             long timeSinceLastActivity = currentTime - lastActivityTime;
 
@@ -364,10 +362,13 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             if (secondsSinceLastActivity >= AutoSaveDelaySeconds && !string.IsNullOrEmpty(receivedMessageOriginal))
             {
-                // Auto-save the received message
-                connectedPrinter.CreateTelegram(receivedMessageOriginal);
+                // If printer is connected, save the message before clearing
+                if (connectedPrinter != null)
+                {
+                    connectedPrinter.CreateTelegram(receivedMessageOriginal);
+                }
                 
-                // Clear the message after saving
+                // Always clear the message after the delay (with or without printer)
                 receivedMessage = "";
                 receivedMessageOriginal = "";
                 MarkDirty();

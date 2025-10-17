@@ -97,7 +97,7 @@
   "Command.Whisper.Desc": "Sets the whisper distance in blocks",
   "Command.Whisper.Success": "Whisper distance set to {0}",
   "Command.Info.Desc": "Displays the current audio distances and toggles",
-  "Command.Info.Success": "Whisper distance: {0} blocks\nTalk distance: {1} blocks\nShout distance: {2} blocks\nForce nametag rendering: {3}\nEncode audio: {4}\nWall thickness weighting (muffling): {5}\nPrinter auto-save delay: {6} seconds",
+  "Command.Info.Success": "Whisper distance: {0} blocks\nTalk distance: {1} blocks\nShout distance: {2} blocks\nForce nametag rendering: {3}\nEncode audio: {4}\nWall thickness weighting (muffling): {5}\nAutomatic message deletion delay: {6} seconds",
   "Command.Reset.Desc": "Resets the audio distances to their default settings",
   "Command.Reset.Success": "Audio distances reset to default",
   "Command.ForceNameTags.Desc": "Toggles forceful name tag rendering when people are talking",
@@ -115,9 +115,9 @@
   "Command.WallThicknessWeighting.Desc": "Set a value that weighting the wall thickness calculated for muffling",
   "Command.WallThicknessWeighting.Help": "Wall thickness is divided by this weighting to remove gain at the high-frequency limit of the filter, simuling muffling. Values below 1 will increase muffling effect, values upper 1 will reduced it. Default value is <strong>1.5f</strong>",
   "Command.WallThicknessWeighting.Success": "Wall thickness weighting set to {0}",
-  "Command.PrinterDelay.Desc": "Sets the printer auto-save delay in seconds",
-  "Command.PrinterDelay.Help": "Sets the delay in seconds before a telegraph message is automatically saved to a telegram. Default value is <strong>10</strong> seconds. Accepted values: 1 to 300 seconds",
-  "Command.PrinterDelay.Success": "Printer auto-save delay set to {0} seconds",
+  "Command.PrinterDelay.Desc": "Sets the automatic telegraph message deletion delay in seconds",
+  "Command.PrinterDelay.Help": "Sets the delay in seconds before a telegraph message is automatically deleted. If a printer is connected, the message will be saved before deletion. Default value is <strong>10</strong> seconds. Accepted values: 1 to 300 seconds",
+  "Command.PrinterDelay.Success": "Automatic message deletion delay set to {0} seconds",
 
   "Hotkey.ModMenu": "RPVoice: Mod menu",
   "Hotkey.VoiceLevel": "RPVoice: Change voice distance",
@@ -261,5 +261,5 @@
   "Handbook.Usage.item-telegram.Title": "Usage",
   "Handbook.Usage.item-telegram.Text": "A printed telegram containing a complete telegraphic message. Each telegram contains a unique message and can be kept as proof of communication.",
   "Handbook.Usage.block-printer.Title": "Usage",
-  "Handbook.Usage.block-printer.Text": "A telegraph printer that can be placed under a telegraph key. It automatically stores received messages on telegrams after 10 seconds of inactivity. Place papers in the top slot and retrieve printed telegrams from the bottom slot."
+  "Handbook.Usage.block-printer.Text": "A telegraph printer that can be placed under a telegraph key. Telegraph messages are automatically deleted after a configurable delay, but if a printer is connected, the message will be saved to a telegram before deletion. Place papers in the top slot and retrieve printed telegrams from the bottom slot."
 }
