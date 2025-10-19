@@ -56,7 +56,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
             Inventory.Pos ??= Pos;
             MarkDirty();
         }
-        
 
         public override void OnBlockPlaced(ItemStack byItemStack = null)
         {
@@ -90,14 +89,12 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
         {
-            // Ensure Api is set before creating inventory
             if (Api == null) this.Api = worldForResolving.Api;
             
             // Create inventory BEFORE calling base.FromTreeAttributes
             if (inventory == null)
             {
                 InitInventory(worldForResolving.Api);
-                // Don't call LateInitInventory here - it calls MarkDirty() which needs Pos to be set
             }
             
             // Now call base.FromTreeAttributes with inventory already created
@@ -205,10 +202,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
             // The telegraph will handle disconnection
         }
-
-
-
-
 
         public bool ConsumePaperSlip()
         {

@@ -31,11 +31,15 @@ namespace RPVoiceChat.GameContent.BlockEntity
         
         // Printer functionality
         private BlockEntityPrinter connectedPrinter;
-        private long lastActivityTime;
+        private long lastReceivedActivityTime;
+        private long lastSentActivityTime;
         private int MessageDeletionDelaySeconds => ServerConfigManager.TelegraphMessageDeletionDelaySeconds;
-        private bool isCountdownActive = false;
-        private int countdownSeconds = 0;
-        private long countdownEndTime = 0; // Time when countdown reached 0
+        private bool isReceivedCountdownActive = false;
+        private int receivedCountdownSeconds = 0;
+        private long receivedCountdownEndTime = 0;
+        private bool isSentCountdownActive = false;
+        private int sentCountdownSeconds = 0;
+        private long sentCountdownEndTime = 0;
 
         public BlockEntityTelegraph() : base()
         {
@@ -46,7 +50,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
             base.Initialize(api);
 
             IsPlaying = false;
-            lastActivityTime = api.World.ElapsedMilliseconds;
+            lastReceivedActivityTime = api.World.ElapsedMilliseconds;
+            lastSentActivityTime = api.World.ElapsedMilliseconds;
 
             OnReceivedSignalEvent += HandleReceivedSignal;
 
@@ -129,6 +134,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 return; // Stop if message is too long
 
             UpdateActivityTime();
+            UpdateSentActivityTime(); // Update sent message activity time
             pendingSignals.Enqueue(keyChar);
 
             string messageToSend = keyChar.ToString(); // Always send latin characters on network
@@ -224,9 +230,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
             // Clear the message
             receivedMessage = "";
             receivedMessageOriginal = "";
-            isCountdownActive = false;
-            countdownSeconds = 0;
-            countdownEndTime = 0;
+            isReceivedCountdownActive = false;
+            receivedCountdownSeconds = 0;
+            receivedCountdownEndTime = 0;
             MarkDirty();
         }
 
@@ -250,6 +256,16 @@ namespace RPVoiceChat.GameContent.BlockEntity
             pendingSignals.Clear();
             dialog?.UpdateSentText("");
             dialog?.UpdateReceivedText("");
+            
+            // Reset countdowns
+            isReceivedCountdownActive = false;
+            receivedCountdownSeconds = 0;
+            receivedCountdownEndTime = 0;
+            isSentCountdownActive = false;
+            sentCountdownSeconds = 0;
+            sentCountdownEndTime = 0;
+            dialog?.UpdateCountdown(-1);
+            dialog?.UpdateSentCountdown(-1);
         }
 
         private void UpdateDisplayMessages()
@@ -347,7 +363,12 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         private void UpdateActivityTime()
         {
-            lastActivityTime = Api.World.ElapsedMilliseconds;
+            lastReceivedActivityTime = Api.World.ElapsedMilliseconds;
+        }
+
+        private void UpdateSentActivityTime()
+        {
+            lastSentActivityTime = Api.World.ElapsedMilliseconds;
         }
 
         public override void OnBlockPlaced(ItemStack byItemStack = null)
@@ -390,19 +411,37 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (Api.Side != EnumAppSide.Client) return;
             
             long currentTime = Api.World.ElapsedMilliseconds;
-            long timeSinceLastActivity = currentTime - lastActivityTime;
-            double secondsSinceLastActivity = timeSinceLastActivity / 1000.0;
+            
+            // Handle received message countdown
+            long timeSinceLastReceivedActivity = currentTime - lastReceivedActivityTime;
+            double secondsSinceLastReceivedActivity = timeSinceLastReceivedActivity / 1000.0;
 
-            // Start countdown if message is complete and countdown not already active
-            if (!string.IsNullOrEmpty(receivedMessageOriginal) && !isCountdownActive && secondsSinceLastActivity >= 2.0)
+            // Start countdown if received message is complete and countdown not already active
+            if (!string.IsNullOrEmpty(receivedMessageOriginal) && !isReceivedCountdownActive && secondsSinceLastReceivedActivity >= 2.0)
             {
-                StartCountdown();
+                StartReceivedCountdown();
             }
 
-            // Update countdown if active
-            if (isCountdownActive)
+            // Update received message countdown if active
+            if (isReceivedCountdownActive)
             {
-                UpdateCountdown();
+                UpdateReceivedCountdown();
+            }
+
+            // Handle sent message countdown
+            long timeSinceLastSentActivity = currentTime - lastSentActivityTime;
+            double secondsSinceLastSentActivity = timeSinceLastSentActivity / 1000.0;
+
+            // Start countdown if sent message is complete and countdown not already active
+            if (!string.IsNullOrEmpty(sentMessageOriginal) && !isSentCountdownActive && secondsSinceLastSentActivity >= 2.0)
+            {
+                StartSentCountdown();
+            }
+
+            // Update sent message countdown if active
+            if (isSentCountdownActive)
+            {
+                UpdateSentCountdown();
             }
         }
 
@@ -410,24 +449,24 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public void CheckAutoSave()
         {
             long currentTime = Api.World.ElapsedMilliseconds;
-            long timeSinceLastActivity = currentTime - lastActivityTime;
+            long timeSinceLastReceivedActivity = currentTime - lastReceivedActivityTime;
 
             // Convert milliseconds to seconds
-            double secondsSinceLastActivity = timeSinceLastActivity / 1000.0;
+            double secondsSinceLastReceivedActivity = timeSinceLastReceivedActivity / 1000.0;
 
-            // Start countdown if message is complete and countdown not already active
-            if (!string.IsNullOrEmpty(receivedMessageOriginal) && !isCountdownActive && secondsSinceLastActivity >= 2.0)
+            // Start countdown if received message is complete and countdown not already active
+            if (!string.IsNullOrEmpty(receivedMessageOriginal) && !isReceivedCountdownActive && secondsSinceLastReceivedActivity >= 2.0)
             {
-                StartCountdown();
+                StartReceivedCountdown();
             }
 
-            // Update countdown if active
-            if (isCountdownActive)
+            // Update received message countdown if active
+            if (isReceivedCountdownActive)
             {
-                UpdateCountdown();
+                UpdateReceivedCountdown();
             }
 
-            if (secondsSinceLastActivity >= MessageDeletionDelaySeconds + 2 && !string.IsNullOrEmpty(receivedMessageOriginal))
+            if (secondsSinceLastReceivedActivity >= MessageDeletionDelaySeconds + 2 && !string.IsNullOrEmpty(receivedMessageOriginal))
             {
                 // If printer is connected, save the message before clearing
                 if (connectedPrinter != null)
@@ -438,41 +477,48 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 // Always clear the message after the delay (with or without printer)
                 receivedMessage = "";
                 receivedMessageOriginal = "";
-                isCountdownActive = false;
-                countdownSeconds = 0;
-                countdownEndTime = 0;
+                isReceivedCountdownActive = false;
+                receivedCountdownSeconds = 0;
+                receivedCountdownEndTime = 0;
                 MarkDirty();
                 dialog?.UpdateReceivedText("");
                 dialog?.UpdateCountdown(-1); // Hide countdown completely
             }
         }
 
-        private void StartCountdown()
+        private void StartReceivedCountdown()
         {
-            isCountdownActive = true;
-            countdownSeconds = MessageDeletionDelaySeconds; // Start from the delay (e.g., 10 seconds)
-            dialog?.UpdateCountdown(countdownSeconds);
+            isReceivedCountdownActive = true;
+            receivedCountdownSeconds = MessageDeletionDelaySeconds; // Start from the delay (e.g., 10 seconds)
+            dialog?.UpdateCountdown(receivedCountdownSeconds);
         }
 
-        private void UpdateCountdown()
+        private void StartSentCountdown()
+        {
+            isSentCountdownActive = true;
+            sentCountdownSeconds = MessageDeletionDelaySeconds; // Start from the delay (e.g., 10 seconds)
+            dialog?.UpdateSentCountdown(sentCountdownSeconds);
+        }
+
+        private void UpdateReceivedCountdown()
         {
             long currentTime = Api.World.ElapsedMilliseconds;
-            long timeSinceLastActivity = currentTime - lastActivityTime;
-            double secondsSinceLastActivity = timeSinceLastActivity / 1000.0;
+            long timeSinceLastReceivedActivity = currentTime - lastReceivedActivityTime;
+            double secondsSinceLastReceivedActivity = timeSinceLastReceivedActivity / 1000.0;
             
             // Calculate countdown: starts 2 seconds after last activity, counts down for 10 seconds
             // So at 2 seconds: countdown = 10, at 12 seconds: countdown = 0
-            int newCountdown = Math.Max(0, MessageDeletionDelaySeconds - (int)secondsSinceLastActivity + 2);
+            int newCountdown = Math.Max(0, MessageDeletionDelaySeconds - (int)secondsSinceLastReceivedActivity + 2);
             
-            if (newCountdown != countdownSeconds)
+            if (newCountdown != receivedCountdownSeconds)
             {
-                countdownSeconds = newCountdown;
-                dialog?.UpdateCountdown(countdownSeconds);
+                receivedCountdownSeconds = newCountdown;
+                dialog?.UpdateCountdown(receivedCountdownSeconds);
                 
                 // If countdown just reached 0, record the time
-                if (countdownSeconds == 0 && countdownEndTime == 0)
+                if (receivedCountdownSeconds == 0 && receivedCountdownEndTime == 0)
                 {
-                    countdownEndTime = currentTime;
+                    receivedCountdownEndTime = currentTime;
                     
                     // Send packet to server to trigger printing
                     if (Api.Side == EnumAppSide.Client)
@@ -488,14 +534,55 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
             
             // Hide countdown 2 seconds after it reached 0
-            if (countdownSeconds == 0 && countdownEndTime > 0)
+            if (receivedCountdownSeconds == 0 && receivedCountdownEndTime > 0)
             {
-                double timeSinceCountdownEnd = (currentTime - countdownEndTime) / 1000.0;
+                double timeSinceCountdownEnd = (currentTime - receivedCountdownEndTime) / 1000.0;
                 if (timeSinceCountdownEnd >= 2.0)
                 {
                     dialog?.UpdateCountdown(-1); // Hide countdown
-                    isCountdownActive = false;
-                    countdownEndTime = 0;
+                    isReceivedCountdownActive = false;
+                    receivedCountdownEndTime = 0;
+                }
+            }
+        }
+
+        private void UpdateSentCountdown()
+        {
+            long currentTime = Api.World.ElapsedMilliseconds;
+            long timeSinceLastSentActivity = currentTime - lastSentActivityTime;
+            double secondsSinceLastSentActivity = timeSinceLastSentActivity / 1000.0;
+            
+            // Calculate countdown: starts 2 seconds after last activity, counts down for 10 seconds
+            // So at 2 seconds: countdown = 10, at 12 seconds: countdown = 0
+            int newCountdown = Math.Max(0, MessageDeletionDelaySeconds - (int)secondsSinceLastSentActivity + 2);
+            
+            if (newCountdown != sentCountdownSeconds)
+            {
+                sentCountdownSeconds = newCountdown;
+                dialog?.UpdateSentCountdown(sentCountdownSeconds);
+                
+                // If countdown just reached 0, record the time
+                if (sentCountdownSeconds == 0 && sentCountdownEndTime == 0)
+                {
+                    sentCountdownEndTime = currentTime;
+                }
+            }
+            
+            // Clear sent message 2 seconds after countdown reached 0
+            if (sentCountdownSeconds == 0 && sentCountdownEndTime > 0)
+            {
+                double timeSinceCountdownEnd = (currentTime - sentCountdownEndTime) / 1000.0;
+                if (timeSinceCountdownEnd >= 2.0)
+                {
+                    // Clear the sent message
+                    sentMessage = "";
+                    sentMessageOriginal = "";
+                    isSentCountdownActive = false;
+                    sentCountdownSeconds = 0;
+                    sentCountdownEndTime = 0;
+                    MarkDirty();
+                    dialog?.UpdateSentText("");
+                    dialog?.UpdateSentCountdown(-1); // Hide countdown
                 }
             }
         }

@@ -198,6 +198,8 @@
   "Telegraph.Gui.Delete": "Delete",
   "Telegraph.Gui.Sent": "Sent message: {0}",
   "Telegraph.Gui.Received": "Received message: {0}",
+  "Telegraph.Gui.ReceivedCountdown": "Received message deletion in {0} seconds...",
+  "Telegraph.Gui.SentCountdown": "Sent message deletion in {0} seconds...",
   "Wire.StartConnection": "Starting point recorded.",
   "Wire.ConnectionSuccess": "Connection successful!",
   "Wire.ConnectionTooFar": "Too far! Max distance is {0} blocks.",
