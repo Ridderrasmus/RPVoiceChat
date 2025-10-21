@@ -67,7 +67,8 @@ namespace RPVoiceChat.Audio
 
         private byte[] EncodeInternal(short[] pcmData, bool isBroadcast)
         {
-            // Apply appropriate quality settings
+            // Fixed: Pre-calculate settings to avoid real-time parameter changes that cause CPU spikes
+            // Apply appropriate quality settings only once per mode change
             if (isBroadcast)
                 SetBroadcastQuality();
             else

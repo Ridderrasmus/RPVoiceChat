@@ -66,7 +66,7 @@ namespace RPVoiceChat.Networking
         protected void OpenUDPClient(int port)
         {
             UdpClient = new UdpClient(port);
-            UdpClient.Client.ReceiveBufferSize = UdpClient.Client.SendBufferSize = 64 * 1024;
+            UdpClient.Client.ReceiveBufferSize = UdpClient.Client.SendBufferSize = 256 * 1024; // Increased for 25+ players
         }
 
         protected int OpenUDPClient()
@@ -75,7 +75,7 @@ namespace RPVoiceChat.Networking
             UdpClient = new UdpClient();
             IPEndPoint endpoint = new IPEndPoint(IPAddress.Any, port);
             UdpClient.Client.Bind(endpoint);
-            UdpClient.Client.ReceiveBufferSize = UdpClient.Client.SendBufferSize = 64 * 1024;
+            UdpClient.Client.ReceiveBufferSize = UdpClient.Client.SendBufferSize = 256 * 1024; // Increased for 25+ players
 
             var localEndpoint = UdpClient.Client.LocalEndPoint as IPEndPoint;
             port = localEndpoint.Port;

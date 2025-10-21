@@ -321,18 +321,23 @@ namespace RPVoiceChat.Audio
                     PcmUtils.ApplyGainWithSoftClipping(ref audio.data, audio.format, finalGain);
                     PcmUtils.ApplyCompressor(ref audio.data, audio.format);
 
-                    // SKIP FADE for global broadcasts
-                    // Opus codec already handles transitions cleanly.
-                    if (!audio.isGlobalBroadcast)
-                    {
-                        int maxFadeDuration = Math.Min(
-                            2 * audio.frequency / 1000,
-                            audio.data.Length / 4
-                        );
+                    // Fixed: Consistent audio processing to prevent CPU spikes
+                    // Apply fade edges for all audio types to maintain consistent processing load
+                    int maxFadeDuration = Math.Min(
+                        2 * audio.frequency / 1000,
+                        audio.data.Length / 4
+                    );
 
-                        if (audio.data.Length > maxFadeDuration * 2)
+                    if (audio.data.Length > maxFadeDuration * 2)
+                    {
+                        // Reduce fade intensity for global broadcasts instead of skipping entirely
+                        if (audio.isGlobalBroadcast)
                         {
-                            AudioUtils.FadeEdges(audio.data, maxFadeDuration);
+                            AudioUtils.FadeEdges(audio.data, maxFadeDuration / 2); // Reduced fade
+                        }
+                        else
+                        {
+                            AudioUtils.FadeEdges(audio.data, maxFadeDuration); // Normal fade
                         }
                     }
 
