@@ -186,8 +186,8 @@ namespace RPVoiceChat.Audio
                 try
                 {
                     // Use WaitHandle instead of Thread.Sleep for proper cancellation
-                    // Fixed: Use consistent timing to prevent CPU spikes with multiple players
-                    int sleepMs = 100; // Constant timing regardless of broadcast mode
+                    // Use consistent timing to prevent CPU spikes with multiple players
+                    int sleepMs = 100;
                     ct.WaitHandle.WaitOne(sleepMs);
                     if (ct.IsCancellationRequested) break;
                     
