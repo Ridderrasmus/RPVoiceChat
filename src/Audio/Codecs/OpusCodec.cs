@@ -16,6 +16,9 @@ namespace RPVoiceChat.Audio
         public int FrameSize { get; }
         private IOpusEncoder encoder;
         private IOpusDecoder decoder;
+        
+        // Track last broadcast mode to avoid unnecessary parameter changes
+        private bool lastWasBroadcast = false;
 
         // Default bitrates
         private int NormalBitrate => ServerConfigManager.NormalBitrate; // 40 kbps
@@ -67,12 +70,16 @@ namespace RPVoiceChat.Audio
 
         private byte[] EncodeInternal(short[] pcmData, bool isBroadcast)
         {
-            // Fixed: Pre-calculate settings to avoid real-time parameter changes that cause CPU spikes
-            // Apply appropriate quality settings only once per mode change
-            if (isBroadcast)
-                SetBroadcastQuality();
-            else
-                SetNormalQuality();
+            // Only change encoder parameters when broadcast mode actually changes
+            // This prevents unnecessary parameter changes that cause CPU spikes
+            if (lastWasBroadcast != isBroadcast)
+            {
+                if (isBroadcast)
+                    SetBroadcastQuality();
+                else
+                    SetNormalQuality();
+                lastWasBroadcast = isBroadcast;
+            }
 
             const int maxPacketSize = 1276;
             byte[] encodedBuffer = new byte[maxPacketSize];

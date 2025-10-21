@@ -295,12 +295,12 @@ namespace RPVoiceChat.Audio
                 orderingQueue.Add(sequenceNumber, audio);
             }
 
-            // Fixed: Use synchronous processing instead of fire-and-forget async tasks
-            // This prevents creating 25+ concurrent async tasks that cause CPU spikes
+            // Use synchronous processing instead of fire-and-forget async tasks
+            // This prevents creating N+ concurrent async tasks that cause CPU spikes
             ProcessNextAudioPacket();
         }
 
-        // Fixed: Synchronous processing to prevent CPU spikes from concurrent async tasks
+        // Synchronous processing to prevent CPU spikes from concurrent async tasks
         private void ProcessNextAudioPacket()
         {
             try
