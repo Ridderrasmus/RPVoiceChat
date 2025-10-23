@@ -23,7 +23,7 @@ jobs:
       matrix:
         include:
         - language: csharp
-          build-mode: manual  # Changef from 'none' to 'manual'
+          build-mode: manual
 
     steps:
     - name: Checkout repository
@@ -34,10 +34,17 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
-    - name: Restore dependencies
-      run: dotnet restore --no-dependencies
-      # Note: Vintage Story dependencies will be not available
-      continue-on-error: true
+    - name: Create mock dependencies
+      run: |
+        # Folders for missing dependencies
+        mkdir -p /tmp/vintage-story/Lib
+        mkdir -p /tmp/vintage-story/Mods
+        
+        # Dummy DLL (stubs)
+        echo "// Mock DLL" > /tmp/vintage-story/Lib/OpenTK.Audio.OpenAL.dll
+        echo "// Mock DLL" > /tmp/vintage-story/Lib/OpenTK.Mathematics.dll
+        echo "// Mock DLL" > /tmp/vintage-story/VintagestoryLib.dll
+        echo "// Mock DLL" > /tmp/vintage-story/VintagestoryAPI.dll
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v4
@@ -47,10 +54,9 @@ jobs:
 
     - name: Build with CodeQL
       run: |
-        # Build seulement les parties analysables
         dotnet build --no-restore --configuration Release
       env:
-        VINTAGE_STORY: /tmp/vintage-story  # Dummy variable to avoir errors
+        VINTAGE_STORY: /tmp/vintage-story
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
