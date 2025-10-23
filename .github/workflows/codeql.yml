@@ -36,15 +36,27 @@ jobs:
 
     - name: Create mock dependencies
       run: |
-        # Folders for missing dependencies
+        # Create directory structure for external dependencies
         mkdir -p /tmp/vintage-story/Lib
         mkdir -p /tmp/vintage-story/Mods
         
-        # Dummy DLL (stubs)
-        echo "// Mock DLL" > /tmp/vintage-story/Lib/OpenTK.Audio.OpenAL.dll
-        echo "// Mock DLL" > /tmp/vintage-story/Lib/OpenTK.Mathematics.dll
-        echo "// Mock DLL" > /tmp/vintage-story/VintagestoryLib.dll
-        echo "// Mock DLL" > /tmp/vintage-story/VintagestoryAPI.dll
+        # Create dummy DLL files (not directories)
+        touch /tmp/vintage-story/Lib/OpenTK.Audio.OpenAL.dll
+        touch /tmp/vintage-story/Lib/OpenTK.Mathematics.dll
+        touch /tmp/vintage-story/VintagestoryLib.dll
+        touch /tmp/vintage-story/VintagestoryAPI.dll
+        touch /tmp/vintage-story/Mods/VSSurvivalMod.dll
+        touch /tmp/vintage-story/Mods/VSEssentials.dll
+        touch /tmp/vintage-story/Lib/cairo-sharp.dll
+        touch /tmp/vintage-story/Lib/Open.Nat.dll
+        touch /tmp/vintage-story/Lib/Newtonsoft.Json.dll
+        touch /tmp/vintage-story/Lib/0Harmony.dll
+        touch /tmp/vintage-story/Lib/protobuf-net.dll
+        touch /tmp/vintage-story/Lib/Microsoft.Data.Sqlite.dll
+        
+        # Verify files were created successfully
+        ls -la /tmp/vintage-story/Lib/
+        ls -la /tmp/vintage-story/Mods/
 
     - name: Restore NuGet packages
       run: dotnet restore
