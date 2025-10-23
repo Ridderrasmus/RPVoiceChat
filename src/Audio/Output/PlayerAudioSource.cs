@@ -99,6 +99,11 @@ namespace RPVoiceChat.Audio
             };
         }
 
+        // Cache wall thickness calculation to prevent expensive repeated calculations
+        private float cachedWallThickness = 0f;
+        private long lastWallThicknessUpdate = 0;
+        private const long WallThicknessCacheMs = 100; // Update every 100ms instead of every frame
+
         public void UpdatePlayer()
         {
             EntityPos speakerPos = player.Entity?.SidedPos;
@@ -124,7 +129,14 @@ namespace RPVoiceChat.Audio
                 }
                 else
                 {
-                    wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
+                    // Fixed: Cache expensive wall thickness calculation to prevent CPU spikes
+                    long currentTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                    if (currentTime - lastWallThicknessUpdate > WallThicknessCacheMs)
+                    {
+                        cachedWallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
+                        lastWallThicknessUpdate = currentTime;
+                    }
+                    wallThickness = cachedWallThickness;
                 }
 
                 if (capi.World.Player.Entity.Swimming)
@@ -283,74 +295,84 @@ namespace RPVoiceChat.Audio
                 orderingQueue.Add(sequenceNumber, audio);
             }
 
-            _ = DequeueAudio(); // Fire and forget - we don't need to await this
+            // Use synchronous processing instead of fire-and-forget async tasks
+            // This prevents creating N+ concurrent async tasks that cause CPU spikes
+            ProcessNextAudioPacket();
         }
 
-        public async Task DequeueAudio()
+        // Synchronous processing to prevent CPU spikes from concurrent async tasks
+        private void ProcessNextAudioPacket()
         {
             try
             {
-                await Task.Delay(orderingDelay);
-
-                lock (dequeue_audio_lock)
+                AudioData audio;
+                lock (ordering_queue_lock)
                 {
-                    AudioData audio;
-                    lock (ordering_queue_lock)
+                    if (orderingQueue.Count == 0) return;
+
+                    lastAudioSequenceNumber = orderingQueue.Keys[0];
+                    audio = orderingQueue[lastAudioSequenceNumber];
+                    orderingQueue.RemoveAt(0);
+                }
+
+                currentAudio = audio;
+                UpdateVoiceLevel(audio.voiceLevel);
+
+                if (codec != null)
+                    audio.data = codec.Decode(audio.data);
+
+                if (audio.data == null || audio.data.Length == 0)
+                {
+                    Logger.client.Warning("Received empty audio data, skipping");
+                    return;
+                }
+
+                float finalGain = GetFinalGain();
+
+                PcmUtils.ApplyGainWithSoftClipping(ref audio.data, audio.format, finalGain);
+                PcmUtils.ApplyCompressor(ref audio.data, audio.format);
+
+                // Consistent audio processing to prevent CPU spikes
+                // Apply fade edges for all audio types to maintain consistent processing load
+                int maxFadeDuration = Math.Min(
+                    2 * audio.frequency / 1000,
+                    audio.data.Length / 4
+                );
+
+                if (audio.data.Length > maxFadeDuration * 2)
+                {
+                    // Reduce fade intensity for global broadcasts instead of skipping entirely
+                    if (audio.isGlobalBroadcast)
                     {
-                        if (orderingQueue.Count == 0) return;
-
-                        lastAudioSequenceNumber = orderingQueue.Keys[0];
-                        audio = orderingQueue[lastAudioSequenceNumber];
-                        orderingQueue.RemoveAt(0);
+                        AudioUtils.FadeEdges(audio.data, maxFadeDuration / 2); // Reduced fade
                     }
-
-                    currentAudio = audio;
-                    UpdateVoiceLevel(audio.voiceLevel);
-
-                    if (codec != null)
-                        audio.data = codec.Decode(audio.data);
-
-                    if (audio.data == null || audio.data.Length == 0)
+                    else
                     {
-                        Logger.client.Warning("Received empty audio data, skipping");
-                        return;
+                        AudioUtils.FadeEdges(audio.data, maxFadeDuration); // Normal fade
                     }
+                }
 
-                    float finalGain = GetFinalGain();
+                buffer.QueueAudio(audio.data, audio.format, audio.frequency);
 
-                    PcmUtils.ApplyGainWithSoftClipping(ref audio.data, audio.format, finalGain);
-                    PcmUtils.ApplyCompressor(ref audio.data, audio.format);
-
-                    // SKIP FADE for global broadcasts
-                    // Opus codec already handles transitions cleanly.
-                    if (!audio.isGlobalBroadcast)
-                    {
-                        int maxFadeDuration = Math.Min(
-                            2 * audio.frequency / 1000,
-                            audio.data.Length / 4
-                        );
-
-                        if (audio.data.Length > maxFadeDuration * 2)
-                        {
-                            AudioUtils.FadeEdges(audio.data, maxFadeDuration);
-                        }
-                    }
-
-                    buffer.QueueAudio(audio.data, audio.format, audio.frequency);
-
-                    // The source can stop playing if it finishes everything in queue
-                    if (source > 0) // Check if source is still valid
-                    {
-                        var state = OALW.GetSourceState(source);
-                        if (state != ALSourceState.Playing)
-                            StartPlaying();
-                    }
+                // The source can stop playing if it finishes everything in queue
+                if (source > 0) // Check if source is still valid
+                {
+                    var state = OALW.GetSourceState(source);
+                    if (state != ALSourceState.Playing)
+                        StartPlaying();
                 }
             }
             catch (Exception e)
             {
-                Logger.client.Warning($"Error in DequeueAudio: {e.Message}");
+                Logger.client.Warning($"Error in ProcessNextAudioPacket: {e.Message}");
             }
+        }
+
+        // Keep the async method for backward compatibility, but make it call the sync version
+        public async Task DequeueAudio()
+        {
+            await Task.Delay(orderingDelay);
+            ProcessNextAudioPacket();
         }
 
         public void StartPlaying()
