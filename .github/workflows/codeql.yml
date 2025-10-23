@@ -34,29 +34,80 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
-    - name: Create mock dependencies
+    - name: Create C# stub project
       run: |
-        # Create directory structure for external dependencies
+        # Create directory structure
         mkdir -p /tmp/vintage-story/Lib
         mkdir -p /tmp/vintage-story/Mods
+        mkdir -p /tmp/stubs
         
-        # Create dummy DLL files (not directories)
-        touch /tmp/vintage-story/Lib/OpenTK.Audio.OpenAL.dll
-        touch /tmp/vintage-story/Lib/OpenTK.Mathematics.dll
-        touch /tmp/vintage-story/VintagestoryLib.dll
-        touch /tmp/vintage-story/VintagestoryAPI.dll
-        touch /tmp/vintage-story/Mods/VSSurvivalMod.dll
-        touch /tmp/vintage-story/Mods/VSEssentials.dll
-        touch /tmp/vintage-story/Lib/cairo-sharp.dll
-        touch /tmp/vintage-story/Lib/Open.Nat.dll
-        touch /tmp/vintage-story/Lib/Newtonsoft.Json.dll
-        touch /tmp/vintage-story/Lib/0Harmony.dll
-        touch /tmp/vintage-story/Lib/protobuf-net.dll
-        touch /tmp/vintage-story/Lib/Microsoft.Data.Sqlite.dll
+        # Create stub project file
+        cat > /tmp/stubs/Stubs.csproj << 'EOF'
+        <Project Sdk="Microsoft.NET.Sdk">
+          <PropertyGroup>
+            <TargetFramework>net8.0</TargetFramework>
+            <OutputType>Library</OutputType>
+            <AssemblyName>OpenTK.Audio.OpenAL</AssemblyName>
+          </PropertyGroup>
+        </Project>
+        EOF
         
-        # Verify files were created successfully
-        ls -la /tmp/vintage-story/Lib/
-        ls -la /tmp/vintage-story/Mods/
+        # Create OpenTK stubs
+        cat > /tmp/stubs/OpenTK.cs << 'EOF'
+        namespace OpenTK.Audio.OpenAL {
+            public class AL {
+                public static int GetError() => 0;
+                public static void GenSources(int n, out int sources) => sources = 0;
+                public static void Source(int source, int param, float value) { }
+                public static void Source(int source, int param, int value) { }
+                public static void BufferData(int buffer, int format, byte[] data, int freq) { }
+                public static void GenBuffers(int n, out int buffers) => buffers = 0;
+                public static void DeleteSources(int n, ref int sources) { }
+                public static void DeleteBuffers(int n, ref int buffers) { }
+            }
+            public enum ALFormat { Mono16 = 0x1101, Stereo16 = 0x1103 }
+            public enum ALSourcei { Buffer = 0x1009 }
+            public enum ALSourcef { Gain = 0x100A, Pitch = 0x1003 }
+            public enum ALGetSourcei { SourceState = 0x1010 }
+            public enum ALSourceState { Playing = 0x1012, Stopped = 0x1014 }
+        }
+        EOF
+        
+        # Create Vintage Story stubs
+        cat > /tmp/stubs/Vintagestory.cs << 'EOF'
+        namespace Vintagestory.API.Common {
+            public interface ICoreAPI { }
+            public interface ICoreClientAPI : ICoreAPI { }
+            public interface ICoreServerAPI : ICoreAPI { }
+            public enum EnumAppSide { Client, Server }
+            public class ModSystem { }
+        }
+        namespace Vintagestory.API.Config {
+            public class RuntimeEnv {
+                public static OS OS => OS.Windows;
+            }
+            public enum OS { Windows, Linux, Mac }
+        }
+        EOF
+        
+        # Compile stubs
+        cd /tmp/stubs
+        dotnet build -c Release -o /tmp/vintage-story/Lib/
+        
+        # Copy to Mods directory
+        cp /tmp/vintage-story/Lib/OpenTK.Audio.OpenAL.dll /tmp/vintage-story/Mods/VSSurvivalMod.dll
+        cp /tmp/vintage-story/Lib/OpenTK.Audio.OpenAL.dll /tmp/vintage-story/Mods/VSEssentials.dll
+        cp /tmp/vintage-story/Lib/OpenTK.Audio.OpenAL.dll /tmp/vintage-story/VintagestoryLib.dll
+        cp /tmp/vintage-story/Lib/OpenTK.Audio.OpenAL.dll /tmp/vintage-story/VintagestoryAPI.dll
+        
+        # Create other required DLLs
+        cp /tmp/vintage-story/Lib/OpenTK.Audio.OpenAL.dll /tmp/vintage-story/Lib/OpenTK.Mathematics.dll
+        cp /tmp/vintage-story/Lib/OpenTK.Audio.OpenAL.dll /tmp/vintage-story/Lib/cairo-sharp.dll
+        cp /tmp/vintage-story/Lib/OpenTK.Audio.OpenAL.dll /tmp/vintage-story/Lib/Open.Nat.dll
+        cp /tmp/vintage-story/Lib/OpenTK.Audio.OpenAL.dll /tmp/vintage-story/Lib/Newtonsoft.Json.dll
+        cp /tmp/vintage-story/Lib/OpenTK.Audio.OpenAL.dll /tmp/vintage-story/Lib/0Harmony.dll
+        cp /tmp/vintage-story/Lib/OpenTK.Audio.OpenAL.dll /tmp/vintage-story/Lib/protobuf-net.dll
+        cp /tmp/vintage-story/Lib/OpenTK.Audio.OpenAL.dll /tmp/vintage-story/Lib/Microsoft.Data.Sqlite.dll
 
     - name: Restore NuGet packages
       run: dotnet restore
