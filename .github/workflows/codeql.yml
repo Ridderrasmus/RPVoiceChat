@@ -62,6 +62,7 @@ jobs:
             <LangVersion>11</LangVersion>
             <RootNamespace>RPVoiceChat</RootNamespace>
             <OutputType>Library</OutputType>
+            <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
           </PropertyGroup>
           
           <ItemGroup>
@@ -154,10 +155,10 @@ jobs:
     - name: Build analyzable code
       run: |
         echo "Building analyzable code for CodeQL analysis..."
-        dotnet build RPVoiceChat.Analyzable.csproj --no-restore --configuration Release --verbosity minimal
+        dotnet build RPVoiceChat.Analyzable.csproj --no-restore --configuration Release --verbosity normal
+        echo "Build completed successfully!"
       env:
         VINTAGE_STORY: /tmp/vintage-story
-      continue-on-error: true
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
