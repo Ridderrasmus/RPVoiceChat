@@ -52,18 +52,22 @@ jobs:
         </Project>
         EOF
         
-        # Create comprehensive Vintage Story stubs
+        # Create comprehensive Vintage Story stubs (fixed order)
         cat > /tmp/stubs/VintagestoryAPI.cs << 'EOF'
         using System;
         using System.Collections.Generic;
         
         namespace Vintagestory.API.Common {
+            // Define base interfaces first
             public interface ICoreAPI { }
-            public interface ICoreClientAPI : ICoreAPI { }
-            public interface ICoreServerAPI : ICoreAPI { }
             public enum EnumAppSide { Client, Server }
             public class ModSystem { }
             
+            // Define derived interfaces after base interfaces
+            public interface ICoreClientAPI : ICoreAPI { }
+            public interface ICoreServerAPI : ICoreAPI { }
+            
+            // Define classes
             public class EntityPlayer {
                 public string PlayerUID { get; set; }
                 public string PlayerName { get; set; }
@@ -93,7 +97,7 @@ jobs:
         }
         
         namespace Vintagestory.API.Client {
-            public interface ICoreClientAPI : ICoreAPI { }
+            public interface ICoreClientAPI : Vintagestory.API.Common.ICoreAPI { }
             public class ClientMain { }
             public class ClientWorldAccess { }
         }
