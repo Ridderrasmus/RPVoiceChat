@@ -46,6 +46,11 @@ jobs:
         echo "// Mock DLL" > /tmp/vintage-story/VintagestoryLib.dll
         echo "// Mock DLL" > /tmp/vintage-story/VintagestoryAPI.dll
 
+    - name: Restore NuGet packages
+      run: dotnet restore
+      env:
+        VINTAGE_STORY: /tmp/vintage-story
+
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v4
       with:
