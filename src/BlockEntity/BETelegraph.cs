@@ -132,11 +132,18 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             if (sentMessage.Length >= MaxMessageLength)
                 return; // Stop if message is too long
+                
+            // Check if NetworkUID is valid
+            if (NetworkUID == 0)
+            {
+                Api.Logger.Warning("Cannot send signal: NetworkUID is 0 (not connected to network)");
+                return;
+            }
 
             UpdateActivityTime();
             UpdateSentActivityTime(); // Update sent message activity time
             pendingSignals.Enqueue(keyChar);
-
+            
             string messageToSend = keyChar.ToString(); // Always send latin characters on network
             string displayPart = GenuineMorseCharacters ? ConvertKeyCodeToMorse(keyChar) : keyChar.ToString();
 
@@ -433,7 +440,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
             double secondsSinceLastSentActivity = timeSinceLastSentActivity / 1000.0;
 
             // Start countdown if sent message is complete and countdown not already active
-            if (!string.IsNullOrEmpty(sentMessageOriginal) && !isSentCountdownActive && secondsSinceLastSentActivity >= 2.0)
+            // Only start countdown if user has stopped typing for a reasonable time
+            if (!string.IsNullOrEmpty(sentMessageOriginal) && !isSentCountdownActive && secondsSinceLastSentActivity >= 3.0)
             {
                 StartSentCountdown();
             }

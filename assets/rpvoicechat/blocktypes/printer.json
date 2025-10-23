@@ -13,6 +13,9 @@
       ]
     }
   },
+  "entityBehaviors": [
+    { "name": "Animatable" }
+  ],
   "creativeinventory": {
     "general": [ "*" ],
     "rpvoicechat": [ "*" ]
@@ -41,8 +44,20 @@
   },
   "shape": { "base": "block/printer" },
   "textures": {
-    "all": {
-      "base": "game:block/planks/oak"
+    "wood": {
+      "base": "game:block/wood-generic"
+    },
+    "gold": {
+      "base": "game:block/metal/plate/gold"
+    },
+    "redglass": {
+      "base": "game:block/glass/red"
+    },
+    "yellowglass": {
+      "base": "game:block/glass/yellow"
+    },
+    "greenglass": {
+      "base": "game:block/glass/green"
     }
   },
   "rainPermeable": false,

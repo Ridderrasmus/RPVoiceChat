@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -8,7 +9,10 @@ using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.GameContent;
+using Vintagestory.Client;
+using Vintagestory.API.Client.Tesselation;
 using RPVoiceChat.GameContent.Inventory;
+using Vintagestory.API.Config;
 
 namespace RPVoiceChat.GameContent.BlockEntity
 {
@@ -19,6 +23,12 @@ namespace RPVoiceChat.GameContent.BlockEntity
         
         public string dialogTitleLangCode = "printercontents";
         public virtual string DialogTitle => "Printer Inventory";
+        
+        // Animation state
+        private bool isDrawerOpen = false;
+        
+        // Animation utility (using VS API BEBehaviorAnimatable)
+        public BlockEntityAnimationUtil animUtil { get { return GetBehavior<BEBehaviorAnimatable>()?.animUtil; } }
 
         public BlockEntityPrinter()
         {
@@ -85,6 +95,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 inventory.ToTreeAttributes(invTree);
                 tree["inventory"] = invTree;
             }
+            
+            // Save animation state
+            tree.SetBool("isDrawerOpen", isDrawerOpen);
         }
 
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
@@ -107,6 +120,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 inventory.ResolveBlocksOrItems();
             }
             
+            // Load animation state
+            isDrawerOpen = tree.GetBool("isDrawerOpen", false);
+            
             // Now call LateInitInventory after Pos is set by base.FromTreeAttributes
             if (inventory != null)
             {
@@ -120,6 +136,13 @@ namespace RPVoiceChat.GameContent.BlockEntity
             
             if (Api.World is IServerWorldAccessor)
             {
+                // Trigger OpenDrawer animation if drawer is closed
+                if (!isDrawerOpen)
+                {
+                    isDrawerOpen = true;
+                    MarkDirty();
+                }
+                
                 // Send packet to client to open inventory (simplified approach)
                 byte[] data;
                 using (MemoryStream ms = new MemoryStream())
@@ -137,7 +160,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 ((ICoreServerAPI)Api).Network.SendBlockEntityPacket(
                     (IServerPlayer)byPlayer, Pos, (int)EnumBlockContainerPacketId.OpenInventory, data);
                 byPlayer.InventoryManager.OpenInventory(inventory);
-            }
+            }   
             return true;
         }
 
@@ -174,7 +197,24 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     inventory.FromTreeAttributes(tree);
                     inventory.ResolveBlocksOrItems();
                     
+                    // Trigger OpenDrawer animation when inventory opens
+                    // Always trigger open-drawer animation when inventory opens
+                    // (the server has already set isDrawerOpen = true, but we still want the animation)
+                    TriggerAnimation("open-drawer");
+                    
                     var invDialog = new GuiDialogBlockEntityInventory(dialogTitle, inventory, Pos, cols, capi);
+                    
+                    // Hook into dialog events to handle drawer animation
+                    invDialog.OnClosed += () =>
+                    {
+                        // Trigger close-drawer animation when inventory is closed
+                        if (isDrawerOpen)
+                        {
+                            isDrawerOpen = false;
+                            TriggerAnimation("close-drawer");
+                        }
+                    };
+                    
                     invDialog.TryOpen();
                 }
             }
@@ -290,5 +330,57 @@ namespace RPVoiceChat.GameContent.BlockEntity
         // Properties for easy access to slots
         public SlotPrinterPaper PaperSlot => inventory.PaperSlot;
         public SlotPrinterTelegram[] TelegramSlots => inventory.TelegramSlots;
+
+        /// <summary>
+        /// Trigger an animation by name
+        /// </summary>
+        /// <param name="animationName">Name of the animation to trigger</param>
+        public void TriggerAnimation(string animationName)
+        {
+            if (animUtil != null)
+            {
+                // Check if animation is already running
+                if (animUtil.activeAnimationsByAnimCode.ContainsKey(animationName))
+                {
+                    return;
+                }
+                
+                animUtil.StartAnimation(new AnimationMetaData() 
+                { 
+                    Animation = animationName, 
+                    Code = animationName 
+                });
+                
+                // Play sound effect
+                playDrawerSound();
+            }
+        }
+
+
+        private void playDrawerSound()
+        {
+            Api.World.PlaySoundAt(
+                new AssetLocation(RPVoiceChatMod.modID, "sounds/block/printer/drawer.ogg"),
+                Pos,
+                0,
+                null,
+                false,
+                12,
+                0.75f
+            );
+        }
+
+        public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tessThreadTesselator)
+        {
+            // Initialize animator here, following the Sprinkler Mod example
+            if (animUtil?.animator == null)
+            {
+                animUtil?.InitializeAnimator("printer");
+            }
+            
+            return animUtil?.activeAnimationsByAnimCode.Count > 0 || (animUtil?.animator != null && animUtil.animator.ActiveAnimationCount > 0);
+        }
+
+
     }
 }
