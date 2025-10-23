@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
     "type": "code",
     "modid": "rpvoicechat",
     "name": "RP Voice Chat",
@@ -12,4 +13,19 @@
     "dependencies": {
         "game": "1.21.5"
     }
+=======
+  "type": "code",
+  "modid": "rpvoicechat",
+  "name": "RP Voice Chat",
+  "authors": [ "Ridderrasmus", "Purplep_", "Dmitry221060", "Nixie", "RomainOdeval" ],
+  "contributors": [ "Floffel", "blakdragan7", "Vlammar", "Kampftroll", "Nyuhnyash" ],
+  "description": "A mod that adds in game voice proximity chat! Also bunch of in-game communication tools!",
+  "version": "2.3.28-dev.1",
+  "Side": "Universal",
+  "RequiredOnClient": true,
+  "RequiredOnServer": true,
+  "dependencies": {
+    "game": "1.21.5"
+  }
+>>>>>>> 6cb49c36d401c519d42c8d97a782bfc5744bc249
 }
