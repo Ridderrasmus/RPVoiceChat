@@ -54,7 +54,7 @@ jobs:
         echo "PK" > /tmp/vintage-story/Lib/protobuf-net.dll
         echo "PK" > /tmp/vintage-story/Lib/Microsoft.Data.Sqlite.dll
         
-        # Create a simplified analyzable project
+        # Create a working analyzable project
         cat > RPVoiceChat.Analyzable.csproj << 'EOF'
         <Project Sdk="Microsoft.NET.Sdk">
           <PropertyGroup>
@@ -63,7 +63,7 @@ jobs:
             <RootNamespace>RPVoiceChat</RootNamespace>
             <OutputType>Library</OutputType>
             <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-            <NoWarn>CS1701;CS1702</NoWarn>
+            <NoWarn>CS1701;CS1702;CS1703</NoWarn>
           </PropertyGroup>
           
           <ItemGroup>
@@ -86,8 +86,9 @@ jobs:
             <Compile Include="src/RPVoiceChatClient.cs" />
             <Compile Include="src/RPVoiceChatServer.cs" />
             
-            <!-- Exclude Audio directory with external OpenTK dependencies -->
+            <!-- Exclude Audio directory and AudioUtils.cs with external dependencies -->
             <Compile Remove="src/Audio/**/*.cs" />
+            <Compile Remove="src/Utils/AudioUtils.cs" />
           </ItemGroup>
           
           <ItemGroup>
@@ -96,10 +97,37 @@ jobs:
             <PackageReference Include="NVorbis" Version="0.10.5" />
           </ItemGroup>
           
-          <!-- Remove problematic references that cause build failures -->
           <ItemGroup>
+            <Reference Include="VintagestoryLib">
+              <HintPath>/tmp/vintage-story/VintagestoryLib.dll</HintPath>
+              <Private>false</Private>
+            </Reference>
+            <Reference Include="VintagestoryAPI">
+              <HintPath>/tmp/vintage-story/VintagestoryAPI.dll</HintPath>
+              <Private>false</Private>
+            </Reference>
+            <Reference Include="VSSurvivalMod">
+              <HintPath>/tmp/vintage-story/Mods/VSSurvivalMod.dll</HintPath>
+              <Private>False</Private>
+            </Reference>
+            <Reference Include="VSEssentials">
+              <HintPath>/tmp/vintage-story/Mods/VSEssentials.dll</HintPath>
+              <Private>False</Private>
+            </Reference>
             <Reference Include="Newtonsoft.Json">
               <HintPath>/tmp/vintage-story/Lib/Newtonsoft.Json.dll</HintPath>
+              <Private>False</Private>
+            </Reference>
+            <Reference Include="0Harmony">
+              <HintPath>/tmp/vintage-story/Lib/0Harmony.dll</HintPath>
+              <Private>False</Private>
+            </Reference>
+            <Reference Include="protobuf-net">
+              <HintPath>/tmp/vintage-story/Lib/protobuf-net.dll</HintPath>
+              <Private>False</Private>
+            </Reference>
+            <Reference Include="SQLite">
+              <HintPath>/tmp/vintage-story/Lib/Microsoft.Data.Sqlite.dll</HintPath>
               <Private>False</Private>
             </Reference>
           </ItemGroup>
