@@ -26,6 +26,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         
         // Animation state
         private bool isDrawerOpen = false;
+        public bool IsDrawerOpen => isDrawerOpen;
         
         // Animation utility (using VS API BEBehaviorAnimatable)
         public BlockEntityAnimationUtil animUtil { get { return GetBehavior<BEBehaviorAnimatable>()?.animUtil; } }
@@ -129,20 +130,16 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 LateInitInventory();
             }
         }
-
+        
         public override bool OnPlayerRightClick(IPlayer byPlayer, BlockSelection blockSel)
         {
             if (inventory == null) return false;
             
+            // Toggle drawer state and trigger animation
+            ToggleDrawerState(byPlayer, !isDrawerOpen);
+            
             if (Api.World is IServerWorldAccessor)
             {
-                // Trigger OpenDrawer animation if drawer is closed
-                if (!isDrawerOpen)
-                {
-                    isDrawerOpen = true;
-                    MarkDirty();
-                }
-                
                 // Send packet to client to open inventory (simplified approach)
                 byte[] data;
                 using (MemoryStream ms = new MemoryStream())
@@ -160,7 +157,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 ((ICoreServerAPI)Api).Network.SendBlockEntityPacket(
                     (IServerPlayer)byPlayer, Pos, (int)EnumBlockContainerPacketId.OpenInventory, data);
                 byPlayer.InventoryManager.OpenInventory(inventory);
-            }   
+            }
             return true;
         }
 
@@ -197,28 +194,33 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     inventory.FromTreeAttributes(tree);
                     inventory.ResolveBlocksOrItems();
                     
-                    // Trigger OpenDrawer animation when inventory opens
-                    // Always trigger open-drawer animation when inventory opens
-                    // (the server has already set isDrawerOpen = true, but we still want the animation)
-                    TriggerAnimation("open-drawer");
-                    
                     var invDialog = new GuiDialogBlockEntityInventory(dialogTitle, inventory, Pos, cols, capi);
-                    
-                    // Hook into dialog events to handle drawer animation
-                    invDialog.OnClosed += () =>
-                    {
-                        // Trigger close-drawer animation when inventory is closed
-                        if (isDrawerOpen)
-                        {
-                            isDrawerOpen = false;
-                            TriggerAnimation("close-drawer");
-                        }
-                    };
-                    
                     invDialog.TryOpen();
                 }
             }
         }
+
+        /// <summary>
+        /// Toggle drawer state
+        /// </summary>
+        private void ToggleDrawerState(IPlayer byPlayer, bool newState)
+        {
+            this.isDrawerOpen = newState;
+            TriggerDrawerAnimation(isDrawerOpen);
+            
+            // Play sound with pitch variation like trapdoor
+            float pitch = isDrawerOpen ? 1.1f : 0.9f;
+            playDrawerSound();
+            
+            MarkDirty(true);
+            
+            if (Api?.Side == EnumAppSide.Server)
+            {
+                Api.World.BlockAccessor.TriggerNeighbourBlockUpdate(Pos);
+            }
+        }
+
+
 
         private void CheckForTelegraphAbove()
         {
@@ -356,6 +358,28 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
         }
 
+        /// <summary>
+        /// Trigger drawer animation (like trapdoor ToggleDoorWing)
+        /// </summary>
+        /// <param name="open">True to open drawer, false to close</param>
+        private void TriggerDrawerAnimation(bool open)
+        {
+            if (!open)
+            {
+                // Closing: stop the animation
+                animUtil.StopAnimation("open-drawer");
+            }
+            else
+            {
+                // Opening: start the animation
+                animUtil.StartAnimation(new AnimationMetaData() 
+                { 
+                    Animation = "open-drawer", 
+                    Code = "open-drawer" 
+                });
+            }
+        }
+
 
         private void playDrawerSound()
         {
@@ -379,6 +403,16 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
             
             return animUtil?.activeAnimationsByAnimCode.Count > 0 || (animUtil?.animator != null && animUtil.animator.ActiveAnimationCount > 0);
+        }
+        
+        public void CloseDrawer()
+        {
+            if (isDrawerOpen)
+            {
+                isDrawerOpen = false;
+                TriggerDrawerAnimation(false);
+                MarkDirty(true);
+            }
         }
 
 

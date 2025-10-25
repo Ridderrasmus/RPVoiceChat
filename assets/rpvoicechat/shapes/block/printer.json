@@ -555,7 +555,6 @@
 			"name": "open-drawer",
 			"code": "open-drawer",
 			"quantityframes": 30,
-			"onActivityStopped": "Rewind",
 			"onAnimationEnd": "Hold",
 			"keyframes": [
 				{
@@ -568,28 +567,6 @@
 					"frame": 29,
 					"elements": {
 						"Drawer": { "offsetX": 0.0, "offsetY": 0.0, "offsetZ": 5.0 }
-					}
-				}
-			]
-		},
-
-		{
-			"name": "close-drawer",
-			"code": "close-drawer",
-			"quantityframes": 30,
-			"onActivityStopped": "Rewind",
-			"onAnimationEnd": "Stop",
-			"keyframes": [
-				{
-					"frame": 0,
-					"elements": {
-						"Drawer": { "offsetX": 0.0, "offsetY": 0.0, "offsetZ": 5.0 }
-					}
-				},
-				{
-					"frame": 29,
-					"elements": {
-						"Drawer": { "offsetX": 0.0, "offsetY": 0.0, "offsetZ": 0.0 }
 					}
 				}
 			]
