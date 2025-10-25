@@ -62,10 +62,10 @@
   },
   "rainPermeable": false,
   "sidesolid": {
-    "all": true
+    "all": false
   },
   "sideopaque": {
-    "all": true
+    "all": false
   },
   "lightAbsorption": 15,
   "resistance": 1,

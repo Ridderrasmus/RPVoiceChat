@@ -72,6 +72,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public override void OnBlockPlaced(ItemStack byItemStack = null)
         {
             base.OnBlockPlaced(byItemStack);
+            isDrawerOpen = false; // Ensure drawer starts closed
             CheckForTelegraphAbove();
         }
 
@@ -122,8 +123,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 inventory.ResolveBlocksOrItems();
             }
             
-            // Load animation state
-            isDrawerOpen = tree.GetBool("isDrawerOpen", false);
+            // Load animation state (always default to false on load)
+            isDrawerOpen = false;
             
             // Now call LateInitInventory after Pos is set by base.FromTreeAttributes
             if (inventory != null)
@@ -134,10 +135,12 @@ namespace RPVoiceChat.GameContent.BlockEntity
         
         public override bool OnPlayerRightClick(IPlayer byPlayer, BlockSelection blockSel)
         {
-            if (inventory == null) return false;
-            
-            // Toggle drawer state and trigger animation
-            ToggleDrawerState(byPlayer, !isDrawerOpen);
+            // Only toggle if drawer is currently closed
+            if (!isDrawerOpen)
+            {
+                // Toggle drawer state and trigger animation
+                ToggleDrawerState(byPlayer, !isDrawerOpen);
+            }
             
             if (Api.World is IServerWorldAccessor)
             {
@@ -371,6 +374,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
         /// <param name="open">True to open drawer, false to close</param>
         private void TriggerDrawerAnimation(bool open)
         {
+            if (animUtil == null) return;
+            
             if (!open)
             {
                 // Closing: stop the animation
