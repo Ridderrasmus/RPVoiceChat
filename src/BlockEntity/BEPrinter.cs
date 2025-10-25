@@ -12,6 +12,7 @@ using Vintagestory.GameContent;
 using Vintagestory.Client;
 using Vintagestory.API.Client.Tesselation;
 using RPVoiceChat.GameContent.Inventory;
+using RPVoiceChat.Gui;
 using Vintagestory.API.Config;
 
 namespace RPVoiceChat.GameContent.BlockEntity
@@ -194,7 +195,13 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     inventory.FromTreeAttributes(tree);
                     inventory.ResolveBlocksOrItems();
                     
-                    var invDialog = new GuiDialogBlockEntityInventory(dialogTitle, inventory, Pos, cols, capi);
+                    var invDialog = new PrinterInventoryDialog(dialogTitle, inventory, Pos, cols, capi, () => {
+                        // Toggle drawer closed on client side
+                        isDrawerOpen = false;
+                        TriggerDrawerAnimation(false);
+                        MarkDirty(true);
+                    });
+                    
                     invDialog.TryOpen();
                 }
             }
