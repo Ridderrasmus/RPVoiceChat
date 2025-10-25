@@ -29,28 +29,23 @@
       "z": 0
     },
     "rotation": {
-      "x": 0,
+      "x": -48,
       "y": 0,
-      "z": 0
+      "z": 5
     },
     "origin": {
       "x": 0.5,
       "y": 0.5,
       "z": 0
     },
-    "scale": 1.0
+    "scale": 2.49
   },
-  "fpHandTransform": {
+  "tpHandTransform": {
     "translation": {
-      "x": 0,
-      "y": 0,
-      "z": 0
+      "x": -1.2,
+      "y": -0.4,
+      "z": -0.8
     },
-    "rotation": {
-      "x": 0,
-      "y": 0,
-      "z": 0
-    },
-    "scale": 1.0
+    "scale": 0.56
   }
 }

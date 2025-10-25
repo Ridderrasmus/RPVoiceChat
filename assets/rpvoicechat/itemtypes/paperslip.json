@@ -11,6 +11,9 @@
   "shape": {
     "base": "item/paperslip"
   },
+  "textures": {
+    "paper": { "base": "game:block/cloth/paper/blank-small" }
+  },
   "attributes": {
     "handbook": {
       "extraSections": [
@@ -23,13 +26,13 @@
   },
   "guiTransform": {
     "translation": {
-      "x": 0,
+      "x": -11,
       "y": 0,
       "z": 0
     },
     "rotation": {
-      "x": 0,
-      "y": 0,
+      "x": -48,
+      "y": 48,
       "z": 0
     },
     "origin": {
@@ -37,19 +40,14 @@
       "y": 0.5,
       "z": 0
     },
-    "scale": 1.0
+    "scale": 1.39
   },
-  "fpHandTransform": {
+  "tpHandTransform": {
     "translation": {
-      "x": 0,
-      "y": 0,
-      "z": 0
+      "x": -1.5,
+      "y": -0.8,
+      "z": -1.2
     },
-    "rotation": {
-      "x": 0,
-      "y": 0,
-      "z": 0
-    },
-    "scale": 1.0
+    "scale": 0.43
   }
 }
