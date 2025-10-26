@@ -13,6 +13,7 @@ using Vintagestory.Client;
 using Vintagestory.API.Client.Tesselation;
 using RPVoiceChat.GameContent.Inventory;
 using RPVoiceChat.Gui;
+using RPVoiceChat.Utils;
 using Vintagestory.API.Config;
 
 namespace RPVoiceChat.GameContent.BlockEntity
@@ -28,6 +29,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         // Animation state
         private bool isDrawerOpen = false;
         public bool IsDrawerOpen => isDrawerOpen;
+        
         
         // Animation utility (using VS API BEBehaviorAnimatable)
         public BlockEntityAnimationUtil animUtil { get { return GetBehavior<BEBehaviorAnimatable>()?.animUtil; } }
@@ -292,11 +294,10 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     // Consume paper only when telegram is actually stored
                     if (ConsumePaperSlip())
                     {
-                        Api.Logger.Event("Telegram printed: " + message);
+                        playPrintSound();
                     }
                     else
                     {
-                        Api.Logger.Warning("Printer has no paper slips.");
                         // Remove the telegram if we can't consume paper
                         foreach (var slot in inventory.TelegramSlots)
                         {
@@ -309,24 +310,33 @@ namespace RPVoiceChat.GameContent.BlockEntity
                         }
                     }
                 }
-                else
-                {
-                    Api.Logger.Warning("Printer has no empty slot for telegram.");
-                }
             }
         }
 
         public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
         {
             // Don't call base.GetBlockInfo() to avoid showing food preservation properties
-            // Just show basic printer info
-            dsc.AppendLine("Printer");
+            // Show basic printer info only
             if (inventory != null)
             {
+                bool needsPaper = PaperSlot.Empty;
+                bool isFull = !HasEmptyTelegramSlot();
+                
+                if (needsPaper)
+                {
+                    dsc.AppendLine(UIUtils.I18n("Printer.Warning.NoPaper"));
+                }
+                
+                if (isFull)
+                {
+                    dsc.AppendLine(UIUtils.I18n("Printer.Warning.Full"));
+                }
+                
                 if (!inventory.PaperSlot.Empty)
                 {
-                    dsc.AppendLine($"Paper: {inventory.PaperSlot.Itemstack.StackSize}");
+                    dsc.AppendLine(UIUtils.I18n("Printer.Paper", inventory.PaperSlot.Itemstack.StackSize));
                 }
+                
                 int telegramCount = 0;
                 foreach (var slot in inventory.TelegramSlots)
                 {
@@ -334,7 +344,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 }
                 if (telegramCount > 0)
                 {
-                    dsc.AppendLine($"Telegrams: {telegramCount}/9");
+                    dsc.AppendLine(UIUtils.I18n("Printer.Telegrams", telegramCount, 9));
                 }
             }
         }
@@ -342,6 +352,16 @@ namespace RPVoiceChat.GameContent.BlockEntity
         // Properties for easy access to slots
         public SlotPrinterPaper PaperSlot => inventory.PaperSlot;
         public SlotPrinterTelegram[] TelegramSlots => inventory.TelegramSlots;
+
+        private bool HasEmptyTelegramSlot()
+        {
+            foreach (var slot in inventory.TelegramSlots)
+            {
+                if (slot.Empty)
+                    return true;
+            }
+            return false;
+        }
 
         /// <summary>
         /// Trigger an animation by name
@@ -401,8 +421,21 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 0,
                 null,
                 false,
+                6,
+                0.7f
+            );
+        }
+
+        private void playPrintSound()
+        {
+            Api.World.PlaySoundAt(
+                new AssetLocation(RPVoiceChatMod.modID, "sounds/block/printer/print.ogg"),
+                Pos,
+                0,
+                null,
+                false,
                 12,
-                0.75f
+                0.65f
             );
         }
 
