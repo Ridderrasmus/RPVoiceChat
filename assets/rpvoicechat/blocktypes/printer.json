@@ -5,6 +5,7 @@
   "entityClass": "BlockEntityPrinter",
   "attributes": {
     "handbook": {
+      "groupBy": [ "printer-*" ],
       "extraSections": [
         {
           "title": "rpvoicechat:Handbook.Usage.block-printer.Title",
@@ -21,10 +22,17 @@
     "rpvoicechat": [ "*" ]
   },
   "maxstacksize": 1,
-  "blockmaterial": "Metal",
+  "blockmaterial": "wood",
+  "variantgroups": [
+    {
+      "code": "wood",
+      "loadFromProperties": "block/wood"
+    }
+  ],
   "sounds": {
     "place": "game:block/planks",
-    "walk": "game:walk/stone"
+    "hit": "game:block/planks",
+    "break": "game:block/planks"
   },
   "collisionBox": {
     "x1": 0,
@@ -45,7 +53,7 @@
   "shape": { "base": "block/printer" },
   "textures": {
     "wood": {
-      "base": "game:block/wood-generic"
+      "base": "game:block/wood/debarked/{wood}"
     },
     "gold": {
       "base": "game:block/metal/plate/gold"

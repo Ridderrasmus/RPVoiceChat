@@ -8,10 +8,17 @@
     "rpvoicechat": [ "*" ]
   },
   "maxstacksize": 1,
-  "blockmaterial": "Metal",
+  "blockmaterial": "wood",
+  "variantgroups": [
+    {
+      "code": "wood",
+      "loadFromProperties": "block/wood"
+    }
+  ],
   "sounds": {
     "place": "game:block/planks",
-    "walk": "game:walk/stone"
+    "hit": "game:block/planks",
+    "break": "game:block/planks"
   },
   "collisionBox": {
     "x1": 0,
@@ -31,7 +38,7 @@
   },
   "shape": { "base": "block/telegraphkey" },
   "textures": {
-    "wood": { "base": "game:block/wood-generic" },
+    "wood": { "base": "game:block/wood/debarked/{wood}" },
     "gold": { "base": "game:block/metal/plate/gold" },
     "copper": { "base": "game:block/metal/plate/copper" },
     "bakelite": { "base": "game:block/coal/bituminous" }
@@ -47,6 +54,7 @@
   "resistance": 1,
   "attributes": {
     "handbook": {
+      "groupBy": [ "telegraph-*" ],
       "extraSections": [
         {
           "title": "rpvoicechat:Handbook.Usage.block-telegraph.Title",
