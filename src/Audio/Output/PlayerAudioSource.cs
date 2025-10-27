@@ -158,10 +158,20 @@ namespace RPVoiceChat.Audio
             var sourcePosition = new Vec3f();
             var velocity = new Vec3f();
 
-            if (IsLocational)
+            // For mono mode, preserve distance but center the audio (no stereo positioning)
+            bool useLocationalAudio = IsLocational && !ModConfig.ClientConfig.IsMonoMode;
+
+            if (useLocationalAudio)
             {
                 sourcePosition = GetRelativeSourcePosition(speakerPos, listenerPos);
                 velocity = GetRelativeVelocity(speakerPos, listenerPos, sourcePosition);
+            }
+            else if (ModConfig.ClientConfig.IsMonoMode)
+            {
+                // In mono mode, preserve distance but center the audio (no stereo positioning)
+                float distance = (float)speakerPos.DistanceTo(listenerPos);
+                sourcePosition = new Vec3f(0, 0, distance); // Position in front of listener at correct distance
+                velocity = new Vec3f(); // No velocity in mono mode
             }
 
             OALW.ClearError();
