@@ -5,7 +5,7 @@
   "authors": [ "Ridderrasmus", "Purplep_", "Dmitry221060", "Nixie", "RomainOdeval" ],
   "contributors": [ "Floffel", "blakdragan7", "Vlammar", "Kampftroll", "Nyuhnyash" ],
   "description": "A mod that adds in game voice proximity chat! Also bunch of in-game communication tools!",
-  "version": "2.3.28-dev.3",
+  "version": "2.3.28-dev.4",
   "Side": "Universal",
   "RequiredOnClient": true,
   "RequiredOnServer": true,
