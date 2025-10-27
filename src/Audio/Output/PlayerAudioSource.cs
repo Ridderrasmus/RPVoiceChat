@@ -99,65 +99,23 @@ namespace RPVoiceChat.Audio
             };
         }
 
-        // Cache wall thickness calculation to prevent expensive repeated calculations
-        private float cachedWallThickness = 0f;
-        private long lastWallThicknessUpdate = 0;
-        private const long WallThicknessCacheMs = 100; // Update every 100ms instead of every frame
-        
-        // Cache UpdatePlayer calls to prevent CPU spikes with many concurrent players
-        private long lastPlayerUpdate = 0;
-        private const long PlayerUpdateIntervalMs = 100; // Update position/gain only every 100ms
-
         public void UpdatePlayer()
         {
-            // Throttle UpdatePlayer calls to prevent CPU spikes with many concurrent players
-            // Position and gain don't need to be updated every packet (10-20 times per second)
-            // Updating 10 times per second (every 100ms) is sufficient and reduces CPU load by 50-80%
-            long currentTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            if (currentTime - lastPlayerUpdate < PlayerUpdateIntervalMs)
-                return; // Skip this update, too soon since last update
-            
-            lastPlayerUpdate = currentTime;
-            
             EntityPos speakerPos = player.Entity?.SidedPos;
             EntityPos listenerPos = capi.World.Player.Entity?.SidedPos;
             if (speakerPos == null || listenerPos == null)
                 return;
 
-            // For global broadcasts, disable muffling and positioning
-            bool isGlobalBroadcast = currentAudio?.isGlobalBroadcast == true;
-
             // If the player is on the other side of something to the listener, then the player's voice should be muffled
-            bool mufflingEnabled = ModConfig.ClientConfig.Muffling && !isGlobalBroadcast; // Disable muffling for global broadcast
-            float wallThickness = 0f;
-
+            bool mufflingEnabled = ModConfig.ClientConfig.Muffling;
+            float wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
             float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");
 
-            if (!isGlobalBroadcast)
-            {
-                // Check if the current audio has a wall thickness override
-                if (currentAudio?.wallThicknessOverride >= 0f)
-                {
-                    wallThickness = currentAudio.wallThicknessOverride;
-                }
-                else
-                {
-                    // Fixed: Cache expensive wall thickness calculation to prevent CPU spikes
-                    long currentTimeForWall = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                    if (currentTimeForWall - lastWallThicknessUpdate > WallThicknessCacheMs)
-                    {
-                        cachedWallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
-                        lastWallThicknessUpdate = currentTimeForWall;
-                    }
-                    wallThickness = cachedWallThickness;
-                }
-
-                if (capi.World.Player.Entity.Swimming)
-                    wallThickness += 1.0f;
-            }
+            if (capi.World.Player.Entity.Swimming)
+                wallThickness += 1.0f;
 
             lowpassFilter?.Stop();
-            if (mufflingEnabled && wallThickness > 0)
+            if (mufflingEnabled && wallThickness != 0)
             {
                 lowpassFilter = lowpassFilter ?? new LowpassFilter(source);
                 lowpassFilter.Start();
@@ -168,7 +126,7 @@ namespace RPVoiceChat.Audio
             // DEACTIVATED : TO BE IMPLEMENTED
             // If the player is in a reverberated area, then the player's voice should be reverberated
             reverbEffect?.Clear();
-            if (toBeImplementedToggle && !isGlobalBroadcast && LocationUtils.IsReverbArea(capi, speakerPos))
+            if (toBeImplementedToggle && LocationUtils.IsReverbArea(capi, speakerPos))
             {
                 reverbEffect = reverbEffect ?? new ReverbEffect(source);
                 reverbEffect.Apply();
@@ -178,7 +136,7 @@ namespace RPVoiceChat.Audio
             // If the player has a temporal stability of less than 0.5, then the player's voice should be distorted
             // Values are temporary currently
             unstableEffect?.Clear();
-            if (toBeImplementedToggle && !isGlobalBroadcast && player.Entity.WatchedAttributes.GetDouble("temporalStability") < 0.5)
+            if (toBeImplementedToggle && player.Entity.WatchedAttributes.GetDouble("temporalStability") < 0.5)
             {
                 unstableEffect = unstableEffect ?? new UnstableEffect(source);
                 unstableEffect.Apply();
@@ -189,7 +147,7 @@ namespace RPVoiceChat.Audio
             // Values are temporary currently
             intoxicatedEffect?.Clear();
             float drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
-            if (toBeImplementedToggle && !isGlobalBroadcast && drunkness > 0)
+            if (toBeImplementedToggle && drunkness > 0)
             {
                 intoxicatedEffect = intoxicatedEffect ?? new IntoxicatedEffect(source);
                 intoxicatedEffect.SetToxicRate(drunkness);
@@ -200,20 +158,10 @@ namespace RPVoiceChat.Audio
             var sourcePosition = new Vec3f();
             var velocity = new Vec3f();
 
-            // For global broadcasts, disable audio positioning
-            bool useLocationalAudio = IsLocational && !isGlobalBroadcast && !ModConfig.ClientConfig.IsMonoMode;
-
-            if (useLocationalAudio)
+            if (IsLocational)
             {
                 sourcePosition = GetRelativeSourcePosition(speakerPos, listenerPos);
                 velocity = GetRelativeVelocity(speakerPos, listenerPos, sourcePosition);
-            }
-            else if (ModConfig.ClientConfig.IsMonoMode && !isGlobalBroadcast)
-            {
-                // In mono mode, preserve distance but center the audio (no stereo positioning)
-                float distance = (float)speakerPos.DistanceTo(listenerPos);
-                sourcePosition = new Vec3f(0, 0, distance); // Position in front of listener at correct distance
-                velocity = new Vec3f(); // No velocity in mono mode
             }
 
             OALW.ClearError();
@@ -308,89 +256,80 @@ namespace RPVoiceChat.Audio
                 orderingQueue.Add(sequenceNumber, audio);
             }
 
-            // Use synchronous processing instead of fire-and-forget async tasks
-            // This prevents creating N+ concurrent async tasks that cause CPU spikes
-            ProcessNextAudioPacket();
+            DequeueAudio();
         }
 
-        // Synchronous processing to prevent CPU spikes from concurrent async tasks
-        private void ProcessNextAudioPacket()
-        {
-            try
-            {
-                AudioData audio;
-                lock (ordering_queue_lock)
-                {
-                    if (orderingQueue.Count == 0) return;
-
-                    lastAudioSequenceNumber = orderingQueue.Keys[0];
-                    audio = orderingQueue[lastAudioSequenceNumber];
-                    orderingQueue.RemoveAt(0);
-                }
-
-                currentAudio = audio;
-                UpdateVoiceLevel(audio.voiceLevel);
-
-                if (codec != null)
-                    audio.data = codec.Decode(audio.data);
-
-                if (audio.data == null || audio.data.Length == 0)
-                {
-                    Logger.client.Warning("Received empty audio data, skipping");
-                    return;
-                }
-
-                float finalGain = GetFinalGain();
-
-                PcmUtils.ApplyGainWithSoftClipping(ref audio.data, audio.format, finalGain);
-                PcmUtils.ApplyCompressor(ref audio.data, audio.format);
-
-                // Consistent audio processing to prevent CPU spikes
-                // Apply fade edges for all audio types to maintain consistent processing load
-                int maxFadeDuration = Math.Min(
-                    2 * audio.frequency / 1000,
-                    audio.data.Length / 4
-                );
-
-                if (audio.data.Length > maxFadeDuration * 2)
-                {
-                    // Reduce fade intensity for global broadcasts instead of skipping entirely
-                    if (audio.isGlobalBroadcast)
-                    {
-                        AudioUtils.FadeEdges(audio.data, maxFadeDuration / 2); // Reduced fade
-                    }
-                    else
-                    {
-                        AudioUtils.FadeEdges(audio.data, maxFadeDuration); // Normal fade
-                    }
-                }
-
-                buffer.QueueAudio(audio.data, audio.format, audio.frequency);
-
-                // The source can stop playing if it finishes everything in queue
-                if (source > 0) // Check if source is still valid
-                {
-                    var state = OALW.GetSourceState(source);
-                    if (state != ALSourceState.Playing)
-                        StartPlaying();
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.client.Warning($"Error in ProcessNextAudioPacket: {e.Message}");
-            }
-        }
-
-        // Keep the async method for backward compatibility, but make it call the sync version
-        public async Task DequeueAudio()
+        public async void DequeueAudio()
         {
             await Task.Delay(orderingDelay);
-            ProcessNextAudioPacket();
+
+            lock (dequeue_audio_lock)
+            {
+                try
+                {
+                    AudioData audio;
+                    lock (ordering_queue_lock)
+                    {
+                        if (orderingQueue.Count == 0) return;
+
+                        lastAudioSequenceNumber = orderingQueue.Keys[0];
+                        audio = orderingQueue[lastAudioSequenceNumber];
+                        orderingQueue.RemoveAt(0);
+                    }
+
+                    currentAudio = audio;
+                    UpdateVoiceLevel(audio.voiceLevel);
+
+                    if (codec != null)
+                        audio.data = codec.Decode(audio.data);
+
+                    if (audio.data == null || audio.data.Length == 0)
+                    {
+                        Logger.client.Warning("Received empty audio data, skipping");
+                        return;
+                    }
+
+                    float finalGain = GetFinalGain();
+
+                    PcmUtils.ApplyGainWithSoftClipping(ref audio.data, audio.format, finalGain);
+                    PcmUtils.ApplyCompressor(ref audio.data, audio.format);
+
+                    // SKIP FADE for global broadcasts
+                    // Opus codec already handles transitions cleanly.
+                    if (!audio.isGlobalBroadcast)
+                    {
+                        int maxFadeDuration = Math.Min(
+                            2 * audio.frequency / 1000,
+                            audio.data.Length / 4
+                        );
+                        if (audio.data.Length > maxFadeDuration * 2)
+                        {
+                            AudioUtils.FadeEdges(audio.data, maxFadeDuration);
+                        }
+                    }
+
+                    buffer.QueueAudio(audio.data, audio.format, audio.frequency);
+
+                    // The source can stop playing if it finishes everything in queue
+                    if (source > 0) // Check if source is still valid
+                    {
+                        var state = OALW.GetSourceState(source);
+                        if (state != ALSourceState.Playing)
+                            StartPlaying();
+                    }
+                }
+                catch (Exception e)
+                {
+                    Logger.client.Warning($"Error in DequeueAudio: {e.Message}");
+                }
+            }
         }
+
 
         public void StartPlaying()
         {
             if (source <= 0) return; // Source is invalid
+            
             OALW.SourcePlay(source);
             PlayerNameTagRenderer.UpdatePlayerNameTag(player, true);
         }
