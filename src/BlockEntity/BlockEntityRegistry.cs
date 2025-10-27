@@ -1,4 +1,5 @@
-﻿using Vintagestory.API.Common;
+﻿using RPVoiceChat.Config;
+using Vintagestory.API.Common;
 
 namespace RPVoiceChat.GameContent.BlockEntity
 {
@@ -6,11 +7,17 @@ namespace RPVoiceChat.GameContent.BlockEntity
     {
         public static void RegisterBlockEntities(ICoreAPI api)
         {
+            if (WorldConfig.GetBool("additional-content") == false) return;
+            
             api.RegisterBlockEntityClass("ChurchBellPart", typeof(BlockEntityChurchBellPart));
             api.RegisterBlockEntityClass("ChurchBellLayer", typeof(BlockEntityChurchBellLayer));
-            api.RegisterBlockEntityClass("BlockEntityTelegraph", typeof(BlockEntityTelegraph));
-            api.RegisterBlockEntityClass("BlockEntityConnector", typeof(BlockEntityConnector));
-            api.RegisterBlockEntityClass("BlockEntityPrinter", typeof(BlockEntityPrinter));
+            
+            if (WorldConfig.GetBool("telegraph-content") != false)
+            {
+                api.RegisterBlockEntityClass("BlockEntityTelegraph", typeof(BlockEntityTelegraph));
+                api.RegisterBlockEntityClass("BlockEntityConnector", typeof(BlockEntityConnector));
+                api.RegisterBlockEntityClass("BlockEntityPrinter", typeof(BlockEntityPrinter));
+            }
         }
     }
 }

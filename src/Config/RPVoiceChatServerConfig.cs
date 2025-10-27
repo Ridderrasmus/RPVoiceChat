@@ -13,6 +13,7 @@ namespace RPVoiceChat.Config
 
         // Features
         public bool AdditionalContent { get; set; } = true;
+        public bool TelegraphContent { get; set; } = true;
 
         // Audio Performance Settings
         public float MaxAudioGain { get; set; } = 2f;
@@ -55,6 +56,7 @@ namespace RPVoiceChat.Config
 
             // Features
             AdditionalContent = previousConfig.AdditionalContent;
+            TelegraphContent = previousConfig.TelegraphContent;
 
             // Audio Performance Settings
             MaxAudioGain = previousConfig.MaxAudioGain;

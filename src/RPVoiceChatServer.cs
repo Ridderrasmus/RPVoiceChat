@@ -53,6 +53,7 @@ namespace RPVoiceChat
         {
             base.StartPre(api);
             WorldConfig.Set("additional-content", ModConfig.ServerConfig.AdditionalContent);
+            WorldConfig.Set("telegraph-content", ModConfig.ServerConfig.TelegraphContent);
         }
 
         public override double ExecuteOrder() => 1.02;
