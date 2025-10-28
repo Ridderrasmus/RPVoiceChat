@@ -3,6 +3,9 @@
   "enabled": true,
   "class": "printerblock",
   "entityClass": "BlockEntityPrinter",
+  "behaviors": [
+    { "name": "HorizontalOrientable" }
+  ],
   "attributes": {
     "handbook": {
       "groupBy": [ "printer-*" ],
@@ -18,17 +21,40 @@
     { "name": "Animatable" }
   ],
   "creativeinventory": {
-    "general": [ "*" ],
-    "rpvoicechat": [ "*" ]
+    "general": [ "*-north" ],
+    "rpvoicechat": [ "*-north" ]
   },
   "maxstacksize": 1,
   "blockmaterial": "wood",
   "variantgroups": [
     {
       "code": "wood",
+      "states": [ "aged" ],
       "loadFromProperties": "block/wood"
+    },
+    {
+      "code": "side",
+      "loadFromProperties": "abstract/horizontalorientation"
     }
   ],
+  "shapeByType": {
+    "*-north": {
+      "base": "block/printer",
+      "rotateY": 0
+    },
+    "*-east": {
+      "base": "block/printer",
+      "rotateY": 270
+    },
+    "*-south": {
+      "base": "block/printer",
+      "rotateY": 180
+    },
+    "*-west": {
+      "base": "block/printer",
+      "rotateY": 90
+    }
+  },
   "sounds": {
     "place": "game:block/planks",
     "hit": "game:block/planks",
@@ -50,7 +76,6 @@
     "y2": 1,
     "z2": 1
   },
-  "shape": { "base": "block/printer" },
   "textures": {
     "wood": {
       "base": "game:block/wood/debarked/{wood}"
@@ -78,16 +103,10 @@
   "lightAbsorption": 15,
   "resistance": 1,
   "guiTransform": {
-    "translation": {
-      "x": 0,
-      "y": -10,
-      "z": 0
-    },
     "rotation": {
-      "x": -22.6,
-      "y": -45,
+      "x": -25,
+      "y": 145,
       "z": 0
-    },
-    "scale": 1.16
+    }
   }
 }

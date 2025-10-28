@@ -3,18 +3,44 @@
   "enabled": true,
   "class": "telegraphblock",
   "entityClass": "BlockEntityTelegraph",
+  "behaviors": [
+    { "name": "HorizontalOrientable" }
+  ],
   "creativeinventory": {
-    "general": [ "*" ],
-    "rpvoicechat": [ "*" ]
+    "general": [ "*-north" ],
+    "rpvoicechat": [ "*-north" ]
   },
   "maxstacksize": 1,
   "blockmaterial": "wood",
   "variantgroups": [
     {
       "code": "wood",
+      "states": [ "aged" ],
       "loadFromProperties": "block/wood"
+    },
+    {
+      "code": "side",
+      "loadFromProperties": "abstract/horizontalorientation"
     }
   ],
+  "shapeByType": {
+    "*-north": {
+      "base": "block/telegraphkey",
+      "rotateY": 0
+    },
+    "*-east": {
+      "base": "block/telegraphkey",
+      "rotateY": 270
+    },
+    "*-south": {
+      "base": "block/telegraphkey",
+      "rotateY": 180
+    },
+    "*-west": {
+      "base": "block/telegraphkey",
+      "rotateY": 90
+    }
+  },
   "sounds": {
     "place": "game:block/planks",
     "hit": "game:block/planks",
@@ -36,7 +62,6 @@
     "y2": 0.5,
     "z2": 1
   },
-  "shape": { "base": "block/telegraphkey" },
   "textures": {
     "wood": { "base": "game:block/wood/debarked/{wood}" },
     "gold": { "base": "game:block/metal/plate/gold" },

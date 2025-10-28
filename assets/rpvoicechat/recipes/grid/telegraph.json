@@ -15,7 +15,6 @@
     "P": {
       "type": "item",
       "code": "game:plank-{wood}",
-      "name": "plank",
       "quantity": 1
     }
   },
@@ -23,6 +22,6 @@
   "height": 3,
   "output": {
     "type": "block",
-    "code": "telegraph-{wood}"
+    "code": "telegraph-{wood}-north"
   }
 }
