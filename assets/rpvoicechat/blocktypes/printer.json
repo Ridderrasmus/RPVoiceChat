@@ -25,6 +25,9 @@
     "rpvoicechat": [ "*-north" ]
   },
   "maxstacksize": 1,
+  "heldTpIdleAnimation": "holdbothhandslarge",
+  "heldRightReadyAnimation": "heldblockready",
+  "heldTpUseAnimation": "twohandplaceblock",
   "blockmaterial": "wood",
   "variantgroups": [
     {
@@ -37,22 +40,13 @@
       "loadFromProperties": "abstract/horizontalorientation"
     }
   ],
-  "shapeByType": {
-    "*-north": {
-      "base": "block/printer",
-      "rotateY": 0
-    },
-    "*-east": {
-      "base": "block/printer",
-      "rotateY": 270
-    },
-    "*-south": {
-      "base": "block/printer",
-      "rotateY": 180
-    },
-    "*-west": {
-      "base": "block/printer",
-      "rotateY": 90
+  "shape": {
+    "base": "block/printer",
+    "rotateYByType": {
+      "*-north": 0,
+      "*-east": 270,
+      "*-west": 90,
+      "*-south": 180
     }
   },
   "sounds": {

@@ -13,7 +13,7 @@ using Vintagestory.Client;
 using Vintagestory.API.Client.Tesselation;
 using RPVoiceChat.GameContent.Inventory;
 using RPVoiceChat.Gui;
-using RPVoiceChat.Utils;
+using RPVoiceChat.Util;
 using Vintagestory.API.Config;
 
 namespace RPVoiceChat.GameContent.BlockEntity

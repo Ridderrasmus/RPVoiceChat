@@ -81,7 +81,7 @@ If you have any questions, feel free to contact me on discord (ridderrasmus).
 The mod is licensed under the [MIT License](LICENSE).
 The mod uses the following libraries:
 	- [Opus](https://opus-codec.org/) - Licensed under the [three-clause BSD License](LICENSE_OPUS)
-	- [RNNoise](https://jmvalin.ca/rnnoise/) - Licensed under the BSD License
+	- [RNNoise](https://jmvalin.ca/demo/rnnoise/) - Licensed under the BSD License
 The mod also uses a few sound effects from [Freesound.org](https://freesound.org/) which are licensed under various licenses.
 	- [Furniture - Drawers open & close](https://freesound.org/people/Vrymaa/sounds/802695/) by Vrymaa - Creative Commons 0
 	- [Dot matrix printer](https://freesound.org/people/DisasterServices/sounds/320008/) DisasterServices - Creative Commons 0

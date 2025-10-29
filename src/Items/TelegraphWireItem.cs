@@ -1,7 +1,7 @@
 using System.Text;
 using RPVoiceChat.Config;
 using RPVoiceChat.GameContent.Systems;
-using RPVoiceChat.Utils;
+using RPVoiceChat.Util;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;

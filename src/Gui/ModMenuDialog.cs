@@ -1,7 +1,7 @@
 using RPVoiceChat.Audio;
 using RPVoiceChat.Config;
 using RPVoiceChat.DB;
-using RPVoiceChat.Utils;
+using RPVoiceChat.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;

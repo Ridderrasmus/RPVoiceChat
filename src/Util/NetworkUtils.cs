@@ -5,7 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 
-namespace RPVoiceChat.Utils
+namespace RPVoiceChat.Util
 {
     public static class NetworkUtils
     {

@@ -2,7 +2,7 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
 
-namespace RPVoiceChat.Utils
+namespace RPVoiceChat.Util
 {
     public class Logger
     {

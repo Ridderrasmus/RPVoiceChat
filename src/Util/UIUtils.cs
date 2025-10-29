@@ -2,7 +2,7 @@ using System;
 using Vintagestory.API.Client;
 using Vintagestory.API.Config;
 
-namespace RPVoiceChat.Utils
+namespace RPVoiceChat.Util
 {
     public static class UIUtils
     {

@@ -4,7 +4,7 @@ using RPVoiceChat.GameContent.Block;
 using RPVoiceChat.GameContent.Items;
 using RPVoiceChat.src.Networking.Packets;
 using RPVoiceChat.Networking.Packets;
-using RPVoiceChat.Utils;
+using RPVoiceChat.Util;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;

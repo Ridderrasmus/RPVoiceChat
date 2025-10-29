@@ -23,22 +23,13 @@
       "loadFromProperties": "abstract/horizontalorientation"
     }
   ],
-  "shapeByType": {
-    "*-north": {
-      "base": "block/telegraphkey",
-      "rotateY": 0
-    },
-    "*-east": {
-      "base": "block/telegraphkey",
-      "rotateY": 270
-    },
-    "*-south": {
-      "base": "block/telegraphkey",
-      "rotateY": 180
-    },
-    "*-west": {
-      "base": "block/telegraphkey",
-      "rotateY": 90
+  "shape": {
+    "base": "block/telegraphkey",
+    "rotateYByType": {
+      "*-north": 0,
+      "*-east": 270,
+      "*-west": 90,
+      "*-south": 180
     }
   },
   "sounds": {

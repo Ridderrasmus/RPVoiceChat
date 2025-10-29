@@ -1,6 +1,6 @@
 ﻿using RPVoiceChat.Config;
 using RPVoiceChat.GameContent.BlockEntity;
-using RPVoiceChat.Utils;
+using RPVoiceChat.Util;
 using Vintagestory.API.Client;
 
 namespace RPVoiceChat.Gui

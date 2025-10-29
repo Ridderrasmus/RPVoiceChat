@@ -555,6 +555,7 @@
 			"name": "open-drawer",
 			"code": "open-drawer",
 			"quantityframes": 30,
+			"onActivityStopped": "Rewind",
 			"onAnimationEnd": "Hold",
 			"keyframes": [
 				{
@@ -570,6 +571,6 @@
 					}
 				}
 			]
-		},
+		}
 	]
 }

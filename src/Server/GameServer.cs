@@ -1,6 +1,6 @@
 using RPVoiceChat.Config;
 using RPVoiceChat.Networking;
-using RPVoiceChat.Utils;
+using RPVoiceChat.Util;
 using System;
 using System.Collections.Generic;
 using Vintagestory.API.Common;

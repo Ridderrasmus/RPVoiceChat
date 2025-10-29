@@ -3,7 +3,7 @@ using System.IO;
 using Concentus;
 using Concentus.Enums;
 using RPVoiceChat.Config;
-using RPVoiceChat.Utils;
+using RPVoiceChat.Util;
 
 namespace RPVoiceChat.Audio
 {
