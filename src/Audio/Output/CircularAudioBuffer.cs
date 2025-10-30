@@ -1,9 +1,8 @@
 using OpenTK.Audio.OpenAL;
-using RPVoiceChat.Utils;
+using RPVoiceChat.Util;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 using Vintagestory.API.Util;
 
 namespace RPVoiceChat.Audio
@@ -12,7 +11,6 @@ namespace RPVoiceChat.Audio
     {
         public event Action OnEmptyingQueue;
 
-        private CancellationTokenSource dequeueAudioCTS;
         private List<int> availableBuffers = new List<int>();
         private List<int> queuedBuffers = new List<int>();
         private int[] buffers;
@@ -20,18 +18,11 @@ namespace RPVoiceChat.Audio
         private ALSourceState previousSourceState = ALSourceState.Initial;
         private object buffer_queue_lock = new object();
 
-        // Track the dequeue task to properly wait for it on disposal
-        private Task dequeueTask;
-
         public CircularAudioBuffer(int source, int bufferCount)
         {
             this.source = source;
             buffers = OALW.GenBuffers(bufferCount);
             availableBuffers.AddRange(buffers);
-            dequeueAudioCTS = new CancellationTokenSource();
-
-            // Store the task so we can wait for it in Dispose
-            dequeueTask = Task.Run(() => DequeueAudioLoop(dequeueAudioCTS.Token));
         }
 
         public void QueueAudio(byte[] audio, ALFormat format, int frequency)
@@ -74,15 +65,6 @@ namespace RPVoiceChat.Audio
             }
         }
 
-        // Renamed and made synchronous to avoid async void anti-pattern
-        private void DequeueAudioLoop(CancellationToken ct)
-        {
-            while (!ct.IsCancellationRequested)
-            {
-                FreeProcessedBuffers();
-                Thread.Sleep(30); // Use Thread.Sleep instead of await Task.Delay
-            }
-        }
 
         private void FreeProcessedBuffers()
         {
@@ -134,25 +116,8 @@ namespace RPVoiceChat.Audio
 
         public void Dispose()
         {
-            // Wait for the dequeue task to finish before releasing resources
-            dequeueAudioCTS?.Cancel();
-
-            try
-            {
-                // Wait max 1 second for the task to complete
-                dequeueTask?.Wait(TimeSpan.FromSeconds(1));
-            }
-            catch (AggregateException)
-            {
-                // Task was cancelled, this is expected
-            }
-
-            dequeueAudioCTS?.Dispose();
-
-            // Clean up buffers before deleting them
             lock (buffer_queue_lock)
             {
-                // Empty the OpenAL queue before deleting buffers
                 try
                 {
                     OALW.SourceStop(source);

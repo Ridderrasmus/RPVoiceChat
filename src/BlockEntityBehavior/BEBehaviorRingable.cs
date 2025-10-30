@@ -1,4 +1,4 @@
-﻿using RPVoiceChat.Utils;
+﻿using RPVoiceChat.Util;
 using System;
 using System.Text;
 using Vintagestory.API.Common;
@@ -11,11 +11,6 @@ public class BEBehaviorRingable : BlockEntityBehavior
 
     public BEBehaviorRingable(Vintagestory.API.Common.BlockEntity blockEntity) : base(blockEntity)
     {
-    }
-
-    public override void Initialize(ICoreAPI api, JsonObject properties)
-    {
-        base.Initialize(api, properties);
     }
 
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldAccessForResolve)
@@ -41,7 +36,6 @@ public class BEBehaviorRingable : BlockEntityBehavior
 
         base.FromTreeAttributes(tree, worldAccessForResolve);
     }
-
 
     public override void ToTreeAttributes(ITreeAttribute tree)
     {

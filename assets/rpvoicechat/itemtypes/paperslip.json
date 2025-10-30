@@ -1,0 +1,53 @@
+{
+  "code": "paperslip",
+  "class": "Item",
+  "enabled": true,
+  "maxstacksize": 64,
+  "creativeinventory": {
+    "general": [ "*" ],
+    "items": [ "*" ],
+    "rpvoicechat": [ "*" ]
+  },
+  "shape": {
+    "base": "item/paperslip"
+  },
+  "textures": {
+    "paper": { "base": "game:block/cloth/paper/blank-small" }
+  },
+  "attributes": {
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.item-paperslip.Title",
+          "text": "rpvoicechat:Handbook.Usage.item-paperslip.Text"
+        }
+      ]
+    }
+  },
+  "guiTransform": {
+    "translation": {
+      "x": -11,
+      "y": 0,
+      "z": 0
+    },
+    "rotation": {
+      "x": -48,
+      "y": 48,
+      "z": 0
+    },
+    "origin": {
+      "x": 0.5,
+      "y": 0.5,
+      "z": 0
+    },
+    "scale": 1.39
+  },
+  "tpHandTransform": {
+    "translation": {
+      "x": -1.5,
+      "y": -0.8,
+      "z": -1.2
+    },
+    "scale": 0.43
+  }
+}

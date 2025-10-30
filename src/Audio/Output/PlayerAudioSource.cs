@@ -3,7 +3,7 @@ using RPVoiceChat.Audio.Effects;
 using RPVoiceChat.Config;
 using RPVoiceChat.DB;
 using RPVoiceChat.Gui;
-using RPVoiceChat.Utils;
+using RPVoiceChat.Util;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -106,33 +106,16 @@ namespace RPVoiceChat.Audio
             if (speakerPos == null || listenerPos == null)
                 return;
 
-            // For global broadcasts, disable muffling and positioning
-            bool isGlobalBroadcast = currentAudio?.isGlobalBroadcast == true;
-
             // If the player is on the other side of something to the listener, then the player's voice should be muffled
-            bool mufflingEnabled = ModConfig.ClientConfig.Muffling && !isGlobalBroadcast; // Disable muffling for global broadcast
-            float wallThickness = 0f;
-
+            bool mufflingEnabled = ModConfig.ClientConfig.Muffling;
+            float wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
             float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");
 
-            if (!isGlobalBroadcast)
-            {
-                // Check if the current audio has a wall thickness override
-                if (currentAudio?.wallThicknessOverride >= 0f)
-                {
-                    wallThickness = currentAudio.wallThicknessOverride;
-                }
-                else
-                {
-                    wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
-                }
-
-                if (capi.World.Player.Entity.Swimming)
-                    wallThickness += 1.0f;
-            }
+            if (capi.World.Player.Entity.Swimming)
+                wallThickness += 1.0f;
 
             lowpassFilter?.Stop();
-            if (mufflingEnabled && wallThickness > 0)
+            if (mufflingEnabled && wallThickness != 0)
             {
                 lowpassFilter = lowpassFilter ?? new LowpassFilter(source);
                 lowpassFilter.Start();
@@ -143,7 +126,7 @@ namespace RPVoiceChat.Audio
             // DEACTIVATED : TO BE IMPLEMENTED
             // If the player is in a reverberated area, then the player's voice should be reverberated
             reverbEffect?.Clear();
-            if (toBeImplementedToggle && !isGlobalBroadcast && LocationUtils.IsReverbArea(capi, speakerPos))
+            if (toBeImplementedToggle && LocationUtils.IsReverbArea(capi, speakerPos))
             {
                 reverbEffect = reverbEffect ?? new ReverbEffect(source);
                 reverbEffect.Apply();
@@ -153,7 +136,7 @@ namespace RPVoiceChat.Audio
             // If the player has a temporal stability of less than 0.5, then the player's voice should be distorted
             // Values are temporary currently
             unstableEffect?.Clear();
-            if (toBeImplementedToggle && !isGlobalBroadcast && player.Entity.WatchedAttributes.GetDouble("temporalStability") < 0.5)
+            if (toBeImplementedToggle && player.Entity.WatchedAttributes.GetDouble("temporalStability") < 0.5)
             {
                 unstableEffect = unstableEffect ?? new UnstableEffect(source);
                 unstableEffect.Apply();
@@ -164,7 +147,7 @@ namespace RPVoiceChat.Audio
             // Values are temporary currently
             intoxicatedEffect?.Clear();
             float drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
-            if (toBeImplementedToggle && !isGlobalBroadcast && drunkness > 0)
+            if (toBeImplementedToggle && drunkness > 0)
             {
                 intoxicatedEffect = intoxicatedEffect ?? new IntoxicatedEffect(source);
                 intoxicatedEffect.SetToxicRate(drunkness);
@@ -175,15 +158,15 @@ namespace RPVoiceChat.Audio
             var sourcePosition = new Vec3f();
             var velocity = new Vec3f();
 
-            // For global broadcasts, disable audio positioning
-            bool useLocationalAudio = IsLocational && !isGlobalBroadcast && !ModConfig.ClientConfig.IsMonoMode;
+            // For mono mode, preserve distance but center the audio (no stereo positioning)
+            bool useLocationalAudio = IsLocational && !ModConfig.ClientConfig.IsMonoMode;
 
             if (useLocationalAudio)
             {
                 sourcePosition = GetRelativeSourcePosition(speakerPos, listenerPos);
                 velocity = GetRelativeVelocity(speakerPos, listenerPos, sourcePosition);
             }
-            else if (ModConfig.ClientConfig.IsMonoMode && !isGlobalBroadcast)
+            else if (ModConfig.ClientConfig.IsMonoMode)
             {
                 // In mono mode, preserve distance but center the audio (no stereo positioning)
                 float distance = (float)speakerPos.DistanceTo(listenerPos);
@@ -283,16 +266,16 @@ namespace RPVoiceChat.Audio
                 orderingQueue.Add(sequenceNumber, audio);
             }
 
-            _ = DequeueAudio(); // Fire and forget - we don't need to await this
+            DequeueAudio();
         }
 
-        public async Task DequeueAudio()
+        public async void DequeueAudio()
         {
-            try
-            {
-                await Task.Delay(orderingDelay);
+            await Task.Delay(orderingDelay);
 
-                lock (dequeue_audio_lock)
+            lock (dequeue_audio_lock)
+            {
+                try
                 {
                     AudioData audio;
                     lock (ordering_queue_lock)
@@ -329,7 +312,6 @@ namespace RPVoiceChat.Audio
                             2 * audio.frequency / 1000,
                             audio.data.Length / 4
                         );
-
                         if (audio.data.Length > maxFadeDuration * 2)
                         {
                             AudioUtils.FadeEdges(audio.data, maxFadeDuration);
@@ -346,16 +328,18 @@ namespace RPVoiceChat.Audio
                             StartPlaying();
                     }
                 }
-            }
-            catch (Exception e)
-            {
-                Logger.client.Warning($"Error in DequeueAudio: {e.Message}");
+                catch (Exception e)
+                {
+                    Logger.client.Warning($"Error in DequeueAudio: {e.Message}");
+                }
             }
         }
+
 
         public void StartPlaying()
         {
             if (source <= 0) return; // Source is invalid
+            
             OALW.SourcePlay(source);
             PlayerNameTagRenderer.UpdatePlayerNameTag(player, true);
         }

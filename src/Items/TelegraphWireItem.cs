@@ -1,7 +1,7 @@
 using System.Text;
 using RPVoiceChat.Config;
 using RPVoiceChat.GameContent.Systems;
-using RPVoiceChat.Utils;
+using RPVoiceChat.Util;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
@@ -64,14 +64,13 @@ namespace RPVoiceChat.GameContent.Items
             firstNodePos = null; // Reset
         }
 
-        public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
+        public override void OnHeldIdle(ItemSlot slot, EntityAgent byEntity)
         {
-            // TODO: not working
-            if (firstNodePos != null)
+            base.OnHeldIdle(slot, byEntity);
+            if (firstNodePos != null && byEntity?.Api is ICoreClientAPI capi && byEntity == capi.World.Player.Entity)
             {
-                dsc.AppendLine(UIUtils.I18n("Wire.Pending", firstNodePos));
+                capi.TriggerIngameError(this, "wire-pending", UIUtils.I18n("Wire.Pending", firstNodePos));
             }
-            base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
         }
     }
 }

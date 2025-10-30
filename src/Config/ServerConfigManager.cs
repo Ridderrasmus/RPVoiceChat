@@ -1,5 +1,5 @@
 using Vintagestory.API.Common;
-using RPVoiceChat.Utils;
+using RPVoiceChat.Util;
 
 namespace RPVoiceChat.Config
 {
@@ -29,6 +29,7 @@ namespace RPVoiceChat.Config
         public static int TelegraphMinDelayBetweenKeysMs => Config?.TelegraphMinDelayBetweenKeysMs ?? 200;
         public static double BellRingCooldownSeconds => Config?.BellRingCooldownSeconds ?? 1.5;
         public static bool TelegraphGenuineMorseCharacters => Config?.TelegraphGenuineMorseCharacters ?? false;
+        public static int TelegraphMessageDeletionDelaySeconds => Config?.TelegraphMessageDeletionDelaySeconds ?? 10;
 
         // Sound Emitting Objects Range Settings
         public static int HandbellAudibleDistance => Config?.HandbellAudibleDistance ?? 16;
@@ -94,6 +95,12 @@ namespace RPVoiceChat.Config
             {
                 Logger.server.Warning($"BellRingCooldownSeconds ({BellRingCooldownSeconds}) should be between 0.1 and 10.0. Using default (1.5).");
                 Config.BellRingCooldownSeconds = 1.5;
+            }
+
+            if (TelegraphMessageDeletionDelaySeconds < 1 || TelegraphMessageDeletionDelaySeconds > 300)
+            {
+                Logger.server.Warning($"TelegraphMessageDeletionDelaySeconds ({TelegraphMessageDeletionDelaySeconds}) should be between 1 and 300. Using default (10).");
+                Config.TelegraphMessageDeletionDelaySeconds = 10;
             }
 
             // Sound emitting objects range validation

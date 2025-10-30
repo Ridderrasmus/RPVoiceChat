@@ -11,6 +11,8 @@ namespace RPVoiceChat.GameContent.Renderers
     {
         private readonly ICoreClientAPI capi;
         private readonly WireNode node;
+        // Default wire texture (atlas tile). Can be changed in future for different wire types.
+        private AssetLocation wireTextureAsset = new AssetLocation("game:block/metal/plate/copper");
 
         private MeshRef meshRef;
         private Vec3f meshOrigin;
@@ -62,8 +64,8 @@ namespace RPVoiceChat.GameContent.Renderers
                 )
                 .Values;
 
-            int texId = capi.Render.GetOrLoadTexture(new AssetLocation("game:block/metal/plate/copper")); //TODO texture not working
-            capi.Render.BindTexture2d(texId);
+            // Use the block atlas to texture the wires (UVs remapped in RebuildMesh)
+            prog.Tex2D = capi.BlockTextureAtlas.AtlasTextures[0].TextureId;
 
             prog.Use();
             capi.Render.RenderMesh(meshRef);
@@ -100,7 +102,25 @@ namespace RPVoiceChat.GameContent.Renderers
 
             if (combinedMesh.VerticesCount > 0)
             {
-                // White plain color
+                // Remap UVs to the copper tile in the block atlas
+                TextureAtlasPosition texPos;
+                int subId;
+                var ok = capi.BlockTextureAtlas.GetOrInsertTexture(wireTextureAsset, out subId, out texPos);
+                if (ok && combinedMesh.Uv != null && combinedMesh.Uv.Length >= 2)
+                {
+                    for (int idx = 0; idx < combinedMesh.Uv.Length - 1; idx += 2)
+                    {
+                        float u = combinedMesh.Uv[idx];
+                        float v = combinedMesh.Uv[idx + 1];
+                        // Normalize to avoid sampling outside the target atlas tile (WireMesh can generate u > 1)
+                        u = (float)(u - Math.Floor(u));
+                        v = GameMath.Clamp(v, 0f, 1f);
+                        combinedMesh.Uv[idx] = GameMath.Lerp(texPos.x1, texPos.x2, u);
+                        combinedMesh.Uv[idx + 1] = GameMath.Lerp(texPos.y1, texPos.y2, v);
+                    }
+                }
+
+                // White vertex color (modulated by the texture)
                 int vcount = combinedMesh.VerticesCount;
                 combinedMesh.Rgba = new byte[vcount * 4];
                 for (int i = 0; i < vcount; i++)

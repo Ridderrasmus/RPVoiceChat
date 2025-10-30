@@ -1,5 +1,5 @@
 using Open.Nat;
-using RPVoiceChat.Utils;
+using RPVoiceChat.Util;
 using System;
 using System.Net;
 using System.Net.Sockets;

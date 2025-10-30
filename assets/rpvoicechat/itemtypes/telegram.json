@@ -1,0 +1,54 @@
+{
+  "code": "telegram",
+  "class": "telegram",
+  "enabled": true,
+  "maxstacksize": 1,
+  "creativeinventory": {
+    "general": [ "*" ],
+    "items": [ "*" ],
+    "rpvoicechat": [ "*" ]
+  },
+  "shape": {
+    "base": "item/telegram"
+  },
+  "textures": {
+    "paper": { "base": "game:block/cloth/paper/blank-small" }
+  },
+  "attributes": {
+    "readable": true,
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.item-telegram.Title",
+          "text": "rpvoicechat:Handbook.Usage.item-telegram.Text"
+        }
+      ]
+    }
+  },
+  "guiTransform": {
+    "translation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "rotation": {
+      "x": -48,
+      "y": 0,
+      "z": 5
+    },
+    "origin": {
+      "x": 0.5,
+      "y": 0.5,
+      "z": 0
+    },
+    "scale": 2.49
+  },
+  "tpHandTransform": {
+    "translation": {
+      "x": -1.2,
+      "y": -0.4,
+      "z": -0.8
+    },
+    "scale": 0.56
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "texture": "item/paperslip",
+  "textureSize": [16, 16],
+  "textureSizes": {
+    "item/paperslip": [16, 16]
+  }
+}

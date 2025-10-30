@@ -27,7 +27,7 @@ Not only does the mod allow players to talk to each other in-game, but it also a
 ## Usage
 ### Talking
 To talk to other players you will need to set up your audio input threshold or turn on push to talk (PTT) in the config menu.
-The default keybind for the config menu is `P` and the default keybind for PTT is `CAPS LOCK`. (Note as of current game version these keybinds cannot be applied to mouse buttons)
+The default keybind for the config menu is `;` and the default keybind for PTT is `CAPS LOCK`. (Note as of current game version these keybinds cannot be applied to mouse buttons)
 
 ### Different voice levels
 There are currently 3 different voice levels in the mod. These are whisper, normal and shout.
@@ -76,3 +76,12 @@ The mod was previously maintained by the following people:
 
 If you want to add something to the mod, feel free to make a pull request.
 If you have any questions, feel free to contact me on discord (ridderrasmus).
+
+## Licenses
+The mod is licensed under the [MIT License](LICENSE).
+The mod uses the following libraries:
+	- [Opus](https://opus-codec.org/) - Licensed under the [three-clause BSD License](LICENSE_OPUS)
+	- [RNNoise](https://jmvalin.ca/demo/rnnoise/) - Licensed under the BSD License
+The mod also uses a few sound effects from [Freesound.org](https://freesound.org/) which are licensed under various licenses.
+	- [Furniture - Drawers open & close](https://freesound.org/people/Vrymaa/sounds/802695/) by Vrymaa - Creative Commons 0
+	- [Dot matrix printer](https://freesound.org/people/DisasterServices/sounds/320008/) DisasterServices - Creative Commons 0

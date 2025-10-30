@@ -1,4 +1,4 @@
-using RPVoiceChat.Utils;
+using RPVoiceChat.Util;
 using System;
 using System.Threading;
 

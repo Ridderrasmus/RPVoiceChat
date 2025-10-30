@@ -1,5 +1,5 @@
 using RPVoiceChat.Networking;
-using RPVoiceChat.Utils;
+using RPVoiceChat.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;

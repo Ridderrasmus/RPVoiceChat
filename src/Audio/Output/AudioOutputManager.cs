@@ -2,7 +2,7 @@ using RPVoiceChat.Config;
 using RPVoiceChat.DB;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Networking;
-using RPVoiceChat.Utils;
+using RPVoiceChat.Util;
 using System;
 using System.Collections.Concurrent;
 using Vintagestory.API.Client;
@@ -109,9 +109,8 @@ namespace RPVoiceChat.Audio
                 IsLocational = false,
             };
 
-            // Don't start playing immediately - wait for audio data to be queued
-            // if (!isLoopbackEnabled) return;
-            // localPlayerAudioSource.StartPlaying();
+            if (!isLoopbackEnabled) return;
+            localPlayerAudioSource.StartPlaying();
         }
 
         private PlayerAudioSource GetOrCreatePlayerSource(string playerId)
@@ -130,7 +129,7 @@ namespace RPVoiceChat.Audio
         {
             var source = new PlayerAudioSource(player, capi, clientSettingsRepo);
             playerSources.AddOrUpdate(player.PlayerUID, source, (_, __) => source);
-            // Don't start playing immediately - wait for audio data to be queued
+            source.StartPlaying();
 
             return source;
         }

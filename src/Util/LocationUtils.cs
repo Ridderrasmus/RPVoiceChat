@@ -7,7 +7,7 @@ using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
 
-namespace RPVoiceChat.Utils
+namespace RPVoiceChat.Util
 {
     using BlockEntry = Tuple<BlockPos, Block>;
     using RayTraceResults = Tuple<List<Tuple<BlockPos, Block>>, List<Entity>>;

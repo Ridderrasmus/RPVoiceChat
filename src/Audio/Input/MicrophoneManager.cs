@@ -1,7 +1,7 @@
 using OpenTK.Audio.OpenAL;
 using RPVoiceChat.Audio.Effects;
 using RPVoiceChat.Config;
-using RPVoiceChat.Utils;
+using RPVoiceChat.Util;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -186,7 +186,8 @@ namespace RPVoiceChat.Audio
                 try
                 {
                     // Use WaitHandle instead of Thread.Sleep for proper cancellation
-                    int sleepMs = isGlobalBroadcast ? 200 : 100;
+                    // Use consistent timing to prevent CPU spikes with multiple players
+                    int sleepMs = 100;
                     ct.WaitHandle.WaitOne(sleepMs);
                     if (ct.IsCancellationRequested) break;
                     
