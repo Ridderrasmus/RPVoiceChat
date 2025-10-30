@@ -441,10 +441,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tessThreadTesselator)
         {
-            // Initialize animator here, following the Sprinkler Mod example
             if (animUtil?.animator == null)
             {
-                animUtil?.InitializeAnimator("printer");
+                // Applies the block orientation to the animator (rotation in degrees around Y)
+                var rotYDeg = this.Block?.GetRotationAngle() ?? 0;
+                animUtil?.InitializeAnimator("printer", null, null, new Vec3f(0, rotYDeg, 0));
             }
             
             return animUtil?.activeAnimationsByAnimCode.Count > 0 || (animUtil?.animator != null && animUtil.animator.ActiveAnimationCount > 0);
