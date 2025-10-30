@@ -39,6 +39,7 @@
   "block-printer-walnut-*": "Imprimante (Noyer)",
   "block-printer-purpleheart-*": "Imprimante (Peltogyne)",
   "blockdesc-printer-*": "Une imprimante télégraphique qui enregistre les messages sous forme de télégrammes lorsqu'elle est placée sous une clé télégraphique. Nécessite des papiers à imprimer.",
+  "printercontents": "Inventaire d'imprimante",
   "Printer.Warning.NoPaper": "Attention : pas de papier à imprimer !",
   "Printer.Warning.Full": "Attention : imprimante pleine (tous les emplacements de télégrammes occupés) !",
   "Printer.Paper": "Papier : {0}",

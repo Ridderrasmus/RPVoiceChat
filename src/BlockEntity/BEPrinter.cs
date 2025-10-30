@@ -23,16 +23,14 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private InventoryPrinter inventory;
         private const int PaperSlotId = 0;
         
-        public string dialogTitleLangCode = "printercontents";
-        public virtual string DialogTitle => "Printer Inventory";
+        public virtual string DialogTitle => Lang.Get($"{RPVoiceChatMod.modID}:printercontents");
         
         // Animation state
         private bool isDrawerOpen = false;
         public bool IsDrawerOpen => isDrawerOpen;
         
         
-        // Animation utility (using VS API BEBehaviorAnimatable)
-        public BlockEntityAnimationUtil animUtil { get { return GetBehavior<BEBehaviorAnimatable>()?.animUtil; } }
+        public BlockEntityAnimationUtil animUtil { get { return this.GetAnimUtil(); } }
 
         public BlockEntityPrinter()
         {
@@ -369,23 +367,10 @@ namespace RPVoiceChat.GameContent.BlockEntity
         /// <param name="animationName">Name of the animation to trigger</param>
         public void TriggerAnimation(string animationName)
         {
-            if (animUtil != null)
-            {
-                // Check if animation is already running
-                if (animUtil.activeAnimationsByAnimCode.ContainsKey(animationName))
-                {
-                    return;
-                }
-                
-                animUtil.StartAnimation(new AnimationMetaData() 
-                { 
-                    Animation = animationName, 
-                    Code = animationName 
-                });
-                
-                // Play sound effect
-                playDrawerSound();
-            }
+            this.StartAnimationIfNotRunning(animationName);
+            
+            // Play sound effect
+            playDrawerSound();
         }
 
         /// <summary>
@@ -394,21 +379,15 @@ namespace RPVoiceChat.GameContent.BlockEntity
         /// <param name="open">True to open drawer, false to close</param>
         private void TriggerDrawerAnimation(bool open)
         {
-            if (animUtil == null) return;
-            
             if (!open)
             {
                 // Closing: stop the animation
-                animUtil.StopAnimation("open-drawer");
+                this.StopAnimation("open-drawer");
             }
             else
             {
                 // Opening: start the animation
-                animUtil.StartAnimation(new AnimationMetaData() 
-                { 
-                    Animation = "open-drawer", 
-                    Code = "open-drawer" 
-                });
+                this.StartAnimationIfNotRunning("open-drawer");
             }
         }
 
@@ -441,14 +420,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tessThreadTesselator)
         {
-            if (animUtil?.animator == null)
-            {
-                // Applies the block orientation to the animator (rotation in degrees around Y)
-                var rotYDeg = this.Block?.GetRotationAngle() ?? 0;
-                animUtil?.InitializeAnimator("printer", null, null, new Vec3f(0, rotYDeg, 0));
-            }
-            
-            return animUtil?.activeAnimationsByAnimCode.Count > 0 || (animUtil?.animator != null && animUtil.animator.ActiveAnimationCount > 0);
+            this.InitializeAnimatorWithRotation("printer");
+            return this.HasActiveAnimations();
         }
         
         public void CloseDrawer()

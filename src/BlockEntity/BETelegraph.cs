@@ -45,7 +45,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private long sentCountdownEndTime = 0;
 
         // Animation util pour jouer l'animation "click" et gérer l'orientation
-        public BlockEntityAnimationUtil animUtil { get { return GetBehavior<BEBehaviorAnimatable>()?.animUtil; } }
+        public BlockEntityAnimationUtil animUtil { get { return this.GetAnimUtil(); } }
 
         public BlockEntityTelegraph() : base()
         {
@@ -605,28 +605,13 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tessThreadTesselator)
         {
-            if (animUtil?.animator == null)
-            {
-                var rotYDeg = this.Block?.GetRotationAngle() ?? 0;
-                animUtil?.InitializeAnimator("telegraphkey", null, null, new Vec3f(0, rotYDeg, 0));
-            }
-
-            return animUtil?.activeAnimationsByAnimCode.Count > 0 || (animUtil?.animator != null && animUtil.animator.ActiveAnimationCount > 0);
+            this.InitializeAnimatorWithRotation("telegraphkey");
+            return this.HasActiveAnimations();
         }
 
         private void TriggerKeyClickAnimation()
         {
-            if (animUtil == null) return;
-            const string anim = "click";
-            if (animUtil.activeAnimationsByAnimCode.ContainsKey(anim))
-            {
-                animUtil.StopAnimation(anim);
-            }
-            animUtil.StartAnimation(new AnimationMetaData
-            {
-                Animation = anim,
-                Code = anim
-            });
+            this.PlaySingleShotAnimation("click");
         }
 
     }

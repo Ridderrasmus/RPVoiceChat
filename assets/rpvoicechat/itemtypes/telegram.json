@@ -11,6 +11,9 @@
   "shape": {
     "base": "item/telegram"
   },
+  "textures": {
+    "paper": { "base": "game:block/cloth/paper/blank-small" }
+  },
   "attributes": {
     "readable": true,
     "handbook": {

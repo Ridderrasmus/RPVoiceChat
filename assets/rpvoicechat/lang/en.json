@@ -81,6 +81,7 @@
   "block-printer-walnut-*": "Printer (Walnut)",
   "block-printer-purpleheart-*": "Printer (Purpleheart)",
   "blockdesc-printer-*": "A telegraph printer that stores messages as telegrams when placed under a telegraph key. Requires paper slips.",
+  "printercontents": "Printer Inventory",
   "Printer.Warning.NoPaper": "Warning: no paper slips!",
   "Printer.Warning.Full": "Warning: printer full (all telegram slots occupied)!",
   "Printer.Paper": "Paper: {0}",
