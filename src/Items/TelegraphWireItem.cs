@@ -64,16 +64,6 @@ namespace RPVoiceChat.GameContent.Items
             firstNodePos = null; // Reset
         }
 
-        public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
-        {
-            // TODO: not working
-            if (firstNodePos != null)
-            {
-                dsc.AppendLine(UIUtils.I18n("Wire.Pending", firstNodePos));
-            }
-            base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
-        }
-
         public override void OnHeldIdle(ItemSlot slot, EntityAgent byEntity)
         {
             base.OnHeldIdle(slot, byEntity);

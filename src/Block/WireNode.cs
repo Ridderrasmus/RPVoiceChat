@@ -43,12 +43,6 @@ public class WireNode : BlockEntity, IWireConnectable
             var capi = api as ICoreClientAPI;
             var wireRenderer = new WireNodeRenderer(this, capi);
             renderer = wireRenderer;
-            capi.Event.RegisterRenderer(renderer, EnumRenderStage.Opaque, "wirenode");
-
-            this.OnConnectionsChanged += () =>
-            {
-                wireRenderer.MarkNeedsRebuild();
-            };
 
             WireNetworkHandler.ClientSideMessageReceived += OnReceivedMessage;
         }
@@ -82,23 +76,7 @@ public class WireNode : BlockEntity, IWireConnectable
             }
         }
 
-        foreach (var otherPos in pendingConnectionPositions)
-        {
-            var otherBe = api.World.BlockAccessor.GetBlockEntity(otherPos) as WireNode;
-            if (otherBe != null)
-            {
-                var connection = new WireConnection(this, otherBe);
-                if (!HasConnection(connection)) AddConnection(connection);
-                if (!otherBe.HasConnection(connection)) otherBe.AddConnection(connection);
-            }
-        }
-
-        if (connections.Count > 0)
-        {
-            OnConnectionsChanged?.Invoke();
-        }
-
-        pendingConnectionPositions.Clear();
+        ResolvePendingConnectionsAndNotify();
     }
 
     public void MarkForUpdate()
@@ -109,6 +87,26 @@ public class WireNode : BlockEntity, IWireConnectable
     public IReadOnlyList<WireConnection> GetConnections()
     {
         return connections.AsReadOnly();
+    }
+
+    private void ResolvePendingConnectionsAndNotify()
+    {
+        if (pendingConnectionPositions == null || pendingConnectionPositions.Count == 0) return;
+        foreach (var otherPos in pendingConnectionPositions)
+        {
+            var otherBe = Api.World.BlockAccessor.GetBlockEntity(otherPos) as WireNode;
+            if (otherBe != null)
+            {
+                var connection = new WireConnection(this, otherBe);
+                if (!HasConnection(connection)) AddConnection(connection);
+                if (!otherBe.HasConnection(connection)) otherBe.AddConnection(connection);
+            }
+        }
+        if (connections.Count > 0)
+        {
+            OnConnectionsChanged?.Invoke();
+        }
+        pendingConnectionPositions.Clear();
     }
 
     public void AddConnection(WireConnection connection)
@@ -246,6 +244,15 @@ public class WireNode : BlockEntity, IWireConnectable
 
         if (Api.Side == EnumAppSide.Client)
         {
+            // Inform connected nodes to remove their connection client-side as well
+            foreach (var connection in new List<WireConnection>(connections))
+            {
+                WireNode other = connection.GetOtherNode(this);
+                other?.RemoveConnection(connection);
+                other?.MarkForUpdate();
+            }
+
+            // Dispose renderer
             if (renderer != null)
             {
                 var capi = Api as ICoreClientAPI;
@@ -349,6 +356,12 @@ public class WireNode : BlockEntity, IWireConnectable
             {
                 pendingConnectionPositions.Add(otherPos);
             }
+        }
+
+        // Resolve immediately on client to ensure wires render without needing hover
+        if (Api?.Side == EnumAppSide.Client)
+        {
+            ResolvePendingConnectionsAndNotify();
         }
     }
 
