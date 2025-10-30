@@ -73,5 +73,14 @@ namespace RPVoiceChat.GameContent.Items
             }
             base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
         }
+
+        public override void OnHeldIdle(ItemSlot slot, EntityAgent byEntity)
+        {
+            base.OnHeldIdle(slot, byEntity);
+            if (firstNodePos != null && byEntity?.Api is ICoreClientAPI capi && byEntity == capi.World.Player.Entity)
+            {
+                capi.TriggerIngameError(this, "wire-pending", UIUtils.I18n("Wire.Pending", firstNodePos));
+            }
+        }
     }
 }
