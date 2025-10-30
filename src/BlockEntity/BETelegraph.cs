@@ -6,11 +6,14 @@ using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Systems;
 using RPVoiceChat.Networking.Packets;
+using RPVoiceChat.Util;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
+using Vintagestory.GameContent;
+using Vintagestory.API.Client.Tesselation;
 
 namespace RPVoiceChat.GameContent.BlockEntity
 {
@@ -40,6 +43,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private bool isSentCountdownActive = false;
         private int sentCountdownSeconds = 0;
         private long sentCountdownEndTime = 0;
+
+        // Animation util pour jouer l'animation "click" et gérer l'orientation
+        public BlockEntityAnimationUtil animUtil { get { return GetBehavior<BEBehaviorAnimatable>()?.animUtil; } }
 
         public BlockEntityTelegraph() : base()
         {
@@ -151,6 +157,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
             sentMessage += displayPart;
             MarkDirty();
             dialog?.UpdateSentText(sentMessage);
+            
+            TriggerKeyClickAnimation();
 
             if (!string.IsNullOrEmpty(messageToSend))
             {
@@ -593,6 +601,32 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     dialog?.UpdateSentCountdown(-1); // Hide countdown
                 }
             }
+        }
+
+        public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tessThreadTesselator)
+        {
+            if (animUtil?.animator == null)
+            {
+                var rotYDeg = this.Block?.GetRotationAngle() ?? 0;
+                animUtil?.InitializeAnimator("telegraphkey", null, null, new Vec3f(0, rotYDeg, 0));
+            }
+
+            return animUtil?.activeAnimationsByAnimCode.Count > 0 || (animUtil?.animator != null && animUtil.animator.ActiveAnimationCount > 0);
+        }
+
+        private void TriggerKeyClickAnimation()
+        {
+            if (animUtil == null) return;
+            const string anim = "click";
+            if (animUtil.activeAnimationsByAnimCode.ContainsKey(anim))
+            {
+                animUtil.StopAnimation(anim);
+            }
+            animUtil.StartAnimation(new AnimationMetaData
+            {
+                Animation = anim,
+                Code = anim
+            });
         }
 
     }

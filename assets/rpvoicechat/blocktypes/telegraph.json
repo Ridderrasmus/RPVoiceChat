@@ -6,6 +6,9 @@
   "behaviors": [
     { "name": "HorizontalOrientable" }
   ],
+  "entityBehaviors": [
+    { "name": "Animatable" }
+  ],
   "creativeinventory": {
     "general": [ "*-north" ],
     "rpvoicechat": [ "*-north" ]
