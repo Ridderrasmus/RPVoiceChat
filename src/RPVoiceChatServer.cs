@@ -4,7 +4,7 @@ using RPVoiceChat.Config;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Server;
 using RPVoiceChat.Systems;
-using RPVoiceChat.Utils;
+using RPVoiceChat.Util;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.CommandAbbr;
 using Vintagestory.API.Server;
@@ -53,6 +53,7 @@ namespace RPVoiceChat
         {
             base.StartPre(api);
             WorldConfig.Set("additional-content", ModConfig.ServerConfig.AdditionalContent);
+            WorldConfig.Set("telegraph-content", ModConfig.ServerConfig.TelegraphContent);
         }
 
         public override double ExecuteOrder() => 1.02;
@@ -110,11 +111,18 @@ namespace RPVoiceChat
                     .WithAdditionalInformation(UIUtils.I18n("Command.OthersHearSpectators.Help"))
                     .WithArgs(parsers.Bool("state"))
                     .HandleWith(ToggleOthersHearSpectators)
+                .EndSub()
                 .BeginSub("wtw")
                     .WithDesc(UIUtils.I18n("Command.WallThicknessWeighting.Desc"))
                     .WithAdditionalInformation(UIUtils.I18n("Command.WallThicknessWeighting.Help"))
                     .WithArgs(parsers.Float("weighting"))
                     .HandleWith(SetWallThicknessWeighting)
+                .EndSub()
+                .BeginSub("msgdelay")
+                    .WithDesc(UIUtils.I18n("Command.MessageDelay.Desc"))
+                    .WithAdditionalInformation(UIUtils.I18n("Command.MessageDelay.Help"))
+                    .WithArgs(parsers.Int("seconds"))
+                    .HandleWith(SetMessageDelay)
                 .EndSub();
         }
 
@@ -168,8 +176,9 @@ namespace RPVoiceChat
             bool forceNameTags = WorldConfig.GetBool("force-render-name-tags");
             bool encoding = WorldConfig.GetBool("encode-audio");
             float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");
+            int messageDeletionDelay = ServerConfigManager.TelegraphMessageDeletionDelaySeconds;
 
-            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceNameTags, encoding, wallThicknessWeighting));
+            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceNameTags, encoding, wallThicknessWeighting, messageDeletionDelay));
         }
 
         private TextCommandResult SetWhisperHandler(TextCommandCallingArgs args)
@@ -206,6 +215,22 @@ namespace RPVoiceChat
             WorldConfig.Set("wall-thickness-weighting", weighting);
 
             return TextCommandResult.Success(UIUtils.I18n("Command.WallThicknessWeighting.Success", weighting));
+        }
+
+        private TextCommandResult SetMessageDelay(TextCommandCallingArgs args)
+        {
+            int seconds = (int)args[0];
+
+            // Validate the input
+            if (seconds < 1 || seconds > 300)
+            {
+                return TextCommandResult.Error("Message deletion delay must be between 1 and 300 seconds.");
+            }
+
+            ModConfig.ServerConfig.TelegraphMessageDeletionDelaySeconds = seconds;
+            ModConfig.SaveServer(sapi);
+
+            return TextCommandResult.Success(UIUtils.I18n("Command.MessageDelay.Success", seconds));
         }
 
         public override void Dispose()

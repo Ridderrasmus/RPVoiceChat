@@ -1,4 +1,4 @@
-using RPVoiceChat.Utils;
+using RPVoiceChat.Util;
 using Vintagestory.Common;
 
 namespace RPVoiceChat.Audio

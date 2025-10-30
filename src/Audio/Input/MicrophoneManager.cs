@@ -1,7 +1,7 @@
 using OpenTK.Audio.OpenAL;
 using RPVoiceChat.Audio.Effects;
 using RPVoiceChat.Config;
-using RPVoiceChat.Utils;
+using RPVoiceChat.Util;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using Vintagestory.API.Config;
 
-namespace RPVoiceChat.Utils
+namespace RPVoiceChat.Util
 {
     public class EmbeddedDllClass
     {

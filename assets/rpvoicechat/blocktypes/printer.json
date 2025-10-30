@@ -1,0 +1,106 @@
+{
+  "code": "printer",
+  "enabled": true,
+  "class": "printerblock",
+  "entityClass": "BlockEntityPrinter",
+  "behaviors": [
+    { "name": "HorizontalOrientable" }
+  ],
+  "attributes": {
+    "handbook": {
+      "groupBy": [ "printer-*" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-printer.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-printer.Text"
+        }
+      ]
+    }
+  },
+  "entityBehaviors": [
+    { "name": "Animatable" }
+  ],
+  "creativeinventory": {
+    "general": [ "*-north" ],
+    "rpvoicechat": [ "*-north" ]
+  },
+  "maxstacksize": 1,
+  "heldTpIdleAnimation": "holdbothhandslarge",
+  "heldRightReadyAnimation": "heldblockready",
+  "heldTpUseAnimation": "twohandplaceblock",
+  "blockmaterial": "wood",
+  "variantgroups": [
+    {
+      "code": "wood",
+      "states": [ "aged" ],
+      "loadFromProperties": "block/wood"
+    },
+    {
+      "code": "side",
+      "loadFromProperties": "abstract/horizontalorientation"
+    }
+  ],
+  "shape": {
+    "base": "block/printer",
+    "rotateYByType": {
+      "*-north": 0,
+      "*-east": 270,
+      "*-west": 90,
+      "*-south": 180
+    }
+  },
+  "sounds": {
+    "place": "game:block/planks",
+    "hit": "game:block/planks",
+    "break": "game:block/planks"
+  },
+  "collisionBox": {
+    "x1": 0,
+    "y1": 0,
+    "z1": 0,
+    "x2": 1,
+    "y2": 1,
+    "z2": 1
+  },
+  "selectionBox": {
+    "x1": 0,
+    "y1": 0,
+    "z1": 0,
+    "x2": 1,
+    "y2": 1,
+    "z2": 1
+  },
+  "textures": {
+    "wood": {
+      "base": "game:block/wood/debarked/{wood}"
+    },
+    "gold": {
+      "base": "game:block/metal/plate/gold"
+    },
+    "redglass": {
+      "base": "game:block/glass/red"
+    },
+    "yellowglass": {
+      "base": "game:block/glass/yellow"
+    },
+    "greenglass": {
+      "base": "game:block/glass/green"
+    }
+  },
+  "rainPermeable": false,
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "lightAbsorption": 15,
+  "resistance": 1,
+  "guiTransform": {
+    "rotation": {
+      "x": -25,
+      "y": 145,
+      "z": 0
+    }
+  }
+}

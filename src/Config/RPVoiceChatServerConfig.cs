@@ -13,6 +13,7 @@ namespace RPVoiceChat.Config
 
         // Features
         public bool AdditionalContent { get; set; } = true;
+        public bool TelegraphContent { get; set; } = true;
 
         // Audio Performance Settings
         public float MaxAudioGain { get; set; } = 2f;
@@ -29,6 +30,7 @@ namespace RPVoiceChat.Config
         public int TelegraphMinDelayBetweenKeysMs { get; set; } = 200;
         public double BellRingCooldownSeconds { get; set; } = 1.5;
         public bool TelegraphGenuineMorseCharacters { get; set; } = false;
+        public int TelegraphMessageDeletionDelaySeconds { get; set; } = 10;
 
         // Sound Emitting Objects Range Settings
         public int HandbellAudibleDistance { get; set; } = 16;
@@ -54,6 +56,7 @@ namespace RPVoiceChat.Config
 
             // Features
             AdditionalContent = previousConfig.AdditionalContent;
+            TelegraphContent = previousConfig.TelegraphContent;
 
             // Audio Performance Settings
             MaxAudioGain = previousConfig.MaxAudioGain;

@@ -1,5 +1,5 @@
 ﻿using RPVoiceChat.GameContent.Renderers;
-using RPVoiceChat.Utils;
+using RPVoiceChat.Util;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;

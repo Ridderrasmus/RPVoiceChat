@@ -1,5 +1,5 @@
 using OpenTK.Audio.OpenAL;
-using RPVoiceChat.Utils;
+using RPVoiceChat.Util;
 using System;
 using System.Collections.Generic;
 

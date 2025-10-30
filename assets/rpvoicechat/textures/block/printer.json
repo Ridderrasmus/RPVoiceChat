@@ -1,0 +1,7 @@
+{
+  "texture": "block/printer",
+  "textureSize": [16, 16],
+  "textureSizes": {
+    "block/printer": [16, 16]
+  }
+}

@@ -1,5 +1,5 @@
 using HarmonyLib;
-using RPVoiceChat.Utils;
+using RPVoiceChat.Util;
 using System;
 using System.Linq;
 using System.Reflection;

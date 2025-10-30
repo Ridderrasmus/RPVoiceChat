@@ -1,7 +1,7 @@
 using OpenTK.Audio.OpenAL;
 using System;
 
-namespace RPVoiceChat.Utils
+namespace RPVoiceChat.Util
 {
     public static class AudioUtils
     {
@@ -43,7 +43,7 @@ namespace RPVoiceChat.Utils
                 return;
 
             int sampleCount = data.Length / sizeof(short);
-            // S'assurer que le fade ne dépasse pas la moitié des données disponibles
+            // S'assurer que le fade ne dï¿½passe pas la moitiï¿½ des donnï¿½es disponibles
             int safeFadeDuration = Math.Min(maxFadeDuration, sampleCount / 2);
 
             if (safeFadeDuration <= 0)

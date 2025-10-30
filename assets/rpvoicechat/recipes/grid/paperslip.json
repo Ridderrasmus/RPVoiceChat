@@ -1,0 +1,25 @@
+{
+  "enabled": true,
+  "ingredientPattern": "SP",
+  "ingredients": {
+    "P": {
+      "type": "item",
+      "code": "game:paper-parchment",
+      "quantity": 1
+    },
+    "S": {
+      "type": "item",
+      "code": "game:shears-*",
+      "isTool": true,
+      "toolDurabilityCost": 1
+    }
+  },
+  "width": 2,
+  "height": 1,
+  "output": {
+    "type": "item",
+    "code": "rpvoicechat:paperslip",
+    "quantity": 4
+  }
+}
+
