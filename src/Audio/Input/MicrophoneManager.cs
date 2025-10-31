@@ -27,6 +27,8 @@ namespace RPVoiceChat.Audio
         private int BufferSize = (int)(Frequency * 0.5);
         private int InputChannelCount;
         private const byte SampleSize = sizeof(short);
+        private byte[] sampleBufferPool;
+        private int lastBufferSize = 0;
 
         // Audio processing
         private IAudioCodec codec;
@@ -222,9 +224,16 @@ namespace RPVoiceChat.Audio
             int frameSize = codec.FrameSize;
             int samplesToRead = samplesAvailable - samplesAvailable % frameSize;
             if (samplesToRead <= 0) return;
+
             int bufferLength = samplesToRead * SampleSize * InputChannelCount;
-            var sampleBuffer = new byte[bufferLength];
-            capture.ReadSamples(sampleBuffer, samplesToRead);
+
+            if (sampleBufferPool == null || sampleBufferPool.Length < bufferLength)
+            {
+                sampleBufferPool = new byte[bufferLength];
+                lastBufferSize = bufferLength;
+            }
+
+            capture.ReadSamples(sampleBufferPool, samplesToRead);
 
             bool isMuted = ModConfig.ClientConfig.IsMuted;
             bool isSleeping = clientEntity.AnimManager.IsAnimationActive("sleep");
@@ -242,7 +251,10 @@ namespace RPVoiceChat.Audio
                 return;
             }
 
-            AudioData data = ProcessAudio(sampleBuffer);
+            byte[] sampleCopy = new byte[bufferLength];
+            Array.Copy(sampleBufferPool, sampleCopy, bufferLength);
+
+            AudioData data = ProcessAudio(sampleCopy);
             TransmitAudio(data);
         }
 
