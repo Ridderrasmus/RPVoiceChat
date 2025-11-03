@@ -83,7 +83,7 @@ namespace RPVoiceChat.Audio
 
             const int maxPacketSize = 1276;
             byte[] encodedBuffer = new byte[maxPacketSize];
-            var encoded = new MemoryStream();
+            using var encoded = new MemoryStream();
 
             try
             {
@@ -109,29 +109,27 @@ namespace RPVoiceChat.Audio
         public byte[] Decode(byte[] encodedData)
         {
             short[] decodedBuffer = new short[FrameSize];
-            var decoded = new MemoryStream();
-            var stream = new MemoryStream(encodedData);
+            using var decoded = new MemoryStream();
+            using var stream = new MemoryStream(encodedData);
+            using var reader = new BinaryReader(stream);
 
-            using (var reader = new BinaryReader(stream))
+            try
             {
-                try
+                while (stream.Position < stream.Length)
                 {
-                    while (stream.Position < stream.Length)
-                    {
-                        int packetSize = reader.ReadInt32();
-                        byte[] encodedPacket = reader.ReadBytes(packetSize);
-                        var encodedSpan = new ReadOnlySpan<byte>(encodedPacket);
-                        var decodedSpan = new Span<short>(decodedBuffer);
-                        int decodedLength = decoder.Decode(encodedSpan, decodedSpan, FrameSize / Channels, false);
+                    int packetSize = reader.ReadInt32();
+                    byte[] encodedPacket = reader.ReadBytes(packetSize);
+                    var encodedSpan = new ReadOnlySpan<byte>(encodedPacket);
+                    var decodedSpan = new Span<short>(decodedBuffer);
+                    int decodedLength = decoder.Decode(encodedSpan, decodedSpan, FrameSize / Channels, false);
 
-                        byte[] decodedPacket = AudioUtils.ShortsToBytes(decodedBuffer, 0, decodedLength);
-                        decoded.Write(decodedPacket, 0, decodedPacket.Length);
-                    }
+                    byte[] decodedPacket = AudioUtils.ShortsToBytes(decodedBuffer, 0, decodedLength);
+                    decoded.Write(decodedPacket, 0, decodedPacket.Length);
                 }
-                catch (Exception e)
-                {
-                    Logger.client.Error($"Couldn't decode audio:\n{e}");
-                }
+            }
+            catch (Exception e)
+            {
+                Logger.client.Error($"Couldn't decode audio:\n{e}");
             }
 
             return decoded.ToArray();
