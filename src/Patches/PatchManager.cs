@@ -27,12 +27,14 @@ namespace RPVoiceChat
             LoadedSoundNativePatch.Patch(harmony);
             SystemNetworkProcessPatch.Patch(harmony);
             HammerWeldingPatch.Patch(harmony);
+            HelveHammerPatch.Patch(harmony);
         }
 
         private void PatchServer()
         {
             NetworkAPIPatch.Patch(harmony);
             TcpNetServerPatch.Patch(harmony);
+            HelveHammerPatch.Patch(harmony);
         }
 
         public void Unpatch()
