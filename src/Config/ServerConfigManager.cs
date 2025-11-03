@@ -4,8 +4,8 @@ using RPVoiceChat.Util;
 namespace RPVoiceChat.Config
 {
     /// <summary>
-    /// Manager pour accéder facilement aux configurations serveur depuis le code
-    /// Remplace les constantes hardcodées par des valeurs configurables
+    /// Manager for easy access to server configurations from code
+    /// Replaces hardcoded constants with configurable values
     /// </summary>
     public static class ServerConfigManager
     {
