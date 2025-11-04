@@ -1,6 +1,6 @@
 {
 	"editor": {
-		"collapsedPaths": "Root/Wire,Root/Tube,Root/Top",
+		"collapsedPaths": "Root/Wire,Root/Tube,Root/Bottom,Root/Top",
 		"allAngles": false,
 		"entityTextureMode": false
 	},
@@ -13,9 +13,9 @@
 	"elements": [
 		{
 			"name": "Bottom",
-			"from": [ 0.0, 0.0, 2.0 ],
-			"to": [ 3.0, 1.0, 6.0 ],
-			"rotationOrigin": [ 0.0, 0.0, 2.0 ],
+			"from": [ 4.0, 0.0, 6.0 ],
+			"to": [ 7.0, 1.0, 10.0 ],
+			"rotationOrigin": [ 4.0, 0.0, 6.0 ],
 			"faces": {
 				"north": { "texture": "#wood", "uv": [ 0.0, 0.0, 3.0, 1.0 ] },
 				"east": { "texture": "#wood", "uv": [ 0.0, 0.0, 4.0, 1.0 ] },
@@ -127,9 +127,9 @@
 		},
 		{
 			"name": "Tube",
-			"from": [ 2.0, 1.0, 3.0 ],
-			"to": [ 3.0, 7.0, 5.0 ],
-			"rotationOrigin": [ 2.0, 1.0, 3.0 ],
+			"from": [ 6.0, 1.0, 7.0 ],
+			"to": [ 7.0, 7.0, 9.0 ],
+			"rotationOrigin": [ 6.0, 1.0, 7.0 ],
 			"faces": {
 				"north": { "texture": "#wood", "uv": [ 0.0, 0.0, 1.0, 6.0 ] },
 				"east": { "texture": "#wood", "uv": [ 0.0, 0.0, 2.0, 6.0 ] },
@@ -185,9 +185,9 @@
 		},
 		{
 			"name": "Top",
-			"from": [ 0.0, 7.0, 2.0 ],
-			"to": [ 3.0, 8.0, 6.0 ],
-			"rotationOrigin": [ 0.0, 7.0, 2.0 ],
+			"from": [ 4.0, 7.0, 6.0 ],
+			"to": [ 7.0, 8.0, 10.0 ],
+			"rotationOrigin": [ 4.0, 7.0, 6.0 ],
 			"faces": {
 				"north": { "texture": "#wood", "uv": [ 0.0, 0.0, 3.0, 1.0 ] },
 				"east": { "texture": "#wood", "uv": [ 0.0, 0.0, 4.0, 1.0 ] },
@@ -299,9 +299,9 @@
 		},
 		{
 			"name": "Wire",
-			"from": [ 2.0, 1.0, 2.0 ],
-			"to": [ 3.0, 7.0, 3.0 ],
-			"rotationOrigin": [ 2.0, 1.0, 2.0 ],
+			"from": [ 6.0, 1.0, 6.0 ],
+			"to": [ 7.0, 7.0, 7.0 ],
+			"rotationOrigin": [ 6.0, 1.0, 6.0 ],
 			"faces": {
 				"north": { "texture": "#metal", "uv": [ 0.0, 0.0, 1.0, 6.0 ] },
 				"east": { "texture": "#metal", "uv": [ 0.0, 0.0, 1.0, 6.0 ] },
