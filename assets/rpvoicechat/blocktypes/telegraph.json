@@ -38,7 +38,8 @@
   "sounds": {
     "place": "game:block/planks",
     "hit": "game:block/planks",
-    "break": "game:block/planks"
+    "break": "game:block/planks",
+    "walk": "game:walk/wood"
   },
   "collisionBox": {
     "x1": 0,

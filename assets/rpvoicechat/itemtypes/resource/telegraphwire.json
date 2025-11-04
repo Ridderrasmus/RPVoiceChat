@@ -15,7 +15,7 @@
           "y2": 0.5,
           "z2": 1
         },
-        "placeRemoveSound": "game:block/planks"
+        "placeRemoveSound": "game:sounds/block/planks"
       }
     }
   ],
@@ -35,6 +35,8 @@
     }
   },
   "attributes": {
+    "helvehammerworkable": true,
+    "createdBy": "smithing",
     "handbook": {
       "extraSections": [
         {

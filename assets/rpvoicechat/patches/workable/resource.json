@@ -1,8 +1,0 @@
-[
-  {
-    "file": "rpvoicechat:itemtypes/resource/telegraphwire.json",
-    "op": "add",
-    "path": "/attributes/helvehammerworkable",
-    "value": true
-  }
-]

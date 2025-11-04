@@ -18,21 +18,24 @@ namespace RPVoiceChat
 
         public static bool GetHelveWorkableMode(ref EnumHelveWorkableMode __result, ref BlockEntityAnvil beAnvil)
         {
-            // Ensure beAnvil and its recipe are fully initialized
-            if (beAnvil == null || beAnvil.SelectedRecipe == null || beAnvil.SelectedRecipe.Output == null)
-            {
-                return true; // Continue with vanilla behavior
-            }
 
-            // Check if the output has the helvehammerworkable attribute
             try
             {
-                var attr = beAnvil.SelectedRecipe.Output.Attributes;
-                if (attr != null && attr["helvehammerworkable"].AsBool(false))
+                var jsonOutput = beAnvil.SelectedRecipe.Output;
+                if (jsonOutput != null && jsonOutput.Code != null && beAnvil.Api?.World != null)
                 {
-                    // If the output has helvehammerworkable attribute set to true, allow it
-                    __result = EnumHelveWorkableMode.TestSufficientVoxelsWorkable;
-                    return false; // Skip original method
+                    // Get the Collectible from the item code using World
+                    var collectible = beAnvil.Api.World.GetItem(jsonOutput.Code);
+                    if (collectible != null)
+                    {
+                        var attr = collectible.Attributes;
+                        if (attr != null && attr["helvehammerworkable"].AsBool())
+                        {
+                            // If the output has helvehammerworkable attribute set to true, allow it
+                            __result = EnumHelveWorkableMode.TestSufficientVoxelsWorkable;
+                            return false; // Skip original method
+                        }
+                    }
                 }
             }
             catch
@@ -45,4 +48,5 @@ namespace RPVoiceChat
         }
     }
 }
+
 
