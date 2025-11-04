@@ -9,5 +9,12 @@
   },
   "shape": {
     "base": "item/perfectgoathorn"
+  },
+  "guiTransform": {
+    "origin": {
+      "x": 0.45,
+      "y": 0.3,
+      "z": 0
+    }
   }
 }
