@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using RPVoiceChat.Config;
 using RPVoiceChat.GameContent.Systems;
@@ -136,7 +137,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (Api is not ICoreClientAPI clientApi)
                 return;
 
-            if (sentMessage.Length >= MaxMessageLength)
+            // Check length on original message, not the morse version
+            if (sentMessageOriginal.Length >= MaxMessageLength)
                 return; // Stop if message is too long
                 
             // Check if NetworkUID is valid
@@ -151,10 +153,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
             pendingSignals.Enqueue(keyChar);
             
             string messageToSend = keyChar.ToString(); // Always send latin characters on network
-            string displayPart = GenuineMorseCharacters ? ConvertKeyCodeToMorse(keyChar) : keyChar.ToString();
 
             sentMessageOriginal += keyChar.ToString(); // Store original latin character
-            sentMessage += displayPart;
+            UpdateDisplayMessages(); // Rebuild display messages from original
             MarkDirty();
             dialog?.UpdateSentText(sentMessage);
             
@@ -186,11 +187,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             if (Api is ICoreClientAPI clientApi)
             {
-                string displayChar = GenuineMorseCharacters ? ConvertKeyCodeToMorse(keyChar) : keyChar.ToString();
-                
                 receivedMessageOriginal += keyChar.ToString(); // Store original latin character
-                receivedMessage += displayChar;
-
+                UpdateDisplayMessages(); // Rebuild display messages from original
                 MarkDirty();
                 dialog?.UpdateReceivedText(receivedMessage);
             }
@@ -239,7 +237,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
             // Trigger message printing/deletion
             if (connectedPrinter != null)
             {
-                connectedPrinter.CreateTelegram(message, NetworkUID.ToString());
+                // Convert to morse for printing if GenuineMorseCharacters is enabled
+                string messageToPrint = GenuineMorseCharacters ? ConvertStringToMorse(message) : message;
+                connectedPrinter.CreateTelegram(messageToPrint, NetworkUID.ToString());
             }
             
             // Clear the message
@@ -343,6 +343,23 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 case '.': return ".-.-.-";
                 default: return "";
             }
+        }
+
+        private string ConvertStringToMorse(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return "";
+
+            StringBuilder morse = new StringBuilder();
+            foreach (char c in text)
+            {
+                string morseChar = ConvertKeyCodeToMorse(c);
+                if (!string.IsNullOrEmpty(morseChar))
+                {
+                    morse.Append(morseChar);
+                }
+            }
+            return morse.ToString();
         }
 
         // Printer functionality methods
@@ -487,7 +504,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 // If printer is connected, save the message before clearing
                 if (connectedPrinter != null)
                 {
-                    connectedPrinter.CreateTelegram(receivedMessageOriginal, NetworkUID.ToString());
+                    // Convert to morse for printing if GenuineMorseCharacters is enabled
+                    string messageToPrint = GenuineMorseCharacters ? ConvertStringToMorse(receivedMessageOriginal) : receivedMessageOriginal;
+                    connectedPrinter.CreateTelegram(messageToPrint, NetworkUID.ToString());
                 }
                 
                 // Always clear the message after the delay (with or without printer)
