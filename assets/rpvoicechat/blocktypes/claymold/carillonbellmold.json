@@ -3,7 +3,7 @@
   "enabled": true,
   "classByType": {
     "carillonbellmold-*-raw": "Block",
-    "carillonbellmold-fired": "BlockToolMold"
+    "carillonbellmold-*-fired": "BlockToolMold"
   },
   "behaviorsByType": {
     "carillonbellmold-*-raw": [
@@ -30,10 +30,10 @@
     }
   ],
   "entityClassByType": {
-    "carillonbellmold-fired": "ToolMold"
+    "carillonbellmold-*-fired": "ToolMold"
   },
   "attributesByType": {
-    "carillonbellmold-fired": {
+    "carillonbellmold-*-fired": {
       "requiredUnits": 800,
       "fillHeight": 13,
       "fillQuadsByLevel": [
@@ -63,6 +63,7 @@
         }
       ],
       "moldrackable": false,
+      "breaksWhenFilled": true,
       "drop": {
         "type": "block",
         "code": "carillonbell-{metal}-up-north",
@@ -78,7 +79,7 @@
       "smeltingType": "fire",
       "smeltedStack": {
         "type": "block",
-        "code": "carillonbellmold-fired"
+        "code": "carillonbellmold-{color}-fired"
       },
       "requiresContainer": false
     }
@@ -95,7 +96,7 @@
   "lightAbsorption": 0,
   "texturesByType": {
     "carillonbellmold-*-raw": { "all": { "base": "game:block/clay/{color}clay" } },
-    "carillonbellmold-fired": {
+    "carillonbellmold-*-fired": {
       "all": { "base": "game:block/clay/hardened/{color}" }
     }
   },

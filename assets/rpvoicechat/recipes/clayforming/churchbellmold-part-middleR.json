@@ -3,7 +3,8 @@
   "ingredient": {
     "type": "item",
     "code": "game:clay-*",
-    "name": "type"
+    "name": "color",
+    "allowedVariants": [ "blue", "fire", "red" ]
   },
   "pattern": [
     [
@@ -41,6 +42,6 @@
   "name": "Bellmold Middle Part",
   "output": {
     "type": "block",
-    "code": "churchbellmold-raw-part-brass-middle"
+    "code": "churchbellmold-{color}-raw-part-brass-middle"
   }
 }

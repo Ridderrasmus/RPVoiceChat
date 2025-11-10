@@ -3,7 +3,7 @@
   "enabled": true,
   "classByType": {
     "churchbellmold-*-raw-*": "Block",
-    "churchbellmold-fired-*": "BlockToolMold"
+    "churchbellmold-*-fired-*": "BlockToolMold"
   },
   "behaviorsByType": {
     "*-raw-*": [
@@ -37,10 +37,10 @@
     }
   ],
   "entityClassByType": {
-    "churchbellmold-fired-*": "ToolMold"
+    "churchbellmold-*-fired-*": "ToolMold"
   },
   "attributesByType": {
-    "churchbellmold-fired-part-brass-bottom": {
+    "churchbellmold-*-fired-part-brass-bottom": {
       "requiredUnits": 300,
       "fillHeight": 2,
       "fillQuadsByLevel": [
@@ -59,7 +59,7 @@
         "quantity": 1
       }
     },
-    "churchbellmold-fired-part-brass-middle": {
+    "churchbellmold-*-fired-part-brass-middle": {
       "requiredUnits": 300,
       "fillHeight": 2,
       "fillQuadsByLevel": [
@@ -78,7 +78,7 @@
         "quantity": 1
       }
     },
-    "churchbellmold-fired-part-brass-top": {
+    "churchbellmold-*-fired-part-brass-top": {
       "requiredUnits": 300,
       "fillHeight": 2,
       "fillQuadsByLevel": [
@@ -97,7 +97,7 @@
         "quantity": 1
       }
     },
-    "churchbellmold-fired-layer-brass-topmost": {
+    "churchbellmold-*-fired-layer-brass-topmost": {
       "requiredUnits": 300,
       "fillHeight": 2,
       "fillQuadsByLevel": [
@@ -125,7 +125,7 @@
       "smeltingType": "fire",
       "smeltedStack": {
         "type": "block",
-        "code": "churchbellmold-fired-{layer}"
+        "code": "churchbellmold-{color}-fired-{layer}"
       },
       "requiresContainer": false
     }
@@ -142,7 +142,7 @@
   "lightAbsorption": 0,
   "texturesByType": {
     "churchbellmold-*-raw-*": { "all": { "base": "game:block/clay/{color}clay" } },
-    "churchbellmold-fired-*": {
+    "churchbellmold-*-fired-*": {
       "all": { "base": "game:block/clay/hardened/{color}" }
     }
   },
