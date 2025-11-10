@@ -2,11 +2,11 @@
   "code": "carillonbellmold",
   "enabled": true,
   "classByType": {
-    "carillonbellmold-raw": "Block",
-    "carillonbellmold-burned": "BlockToolMold"
+    "carillonbellmold-*-raw": "Block",
+    "carillonbellmold-fired": "BlockToolMold"
   },
   "behaviorsByType": {
-    "carillonbellmold-raw": [
+    "carillonbellmold-*-raw": [
       {
         "name": "GroundStorable",
         "properties": { "layout": "SingleCenter" }
@@ -21,15 +21,19 @@
   },
   "variantgroups": [
     {
+      "code": "color",
+      "states": [ "blue", "red", "fire" ]
+    },
+    {
       "code": "materialtype",
-      "states": [ "raw", "burned" ]
+      "states": [ "raw", "fired" ]
     }
   ],
   "entityClassByType": {
-    "carillonbellmold-burned": "ToolMold"
+    "carillonbellmold-fired": "ToolMold"
   },
   "attributesByType": {
-    "carillonbellmold-burned": {
+    "carillonbellmold-fired": {
       "requiredUnits": 800,
       "fillHeight": 13,
       "fillQuadsByLevel": [
@@ -67,14 +71,14 @@
     }
   },
   "combustiblePropsByType": {
-    "carillonbellmold-raw": {
+    "carillonbellmold-*-raw": {
       "meltingPoint": 650,
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
       "smeltedStack": {
         "type": "block",
-        "code": "carillonbellmold-burned"
+        "code": "carillonbellmold-fired"
       },
       "requiresContainer": false
     }
@@ -90,9 +94,9 @@
   "maxStackSize": 1,
   "lightAbsorption": 0,
   "texturesByType": {
-    "carillonbellmold-raw": { "all": { "base": "game:block/clay/blueclay" } },
-    "carillonbellmold-burned": {
-      "all": { "base": "game:block/clay/ceramic" }
+    "carillonbellmold-*-raw": { "all": { "base": "game:block/clay/{color}clay" } },
+    "carillonbellmold-fired": {
+      "all": { "base": "game:block/clay/hardened/{color}" }
     }
   },
   "shape": {
@@ -100,6 +104,9 @@
   },
   "sounds": {
     "walk": "game:walk/stone"
+  },
+  "handbook": {
+    "groupBy": [ "carillonbellmold-*-{materialtype}" ]
   },
   "collisionboxByType": {
     "*": {

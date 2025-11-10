@@ -1,8 +1,8 @@
 {
   "code": "smallbellpartsmold",
   "classByType": {
-    "smallbellpartsmold-raw-*": "Block",
-    "smallbellpartsmold-burned-*": "BlockToolMold"
+    "smallbellpartsmold-*-raw-*": "Block",
+    "smallbellpartsmold-fired-*": "BlockToolMold"
   },
   "behaviorsByType": {
     "*-raw-*": [
@@ -16,15 +16,22 @@
       },
       { "name": "RightClickPickup" }
     ],
-    "*": [ { "name": "UnstableFalling" } ]
+    "*-fired-*": [
+      { "name": "Lockable" },
+      { "name": "UnstableFalling" }
+    ]
   },
   "entityBehaviorsByType": {
-    "smallbellpartsmold-burned-*": [ { "name": "TemperatureSensitive" } ]
+    "smallbellpartsmold-fired-*": [ { "name": "TemperatureSensitive" } ]
   },
   "variantgroups": [
     {
+      "code": "color",
+      "states": [ "blue", "red", "fire" ]
+    },
+    {
       "code": "materialtype",
-      "states": [ "raw", "burned" ]
+      "states": [ "raw", "fired" ]
     },
     {
       "code": "tooltype",
@@ -34,10 +41,10 @@
     }
   ],
   "entityClassByType": {
-    "smallbellpartsmold-burned-*": "ToolMold"
+    "smallbellpartsmold-fired-*": "ToolMold"
   },
   "attributesByType": {
-    "smallbellpartsmold-burned-smallbellparts": {
+    "smallbellpartsmold-fired-smallbellparts": {
       "requiredUnits": 50,
       "fillHeight": 2,
       "fillQuadsByLevel": [
@@ -57,14 +64,14 @@
     }
   },
   "combustiblePropsByType": {
-    "smallbellpartsmold-raw-*": {
+    "smallbellpartsmold-*-raw-*": {
       "meltingPoint": 650,
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
       "smeltedStack": {
         "type": "block",
-        "code": "smallbellpartsmold-burned-{tooltype}"
+        "code": "smallbellpartsmold-fired-{tooltype}"
       },
       "requiresContainer": false
     }
@@ -80,9 +87,9 @@
   "maxStackSize": 8,
   "lightAbsorption": 0,
   "texturesByType": {
-    "smallbellpartsmold-raw-*": { "all": { "base": "game:block/clay/blueclay" } },
-    "smallbellpartsmold-burned-*": {
-      "all": { "base": "game:block/clay/ceramic" }
+    "smallbellpartsmold-*-raw-*": { "all": { "base": "game:block/clay/{color}clay" } },
+    "smallbellpartsmold-fired-*": {
+      "all": { "base": "game:block/clay/hardened/{color}" }
     }
   },
   "shape": {
@@ -90,6 +97,9 @@
   },
   "sounds": {
     "walk": "game:walk/stone"
+  },
+  "handbook": {
+    "groupBy": [ "smallbellpartsmold-*-{materialtype}-{tooltype}" ]
   },
   "collisionboxByType": {
     "*-anvil": {
