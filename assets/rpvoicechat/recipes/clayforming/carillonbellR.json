@@ -3,7 +3,8 @@
   "ingredient": {
     "type": "item",
     "code": "game:clay-*",
-    "name": "type"
+    "name": "color",
+    "allowedVariants": [ "blue", "fire", "red" ]
   },
   "pattern": [
     [
@@ -234,6 +235,6 @@
   "name": "Carillon Bell mold",
   "output": {
     "type": "block",
-    "code": "carillonbellmold-raw"
+    "code": "carillonbellmold-{color}-raw"
   }
 }

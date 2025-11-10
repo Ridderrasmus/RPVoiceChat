@@ -3,7 +3,7 @@
   "enabled": true,
   "classByType": {
     "royalhornheadmold-*-raw-*": "Block",
-    "royalhornheadmold-fired-*": "BlockToolMold"
+    "royalhornheadmold-*-fired-*": "BlockToolMold"
   },
   "behaviorsByType": {
     "*-raw-*": [
@@ -20,7 +20,7 @@
     "*": [ { "name": "UnstableFalling" } ]
   },
   "entityBehaviorsByType": {
-    "royalhornheadmold-fired-*": [ { "name": "TemperatureSensitive" } ]
+    "royalhornheadmold-*-fired-*": [ { "name": "TemperatureSensitive" } ]
   },
   "variantgroups": [
     {
@@ -37,10 +37,10 @@
     }
   ],
   "entityClassByType": {
-    "royalhornheadmold-fired-*": "ToolMold"
+    "royalhornheadmold-*-fired-*": "ToolMold"
   },
   "attributesByType": {
-    "royalhornheadmold-fired-*": {
+    "royalhornheadmold-*-fired-*": {
       "requiredUnits": 200,
       "fillHeight": 4,
       "fillQuadsByLevel": [
@@ -85,7 +85,7 @@
       "smeltingType": "fire",
       "smeltedStack": {
         "type": "block",
-        "code": "royalhornheadmold-fired-{tooltype}"
+        "code": "royalhornheadmold-{color}-fired-{tooltype}"
       },
       "requiresContainer": false
     }
@@ -102,7 +102,7 @@
   "lightAbsorption": 0,
   "texturesByType": {
     "royalhornheadmold-*-raw-*": { "all": { "base": "game:block/clay/{color}clay" } },
-    "royalhornheadmold-fired-*": {
+    "royalhornheadmold-*-fired-*": {
       "all": { "base": "game:block/clay/hardened/{color}" }
     }
   },

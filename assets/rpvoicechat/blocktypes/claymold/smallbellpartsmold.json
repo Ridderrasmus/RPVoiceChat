@@ -2,7 +2,7 @@
   "code": "smallbellpartsmold",
   "classByType": {
     "smallbellpartsmold-*-raw-*": "Block",
-    "smallbellpartsmold-fired-*": "BlockToolMold"
+    "smallbellpartsmold-*-fired-*": "BlockToolMold"
   },
   "behaviorsByType": {
     "*-raw-*": [
@@ -22,7 +22,7 @@
     ]
   },
   "entityBehaviorsByType": {
-    "smallbellpartsmold-fired-*": [ { "name": "TemperatureSensitive" } ]
+    "smallbellpartsmold-*-fired-*": [ { "name": "TemperatureSensitive" } ]
   },
   "variantgroups": [
     {
@@ -41,10 +41,10 @@
     }
   ],
   "entityClassByType": {
-    "smallbellpartsmold-fired-*": "ToolMold"
+    "smallbellpartsmold-*-fired-*": "ToolMold"
   },
   "attributesByType": {
-    "smallbellpartsmold-fired-smallbellparts": {
+    "smallbellpartsmold-*-fired-smallbellparts": {
       "requiredUnits": 50,
       "fillHeight": 2,
       "fillQuadsByLevel": [
@@ -71,7 +71,7 @@
       "smeltingType": "fire",
       "smeltedStack": {
         "type": "block",
-        "code": "smallbellpartsmold-fired-{tooltype}"
+        "code": "smallbellpartsmold-{color}-fired-{tooltype}"
       },
       "requiresContainer": false
     }
@@ -88,7 +88,7 @@
   "lightAbsorption": 0,
   "texturesByType": {
     "smallbellpartsmold-*-raw-*": { "all": { "base": "game:block/clay/{color}clay" } },
-    "smallbellpartsmold-fired-*": {
+    "smallbellpartsmold-*-fired-*": {
       "all": { "base": "game:block/clay/hardened/{color}" }
     }
   },
