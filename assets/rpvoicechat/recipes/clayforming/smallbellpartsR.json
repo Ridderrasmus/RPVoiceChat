@@ -3,7 +3,8 @@
   "ingredient": {
     "type": "item",
     "code": "game:clay-*",
-    "name": "type"
+    "name": "color",
+    "allowedVariants": [ "blue", "fire", "red" ]
   },
   "pattern": [
     [
@@ -32,6 +33,6 @@
   "name": "Small bell parts mold",
   "output": {
     "type": "block",
-    "code": "smallbellpartsmold-raw-smallbellparts"
+    "code": "smallbellpartsmold-{color}-raw-smallbellparts"
   }
 }

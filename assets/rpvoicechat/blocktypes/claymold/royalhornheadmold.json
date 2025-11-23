@@ -2,8 +2,8 @@
   "code": "royalhornheadmold",
   "enabled": true,
   "classByType": {
-    "royalhornheadmold-raw-*": "Block",
-    "royalhornheadmold-burned-*": "BlockToolMold"
+    "royalhornheadmold-*-raw-*": "Block",
+    "royalhornheadmold-*-fired-*": "BlockToolMold"
   },
   "behaviorsByType": {
     "*-raw-*": [
@@ -20,12 +20,16 @@
     "*": [ { "name": "UnstableFalling" } ]
   },
   "entityBehaviorsByType": {
-    "royalhornheadmold-burned-*": [ { "name": "TemperatureSensitive" } ]
+    "royalhornheadmold-*-fired-*": [ { "name": "TemperatureSensitive" } ]
   },
   "variantgroups": [
     {
+      "code": "color",
+      "states": [ "blue", "red", "fire" ]
+    },
+    {
       "code": "materialtype",
-      "states": [ "raw", "burned" ]
+      "states": [ "raw", "fired" ]
     },
     {
       "code": "tooltype",
@@ -33,10 +37,10 @@
     }
   ],
   "entityClassByType": {
-    "royalhornheadmold-burned-*": "ToolMold"
+    "royalhornheadmold-*-fired-*": "ToolMold"
   },
   "attributesByType": {
-    "royalhornheadmold-burned-*": {
+    "royalhornheadmold-*-fired-*": {
       "requiredUnits": 200,
       "fillHeight": 4,
       "fillQuadsByLevel": [
@@ -74,14 +78,14 @@
     }
   },
   "combustiblePropsByType": {
-    "royalhornheadmold-raw-*": {
+    "royalhornheadmold-*-raw-*": {
       "meltingPoint": 650,
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
       "smeltedStack": {
         "type": "block",
-        "code": "royalhornheadmold-burned-{tooltype}"
+        "code": "royalhornheadmold-{color}-fired-{tooltype}"
       },
       "requiresContainer": false
     }
@@ -97,9 +101,9 @@
   "maxStackSize": 8,
   "lightAbsorption": 0,
   "texturesByType": {
-    "royalhornheadmold-raw-*": { "all": { "base": "game:block/clay/blueclay" } },
-    "royalhornheadmold-burned-*": {
-      "all": { "base": "game:block/clay/ceramic" }
+    "royalhornheadmold-*-raw-*": { "all": { "base": "game:block/clay/{color}clay" } },
+    "royalhornheadmold-*-fired-*": {
+      "all": { "base": "game:block/clay/hardened/{color}" }
     }
   },
   "shape": {
@@ -107,6 +111,9 @@
   },
   "sounds": {
     "walk": "game:walk/stone"
+  },
+  "handbook": {
+    "groupBy": [ "royalhornheadmold-*-{materialtype}-{tooltype}" ]
   },
   "collisionboxByType": {
     "*-anvil": {

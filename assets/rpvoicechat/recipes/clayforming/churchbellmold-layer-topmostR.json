@@ -3,7 +3,8 @@
   "ingredient": {
     "type": "item",
     "code": "game:clay-*",
-    "name": "type"
+    "name": "color",
+    "allowedVariants": [ "blue", "fire", "red" ]
   },
   "pattern": [
     [
@@ -44,6 +45,6 @@
   "name": "Bellmold Topmost Part",
   "output": {
     "type": "block",
-    "code": "churchbellmold-raw-layer-brass-topmost"
+    "code": "churchbellmold-{color}-raw-layer-brass-topmost"
   }
 }

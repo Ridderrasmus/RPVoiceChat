@@ -2,7 +2,8 @@
   "ingredient": {
     "type": "item",
     "code": "game:clay-*",
-    "name": "type"
+    "name": "color",
+    "allowedVariants": [ "blue", "fire", "red" ]
   },
   "pattern": [
     [
@@ -63,8 +64,8 @@
 
   ],
   "name": "Royal horn head mold",
-    "output": {
-        "type": "block",
-        "code": "royalhornheadmold-raw-royalhornhead"
-    }
+  "output": {
+    "type": "block",
+    "code": "royalhornheadmold-{color}-raw-royalhornhead"
+  }
 }
