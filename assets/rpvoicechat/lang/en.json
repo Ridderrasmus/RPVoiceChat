@@ -109,7 +109,7 @@
   "block-printer-walnut-*": "Printer (Walnut)",
   "block-printer-purpleheart-*": "Printer (Purpleheart)",
   "blockdesc-printer-*": "A telegraph printer that stores messages as telegrams when placed under a telegraph key. Requires paper slips.",
-  "printercontents": "Printer Inventory",
+  "Printer.Contents": "Printer Inventory",
   "Printer.Warning.NoPaper": "Warning: no paper slips!",
   "Printer.Warning.Full": "Warning: printer full (all telegram slots occupied)!",
   "Printer.Paper": "Paper: {0}",
@@ -263,7 +263,7 @@
   "Wire.StartConnection": "Starting point recorded.",
   "Wire.ConnectionSuccess": "Connection successful!",
   "Wire.ConnectionTooFar": "Too far! Max distance is {0} blocks.",
-  "Wire.Pending": " Connection pending since: {0}",
+  "Wire.Pending": "Connection pending since: {0}",
 
   "Handbook.Welding.block-churchbell-part.Title": "Welding Process: Part",
   "Handbook.Welding.block-churchbell-part.Text": "First step is to clayform the mold for your bell part and filling the molds with brass. For each of the three lower layers you will need 4 parts. <br><br>Second step is to heat the parts of the layer you're constructing. After heating the parts must be assembled together and will need 4 pieces of powdered borax for the welding. <br><br>Step three is to hit that thing with a hammer quite a few times.",

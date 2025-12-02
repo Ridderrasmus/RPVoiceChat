@@ -35,7 +35,7 @@
   "sideopaque": {
     "all": false
   },
-  "lightAbsorption": 0,
+  "lightAbsorption": 15,
   "resistance": 1,
   "sounds": {
     "place": "game:block/glass",
@@ -57,6 +57,7 @@
     "y2": 0.75,
     "z2": 0.75
   },
+  "drawtype": "json",
   "shapebytype": {
     "*-up": { "base": "block/connector/connector" },
     "*-down": {

@@ -23,7 +23,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private InventoryPrinter inventory;
         private const int PaperSlotId = 0;
         
-        public virtual string DialogTitle => Lang.Get($"{RPVoiceChatMod.modID}:printercontents");
+        public virtual string DialogTitle => Lang.Get($"{RPVoiceChatMod.modID}:Printer.Contents");
         
         // Animation state
         private bool isDrawerOpen = false;

@@ -22,6 +22,7 @@
     }
   },
   "drawtype": "json",
+  "renderpass": "transparent",
   "shape": {
     "base": "item/megaphone"
   },
