@@ -40,6 +40,7 @@
       "loadFromProperties": "abstract/horizontalorientation"
     }
   ],
+  "drawtype": "json",
   "shape": {
     "base": "block/printer",
     "rotateYByType": {

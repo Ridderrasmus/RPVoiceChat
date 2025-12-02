@@ -3,9 +3,11 @@ using RPVoiceChat.Audio.Effects;
 using RPVoiceChat.Config;
 using RPVoiceChat.Util;
 using System;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using Vintagestory.API.Client;
 using Vintagestory.API.MathTools;
@@ -251,89 +253,108 @@ namespace RPVoiceChat.Audio
                 return;
             }
 
-            byte[] sampleCopy = new byte[bufferLength];
-            Array.Copy(sampleBufferPool, sampleCopy, bufferLength);
-
-            AudioData data = ProcessAudio(sampleCopy);
+            // Process directly from the sampleBufferPool without making a per-frame copy
+            AudioData data = ProcessAudio(sampleBufferPool, bufferLength);
             TransmitAudio(data);
         }
 
         /// <summary>
         /// Converts audio to Mono16, applies denoising, applies gain, calculates amplitude and encodes the result
         /// </summary>
-        private AudioData ProcessAudio(byte[] rawSamples)
+        private AudioData ProcessAudio(byte[] rawSamples, int rawLength)
         {
             var rawSampleSize = SampleSize * InputChannelCount;
-            var pcmCount = rawSamples.Length / rawSampleSize;
-            short[] pcms = new short[pcmCount];
-            int[] usedChannels = DetectAudioChannels(rawSamples);
+            var pcmCount = rawLength / rawSampleSize;
+
+            // Determine if we should rent or allocate based on denoiser behavior
+            bool willDenoise = ModConfig.ClientConfig.Denoising && denoiser?.SupportsFormat(Frequency, OutputChannelCount, SampleSize * 8) == true;
+            short[] pcms = willDenoise ? new short[pcmCount] : ArrayPool<short>.Shared.Rent(pcmCount);
+            bool rented = !willDenoise;
+
+            bool[] usedChannels = DetectAudioChannels(rawSamples);
+            int usedChannelCount = 0;
+            for (int i = 0; i < usedChannels.Length; i++) if (usedChannels[i]) usedChannelCount++;
+            if (usedChannelCount == 0) usedChannelCount = 1;
             double peakPcmValue = 1;
 
-            // Convert audio to mono, find peaks
-            for (var rawSampleIndex = 0; rawSampleIndex < rawSamples.Length; rawSampleIndex += rawSampleSize)
+            try
             {
-                double pcm = 0;
-                for (var channelIndex = 0; channelIndex < InputChannelCount; channelIndex++)
+                // Interpret rawSamples as little-endian 16-bit samples
+                var span = rawSamples.AsSpan(0, rawLength);
+                var shortSpan = MemoryMarshal.Cast<byte, short>(span);
+
+                // Convert audio to mono, find peaks
+                int pcmIndex = 0;
+                for (int rawSampleShortIndex = 0; rawSampleShortIndex < shortSpan.Length; rawSampleShortIndex += InputChannelCount)
                 {
-                    if (!usedChannels.Contains(channelIndex)) continue;
-                    var sampleIndex = rawSampleIndex + channelIndex * SampleSize;
-                    var sample = BitConverter.ToInt16(rawSamples, sampleIndex);
-                    pcm += sample;
+                    double pcm = 0;
+                    for (int channelIndex = 0; channelIndex < InputChannelCount; channelIndex++)
+                    {
+                        if (!usedChannels[channelIndex]) continue;
+                        pcm += shortSpan[rawSampleShortIndex + channelIndex];
+                    }
+
+                    pcm /= Math.Max(usedChannelCount, 1);
+
+                    var abs = Math.Abs(pcm);
+                    if (abs > peakPcmValue) peakPcmValue = abs;
+
+                    pcms[pcmIndex++] = (short)pcm;
                 }
-                pcm /= Math.Max(usedChannels.Length, 1);
 
-                var abs = Math.Abs(pcm);
-                if (abs > peakPcmValue) peakPcmValue = abs;
+                // Calculate volume amplification
+                float maxSafeGain = Math.Min(gain, (float)(maxSampleValue / peakPcmValue));
+                recentGainLimits.Add(maxSafeGain);
+                if (recentGainLimits.Count > 10) recentGainLimits.RemoveAt(0);
+                recentGainLimitsQueue.Enqueue(maxSafeGain);
+                if (recentGainLimitsQueue.Count > 10) recentGainLimitsQueue.TryDequeue(out _);
+                float volumeAmplification = Math.Min(maxSafeGain, recentGainLimits.Average());
 
-                var pcmIndex = rawSampleIndex / rawSampleSize;
-                pcms[pcmIndex] = (short)pcm;
+                // Denoise audio if applicable
+                if (willDenoise)
+                    denoiser.Denoise(ref pcms);
+
+                // Amplify volume and calculate amplitude
+                double sampleSquareSum = 0;
+                for (var i = 0; i < pcmCount; i++)
+                {
+                    short amplified = (short)GameMath.Clamp(pcms[i] * volumeAmplification, short.MinValue, short.MaxValue);
+                    pcms[i] = amplified;
+                    sampleSquareSum += Math.Pow((float)amplified / short.MaxValue, 2);
+                }
+                var amplitude = Math.Sqrt(sampleSquareSum / Math.Max(1, pcmCount));
+
+                // Encode audio
+                byte[] encodedAudio;
+                if (isGlobalBroadcast && codec is OpusCodec opusCodec)
+                {
+                    encodedAudio = opusCodec.EncodeForBroadcast(pcms);
+                }
+                else
+                {
+                    encodedAudio = codec.Encode(pcms);
+                }
+
+                return new AudioData()
+                {
+                    data = encodedAudio,
+                    frequency = Frequency,
+                    format = OutputFormat,
+                    amplitude = amplitude,
+                    voiceLevel = voiceLevel,
+                    codec = codec.Name,
+                    transmissionRangeBlocks = customTransmissionRange,
+                    ignoreDistanceReduction = this.ignoreDistanceReduction,
+                    wallThicknessOverride = this.wallThicknessOverride,
+                    isGlobalBroadcast = this.isGlobalBroadcast
+                };
             }
-
-            // Calculate volume amplification
-            float maxSafeGain = Math.Min(gain, (float)(maxSampleValue / peakPcmValue));
-            recentGainLimits.Add(maxSafeGain);
-            if (recentGainLimits.Count > 10) recentGainLimits.RemoveAt(0);
-            recentGainLimitsQueue.Enqueue(maxSafeGain);
-            if (recentGainLimitsQueue.Count > 10) recentGainLimitsQueue.TryDequeue(out _);
-            float volumeAmplification = Math.Min(maxSafeGain, recentGainLimits.Average());
-
-            // Denoise audio if applicable
-            if (ModConfig.ClientConfig.Denoising && denoiser?.SupportsFormat(Frequency, OutputChannelCount, SampleSize * 8) == true)
-                denoiser.Denoise(ref pcms);
-
-            // Amplify volume and calculate amplitude
-            double sampleSquareSum = 0;
-            for (var i = 0; i < pcms.Length; i++)
+            finally
             {
-                pcms[i] = (short)GameMath.Clamp(pcms[i] * volumeAmplification, short.MinValue, short.MaxValue);
-                sampleSquareSum += Math.Pow((float)pcms[i] / short.MaxValue, 2);
+                if (rented)
+                    ArrayPool<short>.Shared.Return(pcms);
+                // if not rented, pcms is a normal array and will be GC-collected later
             }
-            var amplitude = Math.Sqrt(sampleSquareSum / pcmCount);
-
-            // Encode audio
-            byte[] encodedAudio;
-            if (isGlobalBroadcast && codec is OpusCodec opusCodec)
-            {
-                encodedAudio = opusCodec.EncodeForBroadcast(pcms);
-            }
-            else
-            {
-                encodedAudio = codec.Encode(pcms);
-            }
-
-            return new AudioData()
-            {
-                data = encodedAudio,
-                frequency = Frequency,
-                format = OutputFormat,
-                amplitude = amplitude,
-                voiceLevel = voiceLevel,
-                codec = codec.Name,
-                transmissionRangeBlocks = customTransmissionRange,
-                ignoreDistanceReduction = this.ignoreDistanceReduction,
-                wallThicknessOverride = this.wallThicknessOverride,
-                isGlobalBroadcast = this.isGlobalBroadcast
-            };
         }
 
         private void TransmitAudio(AudioData data)
@@ -445,16 +466,18 @@ namespace RPVoiceChat.Audio
         /// <returns>
         /// Indices of channels containing audio data
         /// </returns>
-        private int[] DetectAudioChannels(byte[] rawSamples)
+        private bool[] DetectAudioChannels(byte[] rawSamples)
         {
             const int depth = 10;
-            List<int> usedChannels = new List<int>();
+            bool[] used = new bool[InputChannelCount];
             var sampleSums = new int[InputChannelCount];
 
             var rawSampleSize = SampleSize * InputChannelCount;
             int monoSampleSize = SampleSize;
 
-            for (var rawSampleIndex = 0; rawSampleIndex < rawSampleSize * depth; rawSampleIndex += rawSampleSize)
+            int maxIndex = Math.Min(rawSamples.Length, rawSampleSize * depth);
+
+            for (var rawSampleIndex = 0; rawSampleIndex < maxIndex; rawSampleIndex += rawSampleSize)
             {
                 for (var channelIndex = 0; channelIndex < InputChannelCount; channelIndex++)
                 {
@@ -468,10 +491,10 @@ namespace RPVoiceChat.Audio
             for (var channelIndex = 0; channelIndex < InputChannelCount; channelIndex++)
             {
                 var averageSampleValue = sampleSums[channelIndex] / depth;
-                if (averageSampleValue > 5 || !guessUsedChannels) usedChannels.Add(channelIndex);
+                if (averageSampleValue > 5 || !guessUsedChannels) used[channelIndex] = true;
             }
 
-            return usedChannels.ToArray();
+            return used;
         }
 
         public string[] GetInputDeviceNames()
