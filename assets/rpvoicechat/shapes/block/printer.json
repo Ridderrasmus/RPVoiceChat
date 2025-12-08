@@ -440,6 +440,7 @@
 					"from": [ 1.0, 2.5, 1.5 ],
 					"to": [ 2.0, 3.5, 2.0 ],
 					"rotationOrigin": [ 1.0, 2.0, 2.0 ],
+					"renderPass": 3,
 					"faces": {
 						"north": { "texture": "#redglass", "uv": [ 0.0, 0.0, 1.0, 1.0 ] },
 						"east": { "texture": "#redglass", "uv": [ 0.0, 0.0, 0.5, 1.0 ] },
@@ -468,6 +469,7 @@
 					"from": [ 3.5, 2.5, 1.5 ],
 					"to": [ 4.5, 3.5, 2.0 ],
 					"rotationOrigin": [ 3.0, 2.0, 2.0 ],
+					"renderPass": 3,
 					"faces": {
 						"north": { "texture": "#yellowglass", "uv": [ 0.0, 0.0, 1.0, 1.0 ] },
 						"east": { "texture": "#yellowglass", "uv": [ 0.0, 0.0, 0.5, 1.0 ] },
@@ -482,6 +484,7 @@
 					"from": [ 6.0, 2.5, 1.5 ],
 					"to": [ 7.0, 3.5, 2.0 ],
 					"rotationOrigin": [ 6.0, 2.0, 2.0 ],
+					"renderPass": 3,
 					"faces": {
 						"north": { "texture": "#greenglass", "uv": [ 0.0, 0.0, 1.0, 1.0 ] },
 						"east": { "texture": "#greenglass", "uv": [ 0.0, 0.0, 0.5, 1.0 ] },
