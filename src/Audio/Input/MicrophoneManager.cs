@@ -253,8 +253,12 @@ namespace RPVoiceChat.Audio
                 return;
             }
 
-            // Process directly from the sampleBufferPool without making a per-frame copy
-            AudioData data = ProcessAudio(sampleBufferPool, bufferLength);
+            // Create a copy of the buffer to avoid data corruption if the buffer pool is reused
+            // This prevents stutters and audio artifacts at the start of speech
+            byte[] sampleCopy = new byte[bufferLength];
+            Array.Copy(sampleBufferPool, sampleCopy, bufferLength);
+
+            AudioData data = ProcessAudio(sampleCopy, bufferLength);
             TransmitAudio(data);
         }
 
