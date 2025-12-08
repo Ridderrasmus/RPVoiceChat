@@ -29,8 +29,6 @@ namespace RPVoiceChat.Audio
         private int BufferSize = (int)(Frequency * 0.5);
         private int InputChannelCount;
         private const byte SampleSize = sizeof(short);
-        private byte[] sampleBufferPool;
-        private int lastBufferSize = 0;
 
         // Audio processing
         private IAudioCodec codec;
@@ -229,13 +227,8 @@ namespace RPVoiceChat.Audio
 
             int bufferLength = samplesToRead * SampleSize * InputChannelCount;
 
-            if (sampleBufferPool == null || sampleBufferPool.Length < bufferLength)
-            {
-                sampleBufferPool = new byte[bufferLength];
-                lastBufferSize = bufferLength;
-            }
-
-            capture.ReadSamples(sampleBufferPool, samplesToRead);
+            var sampleBuffer = new byte[bufferLength];
+            capture.ReadSamples(sampleBuffer, samplesToRead);
 
             bool isMuted = ModConfig.ClientConfig.IsMuted;
             bool isSleeping = clientEntity.AnimManager.IsAnimationActive("sleep");
@@ -253,12 +246,7 @@ namespace RPVoiceChat.Audio
                 return;
             }
 
-            // Create a copy of the buffer to avoid data corruption if the buffer pool is reused
-            // This prevents stutters and audio artifacts at the start of speech
-            byte[] sampleCopy = new byte[bufferLength];
-            Array.Copy(sampleBufferPool, sampleCopy, bufferLength);
-
-            AudioData data = ProcessAudio(sampleCopy, bufferLength);
+            AudioData data = ProcessAudio(sampleBuffer, bufferLength);
             TransmitAudio(data);
         }
 
@@ -312,7 +300,10 @@ namespace RPVoiceChat.Audio
                 if (recentGainLimits.Count > 10) recentGainLimits.RemoveAt(0);
                 recentGainLimitsQueue.Enqueue(maxSafeGain);
                 if (recentGainLimitsQueue.Count > 10) recentGainLimitsQueue.TryDequeue(out _);
-                float volumeAmplification = Math.Min(maxSafeGain, recentGainLimits.Average());
+                // Use current gain if list is empty to avoid incorrect amplification at startup
+                float volumeAmplification = recentGainLimits.Count > 0 
+                    ? Math.Min(maxSafeGain, recentGainLimits.Average()) 
+                    : maxSafeGain;
 
                 // Denoise audio if applicable
                 if (willDenoise)
