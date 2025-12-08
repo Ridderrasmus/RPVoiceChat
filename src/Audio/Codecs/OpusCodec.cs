@@ -89,6 +89,10 @@ namespace RPVoiceChat.Audio
             {
                 for (var pcmOffset = 0; pcmOffset < pcmData.Length; pcmOffset += FrameSize)
                 {
+                    // Check if we have enough samples for a complete frame
+                    if (pcmOffset + FrameSize > pcmData.Length)
+                        break;
+                    
                     var pcmSpan = new Span<short>(pcmData, pcmOffset, FrameSize);
                     var encodedSpan = new Span<byte>(encodedBuffer);
                     int encodedLength = encoder.Encode(pcmSpan, FrameSize / Channels, encodedSpan, encodedBuffer.Length);
@@ -108,23 +112,57 @@ namespace RPVoiceChat.Audio
 
         public byte[] Decode(byte[] encodedData)
         {
+            if (encodedData == null || encodedData.Length == 0)
+                return new byte[0];
+
+            const int maxPacketSize = 1276; // Same as in Encode
+            const int packetSizeHeader = sizeof(int);
+            
             short[] decodedBuffer = new short[FrameSize];
             using var decoded = new MemoryStream();
             using var stream = new MemoryStream(encodedData);
             using var reader = new BinaryReader(stream);
 
+            long streamLength = stream.Length;
+            
             try
             {
-                while (stream.Position < stream.Length)
+                while (stream.Position < streamLength)
                 {
+                    // Calculate remaining bytes once per iteration
+                    long remainingBytes = streamLength - stream.Position;
+                    
+                    // Fast path: check if we have enough for header, then validate packet size
+                    if (remainingBytes < packetSizeHeader)
+                        break; // Incomplete header, silently skip (data corruption already occurred)
+
                     int packetSize = reader.ReadInt32();
+                    
+                    // Quick validation: packet size must be reasonable
+                    if (packetSize <= 0 || packetSize > maxPacketSize)
+                        break; // Invalid size, silently skip to avoid log spam
+                    
+                    // Check if we have enough bytes for the packet
+                    remainingBytes -= packetSizeHeader;
+                    if (remainingBytes < packetSize)
+                        break; // Incomplete packet, silently skip
+
                     byte[] encodedPacket = reader.ReadBytes(packetSize);
                     var encodedSpan = new ReadOnlySpan<byte>(encodedPacket);
                     var decodedSpan = new Span<short>(decodedBuffer);
                     int decodedLength = decoder.Decode(encodedSpan, decodedSpan, FrameSize / Channels, false);
 
-                    byte[] decodedPacket = AudioUtils.ShortsToBytes(decodedBuffer, 0, decodedLength);
-                    decoded.Write(decodedPacket, 0, decodedPacket.Length);
+                    // Only write if decode was successful (decodedLength > 0)
+                    if (decodedLength > 0)
+                    {
+                        // Validate decoded length is within expected bounds
+                        if (decodedLength <= FrameSize)
+                        {
+                            byte[] decodedPacket = AudioUtils.ShortsToBytes(decodedBuffer, 0, decodedLength);
+                            decoded.Write(decodedPacket, 0, decodedPacket.Length);
+                        }
+                    }
+                    // Silently skip on decode errors (negative values) - decoder handles errors internally
                 }
             }
             catch (Exception e)
