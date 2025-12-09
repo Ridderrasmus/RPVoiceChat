@@ -29,8 +29,6 @@ namespace RPVoiceChat.Audio
         private int BufferSize = (int)(Frequency * 0.5);
         private int InputChannelCount;
         private const byte SampleSize = sizeof(short);
-        private byte[] sampleBufferPool;
-        private int lastBufferSize = 0;
 
         // Audio processing
         private IAudioCodec codec;
@@ -229,13 +227,8 @@ namespace RPVoiceChat.Audio
 
             int bufferLength = samplesToRead * SampleSize * InputChannelCount;
 
-            if (sampleBufferPool == null || sampleBufferPool.Length < bufferLength)
-            {
-                sampleBufferPool = new byte[bufferLength];
-                lastBufferSize = bufferLength;
-            }
-
-            capture.ReadSamples(sampleBufferPool, samplesToRead);
+            var sampleBuffer = new byte[bufferLength];
+            capture.ReadSamples(sampleBuffer, samplesToRead);
 
             bool isMuted = ModConfig.ClientConfig.IsMuted;
             bool isSleeping = clientEntity.AnimManager.IsAnimationActive("sleep");
@@ -253,22 +246,17 @@ namespace RPVoiceChat.Audio
                 return;
             }
 
-            // Create a copy of the buffer to avoid data corruption if the buffer pool is reused
-            // This prevents stutters and audio artifacts at the start of speech
-            byte[] sampleCopy = new byte[bufferLength];
-            Array.Copy(sampleBufferPool, sampleCopy, bufferLength);
-
-            AudioData data = ProcessAudio(sampleCopy, bufferLength);
+            AudioData data = ProcessAudio(sampleBuffer);
             TransmitAudio(data);
         }
 
         /// <summary>
         /// Converts audio to Mono16, applies denoising, applies gain, calculates amplitude and encodes the result
         /// </summary>
-        private AudioData ProcessAudio(byte[] rawSamples, int rawLength)
+        private AudioData ProcessAudio(byte[] rawSamples)
         {
             var rawSampleSize = SampleSize * InputChannelCount;
-            var pcmCount = rawLength / rawSampleSize;
+            var pcmCount = rawSamples.Length / rawSampleSize;
 
             // Determine if we should rent or allocate based on denoiser behavior
             bool willDenoise = ModConfig.ClientConfig.Denoising && denoiser?.SupportsFormat(Frequency, OutputChannelCount, SampleSize * 8) == true;
@@ -284,7 +272,7 @@ namespace RPVoiceChat.Audio
             try
             {
                 // Interpret rawSamples as little-endian 16-bit samples
-                var span = rawSamples.AsSpan(0, rawLength);
+                var span = rawSamples.AsSpan(0, rawSamples.Length);
                 var shortSpan = MemoryMarshal.Cast<byte, short>(span);
 
                 // Convert audio to mono, find peaks
@@ -312,7 +300,10 @@ namespace RPVoiceChat.Audio
                 if (recentGainLimits.Count > 10) recentGainLimits.RemoveAt(0);
                 recentGainLimitsQueue.Enqueue(maxSafeGain);
                 if (recentGainLimitsQueue.Count > 10) recentGainLimitsQueue.TryDequeue(out _);
-                float volumeAmplification = Math.Min(maxSafeGain, recentGainLimits.Average());
+                // Use current gain if list is empty to avoid incorrect amplification at startup
+                float volumeAmplification = recentGainLimits.Count > 0 
+                    ? Math.Min(maxSafeGain, recentGainLimits.Average()) 
+                    : maxSafeGain;
 
                 // Denoise audio if applicable
                 if (willDenoise)

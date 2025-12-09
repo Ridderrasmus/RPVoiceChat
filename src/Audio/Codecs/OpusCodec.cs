@@ -118,6 +118,13 @@ namespace RPVoiceChat.Audio
             const int maxPacketSize = 1276; // Same as in Encode
             const int packetSizeHeader = sizeof(int);
             
+            int samplesPerFrame = FrameSize / Channels;
+            if (samplesPerFrame <= 0)
+            {
+                Logger.client.Error($"[OpusCodec] Invalid frame size calculation: FrameSize={FrameSize}, Channels={Channels}");
+                return new byte[0];
+            }
+            
             short[] decodedBuffer = new short[FrameSize];
             using var decoded = new MemoryStream();
             using var stream = new MemoryStream(encodedData);
@@ -134,13 +141,13 @@ namespace RPVoiceChat.Audio
                     
                     // Fast path: check if we have enough for header, then validate packet size
                     if (remainingBytes < packetSizeHeader)
-                        break; // Incomplete header, silently skip (data corruption already occurred)
+                        break; // Incomplete header, silently skip
 
                     int packetSize = reader.ReadInt32();
                     
                     // Quick validation: packet size must be reasonable
                     if (packetSize <= 0 || packetSize > maxPacketSize)
-                        break; // Invalid size, silently skip to avoid log spam
+                        break; // Invalid size, silently skip
                     
                     // Check if we have enough bytes for the packet
                     remainingBytes -= packetSizeHeader;
@@ -148,25 +155,33 @@ namespace RPVoiceChat.Audio
                         break; // Incomplete packet, silently skip
 
                     byte[] encodedPacket = reader.ReadBytes(packetSize);
+                    
+                    // Validate packet is not empty
+                    if (encodedPacket.Length == 0 || encodedPacket.Length != packetSize)
+                        continue;
+                    
                     var encodedSpan = new ReadOnlySpan<byte>(encodedPacket);
                     var decodedSpan = new Span<short>(decodedBuffer);
-                    int decodedLength = decoder.Decode(encodedSpan, decodedSpan, FrameSize / Channels, false);
+                    
+                    // Decode with validation - OpusException should be rare with valid data
+                    int decodedLength = decoder.Decode(encodedSpan, decodedSpan, samplesPerFrame, false);
 
-                    // Only write if decode was successful (decodedLength > 0)
-                    if (decodedLength > 0)
+                    // Only write if decode was successful (decodedLength > 0 and within bounds)
+                    if (decodedLength > 0 && decodedLength <= samplesPerFrame)
                     {
-                        // Validate decoded length is within expected bounds
-                        if (decodedLength <= FrameSize)
-                        {
-                            byte[] decodedPacket = AudioUtils.ShortsToBytes(decodedBuffer, 0, decodedLength);
-                            decoded.Write(decodedPacket, 0, decodedPacket.Length);
-                        }
+                        byte[] decodedPacket = AudioUtils.ShortsToBytes(decodedBuffer, 0, decodedLength * Channels);
+                        decoded.Write(decodedPacket, 0, decodedPacket.Length);
                     }
-                    // Silently skip on decode errors (negative values) - decoder handles errors internally
+                    // Negative values indicate decode errors, silently skip
                 }
+            }
+            catch (Concentus.OpusException)
+            {
+                // Rare Opus-specific errors, silently skip corrupted packet
             }
             catch (Exception e)
             {
+                // Other errors (IO, etc.) - log but don't spam
                 Logger.client.Error($"Couldn't decode audio:\n{e}");
             }
 
