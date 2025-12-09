@@ -246,17 +246,17 @@ namespace RPVoiceChat.Audio
                 return;
             }
 
-            AudioData data = ProcessAudio(sampleBuffer, bufferLength);
+            AudioData data = ProcessAudio(sampleBuffer);
             TransmitAudio(data);
         }
 
         /// <summary>
         /// Converts audio to Mono16, applies denoising, applies gain, calculates amplitude and encodes the result
         /// </summary>
-        private AudioData ProcessAudio(byte[] rawSamples, int rawLength)
+        private AudioData ProcessAudio(byte[] rawSamples)
         {
             var rawSampleSize = SampleSize * InputChannelCount;
-            var pcmCount = rawLength / rawSampleSize;
+            var pcmCount = rawSamples.Length / rawSampleSize;
 
             // Determine if we should rent or allocate based on denoiser behavior
             bool willDenoise = ModConfig.ClientConfig.Denoising && denoiser?.SupportsFormat(Frequency, OutputChannelCount, SampleSize * 8) == true;
@@ -272,7 +272,7 @@ namespace RPVoiceChat.Audio
             try
             {
                 // Interpret rawSamples as little-endian 16-bit samples
-                var span = rawSamples.AsSpan(0, rawLength);
+                var span = rawSamples.AsSpan(0, rawSamples.Length);
                 var shortSpan = MemoryMarshal.Cast<byte, short>(span);
 
                 // Convert audio to mono, find peaks
