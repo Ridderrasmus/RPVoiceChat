@@ -262,6 +262,12 @@ namespace RPVoiceChat.Audio
             bool willDenoise = ModConfig.ClientConfig.Denoising && denoiser?.SupportsFormat(Frequency, OutputChannelCount, SampleSize * 8) == true;
             short[] pcms = willDenoise ? new short[pcmCount] : ArrayPool<short>.Shared.Rent(pcmCount);
             bool rented = !willDenoise;
+            
+            // Clear buffer from pool to avoid residual data causing audio artifacts
+            if (rented && pcms != null)
+            {
+                Array.Clear(pcms, 0, Math.Min(pcmCount, pcms.Length));
+            }
 
             bool[] usedChannels = DetectAudioChannels(rawSamples);
             int usedChannelCount = 0;
@@ -319,15 +325,24 @@ namespace RPVoiceChat.Audio
                 }
                 var amplitude = Math.Sqrt(sampleSquareSum / Math.Max(1, pcmCount));
 
-                // Encode audio
+                // Encode audio - ensure we only encode the exact amount of samples
+                // (pool buffer may be larger than pcmCount, which would encode residual data)
                 byte[] encodedAudio;
+                short[] samplesToEncode = pcms;
+                if (rented && pcms.Length > pcmCount)
+                {
+                    // Copy only the used portion to avoid encoding residual data from pool
+                    samplesToEncode = new short[pcmCount];
+                    Array.Copy(pcms, 0, samplesToEncode, 0, pcmCount);
+                }
+                
                 if (isGlobalBroadcast && codec is OpusCodec opusCodec)
                 {
-                    encodedAudio = opusCodec.EncodeForBroadcast(pcms);
+                    encodedAudio = opusCodec.EncodeForBroadcast(samplesToEncode);
                 }
                 else
                 {
-                    encodedAudio = codec.Encode(pcms);
+                    encodedAudio = codec.Encode(samplesToEncode);
                 }
 
                 return new AudioData()
