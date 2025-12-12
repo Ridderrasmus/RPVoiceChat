@@ -377,12 +377,22 @@ namespace RPVoiceChat.Audio
             // Check if activation conditions are met
             bool isPTTKeyPressed = capi.Input.KeyboardKeyState[capi.Input.GetHotKeyByCode("voicechatPTT").CurrentMapping.KeyCode];
             bool isAboveInputThreshold = Amplitude >= inputThreshold;
-            Transmitting = ModConfig.ClientConfig.PushToTalkEnabled ? isPTTKeyPressed : isAboveInputThreshold;
+            bool shouldTransmit = ModConfig.ClientConfig.PushToTalkEnabled ? isPTTKeyPressed : isAboveInputThreshold;
 
             // Apply deactivation timeout
-            stepsSinceLastTransmission++;
-            if (Transmitting) stepsSinceLastTransmission = 0;
-            Transmitting = stepsSinceLastTransmission < deactivationWindow;
+            // Only increment if we're not transmitting (to allow deactivation window)
+            if (!shouldTransmit)
+            {
+                stepsSinceLastTransmission++;
+            }
+            else
+            {
+                // If we should transmit, reset the counter and set transmitting
+                stepsSinceLastTransmission = 0;
+            }
+            
+            // Transmitting is true if we should transmit OR if we're within the deactivation window
+            Transmitting = shouldTransmit || stepsSinceLastTransmission < deactivationWindow;
 
             // Trigger notifcation when start/stop transmitting
             if (Transmitting != transmittingOnPreviousStep)
