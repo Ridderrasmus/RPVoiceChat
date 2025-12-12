@@ -1,18 +1,46 @@
 using System;
+using System.IO;
+using Newtonsoft.Json;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 
 namespace RPVoiceChat.Config
 {
     public static class ModConfig
     {
+        private const string ConfigSubfolder = "RPVoiceChat";
         public const string ClientConfigName = "rpvoicechat-client.json";
         public const string ServerConfigName = "rpvoicechat-server.json";
 
         public static RPVoiceChatClientConfig ClientConfig { get; private set; }
         public static RPVoiceChatServerConfig ServerConfig { get; private set; }
 
+        private static string GetConfigDirectory()
+        {
+            string configPath = GamePaths.ModConfig;
+            return Path.Combine(configPath, ConfigSubfolder);
+        }
+
+        private static void EnsureConfigDirectoryExists()
+        {
+            try
+            {
+                string configDir = GetConfigDirectory();
+                if (!Directory.Exists(configDir))
+                {
+                    Directory.CreateDirectory(configDir);
+                }
+            }
+            catch (Exception)
+            {
+                // Log will be done in the calling method if api is available
+            }
+        }
+
         public static void Init(ICoreAPI api)
         {
+            EnsureConfigDirectoryExists();
+
             if (api.Side == EnumAppSide.Client)
             {
                 ClientConfig = ReadConfig<RPVoiceChatClientConfig>(api, ClientConfigName);
@@ -91,7 +119,49 @@ namespace RPVoiceChat.Config
         {
             try
             {
-                return api.LoadModConfig<T>(jsonConfig);
+                string configPath = Path.Combine(GetConfigDirectory(), jsonConfig);
+                
+                // Try loading from subdirectory first
+                if (File.Exists(configPath))
+                {
+                    string jsonContent = File.ReadAllText(configPath);
+                    return JsonConvert.DeserializeObject<T>(jsonContent);
+                }
+
+                // Fallback: try loading from old location for migration
+                try
+                {
+                    T oldConfig = api.LoadModConfig<T>(jsonConfig);
+                    if (oldConfig != null)
+                    {
+                        // Migrate to new location
+                        api.Logger.Notification($"[RPVoiceChat] Migrating {jsonConfig} to new location in {ConfigSubfolder} folder");
+                        GenerateConfig(api, jsonConfig, oldConfig);
+                        
+                        // Delete old config file after successful migration
+                        try
+                        {
+                            string oldConfigPath = Path.Combine(GamePaths.ModConfig, jsonConfig);
+                            if (File.Exists(oldConfigPath))
+                            {
+                                File.Delete(oldConfigPath);
+                                api.Logger.Notification($"[RPVoiceChat] Deleted old config file: {oldConfigPath}");
+                            }
+                        }
+                        catch (Exception deleteEx)
+                        {
+                            api.Logger.Warning($"[RPVoiceChat] Failed to delete old config file: {deleteEx.Message}");
+                        }
+                        
+                        return oldConfig;
+                    }
+                }
+                catch
+                {
+                    // Old config doesn't exist, continue
+                }
+
+                return null;
             }
             catch (Exception e)
             {
@@ -104,8 +174,12 @@ namespace RPVoiceChat.Config
         {
             try
             {
+                EnsureConfigDirectoryExists();
                 var configToSave = CloneConfig<T>(api, previousConfig);
-                api.StoreModConfig(configToSave, jsonConfig);
+                
+                string configPath = Path.Combine(GetConfigDirectory(), jsonConfig);
+                string jsonContent = JsonConvert.SerializeObject(configToSave, Formatting.Indented);
+                File.WriteAllText(configPath, jsonContent);
             }
             catch (Exception e)
             {

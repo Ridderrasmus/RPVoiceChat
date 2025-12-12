@@ -11,10 +11,12 @@ namespace RPVoiceChat.Server
     {
         private ICoreServerAPI api;
         private HashSet<string> bannedPlayers = new HashSet<string>();
+        private VoiceBanConfigManager banConfigManager;
 
         public VoiceBanManager(ICoreServerAPI sapi)
         {
             api = sapi;
+            banConfigManager = new VoiceBanConfigManager(sapi);
             LoadBannedPlayers();
         }
 
@@ -61,17 +63,10 @@ namespace RPVoiceChat.Server
 
         private void LoadBannedPlayers()
         {
-            string bannedListJson = WorldConfig.GetString("voice-ban-list", null);
-            if (string.IsNullOrEmpty(bannedListJson))
-            {
-                bannedPlayers = new HashSet<string>();
-                return;
-            }
-
             try
             {
-                var playerList = bannedListJson.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-                bannedPlayers = new HashSet<string>(playerList);
+                var bannedList = banConfigManager.LoadBannedPlayers();
+                bannedPlayers = new HashSet<string>(bannedList);
             }
             catch (Exception e)
             {
@@ -84,8 +79,8 @@ namespace RPVoiceChat.Server
         {
             try
             {
-                string bannedListJson = string.Join(",", bannedPlayers);
-                WorldConfig.Set("voice-ban-list", bannedListJson);
+                var bannedList = bannedPlayers.ToList();
+                banConfigManager.SaveBannedPlayers(bannedList);
             }
             catch (Exception e)
             {
