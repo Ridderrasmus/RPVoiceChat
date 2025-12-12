@@ -85,9 +85,6 @@
   "Command.OthersHearSpectators.Help": "Este ajuste determina si las personas en cualquier modo de juego, pueden oír lo que dicen los espectadores o sólo pueden hacerlo otros espectadores. El valor predeterminado es <strong>true</strong> lo que significa que otros pueden oír a los espectadores.",
   "Command.OthersHearSpectators.Success.Enabled": "Ahora todo el mundo puede oír a los espectadores.",
   "Command.OthersHearSpectators.Success.Disabled": "Ahora sólo los espectadores pueden oír a los espectadores.",
-  "Command.WallThicknessWeighting.Desc": "Establecer un valor de compensación del espesor de pared calculado para la amortiguación.",
-  "Command.WallThicknessWeighting.Help": "El grosor de la pared se divide por esta compensación para eliminar la ganancia en el límite de alta frecuencia del filtro, simulando la amortiguación. Los valores inferiores a 1 aumentarán el efecto de amortiguación y los superiores a 1 lo reducirán. El valor predeterminado es <strong>1.5f</strong>.",
-  "Command.WallThicknessWeighting.Success": "La compensación del grosor de la pared se ha determinado en {0}.",
 
   "Hotkey.ModMenu": "Mod 'RPVoiceChat' ► Abrir el Menú del Mod",
   "Hotkey.VoiceLevel": "Mod 'RPVoiceChat' ► Cambiar la Potencia de la Voz",

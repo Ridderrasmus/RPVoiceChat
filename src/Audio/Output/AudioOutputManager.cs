@@ -1,3 +1,4 @@
+using RPVoiceChat.Client;
 using RPVoiceChat.Config;
 using RPVoiceChat.DB;
 using RPVoiceChat.Gui;
@@ -64,6 +65,13 @@ namespace RPVoiceChat.Audio
             if (packet.AudioData.Length != packet.Length)
             {
                 Logger.client.Debug("Audio packet payload had invalid length, dropping packet");
+                return;
+            }
+
+            // Check if the player is banned - don't process their audio (additional client-side security)
+            if (RPVoiceChatClient.VoiceBanManagerInstance != null && 
+                RPVoiceChatClient.VoiceBanManagerInstance.IsPlayerBanned(packet.PlayerId))
+            {
                 return;
             }
 
