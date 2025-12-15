@@ -372,27 +372,27 @@ namespace RPVoiceChat.Audio
             // Smooth out amplitude changes
             recentAmplitudes.Add(data.amplitude);
             if (recentAmplitudes.Count > 3) recentAmplitudes.RemoveAt(0);
-            Amplitude = Math.Max(data.amplitude, recentAmplitudes.Average());
+            
+            // Pour la détection, utilise l'amplitude brute si elle est au-dessus du seuil
+            // Cela permet une activation immédiate sans attendre le lissage
+            // Sinon, utilise l'amplitude lissée pour la stabilité
+            if (data.amplitude >= inputThreshold)
+            {
+                Amplitude = data.amplitude; // Utilise l'amplitude brute pour activation rapide
+            }
+            else
+            {
+                Amplitude = Math.Max(data.amplitude, recentAmplitudes.Average()); // Lissage normal
+            }
 
             // Check if activation conditions are met
             bool isPTTKeyPressed = capi.Input.KeyboardKeyState[capi.Input.GetHotKeyByCode("voicechatPTT").CurrentMapping.KeyCode];
             bool isAboveInputThreshold = Amplitude >= inputThreshold;
-            bool shouldTransmit = ModConfig.ClientConfig.PushToTalkEnabled ? isPTTKeyPressed : isAboveInputThreshold;
+            Transmitting = ModConfig.ClientConfig.PushToTalkEnabled ? isPTTKeyPressed : isAboveInputThreshold;
 
-            // Apply deactivation timeout
-            // Only increment if we're not transmitting (to allow deactivation window)
-            if (!shouldTransmit)
-            {
-                stepsSinceLastTransmission++;
-            }
-            else
-            {
-                // If we should transmit, reset the counter and set transmitting
-                stepsSinceLastTransmission = 0;
-            }
-            
-            // Transmitting is true if we should transmit OR if we're within the deactivation window
-            Transmitting = shouldTransmit || stepsSinceLastTransmission < deactivationWindow;
+            stepsSinceLastTransmission++;
+            if (Transmitting) stepsSinceLastTransmission = 0;
+            Transmitting = stepsSinceLastTransmission < deactivationWindow;
 
             // Trigger notifcation when start/stop transmitting
             if (Transmitting != transmittingOnPreviousStep)
