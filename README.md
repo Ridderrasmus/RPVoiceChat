@@ -61,7 +61,9 @@ You can also use `/rpvc [command]` to access world-specific settings:
 - `forcenametags` - If you use mods that hide player name tags you can disable this setting to keep them hidden. The default value is `true`.
 - `encodeaudio` - If you encounter distorted/out of order audio you can disable thus setting and see if it helps. **Be aware that this will drastically increase bandwidth usage for everyone on the server.** The default value is `true`.
 - `hearspectators` - Whether players that aren't in spectator gamemode, will be able to hear spectators talking. The default value is `true`.
-- `wtw` - Sets the weighting applied on wall thickness calculation for muffling. Values below 1 will increase muffling effect, values upper 1 will reduced it. The default value is `2`.
+- `voiceban [player]` - Bans a player from voice chat. Banned players cannot be heard by anyone.
+- `voiceunban [player]` - Unbans a player from voice chat.
+- `voicebanlist` - Lists all players currently voice banned.
 
 ## Maintainers
 Currently the mod is maintained by the following people:

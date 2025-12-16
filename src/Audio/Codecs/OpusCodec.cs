@@ -97,6 +97,11 @@ namespace RPVoiceChat.Audio
                     var encodedSpan = new Span<byte>(encodedBuffer);
                     int encodedLength = encoder.Encode(pcmSpan, FrameSize / Channels, encodedSpan, encodedBuffer.Length);
 
+                    // Skip frames with 0 length (DTX silence) to avoid sending empty packets
+                    // Empty packets can cause client crashes or disconnections
+                    if (encodedLength <= 0)
+                        continue;
+
                     byte[] packetSize = BitConverter.GetBytes(encodedLength);
                     encoded.Write(packetSize, 0, packetSize.Length);
                     encoded.Write(encodedBuffer, 0, encodedLength);
@@ -107,7 +112,16 @@ namespace RPVoiceChat.Audio
                 Logger.client.Error($"Couldn't encode audio:\n{e}");
             }
 
-            return encoded.ToArray();
+            byte[] result = encoded.ToArray();
+            
+            // If all frames were DTX (silence), return empty array to avoid sending malformed packets
+            // This prevents client crashes when receiving empty or malformed broadcast packets
+            if (result.Length == 0)
+            {
+                return new byte[0];
+            }
+
+            return result;
         }
 
         public byte[] Decode(byte[] encodedData)

@@ -7,6 +7,7 @@ namespace RPVoiceChat.Networking
         Pong = 2,
         ConnectionRequest = 10,
         ConnectionInfo = 11,
-        Audio = 20
+        Audio = 20,
+        VoiceBanStatus = 21
     }
 }

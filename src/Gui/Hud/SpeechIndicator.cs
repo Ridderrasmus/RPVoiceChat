@@ -1,4 +1,5 @@
 using RPVoiceChat.Audio;
+using RPVoiceChat.Client;
 using RPVoiceChat.Config;
 using System;
 using Vintagestory.API.Client;
@@ -21,6 +22,7 @@ namespace RPVoiceChat.Gui
         };
         private string voiceType;
         private VoiceLevel currentVoiceLevel;
+        private bool isVoiceBanned = false;
 
         public SpeechIndicator(ICoreClientAPI capi, MicrophoneManager microphoneManager) : base(capi)
         {
@@ -31,6 +33,10 @@ namespace RPVoiceChat.Gui
             microphoneManager.TransmissionStateChanged += bindToMainThread(UpdateDisplay);
             microphoneManager.VoiceLevelUpdated += OnVoiceLevelUpdated;
             capi.Event.RegisterEventBusListener(OnHudUpdate, 0.5, "rpvoicechat:hudUpdate");
+            capi.Event.RegisterEventBusListener(OnVoiceBanUpdate, 0.5, "rpvoicechat:voiceBanUpdate");
+            
+            // Check if the local player is banned on startup
+            CheckVoiceBanStatus();
         }
 
         public override void OnOwnPlayerDataReceived()
@@ -60,20 +66,35 @@ namespace RPVoiceChat.Gui
             bindToMainThread(SetupIcon)();
         }
 
+        private void OnVoiceBanUpdate(string _, ref EnumHandling __, object ___)
+        {
+            CheckVoiceBanStatus();
+            bindToMainThread(SetupIcon)();
+        }
+
+        private void CheckVoiceBanStatus()
+        {
+            if (RPVoiceChatClient.VoiceBanManagerInstance != null && capi.World.Player != null)
+            {
+                isVoiceBanned = RPVoiceChatClient.VoiceBanManagerInstance.IsPlayerBanned(capi.World.Player.PlayerUID);
+            }
+        }
+
         private void UpdateDisplay()
         {
             bool isTalking = audioInputManager.Transmitting;
             bool shouldDisplay;
             
+            // Display if banned, muted, or talking
             if (ModConfig.ClientConfig.IsMinimalHud)
             {
-                // In minimal mode, only show when talking (or muted)
-                shouldDisplay = (ModConfig.ClientConfig.IsMuted || isTalking) && ModConfig.ClientConfig.ShowHud;
+                // In minimal mode, only show when talking (or muted or banned)
+                shouldDisplay = (ModConfig.ClientConfig.IsMuted || isVoiceBanned || isTalking) && ModConfig.ClientConfig.ShowHud;
             }
             else
             {
-                // In normal mode, show when talking or when muted
-                shouldDisplay = (ModConfig.ClientConfig.IsMuted || isTalking) && ModConfig.ClientConfig.ShowHud;
+                // In normal mode, show when talking or when muted or banned
+                shouldDisplay = (ModConfig.ClientConfig.IsMuted || isVoiceBanned || isTalking) && ModConfig.ClientConfig.ShowHud;
             }
             
             bool successful = shouldDisplay ? TryOpen() : TryClose();
@@ -97,7 +118,10 @@ namespace RPVoiceChat.Gui
 
                 SingleComposer = capi.Gui.CreateCompo("rpvcspeechindicator", dialogBounds)
                     .AddImage(ElementBounds.Fixed(16, 16, 32, 32), new AssetLocation(RPVoiceChatMod.modID, "textures/gui/" + colorIcon))
-                    .AddIf(ModConfig.ClientConfig.IsMuted)
+                    .AddIf(isVoiceBanned)
+                    .AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation(RPVoiceChatMod.modID, "textures/gui/banned.png"))
+                    .EndIf()
+                    .AddIf(ModConfig.ClientConfig.IsMuted && !isVoiceBanned)
                     .AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation(RPVoiceChatMod.modID, "textures/gui/muted.png"))
                     .EndIf()
                     .Compose();
@@ -115,7 +139,10 @@ namespace RPVoiceChat.Gui
 
                 SingleComposer = capi.Gui.CreateCompo("rpvcspeechindicator", dialogBounds)
                     .AddImage(ElementBounds.Fixed(0, 0, size, size), voiceIcon)
-                    .AddIf(ModConfig.ClientConfig.IsMuted)
+                    .AddIf(isVoiceBanned)
+                    .AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation(RPVoiceChatMod.modID, "textures/gui/banned.png"))
+                    .EndIf()
+                    .AddIf(ModConfig.ClientConfig.IsMuted && !isVoiceBanned)
                     .AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation(RPVoiceChatMod.modID, "textures/gui/muted.png"))
                     .EndIf()
                     .Compose();

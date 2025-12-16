@@ -14,18 +14,24 @@ namespace RPVoiceChat.Server
         private List<INetworkServer> _initialTransports;
         private List<INetworkServer> activeServers = new List<INetworkServer>();
         private IServerNetworkChannel handshakeChannel;
+        private IServerNetworkChannel voiceBanChannel;
         private Dictionary<string, INetworkServer> serverByTransportID = new Dictionary<string, INetworkServer>();
         private ConnectionRequest connectionRequest;
+        private VoiceBanManager voiceBanManager;
 
         public GameServer(ICoreServerAPI sapi, List<INetworkServer> serverTransports)
         {
             api = sapi;
             _initialTransports = serverTransports;
+            voiceBanManager = new VoiceBanManager(sapi);
             handshakeChannel = sapi.Network
                 .RegisterChannel("RPVCHandshake")
                 .RegisterMessageType<ConnectionRequest>()
                 .RegisterMessageType<ConnectionInfo>()
                 .SetMessageHandler<ConnectionInfo>(FinalizeHandshake);
+            voiceBanChannel = sapi.Network
+                .RegisterChannel("RPVoiceBan")
+                .RegisterMessageType<VoiceBanStatusPacket>();
         }
 
         public void Launch()
@@ -40,6 +46,13 @@ namespace RPVoiceChat.Server
         public void PlayerJoined(IServerPlayer player)
         {
             InitHandshake(player);
+            // Send the ban status of all banned players to the new player
+            SendAllBannedPlayersStatus(player);
+            // Notify all other players if this player is banned
+            if (voiceBanManager.IsPlayerBanned(player.PlayerUID))
+            {
+                NotifyAllPlayersBanStatus(player.PlayerUID, true);
+            }
         }
 
         public void PlayerLeft(IServerPlayer player)
@@ -55,6 +68,12 @@ namespace RPVoiceChat.Server
         {
             var transmittingPlayer = api.World.PlayerByUid(packet.PlayerId);
             bool transmittingIsSpectator = transmittingPlayer?.WorldData.CurrentGameMode == EnumGameMode.Spectator;
+
+            // Check if the player is banned - don't send their audio to other players
+            if (voiceBanManager.IsPlayerBanned(packet.PlayerId))
+            {
+                return;
+            }
 
             int effectiveDistance = packet.TransmissionRangeBlocks > 0
                 ? packet.TransmissionRangeBlocks
@@ -174,6 +193,33 @@ namespace RPVoiceChat.Server
             connectionRequest = new ConnectionRequest(serverConnectionInfos);
 
             return connectionRequest;
+        }
+
+        public void NotifyAllPlayersBanStatus(string playerUID, bool isBanned)
+        {
+            var packet = new VoiceBanStatusPacket(playerUID, isBanned);
+            foreach (IServerPlayer player in api.World.AllOnlinePlayers)
+            {
+                if (player.ConnectionState == EnumClientState.Playing)
+                {
+                    voiceBanChannel.SendPacket(packet, player);
+                }
+            }
+        }
+
+        private void SendAllBannedPlayersStatus(IServerPlayer player)
+        {
+            var bannedPlayers = voiceBanManager.GetBannedPlayers();
+            foreach (var bannedPlayerUID in bannedPlayers)
+            {
+                var packet = new VoiceBanStatusPacket(bannedPlayerUID, true);
+                voiceBanChannel.SendPacket(packet, player);
+            }
+        }
+
+        public VoiceBanManager GetVoiceBanManager()
+        {
+            return voiceBanManager;
         }
 
         public void Dispose()
