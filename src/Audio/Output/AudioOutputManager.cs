@@ -62,6 +62,13 @@ namespace RPVoiceChat.Audio
         // Called when the client receives an audio packet supplying the audio packet
         public void HandleAudioPacket(AudioPacket packet)
         {
+            // Reject null or empty packets to prevent client crashes
+            if (packet.AudioData == null || packet.AudioData.Length == 0)
+            {
+                Logger.client.Debug("Received empty audio packet, dropping");
+                return;
+            }
+
             if (packet.AudioData.Length != packet.Length)
             {
                 Logger.client.Debug("Audio packet payload had invalid length, dropping packet");

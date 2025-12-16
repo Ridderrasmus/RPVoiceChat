@@ -139,7 +139,9 @@ namespace RPVoiceChat
 
         private void OnBufferRecorded(AudioData audioData)
         {
-            if (audioData.data == null) return;
+            // Don't send empty packets - they can cause client crashes or disconnections
+            // This can happen with DTX (Discontinuous Transmission) in broadcast mode
+            if (audioData.data == null || audioData.data.Length == 0) return;
 
             string sender = capi.World.Player.PlayerUID;
             var sequenceNumber = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
