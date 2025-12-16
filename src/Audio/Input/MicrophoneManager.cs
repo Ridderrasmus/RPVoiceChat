@@ -49,6 +49,7 @@ namespace RPVoiceChat.Audio
         private const int deactivationWindow = 4;
         private int stepsSinceLastTransmission = deactivationWindow;
         private bool transmittingOnPreviousStep = false;
+        private AudioData previousBuffer = null; // Keep previous buffer for voice activation
         private ICoreClientAPI capi;
         private VoiceLevel voiceLevel = VoiceLevel.Talking;
         private double inputThreshold;
@@ -242,12 +243,14 @@ namespace RPVoiceChat.Audio
                 Transmitting = false;
                 TransmissionStateChanged?.Invoke();
                 transmittingOnPreviousStep = Transmitting;
+                previousBuffer = null; // Clear previous buffer when muted
                 stepsSinceLastTransmission = deactivationWindow;
                 return;
             }
 
             AudioData data = ProcessAudio(sampleBuffer);
-            TransmitAudio(data);
+            TransmitAudio(data, previousBuffer);
+            previousBuffer = data;
         }
 
         /// <summary>
@@ -367,22 +370,22 @@ namespace RPVoiceChat.Audio
             }
         }
 
-        private void TransmitAudio(AudioData data)
+        private void TransmitAudio(AudioData data, AudioData previousData = null)
         {
             // Smooth out amplitude changes
             recentAmplitudes.Add(data.amplitude);
             if (recentAmplitudes.Count > 3) recentAmplitudes.RemoveAt(0);
             
-            // Pour la détection, utilise l'amplitude brute si elle est au-dessus du seuil
-            // Cela permet une activation immédiate sans attendre le lissage
-            // Sinon, utilise l'amplitude lissée pour la stabilité
+            // For detection, use raw amplitude if it's above threshold
+            // This allows immediate activation without waiting for smoothing
+            // Otherwise, use smoothed amplitude for stability
             if (data.amplitude >= inputThreshold)
             {
-                Amplitude = data.amplitude; // Utilise l'amplitude brute pour activation rapide
+                Amplitude = data.amplitude; // Use raw amplitude for fast activation
             }
             else
             {
-                Amplitude = Math.Max(data.amplitude, recentAmplitudes.Average()); // Lissage normal
+                Amplitude = Math.Max(data.amplitude, recentAmplitudes.Average()); // Normal smoothing
             }
 
             // Check if activation conditions are met
@@ -395,12 +398,24 @@ namespace RPVoiceChat.Audio
             Transmitting = stepsSinceLastTransmission < deactivationWindow;
 
             // Trigger notifcation when start/stop transmitting
+            bool justStartedTransmitting = !transmittingOnPreviousStep && Transmitting;
             if (Transmitting != transmittingOnPreviousStep)
                 TransmissionStateChanged?.Invoke();
             transmittingOnPreviousStep = Transmitting;
 
             // Transmit
-            if (Transmitting || AudioWizardActive) OnBufferRecorded?.Invoke(data);
+            // In voice activation mode, when we just started transmitting, send the previous buffer first
+            // to avoid losing the first syllable (which was captured before we detected voice)
+            if (Transmitting || AudioWizardActive)
+            {
+                if (justStartedTransmitting && !ModConfig.ClientConfig.PushToTalkEnabled && previousData != null)
+                {
+                    // Send previous buffer first (contains the beginning of speech)
+                    OnBufferRecorded?.Invoke(previousData);
+                }
+                // Send current buffer
+                OnBufferRecorded?.Invoke(data);
+            }
         }
 
         private IAudioCapture CreateNewCapture(string deviceName, ALFormat? captureFormat = null)
