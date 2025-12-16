@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using RPVoiceChat.Config;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Server;
@@ -112,17 +113,19 @@ namespace RPVoiceChat
                     .WithArgs(parsers.Bool("state"))
                     .HandleWith(ToggleOthersHearSpectators)
                 .EndSub()
-                .BeginSub("wtw")
-                    .WithDesc(UIUtils.I18n("Command.WallThicknessWeighting.Desc"))
-                    .WithAdditionalInformation(UIUtils.I18n("Command.WallThicknessWeighting.Help"))
-                    .WithArgs(parsers.Float("weighting"))
-                    .HandleWith(SetWallThicknessWeighting)
+                .BeginSub("voiceban")
+                    .WithDesc(UIUtils.I18n("Command.VoiceBan.Desc"))
+                    .WithArgs(parsers.Word("player"))
+                    .HandleWith(VoiceBanHandler)
                 .EndSub()
-                .BeginSub("msgdelay")
-                    .WithDesc(UIUtils.I18n("Command.MessageDelay.Desc"))
-                    .WithAdditionalInformation(UIUtils.I18n("Command.MessageDelay.Help"))
-                    .WithArgs(parsers.Int("seconds"))
-                    .HandleWith(SetMessageDelay)
+                .BeginSub("voiceunban")
+                    .WithDesc(UIUtils.I18n("Command.VoiceUnban.Desc"))
+                    .WithArgs(parsers.Word("player"))
+                    .HandleWith(VoiceUnbanHandler)
+                .EndSub()
+                .BeginSub("voicebanlist")
+                    .WithDesc(UIUtils.I18n("Command.VoiceBanList.Desc"))
+                    .HandleWith(VoiceBanListHandler)
                 .EndSub();
         }
 
@@ -175,10 +178,8 @@ namespace RPVoiceChat
             int shout = WorldConfig.GetInt(VoiceLevel.Shouting);
             bool forceNameTags = WorldConfig.GetBool("force-render-name-tags");
             bool encoding = WorldConfig.GetBool("encode-audio");
-            float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");
-            int messageDeletionDelay = ServerConfigManager.TelegraphMessageDeletionDelaySeconds;
 
-            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceNameTags, encoding, wallThicknessWeighting, messageDeletionDelay));
+            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceNameTags, encoding));
         }
 
         private TextCommandResult SetWhisperHandler(TextCommandCallingArgs args)
@@ -208,29 +209,86 @@ namespace RPVoiceChat
             return TextCommandResult.Success(UIUtils.I18n($"Command.Shout.Success", distance));
         }
 
-        private TextCommandResult SetWallThicknessWeighting(TextCommandCallingArgs args)
+        private TextCommandResult VoiceBanHandler(TextCommandCallingArgs args)
         {
-            float weighting = (float)args[0];
-
-            WorldConfig.Set("wall-thickness-weighting", weighting);
-
-            return TextCommandResult.Success(UIUtils.I18n("Command.WallThicknessWeighting.Success", weighting));
-        }
-
-        private TextCommandResult SetMessageDelay(TextCommandCallingArgs args)
-        {
-            int seconds = (int)args[0];
-
-            // Validate the input
-            if (seconds < 1 || seconds > 300)
+            string playerIdentifier = (string)args[0];
+            IPlayer targetPlayer = FindPlayer(playerIdentifier);
+            
+            if (targetPlayer == null)
             {
-                return TextCommandResult.Error("Message deletion delay must be between 1 and 300 seconds.");
+                return TextCommandResult.Error(UIUtils.I18n("Command.VoiceBan.PlayerNotFound"));
             }
 
-            ModConfig.ServerConfig.TelegraphMessageDeletionDelaySeconds = seconds;
-            ModConfig.SaveServer(sapi);
+            var banManager = server.GetVoiceBanManager();
+            if (banManager.IsPlayerBanned(targetPlayer.PlayerUID))
+            {
+                return TextCommandResult.Error(UIUtils.I18n("Command.VoiceBan.AlreadyBanned", targetPlayer.PlayerName));
+            }
 
-            return TextCommandResult.Success(UIUtils.I18n("Command.MessageDelay.Success", seconds));
+            banManager.BanPlayer(targetPlayer.PlayerUID);
+            server.NotifyAllPlayersBanStatus(targetPlayer.PlayerUID, true);
+
+            return TextCommandResult.Success(UIUtils.I18n("Command.VoiceBan.Success", targetPlayer.PlayerName));
+        }
+
+        private TextCommandResult VoiceUnbanHandler(TextCommandCallingArgs args)
+        {
+            string playerIdentifier = (string)args[0];
+            IPlayer targetPlayer = FindPlayer(playerIdentifier);
+            
+            if (targetPlayer == null)
+            {
+                return TextCommandResult.Error(UIUtils.I18n("Command.VoiceUnban.PlayerNotFound"));
+            }
+
+            var banManager = server.GetVoiceBanManager();
+            if (!banManager.IsPlayerBanned(targetPlayer.PlayerUID))
+            {
+                return TextCommandResult.Error(UIUtils.I18n("Command.VoiceUnban.NotBanned", targetPlayer.PlayerName));
+            }
+
+            banManager.UnbanPlayer(targetPlayer.PlayerUID);
+            server.NotifyAllPlayersBanStatus(targetPlayer.PlayerUID, false);
+
+            return TextCommandResult.Success(UIUtils.I18n("Command.VoiceUnban.Success", targetPlayer.PlayerName));
+        }
+
+        private IPlayer FindPlayer(string identifier)
+        {
+            // Try to find by UID first
+            IPlayer player = sapi.World.PlayerByUid(identifier);
+            if (player != null) return player;
+
+            // Try to find by name (case-insensitive) in online players first
+            player = sapi.World.AllOnlinePlayers.FirstOrDefault(p => 
+                p.PlayerName.Equals(identifier, StringComparison.OrdinalIgnoreCase));
+            if (player != null) return player;
+
+            // Try to find in all players (including offline) by name
+            player = sapi.World.AllPlayers.FirstOrDefault(p => 
+                p.PlayerName.Equals(identifier, StringComparison.OrdinalIgnoreCase));
+            
+            return player;
+        }
+
+        private TextCommandResult VoiceBanListHandler(TextCommandCallingArgs args)
+        {
+            var banManager = server.GetVoiceBanManager();
+            var bannedPlayers = banManager.GetBannedPlayers();
+
+            if (bannedPlayers.Count == 0)
+            {
+                return TextCommandResult.Success(UIUtils.I18n("Command.VoiceBanList.Empty"));
+            }
+
+            var playerNames = new List<string>();
+            foreach (var playerUID in bannedPlayers)
+            {
+                string playerName = banManager.GetPlayerName(playerUID);
+                playerNames.Add($"{playerName} ({playerUID})");
+            }
+
+            return TextCommandResult.Success(UIUtils.I18n("Command.VoiceBanList.Success", string.Join(", ", playerNames)));
         }
 
         public override void Dispose()

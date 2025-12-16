@@ -44,6 +44,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private bool isSentCountdownActive = false;
         private int sentCountdownSeconds = 0;
         private long sentCountdownEndTime = 0;
+        private bool telegramPrinted = false; // Flag to track if telegram has been created
 
         // Animation util pour jouer l'animation "click" et gérer l'orientation
         public BlockEntityAnimationUtil animUtil { get { return this.GetAnimUtil(); } }
@@ -235,14 +236,15 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public void ProcessPrintPacket(string message)
         {
             // Trigger message printing/deletion
-            if (connectedPrinter != null)
+            if (connectedPrinter != null && !string.IsNullOrEmpty(message))
             {
                 // Convert to morse for printing if GenuineMorseCharacters is enabled
                 string messageToPrint = GenuineMorseCharacters ? ConvertStringToMorse(message) : message;
                 connectedPrinter.CreateTelegram(messageToPrint, NetworkUID.ToString());
+                telegramPrinted = true; // Mark that telegram has been created
             }
             
-            // Clear the message
+            // Clear the message - CheckAutoSave will also clean it up if ProcessPrintPacket didn't handle it
             receivedMessage = "";
             receivedMessageOriginal = "";
             isReceivedCountdownActive = false;
@@ -279,6 +281,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             isSentCountdownActive = false;
             sentCountdownSeconds = 0;
             sentCountdownEndTime = 0;
+            telegramPrinted = false; // Reset flag
             dialog?.UpdateCountdown(-1);
             dialog?.UpdateSentCountdown(-1);
         }
@@ -499,22 +502,16 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 UpdateReceivedCountdown();
             }
 
-            if (secondsSinceLastReceivedActivity >= MessageDeletionDelaySeconds + 2 && !string.IsNullOrEmpty(receivedMessageOriginal))
+            if (secondsSinceLastReceivedActivity >= MessageDeletionDelaySeconds + 2 && (!string.IsNullOrEmpty(receivedMessageOriginal) || telegramPrinted))
             {
-                // If printer is connected, save the message before clearing
-                if (connectedPrinter != null)
-                {
-                    // Convert to morse for printing if GenuineMorseCharacters is enabled
-                    string messageToPrint = GenuineMorseCharacters ? ConvertStringToMorse(receivedMessageOriginal) : receivedMessageOriginal;
-                    connectedPrinter.CreateTelegram(messageToPrint, NetworkUID.ToString());
-                }
-                
-                // Always clear the message after the delay (with or without printer)
+                // Telegram creation is exclusively handled by ProcessPrintPacket
+                // Just clear the message and reset flag here
                 receivedMessage = "";
                 receivedMessageOriginal = "";
                 isReceivedCountdownActive = false;
                 receivedCountdownSeconds = 0;
                 receivedCountdownEndTime = 0;
+                telegramPrinted = false; // Reset flag for next message
                 MarkDirty();
                 dialog?.UpdateReceivedText("");
                 dialog?.UpdateCountdown(-1); // Hide countdown completely
