@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 
 namespace RPVoiceChat
 {
@@ -119,7 +120,36 @@ namespace RPVoiceChat
             microphoneManager.Launch();
             audioOutputManager.Launch();
             guiManager.firstLaunchDialog.ShowIfNecessary();
+            
+            // Check for macOS microphone issues and show warning
+            CheckMacOSMicrophoneAccess();
+            
             isReady = true;
+        }
+
+        private void CheckMacOSMicrophoneAccess()
+        {
+            if (RuntimeEnv.OS != OS.Mac) return;
+            
+            // Delay the check slightly to allow microphone initialization
+            capi.Event.RegisterCallback((dt) =>
+            {
+                // Check if microphone capture failed to initialize
+                if (microphoneManager != null && !microphoneManager.IsCaptureInitialized)
+                {
+                    ShowMacOSWarning();
+                }
+            }, 2000); // Wait 2 seconds for initialization
+        }
+
+        private void ShowMacOSWarning()
+        {
+            string wikiLink = "https://github.com/Ridderrasmus/RPVoiceChat/wiki/Troubleshooting#macos-microphone-access-issues";
+            string warningMessage = $"§c[RPVoiceChat] ⚠ Warning: macOS microphone access may require special setup. " +
+                                  $"See: §l{wikiLink}§r";
+            
+            capi.ShowChatMessage(warningMessage);
+            Logger.client.Warning("macOS detected. If microphone doesn't work, see: " + wikiLink);
         }
 
         private void Event_KeyUp(KeyEvent e)
