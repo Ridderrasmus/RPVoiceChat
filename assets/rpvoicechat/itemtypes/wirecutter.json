@@ -1,0 +1,55 @@
+{
+  "code": "wirecutter",
+  "enabled": true,
+  "maxstacksize": 1,
+  "creativeinventory": {
+    "general": [ "*" ],
+    "items": [ "*" ],
+    "tools": [ "*" ],
+    "rpvoicechat": [ "*" ]
+  },
+  "attributes": {
+    "handbook": {
+      "groupBy": [ "wirecutter-*" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.item-wirecutter.Title",
+          "text": "rpvoicechat:Handbook.Usage.item-wirecutter.Text"
+        }
+      ]
+    }
+  },
+    "variantgroups": [
+    {
+      "code": "metal",
+      "states": [ "tinbronze" ]
+    }
+  ],
+  "shape": {
+    "base": "item/wirecutter"
+  },
+  "textures": {
+    "metal": {
+      "base": "game:block/metal/sheet/{metal}1"
+    },
+    "leather": {
+      "base": "game:block/cloth/leather/normal"
+    },
+    "bolt": {
+      "base": "game:block/metal/sheet/blackbronze1"
+    },
+  },
+  "tpHandTransform": {
+      "translation": { x: -0.7, y: 0.1, z: -0.4 },
+	  "rotation": { x: 0, y: -118, z: 0 },
+	  "scale": 1.2
+  },
+  "guiTransform": {
+	"translation": { x: 0, y: 0, z: 0 },
+	"rotation": { x: -46, y: 24, z: 0 },
+	"origin": { x: 0.63, y: 0.4, z: 0.2 },
+	"scale": 3.06
+  }
+}
+
+

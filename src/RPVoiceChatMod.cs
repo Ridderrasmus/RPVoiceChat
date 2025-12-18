@@ -136,7 +136,9 @@ namespace RPVoiceChat
                 {
                     $"{modID}:telegraphwire",
                     $"{modID}:telegram",
-                    $"{modID}:paperslip"
+                    $"{modID}:paperslip",
+                    $"{modID}:wirecutterjaw",
+                    $"{modID}:wirecutter"
                 });
 
                 // Telegraph content blocks
@@ -144,7 +146,8 @@ namespace RPVoiceChat
                 {
                     $"{modID}:telegraph",
                     $"{modID}:connector",
-                    $"{modID}:printer"
+                    $"{modID}:printer",
+                    $"{modID}:wirecutterjawmold"
                 });
             }
 
