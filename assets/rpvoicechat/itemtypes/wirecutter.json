@@ -2,6 +2,16 @@
   "code": "wirecutter",
   "enabled": true,
   "class": "wirecutter",
+  "behaviors": [{ 
+	"name": "GroundStorable",
+	"properties": {
+	  "layout": 'WallHalves',
+	  "wallOffY": 1,
+	  "ctrlKey": true,
+	  "selectionBox": { x1: 0, y1: 0, z1: 0, x2: 1, y2: 0.1, z2: 1 },
+	  "collisionBox": { x1: 0, y1: 0, z1: 0, x2: 0, y2: 0, z2: 0 },
+	}
+  }],
   "maxstacksize": 1,
   "creativeinventory": {
     "general": [ "*" ],
@@ -26,6 +36,12 @@
       "states": [ "tinbronze" ]
     }
   ],
+  "tooltierbytype": {
+	"*-tinbronze": 3,
+  },
+  "durabilitybytype": {
+    "*-tinbronze": 300,
+  },
   "shape": {
     "base": "item/wirecutter"
   },

@@ -57,6 +57,9 @@ namespace RPVoiceChat.Systems
             wireNode.NetworkUID = networkId;
             wireNode.MarkForUpdate();
 
+            // Notify the node that it created a new network (for INetworkRoot)
+            wireNode.OnNetworkCreated(networkId);
+
             // Propagation to all connected nodes (useful if wireNode already has connections)
             PropagateNetworkUIDToConnectedNodes(wireNode, network);
 

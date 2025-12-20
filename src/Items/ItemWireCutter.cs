@@ -45,7 +45,13 @@ namespace RPVoiceChat.GameContent.Items
                 }
                 wireNode.RemoveConnection(connection);
             }
-            wireNode.MarkForUpdate(); // MarkForUpdate already calls MarkDirty(true)
+            wireNode.MarkForUpdate();
+
+            // Damage the item (reduce durability) - only on server side
+            if (byEntity.World.Side == EnumAppSide.Server && connectionCount > 0)
+            {
+                DamageItem(byEntity.World, byEntity, slot);
+            }
 
             // Show message on client side
             if (byEntity?.Api is ICoreClientAPI capi)

@@ -52,29 +52,26 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             if (Api.Side == EnumAppSide.Server)
             {
-                // Only create a new network if it is a NetworkBlock and NetworkUID == 0
                 if (NetworkUID == 0)
                 {
-                    if (IsNetworkBlock(Block))
+                    // Only create a new network if it is an INetworkRoot
+                    if (IsNetworkRoot(this))
                     {
                         WireNetworkHandler.AddNewNetwork(this);
                     }
-                    // Otherwise, networkUID will be assigned later via connection
                 }
                 else
                 {
-                    WireNetwork existing = WireNetworkHandler.GetNetwork(NetworkUID);
+                    var existing = WireNetworkHandler.GetNetwork(NetworkUID);
                     if (existing != null)
                     {
                         existing.AddNode(this);
                         WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(this, existing);
                     }
-                    else
+                    else if (IsNetworkRoot(this))
                     {
-                        if (IsNetworkBlock(Block))
-                        {
-                            WireNetworkHandler.AddNewNetwork(this);
-                        }
+                        // Network was lost, recreate it
+                        WireNetworkHandler.AddNewNetwork(this);
                     }
                 }
             }
@@ -85,6 +82,15 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public void MarkForUpdate()
         {
             base.MarkDirty(true);
+        }
+
+        /// <summary>
+        /// Called when this node creates a new network.
+        /// Override in subclasses to track the original network ID.
+        /// </summary>
+        public virtual void OnNetworkCreated(long networkID)
+        {
+            // Default implementation does nothing
         }
 
         public IReadOnlyList<WireConnection> GetConnections()
@@ -141,58 +147,42 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (connections.Count >= MaxConnections || HasConnection(connection))
                 return;
 
-            // Adds the connection on both nodes
-            // AddConnection already checks if the connection exists, so no need to check HasConnection first
+            // Adds the connection on both nodes (AddConnection already checks if connection exists and calls MarkForUpdate)
             connection.Node1.AddConnection(connection);
             connection.Node2.AddConnection(connection);
-
-            connection.Node1.MarkForUpdate();
-            connection.Node2.MarkForUpdate();
-
             OnConnectionsChanged?.Invoke();
 
             if (Api.Side == EnumAppSide.Server)
             {
-                BEWireNode node1 = connection.Node1 as BEWireNode;
-                BEWireNode node2 = connection.Node2 as BEWireNode;
+                var node1 = connection.Node1 as BEWireNode;
+                var node2 = connection.Node2 as BEWireNode;
+                if (node1 == null || node2 == null) return;
 
-                WireNetwork net1 = WireNetworkHandler.GetNetwork(node1.NetworkUID);
-                WireNetwork net2 = WireNetworkHandler.GetNetwork(node2.NetworkUID);
+                var net1 = WireNetworkHandler.GetNetwork(node1.NetworkUID);
+                var net2 = WireNetworkHandler.GetNetwork(node2.NetworkUID);
 
-                bool node1IsNetworkBlock = IsNetworkBlock(node1.Block);
-                bool node2IsNetworkBlock = IsNetworkBlock(node2.Block);
-
-                bool node1HasNetwork = net1 != null;
-                bool node2HasNetwork = net2 != null;
-
-                // Cases where neither has a network AND neither is NetworkBlock -> no network creation
-                if (!node1HasNetwork && !node2HasNetwork && !node1IsNetworkBlock && !node2IsNetworkBlock)
-                {
-                    // Connection possible, but no network creation
-                    // Both NetworkUIDs remain at 0
+                // Cases where neither has a network AND neither is INetworkRoot -> no network creation
+                if (net1 == null && net2 == null && !IsNetworkRoot(node1) && !IsNetworkRoot(node2))
                     return;
-                }
 
-                // Otherwise, we have to manage network creation/merging/propagation
-                if (!node1HasNetwork && !node2HasNetwork)
+                // Manage network creation/merging/propagation
+                if (net1 == null && net2 == null)
                 {
-                    // Creates a new network from Telegraph, or from the node that is Telegraph, otherwise any node
-                    var component = new HashSet<BEWireNode> { node1, node2 };
-                    CreateNetworkForComponent(component);
+                    CreateNetworkForComponent(new HashSet<BEWireNode> { node1, node2 });
                 }
-                else if (node1HasNetwork && !node2HasNetwork)
+                else if (net1 != null && net2 == null)
                 {
                     net1.AddNode(node2);
                     WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(node2, net1);
                 }
-                else if (!node1HasNetwork && node2HasNetwork)
+                else if (net1 == null && net2 != null)
                 {
                     net2.AddNode(node1);
                     WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(node1, net2);
                 }
-                else if (node1HasNetwork && node2HasNetwork && net1 != net2)
+                else if (net1 != null && net2 != null && net1 != net2)
                 {
-                    // Network merging with full propagation
+                    // Network merging
                     if (net1.Nodes.Count >= net2.Nodes.Count)
                     {
                         net1.MergeFrom(net2);
@@ -306,12 +296,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
         }
 
         /// <summary>
-        /// Checks if a block is a network block (can serve as network root).
-        /// Currently only TelegraphBlock, but can be extended in the future.
+        /// Checks if a block entity is a network root by checking if it implements INetworkRoot.
         /// </summary>
-        private static bool IsNetworkBlock(Vintagestory.API.Common.Block block)
+        private static bool IsNetworkRoot(BEWireNode node)
         {
-            return block is TelegraphBlock;
+            return node is INetworkRoot;
         }
 
         /// <summary>
@@ -350,16 +339,16 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         /// <summary>
         /// Finds the root node for a network component.
-        /// Prefers a NetworkBlock, otherwise returns the first node in the component.
+        /// Prefers a node that implements INetworkRoot, otherwise returns the first node in the component.
         /// </summary>
         private static BEWireNode FindNetworkRoot(IEnumerable<BEWireNode> component)
         {
             if (!component.Any()) return null;
             
-            // Prefer NetworkBlock as root
+            // Prefer INetworkRoot as root
             foreach (var node in component)
             {
-                if (IsNetworkBlock(node.Block))
+                if (IsNetworkRoot(node))
                 {
                     return node;
                 }
@@ -370,48 +359,66 @@ namespace RPVoiceChat.GameContent.BlockEntity
         }
 
         /// <summary>
-        /// Creates a new network for a connected component.
-        /// Only creates a network if the component contains at least one NetworkBlock.
+        /// Creates or reuses a network for a connected component.
+        /// Only creates a network if the component contains at least one INetworkRoot.
         /// Otherwise, sets all nodes' NetworkUID to 0.
         /// </summary>
         private static void CreateNetworkForComponent(HashSet<BEWireNode> component)
         {
             if (component.Count == 0) return;
             
-            // Check if component contains at least one NetworkBlock
-            bool hasNetworkBlock = component.Any(node => IsNetworkBlock(node.Block));
+            // Check if component contains at least one INetworkRoot
+            bool hasNetworkRoot = component.Any(node => IsNetworkRoot(node));
             
-            if (!hasNetworkBlock)
+            if (!hasNetworkRoot)
             {
-                // No NetworkBlock in component, set all NetworkUIDs to 0
-                foreach (var node in component)
-                {
-                    if (node.NetworkUID != 0)
-                    {
-                        var oldNetwork = WireNetworkHandler.GetNetwork(node.NetworkUID);
-                        oldNetwork?.RemoveNode(node);
-                        node.NetworkUID = 0;
-                        node.MarkForUpdate();
-                    }
-                }
+                // No INetworkRoot in component, set all NetworkUIDs to 0
+                RemoveNodesFromNetwork(component);
                 return;
             }
             
-            // Find NetworkBlock as root, or use first node
             var rootNode = FindNetworkRoot(component);
             if (rootNode == null) return;
             
-            // Always create a new network for this component
-            // (This method is only called for components that need a new network)
-            var newNetwork = WireNetworkHandler.AddNewNetwork(rootNode);
-            foreach (var node in component)
+            // Try to reuse the original NetworkID if available and not used elsewhere
+            var network = TryReuseNetworkID(rootNode);
+            if (network == null)
             {
-                if (node != rootNode)
+                network = WireNetworkHandler.AddNewNetwork(rootNode);
+            }
+            
+            WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(rootNode, network);
+        }
+
+        /// <summary>
+        /// Tries to reuse the original NetworkID of a root node if it's not used elsewhere.
+        /// Also checks if the root is already in a network with its original ID.
+        /// Returns the network if successful, null otherwise.
+        /// </summary>
+        private static WireNetwork TryReuseNetworkID(BEWireNode rootNode)
+        {
+            if (rootNode is INetworkRoot networkRoot && networkRoot.CreatedNetworkID != 0)
+            {
+                var existingNetwork = WireNetworkHandler.GetNetwork(networkRoot.CreatedNetworkID);
+                
+                // If the root is already in a network with its original ID, return that network
+                if (existingNetwork != null && existingNetwork.Nodes.Contains(rootNode))
                 {
-                    newNetwork.AddNode(node);
+                    return existingNetwork;
+                }
+                
+                // If the original NetworkID is not used, reuse it
+                if (existingNetwork == null)
+                {
+                    var network = new WireNetwork { networkID = networkRoot.CreatedNetworkID };
+                    WireNetworkHandler.AddNetwork(network);
+                    network.AddNode(rootNode);
+                    rootNode.NetworkUID = networkRoot.CreatedNetworkID;
+                    rootNode.MarkForUpdate();
+                    return network;
                 }
             }
-            WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(rootNode, newNetwork);
+            return null;
         }
 
         /// <summary>
@@ -432,36 +439,149 @@ namespace RPVoiceChat.GameContent.BlockEntity
         }
 
         /// <summary>
-        /// Recalculates networks after a connection is removed.
-        /// Only recalculates if:
-        /// 1. This node is isolated (no connections) - handles NetworkBlock vs Connector differently
-        /// 2. The disconnection split a network between two NetworkBlocks - only the disconnected component changes network
+        /// Handles the case where this node is isolated (no connections).
         /// </summary>
-        private void RecalculateNetworksAfterDisconnection()
+        private void HandleIsolatedNode()
         {
-            // If this node has no connections
-            if (connections.Count == 0)
+            if (IsNetworkRoot(this))
             {
+                // If already in a network with the original ID, keep it
+                if (this is INetworkRoot networkRoot && networkRoot.CreatedNetworkID != 0)
+                {
+                    var existingNetwork = WireNetworkHandler.GetNetwork(networkRoot.CreatedNetworkID);
+                    if (existingNetwork != null && existingNetwork.Nodes.Contains(this))
+                    {
+                        // Already in the correct network, nothing to do
+                        return;
+                    }
+                }
+                
+                // Remove from current network if any
                 if (NetworkUID != 0)
                 {
                     var oldNetwork = WireNetworkHandler.GetNetwork(NetworkUID);
                     oldNetwork?.RemoveNode(this);
                 }
                 
-                // If it's a NetworkBlock, create a new network for it (it's now isolated)
-                if (IsNetworkBlock(Block))
+                // Try to reuse original ID or create new network
+                var network = TryReuseNetworkID(this);
+                if (network == null)
                 {
                     WireNetworkHandler.AddNewNetwork(this);
                 }
-                else
+            }
+            else if (NetworkUID != 0)
+            {
+                // Not a network root, just remove from network
+                var oldNetwork = WireNetworkHandler.GetNetwork(NetworkUID);
+                oldNetwork?.RemoveNode(this);
+            }
+        }
+
+        /// <summary>
+        /// Finds the other connected component after a network split.
+        /// </summary>
+        private static HashSet<BEWireNode> FindOtherComponent(HashSet<BEWireNode> thisComponent, List<BEWireNode> allNetworkNodes)
+        {
+            var processed = new HashSet<BEWireNode>(thisComponent);
+            var filterSet = new HashSet<BEWireNode>(allNetworkNodes);
+            
+            var otherComponentStart = allNetworkNodes.FirstOrDefault(node => !processed.Contains(node));
+            if (otherComponentStart == null) return new HashSet<BEWireNode>();
+            
+            return FindConnectedComponent(otherComponentStart, filterSet);
+        }
+
+        /// <summary>
+        /// Finds the original network root that should keep its network.
+        /// Returns the root with the oldest CreatedNetworkID (the one that created the network first).
+        /// </summary>
+        private static BEWireNode FindOriginalNetworkRoot(HashSet<BEWireNode> component1, HashSet<BEWireNode> component2)
+        {
+            BEWireNode oldestRoot = null;
+            long oldestID = long.MaxValue;
+            
+            foreach (var node in component1.Concat(component2))
+            {
+                if (node is INetworkRoot networkRoot && networkRoot.CreatedNetworkID != 0)
                 {
-                    // Not a NetworkBlock, set NetworkUID to 0
-                    if (NetworkUID != 0)
+                    if (networkRoot.CreatedNetworkID < oldestID)
                     {
-                        NetworkUID = 0;
-                        MarkForUpdate();
+                        oldestID = networkRoot.CreatedNetworkID;
+                        oldestRoot = node;
                     }
                 }
+            }
+            
+            return oldestRoot;
+        }
+
+        /// <summary>
+        /// Removes a component from a network and sets all nodes' NetworkUID to 0.
+        /// </summary>
+        private static void RemoveComponentFromNetwork(HashSet<BEWireNode> component, WireNetwork network)
+        {
+            foreach (var node in component)
+            {
+                node.NetworkUID = 0;
+                network.Nodes.Remove(node);
+            }
+        }
+
+        /// <summary>
+        /// Ensures all nodes in a component have the correct NetworkUID.
+        /// Only updates nodes that are already in the network (doesn't add new nodes).
+        /// </summary>
+        private static void EnsureComponentHasNetworkUID(HashSet<BEWireNode> component, WireNetwork network, long networkID)
+        {
+            foreach (var node in component)
+            {
+                if (network.Nodes.Contains(node))
+                {
+                    node.NetworkUID = networkID;
+                    node.MarkForUpdate();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles network splitting when both components have INetworkRoot nodes.
+        /// The component with the oldest CreatedNetworkID keeps its network, the other gets a new one or reuses its original.
+        /// </summary>
+        private static void SplitNetworkWithBothRoots(HashSet<BEWireNode> component, HashSet<BEWireNode> otherComponent, WireNetwork network)
+        {
+            var originalRoot = FindOriginalNetworkRoot(component, otherComponent);
+            if (originalRoot == null) return;
+            
+            bool originalRootInComponent = component.Contains(originalRoot);
+            long originalNetworkID = ((INetworkRoot)originalRoot).CreatedNetworkID;
+            
+            if (originalRootInComponent)
+            {
+                RemoveComponentFromNetwork(otherComponent, network);
+                EnsureComponentHasNetworkUID(component, network, originalNetworkID);
+                CreateNetworkForComponent(otherComponent);
+            }
+            else
+            {
+                RemoveComponentFromNetwork(component, network);
+                EnsureComponentHasNetworkUID(otherComponent, network, originalNetworkID);
+                CreateNetworkForComponent(component);
+            }
+        }
+
+        /// <summary>
+        /// Recalculates networks after a connection is removed.
+        /// Only recalculates if:
+        /// 1. This node is isolated (no connections) - handles INetworkRoot vs Connector differently
+        /// 2. The disconnection split a network - only the disconnected component changes network
+        /// </summary>
+        private void RecalculateNetworksAfterDisconnection()
+        {
+            // If this node has no connections, handle isolation
+            if (connections.Count == 0)
+            {
+                HandleIsolatedNode();
                 return;
             }
 
@@ -471,93 +591,37 @@ namespace RPVoiceChat.GameContent.BlockEntity
             var network = WireNetworkHandler.GetNetwork(NetworkUID);
             if (network == null) return;
 
-            // Find all nodes reachable from this node (connected component)
             var component = FindConnectedComponent(this);
+            if (component.Count >= network.Nodes.Count) return; // Network not split
 
-            // Only recalculate if the network was actually split
-            if (component.Count >= network.Nodes.Count) return;
+            var allNetworkNodes = new List<BEWireNode>(network.Nodes);
+            var otherComponent = FindOtherComponent(component, allNetworkNodes);
+            if (otherComponent.Count == 0) return;
 
-            // Count NetworkBlocks in both components
-            int networkBlocksInComponent = component.Count(node => IsNetworkBlock(node.Block));
-            
-            // Find the other component
-            var nodesToRemove = new List<BEWireNode>(network.Nodes);
-            var processed = new HashSet<BEWireNode>(component);
-            var filterSet = new HashSet<BEWireNode>(nodesToRemove);
-            
-            BEWireNode otherComponentStart = null;
-            foreach (var node in nodesToRemove)
+            int networkRootsInComponent = component.Count(node => IsNetworkRoot(node));
+            int networkRootsInOther = otherComponent.Count(node => IsNetworkRoot(node));
+
+            // Case 1: Both components have INetworkRoot nodes
+            if (networkRootsInComponent > 0 && networkRootsInOther > 0)
             {
-                if (!processed.Contains(node))
-                {
-                    otherComponentStart = node;
-                    break;
-                }
+                SplitNetworkWithBothRoots(component, otherComponent, network);
             }
-
-            if (otherComponentStart == null) return; // Should not happen
-
-            var otherComponent = FindConnectedComponent(otherComponentStart, filterSet);
-            int networkBlocksInOther = otherComponent.Count(node => IsNetworkBlock(node.Block));
-
-            // Case 1: Both components have NetworkBlocks - we separated two NetworkBlocks
-            // Only one component (the disconnected one) should get a new network
-            // The component with the original root keeps its NetworkUID
-            if (networkBlocksInComponent > 0 && networkBlocksInOther > 0)
+            // Case 2: Only one component has INetworkRoot nodes
+            else if (networkRootsInComponent == 0)
             {
-                // Find the original NetworkBlock root before removing nodes
-                var originalRoot = FindNetworkRoot(nodesToRemove);
-                bool originalRootInThisComponent = component.Contains(originalRoot);
-                
-                // Save the original network ID before any modifications
-                long originalNetworkID = network.networkID;
-
-                if (originalRootInThisComponent)
-                {
-                    // This component keeps the original network and NetworkUID
-                    // First, manually set NetworkUID to 0 for nodes in the other component (before removing from network)
-                    foreach (var node in otherComponent)
-                    {
-                        node.NetworkUID = 0;
-                        network.Nodes.Remove(node); // Remove from list without calling RemoveNode (which would set NetworkUID to 0 again)
-                    }
-                    
-                    // Propagate the original NetworkUID to ensure all nodes in this component have it
-                    WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(originalRoot, network);
-                    
-                    // Create new network for the other component (which no longer has the original NetworkUID)
-                    CreateNetworkForComponent(otherComponent);
-                }
-                else
-                {
-                    // Other component keeps the original network and NetworkUID
-                    // First, manually set NetworkUID to 0 for nodes in this component (before removing from network)
-                    foreach (var node in component)
-                    {
-                        node.NetworkUID = 0;
-                        network.Nodes.Remove(node); // Remove from list without calling RemoveNode (which would set NetworkUID to 0 again)
-                    }
-                    
-                    // Propagate the original NetworkUID to ensure all nodes in the other component have it
-                    WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(originalRoot, network);
-                    
-                    // Create new network for this component (which no longer has the original NetworkUID)
-                    CreateNetworkForComponent(component);
-                }
-            }
-            // Case 2: Only one component has NetworkBlocks - the one without should lose its network
-            else if (networkBlocksInComponent == 0)
-            {
-                // This component has no NetworkBlocks, remove them from network
+                // This component has no network root, remove it from network
                 RemoveNodesFromNetwork(component);
+                // The other component keeps the network - ensure it has the correct NetworkUID
+                EnsureComponentHasNetworkUID(otherComponent, network, network.networkID);
             }
-            else if (networkBlocksInOther == 0)
+            else if (networkRootsInOther == 0)
             {
-                // Other component has no NetworkBlocks, remove them from network
+                // Other component has no network root, remove it from network
                 RemoveNodesFromNetwork(otherComponent);
+                // This component keeps the network - ensure it has the correct NetworkUID
+                EnsureComponentHasNetworkUID(component, network, network.networkID);
             }
-            // Case 3: Neither component has NetworkBlocks - no recalculation needed
-            // (They should already have NetworkUID = 0 from CreateNetworkForComponent)
+            // Case 3: Neither component has INetworkRoot nodes - no recalculation needed
         }
 
         public override void OnBlockBroken(IPlayer byPlayer)
@@ -661,7 +725,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
             if (NetworkUID == 0)
             {
-                if (IsNetworkBlock(Block) && Api?.Side == EnumAppSide.Client)
+                if (IsNetworkRoot(this) && Api?.Side == EnumAppSide.Client)
                 {
                     dsc.AppendLine(UIUtils.I18n("Network.connecting"));
                 }
@@ -672,21 +736,18 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 return;
             }
 
-            // Default display
-            if (Api?.Side == EnumAppSide.Client)
+            // On server, verify network exists
+            if (Api?.Side == EnumAppSide.Server)
             {
-                dsc.AppendLine(UIUtils.I18n("Network.NetworkId", NetworkUID));
-            }
-            else
-            {
-                WireNetwork network = WireNetworkHandler.GetNetwork(NetworkUID);
+                var network = WireNetworkHandler.GetNetwork(NetworkUID);
                 if (network == null)
                 {
                     dsc.AppendLine(UIUtils.I18n("Network.NoNetwork"));
                     return;
                 }
-                dsc.AppendLine(UIUtils.I18n("Network.NetworkId", NetworkUID));
             }
+            
+            dsc.AppendLine(UIUtils.I18n("Network.NetworkId", NetworkUID));
         }
 
         protected void DisplayConnections(IPlayer forPlayer, StringBuilder dsc)
