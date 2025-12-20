@@ -1,5 +1,6 @@
 using System.Text;
 using RPVoiceChat.Config;
+using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Util;
 using Vintagestory.API.Client;
@@ -8,7 +9,7 @@ using Vintagestory.API.MathTools;
 
 namespace RPVoiceChat.GameContent.Items
 {
-    public class TelegraphWireItem : Item
+    public class ItemTelegraphWire : Item
     {
         private int MaxConnectionDistance => ServerConfigManager.TelegraphMaxConnectionDistance;
         private BlockPos firstNodePos;
@@ -41,7 +42,7 @@ namespace RPVoiceChat.GameContent.Items
             }
 
             // Second click
-            var firstNode = byEntity.World.BlockAccessor.GetBlockEntity(firstNodePos) as WireNode;
+            var firstNode = byEntity.World.BlockAccessor.GetBlockEntity(firstNodePos) as BEWireNode;
 
             if (firstNode != null && firstNode != node)
             {
@@ -74,3 +75,5 @@ namespace RPVoiceChat.GameContent.Items
         }
     }
 }
+
+

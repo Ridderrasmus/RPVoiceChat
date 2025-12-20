@@ -5,7 +5,7 @@ using Vintagestory.API.Datastructures;
 
 namespace RPVoiceChat.GameContent.BlockEntity
 {
-    public class BlockEntityConnector : WireNode, IWireConnectable
+    public class BlockEntityConnector : BEWireNode, IWireConnectable
     {
 
         public override void Initialize(ICoreAPI api)

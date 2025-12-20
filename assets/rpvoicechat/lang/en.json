@@ -269,6 +269,8 @@
   "Wire.ConnectionSuccess": "Connection successful!",
   "Wire.ConnectionTooFar": "Too far! Max distance is {0} blocks.",
   "Wire.Pending": "Connection pending since: {0}",
+  "Wire.CannotBreakConnected": "Cannot break block: it is connected to at least one other block. Use a wirecutter to remove connections first.",
+  "Wire.ConnectionsRemoved": "Removed {0} connection(s).",
 
   "Handbook.Welding.block-churchbell-part.Title": "Welding Process: Part",
   "Handbook.Welding.block-churchbell-part.Text": "First step is to clayform the mold for your bell part and filling the molds with brass. For each of the three lower layers you will need 4 parts. <br><br>Second step is to heat the parts of the layer you're constructing. After heating the parts must be assembled together and will need 4 pieces of powdered borax for the welding. <br><br>Step three is to hit that thing with a hammer quite a few times.",

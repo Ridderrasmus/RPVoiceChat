@@ -9,11 +9,12 @@ namespace RPVoiceChat.GameContent.Items
         {
             // Toujours enregistrer les classes, même si le contenu est désactivé
             // Les items seront désactivés dans AssetsFinalize si nécessaire
-            api.RegisterItemClass("soundemittingitem", typeof(SoundEmittingItem));
-            api.RegisterItemClass("voiceamplifieritem", typeof(VoiceAmplifierItem));
-            api.RegisterItemClass("handheldradio", typeof(RadioItem));
-            api.RegisterItemClass("telegraphwire", typeof(TelegraphWireItem));
+            api.RegisterItemClass("soundemitting", typeof(ItemSoundEmitting));
+            api.RegisterItemClass("voiceamplifier", typeof(ItemVoiceAmplifier));
+            api.RegisterItemClass("handheldradio", typeof(ItemRadio));
+            api.RegisterItemClass("telegraphwire", typeof(ItemTelegraphWire));
             api.RegisterItemClass("telegram", typeof(ItemTelegram));
+            api.RegisterItemClass("wirecutter", typeof(ItemWireCutter));
         }
     }
 }

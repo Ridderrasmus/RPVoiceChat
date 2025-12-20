@@ -1,6 +1,7 @@
 {
   "code": "wirecutter",
   "enabled": true,
+  "class": "wirecutter",
   "maxstacksize": 1,
   "creativeinventory": {
     "general": [ "*" ],

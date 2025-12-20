@@ -245,6 +245,8 @@
   "Wire.ConnectionSuccess": "Connexion établie !",
   "Wire.ConnectionTooFar": "Trop loin ! La distance maximale est de {0} blocs.",
   "Wire.Pending": "Connexion en attente depuis : {0}",
+  "Wire.CannotBreakConnected": "Impossible de casser le bloc : il est connecté à au moins un autre bloc. Utilisez un coupe-fil pour retirer les connexions d'abord.",
+  "Wire.ConnectionsRemoved": "{0} connexion(s) retirée(s).",
   "Handbook.Welding.block-churchbell-part.Title": "Processus de soudage : Pièce",
   "Handbook.Welding.block-churchbell-part.Text": "La première étape consiste à créer le moule en argile pour votre cloche et à remplir les moules en laiton. Pour chacune des trois couches inférieures, vous aurez besoin de 4 parties. <br><br>La seconde étape consiste à chauffer les parties de la couche que vous construisez. Après le chauffage, les pièces doivent être assemblées ensemble et auront besoin de 4 borax en poudre pour le soudage. <br><br>L'Étape trois consiste à frapper cette chose avec un marteau plusieurs fois.",
   "Handbook.Welding.block-churchbell-layer.Title": "Processus de soudage : Couche",

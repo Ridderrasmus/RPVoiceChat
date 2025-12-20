@@ -18,7 +18,7 @@ using Vintagestory.API.Client.Tesselation;
 
 namespace RPVoiceChat.GameContent.BlockEntity
 {
-    public class BlockEntityTelegraph : WireNode
+    public class BlockEntityTelegraph : BEWireNode
     {
         TelegraphMenuDialog dialog;
 

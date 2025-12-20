@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.GameContent.Systems;
 using Vintagestory.API.Client;
 using Vintagestory.API.Server;
@@ -41,7 +42,7 @@ namespace RPVoiceChat.Systems
             ServerChannel.BroadcastPacket(packet);
         }
 
-        public static WireNetwork AddNewNetwork(WireNode wireNode)
+        public static WireNetwork AddNewNetwork(BEWireNode wireNode)
         {
             long networkId = 1;
             if (Networks.Count > 0)
@@ -81,7 +82,7 @@ namespace RPVoiceChat.Systems
             return Networks.TryGetValue(networkID, out var net) ? net : null;
         }
 
-        public static WireNetwork GetNetwork(WireNode node)
+        public static WireNetwork GetNetwork(BEWireNode node)
         {
             if (node == null) return null;
             return Networks.Values.FirstOrDefault(nw => nw.Nodes.Contains(node));
@@ -90,12 +91,12 @@ namespace RPVoiceChat.Systems
         /// <summary>
         /// Recursively updates the NetworkUID of all nodes connected from a starting node
         /// </summary>
-        public static void PropagateNetworkUIDToConnectedNodes(WireNode startNode, WireNetwork network)
+        public static void PropagateNetworkUIDToConnectedNodes(BEWireNode startNode, WireNetwork network)
         {
             if (startNode == null || network == null) return;
 
-            var visited = new HashSet<WireNode>();
-            var queue = new Queue<WireNode>();
+            var visited = new HashSet<BEWireNode>();
+            var queue = new Queue<BEWireNode>();
 
             queue.Enqueue(startNode);
             visited.Add(startNode);
