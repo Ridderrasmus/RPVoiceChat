@@ -107,7 +107,7 @@
     }
   },
   "shape": {
-    "base": "block/clay/mold/{tooltype}mold"
+    "base": "block/clay/mold/{tooltype}"
   },
   "sounds": {
     "walk": "game:walk/stone"

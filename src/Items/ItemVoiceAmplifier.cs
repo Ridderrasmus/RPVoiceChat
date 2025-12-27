@@ -1,9 +1,9 @@
-﻿using RPVoiceChat;
+using RPVoiceChat;
 using RPVoiceChat.Config;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
-public class VoiceAmplifierItem : Item
+public class ItemVoiceAmplifier : Item
 {
     private string soundEffectName = null;
     private bool isAmplifierActive = false;
@@ -134,14 +134,14 @@ public class VoiceAmplifierItem : Item
         
         switch (itemClass)
         {
-            case "voiceamplifieritem":
-                return GetVoiceAmplifierItemRange();
+            case "voiceamplifier":
+                return GetVoiceAmplifierRange();
             default:
                 return defaultRange;
         }
     }
 
-    private int GetVoiceAmplifierItemRange()
+    private int GetVoiceAmplifierRange()
     {
         // Identify the specific megaphone type by its code
         string itemCode = Code?.ToString()?.ToLower() ?? "";
@@ -153,3 +153,5 @@ public class VoiceAmplifierItem : Item
         return Attributes?["voiceRangeBlocks"].AsInt(125) ?? 125;
     }
 }
+
+

@@ -1,6 +1,6 @@
 {
   "code": "handbell",
-  "class": "soundemittingitem",
+  "class": "soundemitting",
   "enabled": true,
   "maxstacksize": 1,
   "attackpower": 0.3,

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using RPVoiceChat.Audio;
 using RPVoiceChat.Config;
 using Vintagestory.API.Common;
@@ -6,7 +6,7 @@ using Vintagestory.API.Common.Entities;
 
 namespace RPVoiceChat.GameContent.Items
 {
-    public class SoundEmittingItem : Item
+    public class ItemSoundEmitting : Item
     {
         private Random rand = new Random();
         public const float MaxGain = 2f;
@@ -41,14 +41,14 @@ namespace RPVoiceChat.GameContent.Items
             
             switch (itemClass)
             {
-                case "soundemittingitem":
-                    return GetSoundEmittingItemDistance();
+                case "soundemitting":
+                    return GetSoundEmittingDistance();
                 default:
                     return defaultDistance;
             }
         }
 
-        private int GetSoundEmittingItemDistance()
+        private int GetSoundEmittingDistance()
         {
             // Identify the specific sound item type by its code
             string itemCode = Code?.ToString()?.ToLower() ?? "";
@@ -165,3 +165,5 @@ namespace RPVoiceChat.GameContent.Items
         }
     }
 }
+
+

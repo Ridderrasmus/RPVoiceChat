@@ -1,0 +1,16 @@
+{
+  "ingredientPattern": "JJ,LL",
+  "ingredients": {
+    "J": { "type": "item", "code": "wirecutterjaw-*", "name": "metal", "quantity": 1 },
+    "L": { "type": "item", "code": "game:leather-normal-plain", "quantity": 1 }
+  },
+  "width": 2,
+  "height": 2,
+  "output": { "type": "item", "code": "wirecutter-{metal}", "quantity": 1 }
+}
+
+
+
+
+
+

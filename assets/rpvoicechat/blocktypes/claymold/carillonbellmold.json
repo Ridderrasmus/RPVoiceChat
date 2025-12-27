@@ -101,7 +101,7 @@
     }
   },
   "shape": {
-    "base": "block/clay/mold/carillonbellmold"
+    "base": "block/clay/mold/carillonbell"
   },
   "sounds": {
     "walk": "game:walk/stone"

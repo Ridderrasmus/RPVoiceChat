@@ -1,5 +1,5 @@
 ﻿using System;
-using RPVoiceChat.GameContent.Block;
+using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.GameContent.Systems;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -10,7 +10,7 @@ namespace RPVoiceChat.GameContent.Renderers
     public class WireNodeRenderer : IRenderer, IDisposable
     {
         private readonly ICoreClientAPI capi;
-        private readonly WireNode node;
+        private readonly BEWireNode node;
         // Default wire texture (atlas tile). Can be changed in future for different wire types.
         private AssetLocation wireTextureAsset = new AssetLocation("game:block/metal/plate/copper");
 
@@ -18,7 +18,7 @@ namespace RPVoiceChat.GameContent.Renderers
         private Vec3f meshOrigin;
         private bool needsRebuild = true;
 
-        public WireNodeRenderer(WireNode node, ICoreClientAPI capi)
+        public WireNodeRenderer(BEWireNode node, ICoreClientAPI capi)
         {
             this.node = node;
             this.capi = capi;
@@ -49,7 +49,7 @@ namespace RPVoiceChat.GameContent.Renderers
             Vec3d camPos = capi.World.Player.Entity.CameraPos;
 
             IStandardShaderProgram prog = capi.Render.PreparedStandardShader(
-                (int)node.Pos.X, (int)node.Pos.Y, (int)node.Pos.Z
+                (int)node.Position.X, (int)node.Position.Y, (int)node.Position.Z
             );
 
             prog.ProjectionMatrix = capi.Render.CurrentProjectionMatrix;
@@ -80,7 +80,7 @@ namespace RPVoiceChat.GameContent.Renderers
             var connections = node.GetConnections();
             if (connections == null || connections.Count == 0) return;
 
-            Vec3f origin = node.Pos.ToVec3f().Add(node.WireAttachmentOffset);
+            Vec3f origin = node.Position.ToVec3f().Add(node.WireAttachmentOffset);
             meshOrigin = origin;
 
             // Combined MeshData to render all wires at once
@@ -90,10 +90,10 @@ namespace RPVoiceChat.GameContent.Renderers
             foreach (var conn in connections)
             {
                 var other = conn.GetOtherNode(node);
-                if (other == null || other.Pos == null) continue;
+                if (other == null || other.Position == null) continue;
 
                 Vec3f startLocal = origin - origin; // always (0,0,0) in local space
-                Vec3f endLocal = other.Pos.ToVec3f().Add(other.WireAttachmentOffset) - origin;
+                Vec3f endLocal = other.Position.ToVec3f().Add(other.WireAttachmentOffset) - origin;
 
                 MeshData wireMesh = WireMesh.MakeWireMesh(startLocal, endLocal, 0.05f);
 

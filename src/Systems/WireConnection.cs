@@ -1,4 +1,5 @@
 ﻿using System;
+using RPVoiceChat.GameContent.BlockEntity;
 
 namespace RPVoiceChat.GameContent.Systems
 {
@@ -13,10 +14,10 @@ namespace RPVoiceChat.GameContent.Systems
             Node2 = node2;
         }
 
-        public WireNode GetOtherNode(IWireConnectable from)
+        public BEWireNode GetOtherNode(IWireConnectable from)
         {
-            if (from == Node1) return Node2 as WireNode;
-            if (from == Node2) return Node1 as WireNode;
+            if (from == Node1) return Node2 as BEWireNode;
+            if (from == Node2) return Node1 as BEWireNode;
             return null;
         }
 

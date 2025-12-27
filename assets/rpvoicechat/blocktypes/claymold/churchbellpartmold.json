@@ -147,10 +147,10 @@
     }
   },
   "shapeByType": {
-    "churchbellmold-*-part-*-bottom": { "base": "block/clay/mold/churchbellmold-part-bottom" },
-    "churchbellmold-*-part-*-middle": { "base": "block/clay/mold/churchbellmold-part-middle" },
-    "churchbellmold-*-part-*-top": { "base": "block/clay/mold/churchbellmold-part-top" },
-    "churchbellmold-*-layer-*-topmost": { "base": "block/clay/mold/churchbellmold-layer-topmost" }
+    "churchbellmold-*-part-*-bottom": { "base": "block/clay/mold/churchbell-part-bottom" },
+    "churchbellmold-*-part-*-middle": { "base": "block/clay/mold/churchbell-part-middle" },
+    "churchbellmold-*-part-*-top": { "base": "block/clay/mold/churchbell-part-top" },
+    "churchbellmold-*-layer-*-topmost": { "base": "block/clay/mold/churchbell-layer-topmost" }
   },
   "sounds": {
     "walk": "game:walk/stone"

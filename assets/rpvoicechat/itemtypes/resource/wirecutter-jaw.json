@@ -1,0 +1,49 @@
+{
+  "code": "wirecutterjaw",
+  "enabled": true,
+  "attributes": {
+    "handbook": {
+      "groupBy": [ "wirecutterjaw-*" ],
+      "createdBy": "metalmolding",
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.item-wirecutterjaw.Title",
+          "text": "rpvoicechat:Handbook.Usage.item-wirecutterjaw.Text"
+        }
+      ]
+    }
+  },
+  "maxstacksize": 8,
+  "creativeinventory": {
+    "general": [ "*" ],
+    "items": [ "*" ],
+    "rpvoicechat": [ "*" ]
+  },
+  "shape": {
+    "base": "item/wirecutter-jaw"
+  },
+  "variantgroups": [
+    {
+      "code": "metal",
+      "states": [ "tinbronze" ]
+    }
+  ],
+  "textures": {
+    "metal": {
+      "base": "game:block/metal/sheet/{metal}1"
+    }
+  },
+  "tpHandTransform": {
+	"translation": { x: -0.65, y: 0.1, z: -0.35 },
+	"rotation": { x: 0, y: -92, z: 18 },
+	"scale": 1.2
+  },
+  "guiTransform": {
+	"translation": { x: 0, y: 0, z: 0 },
+	"rotation": { x: -79, y: 0, z: 0 },
+	"origin": { x: 0.45, y: 0.6, z: 0.4 },
+	"scale": 2.6
+  }
+}
+
+

@@ -1,6 +1,6 @@
 {
   "code": "royalhorn",
-  "class": "soundemittingitem",
+  "class": "soundemitting",
   "enabled": true,
   "maxstacksize": 1,
   "creativeinventory": {

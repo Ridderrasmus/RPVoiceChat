@@ -58,7 +58,7 @@
       "moldrackable": false,
       "drop": {
         "type": "item",
-        "code": "smallbellparts-silver",
+        "code": "{tooltype}-{metal}",
         "quantity": 1
       }
     }
@@ -93,7 +93,7 @@
     }
   },
   "shape": {
-    "base": "block/clay/mold/smallbellpartsmold"
+    "base": "block/clay/mold/smallbellparts"
   },
   "sounds": {
     "walk": "game:walk/stone"

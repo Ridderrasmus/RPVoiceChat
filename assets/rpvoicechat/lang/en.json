@@ -9,6 +9,7 @@
   "item-royalhornhead-blackbronze": "Royal Horn Head",
   "item-handheldradio": "Handheld Radio",
   "item-telegraphwire": "Telegraph Wire",
+  "item-wirecutter-tinbronze": "Tin Bronze Wire Cutter",
   "item-radiocase": "Radio Case",
   "item-smallbellparts-silver": "Small Bell Parts",
   "item-perfectgoathorn": "Perfect goat horn",
@@ -23,6 +24,7 @@
   "itemdesc-warhorn": "A rustic war horn, used to rally even the most distant allies.",
   "itemdesc-royalhornhead-blackbronze": "A bell (head) for a royal horn, made of black bronze.",
   "itemdesc-telegraphwire": "A spool of wire. Its simplistic design allows it to be used only for creating a telegraph network.",
+  "itemdesc-wirecutter-tinbronze": "A specialized tool for cutting wire connections.",
   "itemdesc-megaphone": "A megaphone that allows you to carry your voice far. Beware of walls blocking the sound!",
   "itemdesc-enhancedmegaphone": "This extremely rare megaphone has the unique ability to carry sound across distances and through matter.",
   "itemdesc-paperslip": "A piece of paper used for printing telegrams.",
@@ -269,6 +271,8 @@
   "Wire.ConnectionSuccess": "Connection successful!",
   "Wire.ConnectionTooFar": "Too far! Max distance is {0} blocks.",
   "Wire.Pending": "Connection pending since: {0}",
+  "Wire.CannotBreakConnected": "Cannot break block: it is connected to at least one other block. Use a wirecutter to remove connections first.",
+  "Wire.ConnectionsRemoved": "Removed {0} connection(s).",
 
   "Handbook.Welding.block-churchbell-part.Title": "Welding Process: Part",
   "Handbook.Welding.block-churchbell-part.Text": "First step is to clayform the mold for your bell part and filling the molds with brass. For each of the three lower layers you will need 4 parts. <br><br>Second step is to heat the parts of the layer you're constructing. After heating the parts must be assembled together and will need 4 pieces of powdered borax for the welding. <br><br>Step three is to hit that thing with a hammer quite a few times.",
@@ -308,6 +312,8 @@
   "Handbook.Usage.block-telegraph.Text": "The telegraph key allows sending and receiving messages. Right-click on it to use it. It emits an audible sound code within a maximum radius of 5 blocks. Messages are currently stored during the session, but in the future they will be deleted after 10 seconds and can be saved using a printer.",
   "Handbook.Usage.item-telegraphwire.Title": "Usage",
   "Handbook.Usage.item-telegraphwire.Text": "This telegraph wire spool allows extending a network over a maximum distance of 20 blocks, by right-clicking on the first then the second element to connect. To cover greater distances, insulators (relays) are necessary to extend the network.",
+  "Handbook.Usage.item-wirecutter.Title": "Usage",
+  "Handbook.Usage.item-wirecutter.Text": "A specialized tool for cutting wire connections in telegraph networks. Right-click on any connected communication network block or insulator to remove all its wire connections. This allows you to reconfigure your network or remove connections before breaking blocks.",
   "Handbook.Usage.item-megaphone.Title": "Usage",
   "Handbook.Usage.item-megaphone.Text": "The rarity of the components used makes this tool valuable for long-distance communications and emergency situations. Hold down the right click to activate voice amplification, carrying your voice over 125 blocks. The sound of your voice is still affected by distance and obstacles.",
   "Handbook.Usage.item-enhancedmegaphone.Title": "Usage",
@@ -326,7 +332,7 @@
   "bells-title": "RP Voice Chat - Bells",
   "bells-text": "<strong>RP Voice Chat - Bells</strong><br /><br />Bells have always announced victories, defeats, festivities or deaths. You will find a bell for each use:<br /><br /><icon name=wpCircle></icon><a href=\"handbooksearch://handbell\">Handbell</a>: short-range hand bell<br /><icon name=wpCircle></icon><a href=\"handbooksearch://callbell\">Callbell</a>: counter bell to alert of its presence<br /><icon name=wpCircle></icon><a href=\"handbooksearch://Small bell parts\">Small bell parts</a>: element used for the first two items but usable on doors<br /><icon name=wpCircle></icon><a href=\"handbooksearch://Carillon bell\">Carillon bell</a>: bell emitting a different tone depending on the metal used<br /><icon name=wpCircle></icon><a href=\"handbooksearch://Church bell\">Church bell</a>: bell so big that it has to be welded<br />",
   "telegraph-title": "RP Voice Chat - Telegraph",
-  "telegraph-text": "<strong>RP Voice Chat - Telegraph</strong><br /><br />The telegraph system allows transmitting coded messages over long distances through a network of wires and specialized equipment. This revolutionary technology enables you to communicate silently with your allies over great distances, perfect for coordinating strategies or transmitting sensitive information.<br /><br />The telegraph works through an audible sound code within a limited radius around the device.<br /><br /><icon name=wpCircle></icon><a href=\"handbooksearch://Telegraph key\">Telegraph key</a>: main device for sending and receiving coded messages<br /><icon name=wpCircle></icon><a href=\"handbooksearch://Telegraph wire\">Telegraph wire</a>: spool allowing connection of equipment<br /><icon name=wpCircle></icon><a href=\"handbooksearch://Insulator\">Insulator</a>: essential connector for extending and structuring your telegraph network<br /><icon name=wpCircle></icon><a href=\"handbooksearch://Printer\">Printer</a>: prints telegrams when placed under a telegraph key; requires paper slips",
+  "telegraph-text": "<strong>RP Voice Chat - Telegraph</strong><br /><br />The telegraph system allows transmitting coded messages over long distances through a network of wires and specialized equipment. This revolutionary technology enables you to communicate silently with your allies over great distances, perfect for coordinating strategies or transmitting sensitive information.<br /><br />The telegraph works through an audible sound code within a limited radius around the device.<br /><br /><icon name=wpCircle></icon><a href=\"handbooksearch://Telegraph key\">Telegraph key</a>: main device for sending and receiving coded messages<br /><icon name=wpCircle></icon><a href=\"handbooksearch://Telegraph wire\">Telegraph wire</a>: spool allowing connection of equipment<br /><icon name=wpCircle></icon><a href=\"handbooksearch://Insulator\">Insulator</a>: essential connector for extending and structuring your telegraph network<br /><icon name=wpCircle></icon><a href=\"handbooksearch://Wire cutter\">Wire cutter</a>: tool for cutting wire connections to reconfigure networks<br /><icon name=wpCircle></icon><a href=\"handbooksearch://Printer\">Printer</a>: prints telegrams when placed under a telegraph key; requires paper slips",
   "megaphones-title": "RP Voice Chat - Megaphones",
   "megaphones-text": "<strong>RP Voice Chat - Megaphones</strong><br /><br />Megaphones amplify your voice far beyond normal speech range. You will be able to use different models:<br /><br /><icon name=wpCircle></icon><a href=\"handbooksearch://Megaphone\">Megaphone</a>: carries your voice up to 125 blocks; still affected by distance and obstacles<br /><icon name=wpCircle></icon><a href=\"handbooksearch://Administrator's Megaphone\">Administrator's Megaphone</a>: exceptional device, whose manufacturing secret Jonas took to his grave, carrying voice over long distances and through matter"
 }
