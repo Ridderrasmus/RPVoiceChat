@@ -1,9 +1,9 @@
 {
-  "code": "churchbellmold",
+  "code": "wirecutterjawmold",
   "enabled": true,
   "classByType": {
-    "churchbellmold-*-raw-*": "Block",
-    "churchbellmold-*-fired-*": "BlockToolMold"
+    "wirecutterjawmold-*-raw-*": "Block",
+    "wirecutterjawmold-*-fired-*": "BlockToolMold"
   },
   "behaviorsByType": {
     "*-raw-*": [
@@ -22,6 +22,9 @@
       { "name": "UnstableFalling" }
     ]
   },
+  "entityBehaviorsByType": {
+    "wirecutterjawmold-*-fired-*": [ { "name": "TemperatureSensitive" } ]
+  },
   "variantgroups": [
     {
       "code": "color",
@@ -32,100 +35,42 @@
       "states": [ "raw", "fired" ]
     },
     {
-      "code": "layer",
-      "states": [ "part-brass-bottom", "part-brass-middle", "part-brass-top", "layer-brass-topmost" ]
+      "code": "tooltype",
+      "states": [ "wirecutterjaw" ]
     }
   ],
   "entityClassByType": {
-    "churchbellmold-*-fired-*": "ToolMold"
+    "wirecutterjawmold-*-fired-*": "ToolMold"
   },
   "attributesByType": {
-    "churchbellmold-*-fired-part-brass-bottom": {
-      "requiredUnits": 300,
+    "wirecutterjawmold-*-fired-wirecutterjaw": {
+      "requiredUnits": 100,
       "fillHeight": 2,
       "fillQuadsByLevel": [
         {
-          "x1": 2,
-          "z1": 2,
-          "x2": 14,
-          "z2": 8
-        }
-      ],
-      "moldrackable": true,
-      "onmoldrackTransform": { "rotation": { "z": 90 } },
-      "drop": {
-        "type": "Block",
-        "code": "churchbell-{layer}",
-        "quantity": 1
-      }
-    },
-    "churchbellmold-*-fired-part-brass-middle": {
-      "requiredUnits": 300,
-      "fillHeight": 2,
-      "fillQuadsByLevel": [
-        {
-          "x1": 2,
-          "z1": 2,
-          "x2": 14,
-          "z2": 10
-        }
-      ],
-      "moldrackable": true,
-      "onmoldrackTransform": { "rotation": { "z": 90 } },
-      "drop": {
-        "type": "Block",
-        "code": "churchbell-{layer}",
-        "quantity": 1
-      }
-    },
-    "churchbellmold-*-fired-part-brass-top": {
-      "requiredUnits": 300,
-      "fillHeight": 2,
-      "fillQuadsByLevel": [
-        {
-          "x1": 3,
-          "z1": 2,
-          "x2": 12,
-          "z2": 14
-        }
-      ],
-      "moldrackable": true,
-      "onmoldrackTransform": { "rotation": { "z": 90 } },
-      "drop": {
-        "type": "Block",
-        "code": "churchbell-{layer}",
-        "quantity": 1
-      }
-    },
-    "churchbellmold-*-fired-layer-brass-topmost": {
-      "requiredUnits": 300,
-      "fillHeight": 2,
-      "fillQuadsByLevel": [
-        {
-          "x1": 4,
+          "x1": 6,
           "z1": 4,
-          "x2": 13,
+          "x2": 10,
           "z2": 12
         }
       ],
       "moldrackable": true,
-      "onmoldrackTransform": { "rotation": { "z": 90 } },
       "drop": {
-        "type": "Block",
-        "code": "churchbell-{layer}",
+        "type": "item",
+        "code": "{tooltype}-{metal}",
         "quantity": 1
       }
     }
   },
   "combustiblePropsByType": {
-    "churchbellmold-*-raw-*": {
+    "wirecutterjawmold-*-raw-*": {
       "meltingPoint": 650,
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
       "smeltedStack": {
         "type": "block",
-        "code": "churchbellmold-{color}-fired-{layer}"
+        "code": "wirecutterjawmold-{color}-fired-{tooltype}"
       },
       "requiresContainer": false
     }
@@ -141,22 +86,19 @@
   "maxStackSize": 8,
   "lightAbsorption": 0,
   "texturesByType": {
-    "churchbellmold-*-raw-*": { "all": { "base": "game:block/clay/{color}clay" } },
-    "churchbellmold-*-fired-*": {
+    "wirecutterjawmold-*-raw-*": { "all": { "base": "game:block/clay/{color}clay" } },
+    "wirecutterjawmold-*-fired-*": {
       "all": { "base": "game:block/clay/hardened/{color}" }
     }
   },
-  "shapeByType": {
-    "churchbellmold-*-part-*-bottom": { "base": "block/clay/mold/churchbell-part-bottom" },
-    "churchbellmold-*-part-*-middle": { "base": "block/clay/mold/churchbell-part-middle" },
-    "churchbellmold-*-part-*-top": { "base": "block/clay/mold/churchbell-part-top" },
-    "churchbellmold-*-layer-*-topmost": { "base": "block/clay/mold/churchbell-layer-topmost" }
+  "shape": {
+    "base": "block/clay/mold/wirecutter-jaw"
   },
   "sounds": {
     "walk": "game:walk/stone"
   },
   "handbook": {
-    "groupBy": [ "churchbellmold-*-{materialtype}-{layer}" ]
+    "groupBy": [ "wirecutterjawmold-*-{materialtype}-{tooltype}" ]
   },
   "collisionboxByType": {
     "*-anvil": {
@@ -273,3 +215,9 @@
     "scale": 1
   }
 }
+
+
+
+
+
+

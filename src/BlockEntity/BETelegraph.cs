@@ -18,9 +18,13 @@ using Vintagestory.API.Client.Tesselation;
 
 namespace RPVoiceChat.GameContent.BlockEntity
 {
-    public class BlockEntityTelegraph : WireNode
+    public class BlockEntityTelegraph : BEWireNode, INetworkRoot
     {
         TelegraphMenuDialog dialog;
+
+        // INetworkRoot implementation - stores the original network ID created by this root
+        private long originalCreatedNetworkID = 0;
+        public long CreatedNetworkID => originalCreatedNetworkID;
 
         public bool IsPlaying { get; private set; }
         public int Volume { get; set; } = 8;
@@ -53,9 +57,23 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
         }
 
+        public override void OnNetworkCreated(long networkID)
+        {
+            base.OnNetworkCreated(networkID);
+            // Store the original network ID created by this root
+            if (originalCreatedNetworkID == 0)
+            {
+                originalCreatedNetworkID = networkID;
+                MarkDirty();
+            }
+        }
+
         public override void Initialize(ICoreAPI api)
         {
             base.Initialize(api);
+
+            // Don't initialize originalCreatedNetworkID here - it should only be set when OnNetworkCreated is called
+            // This ensures that only roots that actually created a network have originalCreatedNetworkID set
 
             IsPlaying = false;
             lastReceivedActivityTime = api.World.ElapsedMilliseconds;
@@ -83,6 +101,12 @@ namespace RPVoiceChat.GameContent.BlockEntity
             base.FromTreeAttributes(tree, worldForResolving);
             sentMessageOriginal = tree.GetString("sentMessage");
             receivedMessageOriginal = tree.GetString("receivedMessage");
+            long savedOriginalCreatedNetworkID = tree.GetLong("originalCreatedNetworkID", 0);
+            // Only restore if it's not 0 (meaning this root actually created a network)
+            if (savedOriginalCreatedNetworkID != 0)
+            {
+                originalCreatedNetworkID = savedOriginalCreatedNetworkID;
+            }
             UpdateDisplayMessages();
             
             // Update dialog if it exists
@@ -98,6 +122,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             base.ToTreeAttributes(tree);
             tree.SetString("sentMessage", sentMessageOriginal);
             tree.SetString("receivedMessage", receivedMessageOriginal);
+            tree.SetLong("originalCreatedNetworkID", originalCreatedNetworkID);
         }
 
         protected override void SetWireAttachmentOffset()

@@ -1,6 +1,6 @@
 ﻿using Vintagestory.API.Common;
 
-public class ConnectorBlock : Block
+public class ConnectorBlock : WireNodeBlock
 {
     public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
     {

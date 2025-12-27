@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.Systems;
 using Vintagestory.API.Common;
 
@@ -9,12 +10,12 @@ namespace RPVoiceChat.GameContent.Systems
     public class WireNetwork
     {
         public long networkID;
-        public List<WireNode> Nodes { get; private set; } = new List<WireNode>();
-        public event Action<WireNode, string> OnReceivedSignal;
+        public List<BEWireNode> Nodes { get; private set; } = new List<BEWireNode>();
+        public event Action<BEWireNode, string> OnReceivedSignal;
 
         public WireNetwork() { }
 
-        public void AddNode(WireNode node)
+        public void AddNode(BEWireNode node)
         {
             if (node == null || Nodes.Contains(node))
                 return;
@@ -34,7 +35,7 @@ namespace RPVoiceChat.GameContent.Systems
             }
         }
 
-        public void RemoveNode(WireNode node)
+        public void RemoveNode(BEWireNode node)
         {
             if (node == null)
                 return;
@@ -59,7 +60,7 @@ namespace RPVoiceChat.GameContent.Systems
             }
         }
 
-        public void SendSignal(WireNode sender, string message)
+        public void SendSignal(BEWireNode sender, string message)
         {
             OnReceivedSignal?.Invoke(sender, message);
 

@@ -1,7 +1,7 @@
 ﻿using RPVoiceChat.GameContent.BlockEntity;
 using Vintagestory.API.Common;
 
-public class TelegraphBlock : Block
+public class TelegraphBlock : WireNodeBlock
 {
     public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
     {

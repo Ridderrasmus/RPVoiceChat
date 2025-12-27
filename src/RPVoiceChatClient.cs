@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 
 namespace RPVoiceChat
 {
@@ -33,6 +34,14 @@ namespace RPVoiceChat
         public override bool ShouldLoad(EnumAppSide forSide)
         {
             return forSide == EnumAppSide.Client;
+        }
+
+        public override void StartPre(ICoreAPI api)
+        {
+            base.StartPre(api);
+            // Set world config values for patches to work (needed for singleplayer)
+            WorldConfig.Set("additional-content", ModConfig.ServerConfig.AdditionalContent);
+            WorldConfig.Set("telegraph-content", ModConfig.ServerConfig.TelegraphContent);
         }
 
         public override void StartClientSide(ICoreClientAPI api)
@@ -119,7 +128,24 @@ namespace RPVoiceChat
             microphoneManager.Launch();
             audioOutputManager.Launch();
             guiManager.firstLaunchDialog.ShowIfNecessary();
+            
+            ShowMacOSMicrophoneWarningOnce();
             isReady = true;
+        }
+
+        private static bool macosMicWarningShown = false;
+
+        private void ShowMacOSMicrophoneWarningOnce()
+        {
+            if (RuntimeEnv.OS != OS.Mac) return;
+            if (macosMicWarningShown) return;
+            macosMicWarningShown = true;
+
+            const string wikiLink = "https://github.com/Ridderrasmus/RPVoiceChat/wiki/Troubleshooting#macos-microphone-access-issues";
+            string message = "\u00A76[RPVoiceChat] WARNING macOS: if microphone doesn't work, see: \u00A7l" + wikiLink + "\u00A7r";
+
+            capi.TriggerChatMessage(message);
+            Logger.client.Warning("macOS detected. If microphone doesn't work, see: " + wikiLink);
         }
 
         private void Event_KeyUp(KeyEvent e)
