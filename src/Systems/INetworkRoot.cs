@@ -13,4 +13,3 @@ namespace RPVoiceChat.GameContent.Systems
         long CreatedNetworkID { get; }
     }
 }
-

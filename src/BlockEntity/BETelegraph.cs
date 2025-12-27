@@ -6,7 +6,6 @@ using RPVoiceChat.Config;
 using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Systems;
-using RPVoiceChat.Systems;
 using RPVoiceChat.Networking.Packets;
 using RPVoiceChat.Util;
 using Vintagestory.API.Client;

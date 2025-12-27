@@ -36,6 +36,14 @@ namespace RPVoiceChat
             return forSide == EnumAppSide.Client;
         }
 
+        public override void StartPre(ICoreAPI api)
+        {
+            base.StartPre(api);
+            // Set world config values for patches to work (needed for singleplayer)
+            WorldConfig.Set("additional-content", ModConfig.ServerConfig.AdditionalContent);
+            WorldConfig.Set("telegraph-content", ModConfig.ServerConfig.TelegraphContent);
+        }
+
         public override void StartClientSide(ICoreClientAPI api)
         {
             capi = api;
