@@ -5,9 +5,8 @@
   "behaviors": [{ 
 	"name": "GroundStorable",
 	"properties": {
-	  "layout": 'WallHalves',
-	  "wallOffY": 1,
-	  "ctrlKey": true,
+	  "layout": 'Halves',
+	  "sprintKey": true,
 	  "selectionBox": { x1: 0, y1: 0, z1: 0, x2: 1, y2: 0.1, z2: 1 },
 	  "collisionBox": { x1: 0, y1: 0, z1: 0, x2: 0, y2: 0, z2: 0 },
 	}
@@ -20,6 +19,12 @@
     "rpvoicechat": [ "*" ]
   },
   "attributes": {
+    "rackable": true,
+    "toolrackTransform": {
+      "rotation": { x: 0, y: -91, z: 0 },
+	  "origin": { x: 0.5, y: -0.7, z: 0.5 },
+	  "scale": 1.51
+    },
     "handbook": {
       "groupBy": [ "wirecutter-*" ],
       "extraSections": [
@@ -66,7 +71,5 @@
 	"rotation": { x: -46, y: 24, z: 0 },
 	"origin": { x: 0.63, y: 0.4, z: 0.2 },
 	"scale": 3.06
-  }
+  },
 }
-
-
