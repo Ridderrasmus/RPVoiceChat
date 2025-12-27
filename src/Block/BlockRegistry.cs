@@ -7,8 +7,8 @@ namespace RPVoiceChat.GameContent.Block
     {
         public static void RegisterBlocks(ICoreAPI api)
         {
-            // Toujours enregistrer les classes, même si le contenu est désactivé
-            // Les blocks seront désactivés dans AssetsFinalize si nécessaire
+            // Always register all block classes - blocks will be disabled via JSON patches if needed
+            // This prevents "no such class registered" errors when JSON files reference these classes
             api.RegisterBlockClass("soundemittingblock", typeof(SoundEmittingBlock));
             api.RegisterBlockClass("churchbellpart", typeof(ChurchBellPartBlock));
             api.RegisterBlockClass("churchbelllayer", typeof(ChurchBellLayerBlock));

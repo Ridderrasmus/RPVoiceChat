@@ -36,6 +36,14 @@ namespace RPVoiceChat
             return forSide == EnumAppSide.Client;
         }
 
+        public override void StartPre(ICoreAPI api)
+        {
+            base.StartPre(api);
+            // Set world config values for patches to work (needed for singleplayer)
+            WorldConfig.Set("additional-content", ModConfig.ServerConfig.AdditionalContent);
+            WorldConfig.Set("telegraph-content", ModConfig.ServerConfig.TelegraphContent);
+        }
+
         public override void StartClientSide(ICoreClientAPI api)
         {
             capi = api;
@@ -121,34 +129,22 @@ namespace RPVoiceChat
             audioOutputManager.Launch();
             guiManager.firstLaunchDialog.ShowIfNecessary();
             
-            // Check for macOS microphone issues and show warning
-            CheckMacOSMicrophoneAccess();
-            
+            ShowMacOSMicrophoneWarningOnce();
             isReady = true;
         }
 
-        private void CheckMacOSMicrophoneAccess()
+        private static bool macosMicWarningShown = false;
+
+        private void ShowMacOSMicrophoneWarningOnce()
         {
             if (RuntimeEnv.OS != OS.Mac) return;
-            
-            // Delay the check slightly to allow microphone initialization
-            capi.Event.RegisterCallback((dt) =>
-            {
-                // Check if microphone capture failed to initialize
-                if (microphoneManager != null && !microphoneManager.IsCaptureInitialized)
-                {
-                    ShowMacOSWarning();
-                }
-            }, 2000); // Wait 2 seconds for initialization
-        }
+            if (macosMicWarningShown) return;
+            macosMicWarningShown = true;
 
-        private void ShowMacOSWarning()
-        {
-            string wikiLink = "https://github.com/Ridderrasmus/RPVoiceChat/wiki/Troubleshooting#macos-microphone-access-issues";
-            string warningMessage = $"§c[RPVoiceChat] ⚠ Warning: macOS microphone access may require special setup. " +
-                                  $"See: §l{wikiLink}§r";
-            
-            capi.ShowChatMessage(warningMessage);
+            const string wikiLink = "https://github.com/Ridderrasmus/RPVoiceChat/wiki/Troubleshooting#macos-microphone-access-issues";
+            string message = "\u00A76[RPVoiceChat] WARNING macOS: if microphone doesn't work, see: \u00A7l" + wikiLink + "\u00A7r";
+
+            capi.TriggerChatMessage(message);
             Logger.client.Warning("macOS detected. If microphone doesn't work, see: " + wikiLink);
         }
 

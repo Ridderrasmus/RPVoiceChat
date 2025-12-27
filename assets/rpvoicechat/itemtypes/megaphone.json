@@ -1,6 +1,6 @@
 {
   "code": "megaphone",
-  "class": "voiceamplifieritem",
+  "class": "voiceamplifier",
   "enabled": true,
   "maxStackSize": 1,
   "creativeinventory": {
