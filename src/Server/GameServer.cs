@@ -75,14 +75,69 @@ namespace RPVoiceChat.Server
                 return;
             }
 
+            // Security checks: Validate megaphone-related parameters on server side
+            // This prevents clients from manipulating audio transmission without having the items
+            var megaphoneInfo = GetPlayerMegaphoneInfo(transmittingPlayer);
+            
+            // Validate global broadcast - only allowed with enhanced megaphone
+            bool isGlobalBroadcast = false;
+            if (packet.IsGlobalBroadcast)
+            {
+                isGlobalBroadcast = megaphoneInfo.HasEnhancedMegaphone;
+                if (!isGlobalBroadcast)
+                {
+                    // Player tried to use global broadcast without having the item - log and ignore
+                    Logger.server.Warning($"Player {packet.PlayerId} attempted to use global broadcast without enhanced megaphone. Request denied.");
+                    packet.IsGlobalBroadcast = false;
+                }
+            }
+
+            // Validate ignoreDistanceReduction - only allowed with enhanced megaphone
+            if (packet.IgnoreDistanceReduction && !megaphoneInfo.HasEnhancedMegaphone)
+            {
+                Logger.server.Warning($"Player {packet.PlayerId} attempted to ignore distance reduction without enhanced megaphone. Request denied.");
+                packet.IgnoreDistanceReduction = false;
+            }
+
+            // Validate wallThicknessOverride - only allowed with enhanced megaphone
+            if (packet.WallThicknessOverride >= 0 && !megaphoneInfo.HasEnhancedMegaphone)
+            {
+                Logger.server.Warning($"Player {packet.PlayerId} attempted to override wall thickness without enhanced megaphone. Request denied.");
+                packet.WallThicknessOverride = -1f;
+            }
+
+            // Validate transmission range - should match configured megaphone range if using megaphone
+            // If player has a megaphone, validate the transmission range
+            if (megaphoneInfo.HasMegaphone || megaphoneInfo.HasEnhancedMegaphone)
+            {
+                int maxAllowedRange = megaphoneInfo.HasEnhancedMegaphone 
+                    ? int.MaxValue // Enhanced megaphone has no range limit (global broadcast)
+                    : ServerConfigManager.MegaphoneAudibleDistance;
+                
+                if (packet.TransmissionRangeBlocks > maxAllowedRange && !megaphoneInfo.HasEnhancedMegaphone)
+                {
+                    Logger.server.Warning($"Player {packet.PlayerId} attempted to use transmission range {packet.TransmissionRangeBlocks} which exceeds megaphone limit {maxAllowedRange}. Request denied.");
+                    packet.TransmissionRangeBlocks = maxAllowedRange;
+                }
+            }
+            else if (packet.TransmissionRangeBlocks > 0)
+            {
+                // Player doesn't have a megaphone but is trying to use custom transmission range
+                // This could be legitimate (from other items) but we should validate it's reasonable
+                int maxNormalRange = WorldConfig.GetInt(VoiceLevel.Shouting);
+                if (packet.TransmissionRangeBlocks > maxNormalRange * 2)
+                {
+                    Logger.server.Warning($"Player {packet.PlayerId} attempted to use transmission range {packet.TransmissionRangeBlocks} without megaphone. Request denied.");
+                    packet.TransmissionRangeBlocks = 0; // Reset to use voice level default
+                }
+            }
+
+            // Calculate effective distance AFTER all validations to ensure consistency
             int effectiveDistance = packet.TransmissionRangeBlocks > 0
                 ? packet.TransmissionRangeBlocks
                 : WorldConfig.GetInt(packet.VoiceLevel);
 
             packet.EffectiveRange = effectiveDistance;
-
-            // Check if it is a global broadcast via the dedicated flag
-            bool isGlobalBroadcast = packet.IsGlobalBroadcast;
 
             float squareDistance = 0f;
             if (!isGlobalBroadcast)
@@ -220,6 +275,62 @@ namespace RPVoiceChat.Server
         public VoiceBanManager GetVoiceBanManager()
         {
             return voiceBanManager;
+        }
+
+        /// <summary>
+        /// Information about megaphone items held by the player
+        /// </summary>
+        private struct MegaphoneInfo
+        {
+            public bool HasMegaphone;
+            public bool HasEnhancedMegaphone;
+        }
+
+        /// <summary>
+        /// Validates that the player has megaphone items in their hands
+        /// This prevents clients from using megaphone features without actually having the items
+        /// </summary>
+        private MegaphoneInfo GetPlayerMegaphoneInfo(IPlayer player)
+        {
+            var info = new MegaphoneInfo();
+
+            if (player?.Entity == null) return info;
+
+            // Check active hand (right hand)
+            var activeSlot = player.Entity.RightHandItemSlot;
+            if (activeSlot?.Itemstack?.Item != null)
+            {
+                var itemCode = activeSlot.Itemstack.Item.Code?.ToString() ?? "";
+                if (itemCode == "rpvoicechat:enhancedmegaphone")
+                {
+                    info.HasEnhancedMegaphone = true;
+                    info.HasMegaphone = true;
+                }
+                else if (itemCode == "rpvoicechat:megaphone")
+                {
+                    info.HasMegaphone = true;
+                }
+            }
+
+            // Check left hand
+            var leftSlot = player.Entity.LeftHandItemSlot;
+            if (leftSlot?.Itemstack?.Item != null)
+            {
+                var itemCode = leftSlot.Itemstack.Item.Code?.ToString() ?? "";
+                if (itemCode == "rpvoicechat:enhancedmegaphone")
+                {
+                    info.HasEnhancedMegaphone = true;
+                    info.HasMegaphone = true;
+                }
+                else if (itemCode == "rpvoicechat:megaphone")
+                {
+                    info.HasMegaphone = true;
+                }
+            }
+
+            // Note: We don't check the entire inventory for performance reasons
+            // The megaphone must be in hand to be used, which is consistent with game mechanics
+            return info;
         }
 
         public void Dispose()
