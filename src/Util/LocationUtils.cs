@@ -14,7 +14,7 @@ namespace RPVoiceChat.Util
 
     public static class LocationUtils
     {
-        private static int maxRayTraceDistance = 100;
+        private static int maxRayTraceDistance = 50; // Reduced from 100 to 50 for better performance
         private static string[] transparentBlocks = new string[]
         {
             "BlockGroundStorage",
