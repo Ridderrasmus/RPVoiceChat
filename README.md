@@ -69,7 +69,7 @@ All user-related configuration options are documented in the wiki:
 https://github.com/Ridderrasmus/RPVoiceChat/wiki/User-Guide
 
 Client configuration file location:
-`ModConfig/rpvoicechat-client.json`
+`ModConfig/RPVoiceChat/rpvoicechat-client.json`
 
 ---
 
@@ -79,7 +79,7 @@ All server-side configuration options are documented here:
 https://github.com/Ridderrasmus/RPVoiceChat/wiki/Server-Administration
 
 Server configuration file location:
-`ModConfig/rpvoicechat-server.json`
+`ModConfig/RPVoiceChat/rpvoicechat-server.json`
 
 ### In-game configuration commands
 World-specific `/rpvc` commands are documented here:
