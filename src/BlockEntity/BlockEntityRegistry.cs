@@ -1,4 +1,4 @@
-﻿using RPVoiceChat.Config;
+using RPVoiceChat.Config;
 using Vintagestory.API.Common;
 
 namespace RPVoiceChat.GameContent.BlockEntity

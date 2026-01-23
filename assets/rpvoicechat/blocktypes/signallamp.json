@@ -1,0 +1,84 @@
+{
+  "code": "signallamp",
+  "enabled": true,
+  "class": "signallampblock",
+  "behaviors": [
+    { "name": "HorizontalOrientable" }
+  ],
+  "entityBehaviors": [
+    { "name": "BELightSource" }
+  ],
+  "creativeinventory": {
+    "general": [ "*-north" ],
+    "rpvoicechat": [ "*-north" ]
+  },
+  "maxstacksize": 16,
+  "blockmaterial": "metal",
+  "variantgroups": [
+    {
+      "code": "metal",
+      "states": [ "copper", "tinbronze", "bismuthbronze", "blackbronze", "brass" ],
+      "loadFromProperties": "block/metal"
+    },
+    {
+      "code": "side",
+      "loadFromProperties": "abstract/horizontalorientation"
+    }
+  ],
+  "drawtype": "json",
+  "shape": {
+    "base": "block/signallamp/signallamp",
+    "rotateYByType": {
+      "*-north": 0,
+      "*-east": 270,
+      "*-west": 90,
+      "*-south": 180
+    }
+  },
+  "sounds": {
+    "place": "game:block/metal",
+    "hit": "game:block/metal",
+    "break": "game:block/metal",
+    "walk": "game:walk/stone"
+  },
+  "collisionBox": {
+    "x1": 0.25,
+    "y1": 0,
+    "z1": 0.25,
+    "x2": 0.75,
+    "y2": 0.5,
+    "z2": 0.75
+  },
+  "selectionBox": {
+    "x1": 0.25,
+    "y1": 0,
+    "z1": 0.25,
+    "x2": 0.75,
+    "y2": 0.5,
+    "z2": 0.75
+  },
+  "textures": {
+    "metal": { "base": "game:block/metal/plate/{metal}" },
+    "glass": { "base": "game:block/glass/plain" }
+  },
+  "rainPermeable": false,
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "lightAbsorption": 0,
+  "resistance": 3,
+  "attributes": {
+    "handbook": {
+      "groupBy": [ "signallamp-*" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-signallamp.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-signallamp.Text"
+        }
+      ]
+    }
+  }
+}
