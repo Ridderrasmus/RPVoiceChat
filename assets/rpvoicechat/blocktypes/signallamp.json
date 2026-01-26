@@ -12,13 +12,12 @@
     "general": [ "*-north" ],
     "rpvoicechat": [ "*-north" ]
   },
-  "maxstacksize": 16,
+  "maxstacksize": 1,
   "blockmaterial": "metal",
   "variantgroups": [
     {
       "code": "metal",
-      "states": [ "copper", "tinbronze", "bismuthbronze", "blackbronze", "brass" ],
-      "loadFromProperties": "block/metal"
+      "states": [ "copper", "tinbronze", "bismuthbronze", "blackbronze", "brass" ]
     },
     {
       "code": "side",

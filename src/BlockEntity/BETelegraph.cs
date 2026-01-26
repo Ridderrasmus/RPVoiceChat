@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -50,7 +50,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private long sentCountdownEndTime = 0;
         private bool telegramPrinted = false; // Flag to track if telegram has been created
 
-        // Animation util pour jouer l'animation "click" et gérer l'orientation
+        // Animation util to play the "click" animation and handle orientation
         public BlockEntityAnimationUtil animUtil { get { return this.GetAnimUtil(); } }
 
         public BlockEntityTelegraph() : base()

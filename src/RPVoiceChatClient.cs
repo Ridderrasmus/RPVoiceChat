@@ -4,6 +4,7 @@ using RPVoiceChat.Config;
 using RPVoiceChat.DB;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Networking;
+using RPVoiceChat.Networking.Packets;
 using RPVoiceChat.Systems;
 using RPVoiceChat.Util;
 using System;
@@ -49,6 +50,9 @@ namespace RPVoiceChat
             capi = api;
 
             WireNetworkHandler.RegisterClientside(api);
+
+            // Set up handler for announcements (channel already registered in Start())
+            AnnounceClientChannel.SetMessageHandler<AnnouncePacket>(OnAnnounceReceived);
 
             // Sneak in native dlls
             EmbeddedDllClass.ExtractEmbeddedDlls();
@@ -176,6 +180,18 @@ namespace RPVoiceChat
 
             if (microphoneManager.AudioWizardActive) return;
             client.SendAudioToServer(packet);
+        }
+
+        private void OnAnnounceReceived(AnnouncePacket packet)
+        {
+            if (guiManager?.announce != null)
+            {
+                guiManager.announce.ShowAnnouncement(packet.Title, packet.Message, packet.Duration, packet.ShowBackground);
+            }
+            else
+            {
+                Logger.client.Warning("GuiManager or announce is null, cannot display announcement");
+            }
         }
 
         public override void Dispose()

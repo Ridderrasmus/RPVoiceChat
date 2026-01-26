@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RPVoiceChat.Config;
 using RPVoiceChat.Networking;
+using RPVoiceChat.Networking.Packets;
 using RPVoiceChat.Server;
 using RPVoiceChat.Systems;
 using RPVoiceChat.Util;
@@ -127,6 +128,14 @@ namespace RPVoiceChat
                     .WithDesc(UIUtils.I18n("Command.VoiceBanList.Desc"))
                     .HandleWith(VoiceBanListHandler)
                 .EndSub();
+            
+            // Announce command - format: /announce Title | Message | Duration | glass (optional)
+            sapi.ChatCommands
+                .GetOrCreate("announce")
+                .RequiresPrivilege(Privilege.controlserver)
+                .WithDesc(UIUtils.I18n("Command.Announce.Desc"))
+                .WithArgs(parsers.All("title | message | duration | glass"))
+                .HandleWith(AnnounceHandler);
         }
 
         private TextCommandResult ToggleOthersHearSpectators(TextCommandCallingArgs args)
@@ -289,6 +298,81 @@ namespace RPVoiceChat
             }
 
             return TextCommandResult.Success(UIUtils.I18n("Command.VoiceBanList.Success", string.Join(", ", playerNames)));
+        }
+
+        private TextCommandResult AnnounceHandler(TextCommandCallingArgs args)
+        {
+            string fullText = (string)args[0];
+
+            if (string.IsNullOrWhiteSpace(fullText))
+            {
+                return TextCommandResult.Error(UIUtils.I18n("Command.Announce.Usage"));
+            }
+
+            // Split by | separator
+            string[] parts = fullText.Split('|');
+            if (parts.Length < 2)
+            {
+                return TextCommandResult.Error(UIUtils.I18n("Command.Announce.MissingSeparator"));
+            }
+
+            string title = parts[0].Trim();
+            string message = parts[1].Trim();
+            double duration = 5.0; // Default duration
+            bool showBackground = true;
+
+            // Parse optional duration
+            if (parts.Length >= 3)
+            {
+                string durationStr = parts[2].Trim();
+                if (!string.IsNullOrWhiteSpace(durationStr))
+                {
+                    if (!double.TryParse(durationStr, out duration) || duration <= 0)
+                    {
+                        return TextCommandResult.Error(UIUtils.I18n("Command.Announce.InvalidDuration", durationStr));
+                    }
+                }
+            }
+
+            // Parse optional glass flag (semi-transparent background)
+            if (parts.Length >= 4)
+            {
+                string bgFlag = parts[3].Trim().ToLowerInvariant();
+                if (bgFlag == "glass" || bgFlag == "transparent" || bgFlag == "1")
+                {
+                    showBackground = false;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                return TextCommandResult.Error(UIUtils.I18n("Command.Announce.EmptyTitle"));
+            }
+
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return TextCommandResult.Error(UIUtils.I18n("Command.Announce.EmptyMessage"));
+            }
+
+            // Send announcement to all connected players
+            var packet = new AnnouncePacket(title, message, duration, showBackground);
+            foreach (IServerPlayer player in sapi.World.AllOnlinePlayers)
+            {
+                if (player.ConnectionState == EnumClientState.Playing)
+                {
+                    RPVoiceChatMod.AnnounceServerChannel.SendPacket(packet, player);
+                }
+            }
+
+            int playerCount = sapi.World.AllOnlinePlayers.Count();
+            if (showBackground)
+            {
+                return TextCommandResult.Success(UIUtils.I18n("Command.Announce.Success", playerCount, duration));
+            }
+            else
+            {
+                return TextCommandResult.Success(UIUtils.I18n("Command.Announce.SuccessGlass", playerCount, duration));
+            }
         }
 
         public override void Dispose()

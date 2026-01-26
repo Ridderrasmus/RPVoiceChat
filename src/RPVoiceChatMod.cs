@@ -22,6 +22,8 @@ namespace RPVoiceChat
         internal static IServerNetworkChannel ServerChannel;
         internal static IClientNetworkChannel TelegraphPrintClientChannel;
         internal static IServerNetworkChannel TelegraphPrintServerChannel;
+        internal static IClientNetworkChannel AnnounceClientChannel;
+        internal static IServerNetworkChannel AnnounceServerChannel;
 
         private PatchManager patchManager;
 
@@ -46,6 +48,9 @@ namespace RPVoiceChat
                     
                 TelegraphPrintClientChannel = capi.Network.RegisterChannel("telegraphprint")
                     .RegisterMessageType<TelegraphPrintPacket>();
+
+                AnnounceClientChannel = capi.Network.RegisterChannel("announce")
+                    .RegisterMessageType<AnnouncePacket>();
             }
             else if (api.Side == EnumAppSide.Server)
             {
@@ -57,6 +62,9 @@ namespace RPVoiceChat
                 TelegraphPrintServerChannel = sapi.Network.RegisterChannel("telegraphprint")
                     .RegisterMessageType<TelegraphPrintPacket>()
                     .SetMessageHandler<TelegraphPrintPacket>(OnTelegraphPrintPacket);
+
+                AnnounceServerChannel = sapi.Network.RegisterChannel("announce")
+                    .RegisterMessageType<AnnouncePacket>();
             }
 
             patchManager = new PatchManager(modID);
@@ -107,5 +115,6 @@ namespace RPVoiceChat
                 sapi.Logger.Warning($"Telegraph at {packet.TelegraphPos} not found for print packet");
             }
         }
+
     }
 }
