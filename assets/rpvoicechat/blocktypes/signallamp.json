@@ -2,11 +2,13 @@
   "code": "signallamp",
   "enabled": true,
   "class": "signallampblock",
+  "entityClass": "BlockEntitySignalLamp",
   "behaviors": [
     { "name": "HorizontalOrientable" }
   ],
   "entityBehaviors": [
-    { "name": "BELightSource" }
+    { "name": "BELightSource" },
+    { "name": "Animatable" }
   ],
   "creativeinventory": {
     "general": [ "*-north" ],
@@ -26,7 +28,7 @@
   ],
   "drawtype": "json",
   "shape": {
-    "base": "block/signallamp/signallamp",
+    "base": "block/signallamp",
     "rotateYByType": {
       "*-north": 0,
       "*-east": 270,
@@ -35,9 +37,9 @@
     }
   },
   "sounds": {
-    "place": "game:block/metal",
-    "hit": "game:block/metal",
-    "break": "game:block/metal",
+    "place": "game:block/anvil",
+    "hit": "game:block/anvil",
+    "break": "game:block/anvil",
     "walk": "game:walk/stone"
   },
   "collisionBox": {
@@ -58,7 +60,10 @@
   },
   "textures": {
     "metal": { "base": "game:block/metal/plate/{metal}" },
-    "glass": { "base": "game:block/glass/plain" }
+    "glass": { "base": "game:block/glass/plain" },
+    "wood": { "base": "game:block/wood-generic" },
+    "handle": { "base": "game:block/coal/bituminous" },
+    "candle": { "base": "game:block/candle-unlit" }
   },
   "rainPermeable": false,
   "sidesolid": {

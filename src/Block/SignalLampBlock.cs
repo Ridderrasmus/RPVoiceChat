@@ -1,3 +1,4 @@
+using RPVoiceChat.GameContent.BlockEntity;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 
@@ -10,14 +11,25 @@ namespace RPVoiceChat.GameContent.Block
     {
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
-            if (world.Side != EnumAppSide.Server) return true;
-
-            var blockEntity = world.BlockAccessor.GetBlockEntity(blockSel.Position);
-            var lightBehavior = blockEntity?.GetBehavior<BEBehaviorLightSource>();
-            if (lightBehavior != null)
+            var blockEntity = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BESignalLamp;
+            if (blockEntity != null)
             {
-                // Activate the light
-                lightBehavior.SetLightActive(true);
+                if (world.Side == EnumAppSide.Server)
+                {
+                    var lightBehavior = blockEntity.GetBehavior<BEBehaviorLightSource>();
+                    if (lightBehavior != null)
+                    {
+                        // Activate the light on server side
+                        lightBehavior.SetLightActive(true);
+                    }
+                    // Start animation on server side for synchronization
+                    blockEntity.StartSlatesAnimation();
+                }
+                else
+                {
+                    // Start animation on client side for immediate visual feedback
+                    blockEntity.StartSlatesAnimation();
+                }
             }
 
             return true; // Return true to continue the interaction
@@ -31,14 +43,25 @@ namespace RPVoiceChat.GameContent.Block
 
         public override bool OnBlockInteractCancel(float secondsUsed, IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel, EnumItemUseCancelReason cancelReason)
         {
-            if (world.Side != EnumAppSide.Server) return true;
-
-            var blockEntity = world.BlockAccessor.GetBlockEntity(blockSel.Position);
-            var lightBehavior = blockEntity?.GetBehavior<BEBehaviorLightSource>();
-            if (lightBehavior != null)
+            var blockEntity = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BESignalLamp;
+            if (blockEntity != null)
             {
-                // Deactivate the light if the interaction is cancelled
-                lightBehavior.SetLightActive(false);
+                if (world.Side == EnumAppSide.Server)
+                {
+                    var lightBehavior = blockEntity.GetBehavior<BEBehaviorLightSource>();
+                    if (lightBehavior != null)
+                    {
+                        // Deactivate the light if the interaction is cancelled
+                        lightBehavior.SetLightActive(false);
+                    }
+                    // Stop animation on server side
+                    blockEntity.StopSlatesAnimation();
+                }
+                else
+                {
+                    // Stop the animation on client side
+                    blockEntity.StopSlatesAnimation();
+                }
             }
 
             return true;
@@ -46,14 +69,25 @@ namespace RPVoiceChat.GameContent.Block
 
         public override void OnBlockInteractStop(float secondsUsed, IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
-            if (world.Side != EnumAppSide.Server) return;
-
-            var blockEntity = world.BlockAccessor.GetBlockEntity(blockSel.Position);
-            var lightBehavior = blockEntity?.GetBehavior<BEBehaviorLightSource>();
-            if (lightBehavior != null)
+            var blockEntity = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BESignalLamp;
+            if (blockEntity != null)
             {
-                // Deactivate the light when the click is released
-                lightBehavior.SetLightActive(false);
+                if (world.Side == EnumAppSide.Server)
+                {
+                    var lightBehavior = blockEntity.GetBehavior<BEBehaviorLightSource>();
+                    if (lightBehavior != null)
+                    {
+                        // Deactivate the light when the click is released
+                        lightBehavior.SetLightActive(false);
+                    }
+                    // Stop animation on server side
+                    blockEntity.StopSlatesAnimation();
+                }
+                else
+                {
+                    // Stop the animation on client side
+                    blockEntity.StopSlatesAnimation();
+                }
             }
         }
     }
