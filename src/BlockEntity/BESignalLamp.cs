@@ -1,3 +1,4 @@
+using RPVoiceChat;
 using RPVoiceChat.Util;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -25,7 +26,12 @@ namespace RPVoiceChat.GameContent.BlockEntity
         /// </summary>
         public void StartSlatesAnimation()
         {
+            bool wasRunning = animUtil?.activeAnimationsByAnimCode?.ContainsKey("slates") == true;
             this.StartAnimationIfNotRunning("slates");
+            if (!wasRunning && Api?.Side == EnumAppSide.Server)
+            {
+                PlayShutterSound();
+            }
         }
 
         /// <summary>
@@ -34,6 +40,18 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public void StopSlatesAnimation()
         {
             this.StopAnimation("slates");
+        }
+
+        private void PlayShutterSound()
+        {
+            Api.World.PlaySoundAt(
+                new AssetLocation(RPVoiceChatMod.modID, "sounds/block/signallamp/shutter.ogg"),
+                Pos.X + 0.5, Pos.Y + 0.5, Pos.Z + 0.5,
+                null,
+                false,
+                6,
+                0.25f
+            );
         }
     }
 }

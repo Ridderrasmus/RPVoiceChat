@@ -289,6 +289,7 @@
 					"name": "lens",
 					"from": [ 0.0, 4.0, 10.0 ],
 					"to": [ 10.0, 12.0, 11.0 ],
+					"renderPass": 3,
 					"rotationOrigin": [ 0.0, 4.0, 10.0 ],
 					"faces": {
 						"north": { "texture": "#glass", "uv": [ 0.0, 0.0, 10.0, 8.0 ] },
@@ -471,35 +472,34 @@
 							}
 						}
 					]
-				}
-			]
-		},
-		{
-			"name": "candle",
-			"from": [ 7.0, 3.0, 7.0 ],
-			"to": [ 9.0, 7.0, 9.0 ],
-			"rotationOrigin": [ 8.0, 3.0, 8.0 ],
-			"faces": {
-				"north": { "texture": "#candle", "uv": [ 0.0, 12.0, 2.0, 16.0 ] },
-				"east": { "texture": "#candle", "uv": [ 2.0, 12.0, 4.0, 16.0 ] },
-				"south": { "texture": "#candle", "uv": [ 5.0, 12.0, 7.0, 16.0 ] },
-				"west": { "texture": "#candle", "uv": [ 11.0, 12.0, 13.0, 16.0 ] },
-				"up": { "texture": "#candle", "uv": [ 14.0, 0.0, 16.0, 2.0 ] },
-				"down": { "texture": "#candle", "uv": [ 12.0, 14.0, 14.0, 16.0 ] }
-			},
-			"children": [
+				},
 				{
-					"name": "top",
-					"from": [ 0.8, 4.0, 0.8 ],
-					"to": [ 1.2, 4.5, 1.2 ],
+					"name": "candle",
+					"from": [ 4.0, 3.0, 4.0 ],
+					"to": [ 6.0, 7.0, 6.0 ],
+					"rotationOrigin": [ 5.0, 3.0, 5.0 ],
 					"faces": {
-						"north": { "texture": "#candle", "uv": [ 0.0, 0.0, 0.0, 0.5 ] },
-						"east": { "texture": "#candle", "uv": [ 0.0, 0.0, 0.0, 0.5 ] },
-						"south": { "texture": "#candle", "uv": [ 0.0, 0.0, 0.0, 0.5 ] },
-						"west": { "texture": "#candle", "uv": [ 0.0, 0.0, 0.0, 0.5 ] },
-						"up": { "texture": "#candle", "uv": [ 0.0, 0.0, 0.0, 0.0 ] },
-						"down": { "texture": "#candle", "uv": [ 0.0, 0.0, 0.5, 0.5 ], "enabled": false }
-					}
+						"north": { "texture": "#candle", "uv": [ 0.0, 12.0, 2.0, 16.0 ] },
+						"east": { "texture": "#candle", "uv": [ 2.0, 12.0, 4.0, 16.0 ] },
+						"south": { "texture": "#candle", "uv": [ 5.0, 12.0, 7.0, 16.0 ] },
+						"west": { "texture": "#candle", "uv": [ 11.0, 12.0, 13.0, 16.0 ] },
+						"up": { "texture": "#candle", "uv": [ 14.0, 0.0, 16.0, 2.0 ] },
+						"down": { "texture": "#candle", "uv": [ 12.0, 14.0, 14.0, 16.0 ] }
+					},
+					"children": [
+						{
+							"name": "top",
+							"from": [ 0.8, 4.0, 0.8 ],
+							"to": [ 1.2, 4.5, 1.2 ],
+							"faces": {
+								"north": { "texture": "#candle", "uv": [ 0.0, 0.0, 0.0, 0.5 ] },
+								"east": { "texture": "#candle", "uv": [ 0.0, 0.0, 0.0, 0.5 ] },
+								"south": { "texture": "#candle", "uv": [ 0.0, 0.0, 0.0, 0.5 ] },
+								"west": { "texture": "#candle", "uv": [ 0.0, 0.0, 0.0, 0.5 ] },
+								"up": { "texture": "#candle", "uv": [ 0.0, 0.0, 0.0, 0.0 ] }
+							}
+						}
+					]
 				}
 			]
 		}

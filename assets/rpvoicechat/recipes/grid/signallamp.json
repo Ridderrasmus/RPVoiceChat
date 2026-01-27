@@ -4,8 +4,8 @@
   "ingredientPattern": "PM_,GCM,PM_",
   "ingredients": {
     "M": {
-      "type": "block",
-      "code": "game:metalplate-*",
+      "type": "item",
+      "code": "game:metalplate-{metal}",
       "name": "metal",
       "quantity": 1
     },
@@ -29,6 +29,6 @@
   "height": 3,
   "output": {
     "type": "block",
-    "code": "signallamp-{metal}-north"
+    "code": "rpvoicechat:signallamp-{metal}-north"
   }
 }
