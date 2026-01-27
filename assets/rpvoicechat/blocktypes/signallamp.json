@@ -62,8 +62,8 @@
     "metal": { "base": "game:block/metal/plate/{metal}" },
     "glass": { "base": "game:block/glass/plain" },
     "wood": { "base": "game:block/wood-generic" },
-    "handle": { "base": "game:block/coal/bituminous" },
-    "candle": { "base": "game:block/candle-unlit" }
+    "gold": { "base": "game:block/metal/plate/gold" },
+    "candle": { "base": "game:block/candle" }
   },
   "rainPermeable": false,
   "sidesolid": {

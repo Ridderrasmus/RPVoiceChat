@@ -1,0 +1,34 @@
+{
+  "name": "signallamp",
+  "enabled": true,
+  "ingredientPattern": "PM_,GCM,PM_",
+  "ingredients": {
+    "M": {
+      "type": "block",
+      "code": "game:metalplate-*",
+      "name": "metal",
+      "quantity": 1
+    },
+    "G": {
+      "type": "block",
+      "code": "game:glass-*",
+      "quantity": 1
+    },
+    "C": {
+      "type": "item",
+      "code": "game:candle",
+      "quantity": 1
+    },
+    "P": {
+      "type": "item",
+      "code": "game:plank-*",
+      "quantity": 2
+    }
+  },
+  "width": 3,
+  "height": 3,
+  "output": {
+    "type": "block",
+    "code": "signallamp-{metal}-north"
+  }
+}
