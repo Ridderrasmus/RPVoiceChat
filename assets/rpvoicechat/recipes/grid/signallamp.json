@@ -5,8 +5,9 @@
   "ingredients": {
     "M": {
       "type": "item",
-      "code": "game:metalplate-{metal}",
+      "code": "game:metalplate-*",
       "name": "metal",
+      "allowedVariants": [ "copper", "tinbronze", "bismuthbronze", "blackbronze", "brass" ],
       "quantity": 1
     },
     "G": {

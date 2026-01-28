@@ -127,15 +127,13 @@ namespace RPVoiceChat
                 .BeginSub("voicebanlist")
                     .WithDesc(UIUtils.I18n("Command.VoiceBanList.Desc"))
                     .HandleWith(VoiceBanListHandler)
+                .EndSub()
+                .BeginSub("announce")
+                    .WithDesc(UIUtils.I18n("Command.Announce.Desc"))
+                    .WithAdditionalInformation(UIUtils.I18n("Command.Announce.Help"))
+                    .WithArgs(parsers.All("title | message | duration | glass"))
+                    .HandleWith(AnnounceHandler)
                 .EndSub();
-            
-            // Announce command - format: /announce Title | Message | Duration | glass (optional)
-            sapi.ChatCommands
-                .GetOrCreate("announce")
-                .RequiresPrivilege(Privilege.controlserver)
-                .WithDesc(UIUtils.I18n("Command.Announce.Desc"))
-                .WithArgs(parsers.All("title | message | duration | glass"))
-                .HandleWith(AnnounceHandler);
         }
 
         private TextCommandResult ToggleOthersHearSpectators(TextCommandCallingArgs args)
