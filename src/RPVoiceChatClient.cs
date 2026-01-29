@@ -184,6 +184,11 @@ namespace RPVoiceChat
 
         private void OnAnnounceReceived(AnnouncePacket packet)
         {
+            // Play a random callbell sound on announcement
+            int callbellIndex = capi.World.Rand.Next(1, 4); // 1, 2 oor 3
+            var callbellSound = new AssetLocation(RPVoiceChatMod.modID, $"sounds/block/callbell/callbell_{callbellIndex}.ogg");
+            capi.World.PlaySoundFor(callbellSound, capi.World.Player, range: float.MaxValue, volume: 0.7f);
+
             if (guiManager?.announce != null)
             {
                 guiManager.announce.ShowAnnouncement(packet.Title, packet.Message, packet.Duration, packet.ShowBackground);
