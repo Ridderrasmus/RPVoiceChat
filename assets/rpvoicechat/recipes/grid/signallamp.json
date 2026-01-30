@@ -12,7 +12,7 @@
     },
     "G": {
       "type": "block",
-      "code": "game:glass-*",
+      "code": "game:glasspane-leaded-*",
       "quantity": 1
     },
     "C": {
