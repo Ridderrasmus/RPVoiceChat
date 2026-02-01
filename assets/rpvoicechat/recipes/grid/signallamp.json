@@ -1,0 +1,35 @@
+{
+  "name": "signallamp",
+  "enabled": true,
+  "ingredientPattern": "PM_,GCM,PM_",
+  "ingredients": {
+    "M": {
+      "type": "item",
+      "code": "game:metalplate-*",
+      "name": "metal",
+      "allowedVariants": [ "copper", "tinbronze", "bismuthbronze", "blackbronze", "brass" ],
+      "quantity": 1
+    },
+    "G": {
+      "type": "block",
+      "code": "game:glasspane-leaded-*",
+      "quantity": 1
+    },
+    "C": {
+      "type": "item",
+      "code": "game:candle",
+      "quantity": 1
+    },
+    "P": {
+      "type": "item",
+      "code": "game:plank-*",
+      "quantity": 2
+    }
+  },
+  "width": 3,
+  "height": 3,
+  "output": {
+    "type": "block",
+    "code": "rpvoicechat:signallamp-{metal}-north"
+  }
+}
