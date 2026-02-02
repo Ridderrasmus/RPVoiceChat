@@ -1,4 +1,4 @@
-﻿using RPVoiceChat.Config;
+using RPVoiceChat.Config;
 using Vintagestory.API.Common;
 
 namespace RPVoiceChat.GameContent.Block
@@ -15,6 +15,7 @@ namespace RPVoiceChat.GameContent.Block
             api.RegisterBlockClass("telegraphblock", typeof(TelegraphBlock));
             api.RegisterBlockClass("connectorblock", typeof(ConnectorBlock));
             api.RegisterBlockClass("printerblock", typeof(PrinterBlock));
+            api.RegisterBlockClass("signallampblock", typeof(SignalLampBlock));
         }
     }
 }

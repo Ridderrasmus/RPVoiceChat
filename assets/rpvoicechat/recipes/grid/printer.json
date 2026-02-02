@@ -32,6 +32,6 @@
   "height": 3,
   "output": {
     "type": "block",
-    "code": "printer-{wood}-north"
+    "code": "rpvoicechat:printer-{wood}-north"
   }
 }

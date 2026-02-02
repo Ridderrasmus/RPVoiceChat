@@ -69,7 +69,7 @@ All user-related configuration options are documented in the wiki:
 https://github.com/Ridderrasmus/RPVoiceChat/wiki/User-Guide
 
 Client configuration file location:
-`ModConfig/rpvoicechat-client.json`
+`ModConfig/RPVoiceChat/rpvoicechat-client.json`
 
 ---
 
@@ -79,7 +79,7 @@ All server-side configuration options are documented here:
 https://github.com/Ridderrasmus/RPVoiceChat/wiki/Server-Administration
 
 Server configuration file location:
-`ModConfig/rpvoicechat-server.json`
+`ModConfig/RPVoiceChat/rpvoicechat-server.json`
 
 ### In-game configuration commands
 World-specific `/rpvc` commands are documented here:
@@ -111,6 +111,7 @@ Used libraries:
 - [RNNoise](https://jmvalin.ca/demo/rnnoise/) - BSD License
 
 Sound effects from [Freesound.org](https://freesound.org/):
-- [Furniture � Drawers open & close](https://freesound.org/people/Vrymaa/sounds/802695/) by Vrymaa - CC0
+- [Furniture - Drawers open & close](https://freesound.org/people/Vrymaa/sounds/802695/) by Vrymaa - CC0
 - [Dot matrix printer](https://freesound.org/people/DisasterServices/sounds/320008/) by DisasterServices - CC0
+- [Wooden plank snap](https://freesound.org/people/Tomlija/sounds/98056/) by Tomlija - CC BY 3.0
 
