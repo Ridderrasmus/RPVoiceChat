@@ -26,7 +26,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private List<BlockPos> pendingConnectionPositions = new();
         private IRenderer renderer;
 
-        protected EventHandler<string> OnReceivedSignalEvent { get; set; }
+        protected EventHandler<WireNetworkMessage> OnReceivedSignalEvent { get; set; }
         public event Action OnConnectionsChanged;
         public Vec3f WireAttachmentOffset { get; protected set; } = new Vec3f(0.5f, 0.5f, 0.5f);
 
@@ -200,10 +200,14 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         private void OnReceivedMessage(object sender, WireNetworkMessage e)
         {
-            if (e.NetworkUID != NetworkUID || e.SenderPos == Pos)
+            if (e.NetworkUID != NetworkUID)
+                return;
+            // Only skip if we are the sender (avoids duplicate for the player who pressed)
+            if (e.SenderPos == Pos && Api.Side == EnumAppSide.Client &&
+                (Api as ICoreClientAPI).World.Player?.PlayerUID == e.SenderPlayerUID)
                 return;
 
-            OnReceivedSignalEvent?.Invoke(this, e.Message);
+            OnReceivedSignalEvent?.Invoke(this, e);
 
             foreach (var conn in connections)
             {

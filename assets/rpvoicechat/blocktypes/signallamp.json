@@ -7,8 +7,9 @@
     { "name": "HorizontalOrientable" }
   ],
   "entityBehaviors": [
-    { "name": "BELightSource" },
-    { "name": "Animatable" }
+    { "name": "BELightable" },
+    { "name": "Animatable" },
+    { "name": "BEAnimatable", "properties": { "animationCodes": "slates" } }
   ],
   "creativeinventory": {
     "general": [ "*-north" ],

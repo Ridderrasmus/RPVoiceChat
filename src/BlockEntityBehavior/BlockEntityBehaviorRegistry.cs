@@ -10,7 +10,8 @@ public class BlockEntityBehaviorRegistry
     public static void RegisterBlockEntityBehaviors(ICoreAPI api)
     {
         api.RegisterBlockEntityBehaviorClass("BERingable", typeof(BEBehaviorRingable));
-        api.RegisterBlockEntityBehaviorClass("BELightSource", typeof(BEBehaviorLightSource));
+        api.RegisterBlockEntityBehaviorClass("BELightable", typeof(BEBehaviorLightable));
+        api.RegisterBlockEntityBehaviorClass("BEAnimatable", typeof(RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorAnimatable));
     }
 
     public static void AddBlockEntityBehaviors(ICoreAPI api)

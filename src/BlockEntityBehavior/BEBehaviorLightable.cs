@@ -5,10 +5,10 @@ using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 
 /// <summary>
-/// BlockEntityBehavior for managing light sources.
+/// BlockEntityBehavior for blocks that can emit light (lightable).
 /// Implements IPointLight directly to serve as the light source.
 /// </summary>
-public class BEBehaviorLightSource : BlockEntityBehavior, IPointLight
+public class BEBehaviorLightable : BlockEntityBehavior, IPointLight
 {
     private bool isLightActive = false;
     private Vec3f lightColor = new Vec3f(1.0f, 0.9f, 0.7f); // Warm color by default
@@ -20,7 +20,7 @@ public class BEBehaviorLightSource : BlockEntityBehavior, IPointLight
     public new Vec3d Pos { get; private set; }
     public Vec3f Color { get; private set; }
 
-    public BEBehaviorLightSource(Vintagestory.API.Common.BlockEntity blockEntity) : base(blockEntity)
+    public BEBehaviorLightable(Vintagestory.API.Common.BlockEntity blockEntity) : base(blockEntity)
     {
     }
 
