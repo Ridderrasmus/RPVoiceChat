@@ -1,24 +1,23 @@
 using RPVoiceChat;
-using RPVoiceChat.Util;
+using RPVoiceChat.GameContent.BlockEntityBehavior;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Client.Tesselation;
-using Vintagestory.GameContent;
 
 namespace RPVoiceChat.GameContent.BlockEntity
 {
-    public class BESignalLamp : Vintagestory.API.Common.BlockEntity
+    public class BlockEntitySignalLamp : Vintagestory.API.Common.BlockEntity
     {
-        public BlockEntityAnimationUtil animUtil { get { return this.GetAnimUtil(); } }
+        private RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorAnimatable Animatable => GetBehavior<RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorAnimatable>();
 
-        public BESignalLamp()
+        public BlockEntitySignalLamp()
         {
         }
 
         public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tessThreadTesselator)
         {
-            this.InitializeAnimatorWithRotation("signallamp");
-            return this.HasActiveAnimations();
+            Animatable?.InitializeAnimatorWithRotation("signallamp");
+            return Animatable?.HasActiveAnimations() ?? false;
         }
 
         /// <summary>
@@ -26,10 +25,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
         /// </summary>
         public void StartSlatesAnimation()
         {
-            bool wasRunning = animUtil?.activeAnimationsByAnimCode?.ContainsKey("slates") == true;
-            this.StartAnimationIfNotRunning("slates");
+            bool wasRunning = Animatable?.AnimUtil?.activeAnimationsByAnimCode?.ContainsKey("slates") == true;
+            Animatable?.StartAnimationIfNotRunning("slates");
             if (!wasRunning && Api?.Side == EnumAppSide.Server)
             {
+                MarkDirty();
                 PlayShutterSound();
             }
         }
@@ -39,7 +39,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
         /// </summary>
         public void StopSlatesAnimation()
         {
-            this.StopAnimation("slates");
+            Animatable?.StopAnimation("slates");
+            if (Api?.Side == EnumAppSide.Server)
+            {
+                MarkDirty();
+            }
         }
 
         private void PlayShutterSound()

@@ -18,7 +18,8 @@
     }
   },
   "entityBehaviors": [
-    { "name": "Animatable" }
+    { "name": "Animatable" },
+    { "name": "BEAnimatable", "properties": { "animationCodes": "open-drawer" } }
   ],
   "creativeinventory": {
     "general": [ "*-north" ],

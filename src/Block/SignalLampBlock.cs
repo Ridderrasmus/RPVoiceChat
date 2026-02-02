@@ -11,12 +11,12 @@ namespace RPVoiceChat.GameContent.Block
     {
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
-            var blockEntity = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BESignalLamp;
+            var blockEntity = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntitySignalLamp;
             if (blockEntity != null)
             {
                 if (world.Side == EnumAppSide.Server)
                 {
-                    var lightBehavior = blockEntity.GetBehavior<BEBehaviorLightSource>();
+                    var lightBehavior = blockEntity.GetBehavior<BEBehaviorLightable>();
                     if (lightBehavior != null)
                     {
                         // Activate the light on server side
@@ -43,12 +43,12 @@ namespace RPVoiceChat.GameContent.Block
 
         public override bool OnBlockInteractCancel(float secondsUsed, IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel, EnumItemUseCancelReason cancelReason)
         {
-            var blockEntity = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BESignalLamp;
+            var blockEntity = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntitySignalLamp;
             if (blockEntity != null)
             {
                 if (world.Side == EnumAppSide.Server)
                 {
-                    var lightBehavior = blockEntity.GetBehavior<BEBehaviorLightSource>();
+                    var lightBehavior = blockEntity.GetBehavior<BEBehaviorLightable>();
                     if (lightBehavior != null)
                     {
                         // Deactivate the light if the interaction is cancelled
@@ -69,12 +69,12 @@ namespace RPVoiceChat.GameContent.Block
 
         public override void OnBlockInteractStop(float secondsUsed, IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
-            var blockEntity = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BESignalLamp;
+            var blockEntity = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntitySignalLamp;
             if (blockEntity != null)
             {
                 if (world.Side == EnumAppSide.Server)
                 {
-                    var lightBehavior = blockEntity.GetBehavior<BEBehaviorLightSource>();
+                    var lightBehavior = blockEntity.GetBehavior<BEBehaviorLightable>();
                     if (lightBehavior != null)
                     {
                         // Deactivate the light when the click is released

@@ -11,6 +11,7 @@ using Vintagestory.API.Server;
 using Vintagestory.GameContent;
 using Vintagestory.Client;
 using Vintagestory.API.Client.Tesselation;
+using RPVoiceChat.GameContent.BlockEntityBehavior;
 using RPVoiceChat.GameContent.Inventory;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Util;
@@ -30,7 +31,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public bool IsDrawerOpen => isDrawerOpen;
         
         
-        public BlockEntityAnimationUtil animUtil { get { return this.GetAnimUtil(); } }
+        private RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorAnimatable Animatable => GetBehavior<RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorAnimatable>();
 
         public BlockEntityPrinter()
         {
@@ -123,8 +124,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 inventory.ResolveBlocksOrItems();
             }
             
-            // Load animation state (always default to false on load)
-            isDrawerOpen = false;
+            // Load animation state from server sync (drawer animation applied by BEAnimatable behavior)
+            isDrawerOpen = tree.GetBool("isDrawerOpen", false);
             
             // Now call LateInitInventory after Pos is set by base.FromTreeAttributes
             if (inventory != null)
@@ -197,6 +198,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 {
                     inventory.FromTreeAttributes(tree);
                     inventory.ResolveBlocksOrItems();
+                    
+                    // Server opened the drawer; trigger animation and sound on this client so they play on first open
+                    // (block entity sync may not have arrived yet)
+                    isDrawerOpen = true;
+                    TriggerAnimation("open-drawer");
                     
                     var invDialog = new PrinterInventoryDialog(dialogTitle, inventory, Pos, cols, capi, () => {
                         // Toggle drawer closed on client side
@@ -367,9 +373,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         /// <param name="animationName">Name of the animation to trigger</param>
         public void TriggerAnimation(string animationName)
         {
-            this.StartAnimationIfNotRunning(animationName);
-            
-            // Play sound effect
+            Animatable?.StartAnimationIfNotRunning(animationName);
             playDrawerSound();
         }
 
@@ -380,15 +384,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private void TriggerDrawerAnimation(bool open)
         {
             if (!open)
-            {
-                // Closing: stop the animation
-                this.StopAnimation("open-drawer");
-            }
+                Animatable?.StopAnimation("open-drawer");
             else
-            {
-                // Opening: start the animation
-                this.StartAnimationIfNotRunning("open-drawer");
-            }
+                Animatable?.StartAnimationIfNotRunning("open-drawer");
         }
 
 
@@ -420,8 +418,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tessThreadTesselator)
         {
-            this.InitializeAnimatorWithRotation("printer");
-            return this.HasActiveAnimations();
+            Animatable?.InitializeAnimatorWithRotation("printer");
+            return Animatable?.HasActiveAnimations() ?? false;
         }
         
         public void CloseDrawer()
