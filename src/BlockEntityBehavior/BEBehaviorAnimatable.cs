@@ -17,6 +17,8 @@ namespace RPVoiceChat.GameContent.BlockEntityBehavior
     public class BEBehaviorAnimatable : Vintagestory.API.Common.BlockEntityBehavior
     {
         private string[] _animationCodes = System.Array.Empty<string>();
+        /// <summary>Optional element names that require joints for animations (for Shape.InitForAnimations).</summary>
+        private string[] _requireJointsForElements = System.Array.Empty<string>();
         /// <summary>Track which animations we started, so ToTreeAttributes works on server (animUtil may be empty there).</summary>
         private HashSet<string> _runningAnimations = new HashSet<string>();
         /// <summary>One-shot codes to clear after next ToTreeAttributes so they are only synced once.</summary>
@@ -37,6 +39,11 @@ namespace RPVoiceChat.GameContent.BlockEntityBehavior
             if (!string.IsNullOrWhiteSpace(codesStr))
             {
                 _animationCodes = codesStr.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0).ToArray();
+            }
+            string jointsStr = properties["requireJointsForElements"].AsString(null);
+            if (!string.IsNullOrWhiteSpace(jointsStr))
+            {
+                _requireJointsForElements = jointsStr.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0).ToArray();
             }
         }
 
@@ -77,14 +84,29 @@ namespace RPVoiceChat.GameContent.BlockEntityBehavior
             }
         }
 
-        /// <summary>Initialize animator with block rotation. Call from OnTesselation.</summary>
+        /// <summary>Initialize animator with block rotation. Call from Initialize (client) so the shape is ready for animations (InitForAnimations).</summary>
         public void InitializeAnimatorWithRotation(string shapeCode)
         {
             var animUtil = AnimUtil;
             if (animUtil?.animator == null)
             {
+                EnsureShapeInitForAnimations(shapeCode);
                 var rotYDeg = Blockentity.Block?.GetRotationAngle() ?? 0;
                 animUtil?.InitializeAnimator(shapeCode, null, null, new Vec3f(0, rotYDeg, 0));
+            }
+        }
+
+        /// <summary>Loads the shape and calls Shape.InitForAnimations so joints/animations are resolved (API: https://apidocs.vintagestory.at/api/Vintagestory.API.Common.Shape.html).</summary>
+        private void EnsureShapeInitForAnimations(string shapeCode)
+        {
+            var block = Blockentity.Block;
+            if (block?.Code == null || Api?.Side != EnumAppSide.Client) return;
+
+            var assetLoc = new AssetLocation(block.Code.Domain, "shapes/" + shapeCode + ".json");
+            var shape = Shape.TryGet(Api, assetLoc);
+            if (shape?.Animations != null && shape.Animations.Length > 0)
+            {
+                shape.InitForAnimations(Api.Logger, shapeCode, _requireJointsForElements);
             }
         }
 

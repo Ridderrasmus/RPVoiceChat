@@ -14,8 +14,6 @@ using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.GameContent;
-using Vintagestory.API.Client.Tesselation;
-
 namespace RPVoiceChat.GameContent.BlockEntity
 {
     public class BlockEntityTelegraph : BEWireNode, INetworkRoot
@@ -82,6 +80,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             if (api.Side == EnumAppSide.Client)
             {
+                Animatable?.InitializeAnimatorWithRotation("telegraphkey");
                 dialog = new TelegraphMenuDialog((ICoreClientAPI)api, this);
                 UpdateDisplayMessages();
                 dialog.UpdateSentText(sentMessage);
@@ -643,12 +642,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     dialog?.UpdateSentCountdown(-1); // Hide countdown
                 }
             }
-        }
-
-        public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tessThreadTesselator)
-        {
-            Animatable?.InitializeAnimatorWithRotation("telegraphkey");
-            return Animatable?.HasActiveAnimations() ?? false;
         }
 
         private void TriggerKeyClickAnimation()
