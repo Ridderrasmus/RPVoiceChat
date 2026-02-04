@@ -10,7 +10,6 @@ using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.GameContent;
 using Vintagestory.Client;
-using Vintagestory.API.Client.Tesselation;
 using RPVoiceChat.GameContent.BlockEntityBehavior;
 using RPVoiceChat.GameContent.Inventory;
 using RPVoiceChat.Gui;
@@ -52,6 +51,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
             
             // Late initialize inventory after base initialization
             LateInitInventory();
+            
+            if (api.Side == EnumAppSide.Client)
+                Animatable?.InitializeAnimatorWithRotation("printer");
             
             // Check for telegraph block above
             CheckForTelegraphAbove();
@@ -416,12 +418,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
             );
         }
 
-        public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tessThreadTesselator)
-        {
-            Animatable?.InitializeAnimatorWithRotation("printer");
-            return Animatable?.HasActiveAnimations() ?? false;
-        }
-        
         public void CloseDrawer()
         {
             if (isDrawerOpen)
