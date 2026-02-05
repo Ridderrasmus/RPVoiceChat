@@ -17,6 +17,24 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
         }
 
+        public override void OnBlockPlaced(ItemStack byItemStack = null)
+        {
+            base.OnBlockPlaced(byItemStack);
+
+            // When the bell lands after falling (UnstableFalling), convert down -> up so it sits correctly
+            if (Api?.Side != EnumAppSide.Server || Block == null) return;
+            if (byItemStack != null) return; // Placed by player: keep orientation
+
+            if (Block.Variant.TryGetValue("v", out var v) && v == "down")
+            {
+                var upPath = Block.Code.Path.Replace("-down-", "-up-");
+                if (upPath == Block.Code.Path) return;
+                var upBlock = Api.World.GetBlock(Block.Code.WithPath(upPath));
+                if (upBlock != null)
+                    Api.World.BlockAccessor.SetBlock(upBlock.BlockId, Pos);
+            }
+        }
+
         public override void Initialize(ICoreAPI api)
         {
             base.Initialize(api);

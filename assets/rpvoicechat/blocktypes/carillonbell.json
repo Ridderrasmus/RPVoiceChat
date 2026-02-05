@@ -62,8 +62,14 @@
     }
   ],
   "shapebytype": {
-    "*-up-*": { "base": "block/carillonbell/carillonbell.json" },
-    "*-down-*": { "base": "block/carillonbell/carillonbell_rope.json" }
+    "*-up-north": { "base": "block/carillonbell/carillonbell.json" },
+    "*-up-east": { "base": "block/carillonbell/carillonbell.json", "rotateY": 270 },
+    "*-up-west": { "base": "block/carillonbell/carillonbell.json", "rotateY": 90 },
+    "*-up-south": { "base": "block/carillonbell/carillonbell.json", "rotateY": 180 },
+    "*-down-north": { "base": "block/carillonbell/carillonbell_rope.json" },
+    "*-down-east": { "base": "block/carillonbell/carillonbell_rope.json", "rotateY": 270 },
+    "*-down-west": { "base": "block/carillonbell/carillonbell_rope.json", "rotateY": 90 },
+    "*-down-south": { "base": "block/carillonbell/carillonbell_rope.json", "rotateY": 180 }
   },
   "textures": {
     "metal": {
@@ -86,7 +92,7 @@
     },
     "soundAudibleDistance": 256,
     "soundVolume": 0.6,
-    "soundDuration": 0.5, // Shorter than 3 real-time seconds to allow for bell to ring in succession
+    "soundDuration": 0.5,
     "blockInteractSounds": [
       "block/carillonbell/carillonbell_{metal}"
     ]
