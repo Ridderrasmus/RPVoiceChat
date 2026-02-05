@@ -2,6 +2,10 @@
   "code": "churchbell",
   "enabled": true,
   "class": "soundemittingblock",
+  "entityClass": "BESoundEmitting",
+  "entityBehaviors": [
+    { "name": "BESoundable" }
+  ],
   "creativeinventory": {
     "general": [ "*" ],
     "rpvoicechat": [ "*" ]

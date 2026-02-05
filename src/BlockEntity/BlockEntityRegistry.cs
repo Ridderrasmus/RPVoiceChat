@@ -1,4 +1,4 @@
-﻿using RPVoiceChat.Config;
+using RPVoiceChat.Config;
 using Vintagestory.API.Common;
 
 namespace RPVoiceChat.GameContent.BlockEntity
@@ -7,13 +7,16 @@ namespace RPVoiceChat.GameContent.BlockEntity
     {
         public static void RegisterBlockEntities(ICoreAPI api)
         {
-            // Toujours enregistrer les classes, même si le contenu est désactivé
-            // Les blocks seront désactivés dans AssetsFinalize si nécessaire
+            // Always register classes, even if content is disabled
+            // Blocks will be disabled in AssetsFinalize if necessary
             api.RegisterBlockEntityClass("ChurchBellPart", typeof(BlockEntityChurchBellPart));
             api.RegisterBlockEntityClass("ChurchBellLayer", typeof(BlockEntityChurchBellLayer));
             api.RegisterBlockEntityClass("BlockEntityTelegraph", typeof(BlockEntityTelegraph));
             api.RegisterBlockEntityClass("BlockEntityConnector", typeof(BlockEntityConnector));
             api.RegisterBlockEntityClass("BlockEntityPrinter", typeof(BlockEntityPrinter));
+            api.RegisterBlockEntityClass("BlockEntitySignalLamp", typeof(BlockEntitySignalLamp));
+            api.RegisterBlockEntityClass("BlockEntityCarillonBell", typeof(BlockEntityCarillonBell));
+            api.RegisterBlockEntityClass("BESoundEmitting", typeof(BESoundEmitting));
         }
     }
 }

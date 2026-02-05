@@ -1,4 +1,4 @@
-﻿using RPVoiceChat.Config;
+using RPVoiceChat.Config;
 using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.Util;
 using Vintagestory.API.Client;
@@ -37,7 +37,7 @@ namespace RPVoiceChat.Gui
 
             ElementBounds bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
             bgBounds.BothSizing = ElementSizing.FitToChildren;
-            bgBounds.WithChildren(sentTextBounds, receivedTextBounds, countdownTextBounds, sentCountdownTextBounds); // Inclure les textes et les décomptes
+            bgBounds.WithChildren(sentTextBounds, receivedTextBounds, countdownTextBounds, sentCountdownTextBounds); // Include texts and countdowns
 
             SingleComposer = capi.Gui.CreateCompo("telegraphmenu", dialogBounds)
                 .AddShadedDialogBG(bgBounds)

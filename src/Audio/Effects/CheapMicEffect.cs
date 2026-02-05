@@ -1,4 +1,4 @@
-﻿using OpenTK.Audio.OpenAL;
+using OpenTK.Audio.OpenAL;
 
 namespace RPVoiceChat.Audio.Effects
 {
@@ -10,7 +10,7 @@ namespace RPVoiceChat.Audio.Effects
 
         protected override int GenerateEffect()
         {
-            // Création de l'effet de réverbération
+            // Create reverb effect
             effect = ALC.EFX.GenEffect();
             slot = ALC.EFX.GenAuxiliaryEffectSlot();
 

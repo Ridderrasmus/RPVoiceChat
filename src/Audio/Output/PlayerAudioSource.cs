@@ -27,8 +27,9 @@ namespace RPVoiceChat.Audio
         private SortedList<long, AudioData> orderingQueue = new SortedList<long, AudioData>();
         private object ordering_queue_lock = new object();
         private object dequeue_audio_lock = new object();
-        private int orderingDelay = 100;
+        private int orderingDelay = 50; // Reduced from 100ms to 50ms for lower latency and fewer async tasks
         private long lastAudioSequenceNumber = -1;
+        private bool dequeueTaskRunning = false; // Prevent multiple concurrent dequeue tasks
         private string currentEffectName;
 
         private IAudioCodec codec;
@@ -52,6 +53,13 @@ namespace RPVoiceChat.Audio
         private Vec3f lastSpeakerCoords;
         private DateTime? lastSpeakerUpdate;
         private AudioData currentAudio; // Store current audio data for distance factor calculation
+        
+        // Performance optimization: throttle expensive calculations
+        private DateTime? lastFullUpdate;
+        private DateTime? lastWallThicknessUpdate;
+        private float cachedWallThickness = 0f;
+        private const int FullUpdateIntervalMs = 50; // Update position/velocity every 50ms (20 Hz)
+        private const int WallThicknessUpdateIntervalMs = 200; // Update wall thickness every 200ms (5 Hz)
 
         public PlayerAudioSource(IPlayer player, ICoreClientAPI capi, ClientSettingsRepository clientSettingsRepo)
         {
@@ -106,21 +114,57 @@ namespace RPVoiceChat.Audio
             if (speakerPos == null || listenerPos == null)
                 return;
 
-            // If the player is on the other side of something to the listener, then the player's voice should be muffled
-            bool mufflingEnabled = ModConfig.ClientConfig.Muffling;
-            float wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
-            float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");
+            DateTime now = DateTime.Now;
+            bool shouldDoFullUpdate = lastFullUpdate == null || 
+                (now - lastFullUpdate.Value).TotalMilliseconds >= FullUpdateIntervalMs;
+            bool shouldUpdateWallThickness = lastWallThicknessUpdate == null || 
+                (now - lastWallThicknessUpdate.Value).TotalMilliseconds >= WallThicknessUpdateIntervalMs;
 
-            if (capi.World.Player.Entity.Swimming)
-                wallThickness += 1.0f;
-
-            lowpassFilter?.Stop();
-            if (mufflingEnabled && wallThickness != 0)
+            // Cache wall thickness calculation (very expensive ray tracing)
+            float wallThickness = cachedWallThickness;
+            if (shouldUpdateWallThickness)
             {
-                lowpassFilter = lowpassFilter ?? new LowpassFilter(source);
-                lowpassFilter.Start();
-                lowpassFilter.SetHFGain(Math.Max(1.0f - (wallThickness / wallThicknessWeighting), 0.1f));
+                bool mufflingEnabled = ModConfig.ClientConfig.Muffling;
+                if (mufflingEnabled)
+                {
+                    wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
+                    if (capi.World.Player.Entity.Swimming)
+                        wallThickness += 1.0f;
+                    cachedWallThickness = wallThickness;
+                    lastWallThicknessUpdate = now;
+                }
+                else
+                {
+                    wallThickness = 0f;
+                    cachedWallThickness = 0f;
+                }
             }
+            else if (capi.World.Player.Entity.Swimming && cachedWallThickness > 0)
+            {
+                // Apply swimming modifier to cached value
+                wallThickness = cachedWallThickness + 1.0f;
+            }
+
+            // Update lowpass filter only when wall thickness changes
+            if (shouldUpdateWallThickness)
+            {
+                bool mufflingEnabled = ModConfig.ClientConfig.Muffling;
+                float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");
+                
+                lowpassFilter?.Stop();
+                if (mufflingEnabled && wallThickness != 0)
+                {
+                    lowpassFilter = lowpassFilter ?? new LowpassFilter(source);
+                    lowpassFilter.Start();
+                    lowpassFilter.SetHFGain(Math.Max(1.0f - (wallThickness / wallThicknessWeighting), 0.1f));
+                }
+            }
+
+            // Skip expensive position/velocity updates if not needed
+            if (!shouldDoFullUpdate)
+                return;
+
+            lastFullUpdate = now;
 
             bool toBeImplementedToggle = false;
             // DEACTIVATED : TO BE IMPLEMENTED
@@ -266,11 +310,22 @@ namespace RPVoiceChat.Audio
                 orderingQueue.Add(sequenceNumber, audio);
             }
 
-            DequeueAudio();
+            // Only start a new dequeue task if one isn't already running
+            if (!dequeueTaskRunning)
+            {
+                DequeueAudio();
+            }
         }
 
         public async void DequeueAudio()
         {
+            // Prevent multiple concurrent dequeue tasks
+            lock (dequeue_audio_lock)
+            {
+                if (dequeueTaskRunning) return;
+                dequeueTaskRunning = true;
+            }
+
             await Task.Delay(orderingDelay);
 
             lock (dequeue_audio_lock)
@@ -280,7 +335,11 @@ namespace RPVoiceChat.Audio
                     AudioData audio;
                     lock (ordering_queue_lock)
                     {
-                        if (orderingQueue.Count == 0) return;
+                        if (orderingQueue.Count == 0)
+                        {
+                            dequeueTaskRunning = false;
+                            return;
+                        }
 
                         lastAudioSequenceNumber = orderingQueue.Keys[0];
                         audio = orderingQueue[lastAudioSequenceNumber];
@@ -296,6 +355,7 @@ namespace RPVoiceChat.Audio
                     if (audio.data == null || audio.data.Length == 0)
                     {
                         Logger.client.Warning("Received empty audio data, skipping");
+                        dequeueTaskRunning = false;
                         return;
                     }
 
@@ -327,10 +387,25 @@ namespace RPVoiceChat.Audio
                         if (state != ALSourceState.Playing)
                             StartPlaying();
                     }
+
+                    // Check if there are more items to process
+                    lock (ordering_queue_lock)
+                    {
+                        if (orderingQueue.Count > 0)
+                        {
+                            dequeueTaskRunning = false;
+                            DequeueAudio(); // Process next item immediately
+                            return;
+                        }
+                    }
                 }
                 catch (Exception e)
                 {
                     Logger.client.Warning($"Error in DequeueAudio: {e.Message}");
+                }
+                finally
+                {
+                    dequeueTaskRunning = false;
                 }
             }
         }

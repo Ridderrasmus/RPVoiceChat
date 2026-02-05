@@ -1,0 +1,92 @@
+{
+  "code": "signallamp",
+  "enabled": true,
+  "class": "signallampblock",
+  "entityClass": "BlockEntitySignalLamp",
+  "behaviors": [
+    { "name": "HorizontalOrientable" }
+  ],
+  "entityBehaviors": [
+    { "name": "BELightable" },
+    { "name": "Animatable" },
+    { "name": "BEAnimatable", "properties": { "animationCodes": "slates" } }
+  ],
+  "creativeinventory": {
+    "general": [ "*-north" ],
+    "rpvoicechat": [ "*-north" ]
+  },
+  "maxstacksize": 1,
+  "blockmaterial": "metal",
+  "variantgroups": [
+    {
+      "code": "metal",
+      "states": [ "copper", "tinbronze", "bismuthbronze", "blackbronze", "brass" ]
+    },
+    {
+      "code": "side",
+      "loadFromProperties": "abstract/horizontalorientation"
+    }
+  ],
+  "drawtype": "json",
+  "shape": {
+    "base": "block/signallamp",
+    "rotateYByType": {
+      "*-north": 0,
+      "*-east": 270,
+      "*-west": 90,
+      "*-south": 180
+    }
+  },
+  "sounds": {
+    "place": "game:block/anvil",
+    "hit": "game:block/anvil",
+    "break": "game:block/anvil",
+    "walk": "game:walk/stone"
+  },
+  "collisionBox": {
+    "x1": 0,
+    "y1": 0,
+    "z1": 0,
+    "x2": 1,
+    "y2": 1,
+    "z2": 1
+  },
+  "selectionBox": {
+    "x1": 0,
+    "y1": 0,
+    "z1": 0,
+    "x2": 1,
+    "y2": 1,
+    "z2": 1
+  },
+  "textures": {
+    "metal": { "base": "game:block/metal/plate/{metal}" },
+    "glass": { "base": "game:block/glass/plain" },
+    "wood": { "base": "game:block/wood-generic" },
+    "candle": { "base": "game:block/candle" },
+    "gold": { "base": "game:block/metal/plate/gold" }
+  },
+  "rainPermeable": false,
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "lightAbsorption": 0,
+  "resistance": 3,
+  "attributes": {
+    "handbook": {
+      "groupBy": [ "signallamp-*" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-signallamp.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-signallamp.Text"
+        }
+      ]
+    }
+  },
+  "guiTransform": {
+	"rotation": { x: -22.6, y: -145, z: 0 }
+  }
+}

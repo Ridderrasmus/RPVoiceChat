@@ -10,6 +10,7 @@ namespace RPVoiceChat.Gui
         public AudioWizardDialog audioWizardDialog { get; }
         public FirstLaunchDialog firstLaunchDialog { get; }
         public ModMenuDialog modMenuDialog { get; }
+        public Announce announce { get; }
 
         public GuiManager(ICoreClientAPI capi, MicrophoneManager audioInputManager, AudioOutputManager audioOutputManager, ClientSettingsRepository settingsRepository)
         {
@@ -18,6 +19,8 @@ namespace RPVoiceChat.Gui
             modMenuDialog = new ModMenuDialog(capi, audioInputManager, audioOutputManager, settingsRepository, this);
             capi.Gui.RegisterDialog(new SpeechIndicator(capi, audioInputManager));
             capi.Gui.RegisterDialog(new VoiceLevelIcon(capi, audioInputManager));
+            announce = new Announce(capi);
+            capi.Gui.RegisterDialog(announce);
             new PlayerNameTagRenderer(capi, audioOutputManager);
         }
 

@@ -1,5 +1,6 @@
 {
   "name": "callbell",
+  "enabled": true,
   "ingredientPattern": "P,B",
   "ingredients": {
     "P": {
@@ -17,6 +18,6 @@
   "height": 2,
   "output": {
     "type": "block",
-    "code": "callbell"
+    "code": "rpvoicechat:callbell"
   }
 }

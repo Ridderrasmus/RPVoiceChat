@@ -1,6 +1,6 @@
 {
 	"editor": {
-		"collapsedPaths": "Root/Base/Level2,Root/Base/Level1,Root/middle-part/Level3,Root/middle-part/Level4,Root/Base/Cube2/Cube3,Root/Base/Cube38,Root/Base/Cube59,Root/Base/exterior,Root/Base/exterior/Cube3,Root/Base,Root/middle-part/Level1,Root/Base/Cube63,Root/Base/Cube51,Root/middle-part/Level2,Root/Base/Level4,Root/Base/Level3,Root/Base/Cube2,Root/Base/Cube3,Root/Base/Cube22",
+		"collapsedPaths": "Root/Base/Level2,Root/Base/Level1,Root/middle-part/Level3,Root/middle-part/Level4,Root/base/handle,Root/base/Level2,Root/base/Level1,Root/Base/Cube2/Cube3,Root/Base/Cube38,Root/base/Level4,Root/Base/Cube59,Root/Base/exterior,Root/base/Level3,Root/Base/exterior/Cube3,Root/Base,Root/middle-part/Level1,Root/Base/Cube63,Root/Base/Cube51,Root/middle-part/Level2,Root/Base/Level4,Root/Base/Level3,Root/Base/Cube2,Root/Base/Cube3,Root/Base/Cube22",
 		"allAngles": false,
 		"entityTextureMode": false
 	},
@@ -677,6 +677,36 @@
 								"west": { "texture": "#metal", "uv": [ 0.0, 0.0, 1.0, 0.5 ] },
 								"up": { "texture": "#metal", "uv": [ 0.0, 0.0, 0.5, 1.0 ] },
 								"down": { "texture": "#metal", "uv": [ 0.0, 0.0, 0.5, 1.0 ] }
+							}
+						}
+					]
+				},
+				{
+					"name": "clapper",
+					"from": [ 3.25, 3.0, 3.25 ],
+					"to": [ 3.75, 9.0, 3.75 ],
+					"rotationOrigin": [ 3.0, 9.0, 4.0 ],
+					"faces": {
+						"north": { "texture": "#metal", "uv": [ 0.0, 0.0, 0.5, 6.0 ] },
+						"east": { "texture": "#metal", "uv": [ 0.0, 0.0, 0.5, 6.0 ] },
+						"south": { "texture": "#metal", "uv": [ 0.0, 0.0, 0.5, 6.0 ] },
+						"west": { "texture": "#metal", "uv": [ 0.0, 0.0, 0.5, 6.0 ] },
+						"up": { "texture": "#metal", "uv": [ 0.0, 0.0, 0.5, 0.5 ] },
+						"down": { "texture": "#metal", "uv": [ 0.0, 0.0, 0.5, 0.5 ] }
+					},
+					"children": [
+						{
+							"name": "clapper-head",
+							"from": [ -0.25, -1.0, -0.25 ],
+							"to": [ 0.75, 0.0, 0.75 ],
+							"rotationOrigin": [ 0.0, -1.0, 0.0 ],
+							"faces": {
+								"north": { "texture": "#metal", "uv": [ 0.0, 0.0, 1.0, 1.0 ] },
+								"east": { "texture": "#metal", "uv": [ 0.0, 0.0, 1.0, 1.0 ] },
+								"south": { "texture": "#metal", "uv": [ 0.0, 0.0, 1.0, 1.0 ] },
+								"west": { "texture": "#metal", "uv": [ 0.0, 0.0, 1.0, 1.0 ] },
+								"up": { "texture": "#metal", "uv": [ 0.0, 0.0, 1.0, 1.0 ] },
+								"down": { "texture": "#metal", "uv": [ 0.0, 0.0, 1.0, 1.0 ] }
 							}
 						}
 					]

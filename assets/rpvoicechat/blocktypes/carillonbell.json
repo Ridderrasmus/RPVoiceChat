@@ -1,7 +1,13 @@
 {
   "code": "carillonbell",
   "enabled": true,
-  "class": "soundemittingblock",
+  "class": "carillonbellblock",
+  "entityClass": "BlockEntityCarillonBell",
+  "entityBehaviors": [
+    { "name": "Animatable" },
+    { "name": "BEAnimatable", "properties": { "animationCodes": "swing,clapper", "requireJointsForElements": "rope,clapper" } },
+    { "name": "BESoundable" }
+  ],
   "behaviors": [
     {
       "name": "HorizontalUpDownOrientable"
