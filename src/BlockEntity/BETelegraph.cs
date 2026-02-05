@@ -1,21 +1,19 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using RPVoiceChat.Config;
+using RPVoiceChat.GameContent.BlockEntityBehavior;
 using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Systems;
 using RPVoiceChat.Networking.Packets;
-using RPVoiceChat.Util;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.GameContent;
-using Vintagestory.API.Client.Tesselation;
-
 namespace RPVoiceChat.GameContent.BlockEntity
 {
     public class BlockEntityTelegraph : BEWireNode, INetworkRoot
@@ -50,8 +48,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private long sentCountdownEndTime = 0;
         private bool telegramPrinted = false; // Flag to track if telegram has been created
 
-        // Animation util pour jouer l'animation "click" et gérer l'orientation
-        public BlockEntityAnimationUtil animUtil { get { return this.GetAnimUtil(); } }
+        private RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorAnimatable Animatable => GetBehavior<RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorAnimatable>();
 
         public BlockEntityTelegraph() : base()
         {
@@ -83,6 +80,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             if (api.Side == EnumAppSide.Client)
             {
+                Animatable?.InitializeAnimatorWithRotation("telegraphkey");
                 dialog = new TelegraphMenuDialog((ICoreClientAPI)api, this);
                 UpdateDisplayMessages();
                 dialog.UpdateSentText(sentMessage);
@@ -194,7 +192,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     {
                         NetworkUID = NetworkUID,
                         Message = messageToSend,
-                        SenderPos = Pos
+                        SenderPos = Pos,
+                        SenderPlayerUID = clientApi.World.Player?.PlayerUID
                     });
             }
 
@@ -204,7 +203,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
         }
 
-        public void OnReceivedSignal(char keyChar)
+        public void OnReceivedSignal(char keyChar, BlockPos senderPos)
         {
             if (Api.Side != EnumAppSide.Client)
                 return;
@@ -213,23 +212,24 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             if (Api is ICoreClientAPI clientApi)
             {
-                receivedMessageOriginal += keyChar.ToString(); // Store original latin character
-                UpdateDisplayMessages(); // Rebuild display messages from original
+                receivedMessageOriginal += keyChar.ToString();
+                UpdateDisplayMessages();
                 MarkDirty();
                 dialog?.UpdateReceivedText(receivedMessage);
+                if (Pos.Equals(senderPos))
+                    TriggerKeyClickAnimation();
             }
 
             Task.Run(() => PlayMorseAsync(ConvertKeyCodeToMorse(keyChar)));
         }
 
 
-        private void HandleReceivedSignal(object sender, string message)
+        private void HandleReceivedSignal(object sender, WireNetworkMessage e)
         {
-            if (string.IsNullOrEmpty(message)) return;
+            if (e?.Message == null || e.Message.Length == 0) return;
 
-            // Always receive latin characters on network, convert to morse for display if needed
-            char keyChar = message[0];
-            OnReceivedSignal(keyChar);
+            char keyChar = e.Message[0];
+            OnReceivedSignal(keyChar, e.SenderPos);
         }
 
         private async Task PlayMorseAsync(string morse)
@@ -644,15 +644,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
         }
 
-        public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tessThreadTesselator)
-        {
-            this.InitializeAnimatorWithRotation("telegraphkey");
-            return this.HasActiveAnimations();
-        }
-
         private void TriggerKeyClickAnimation()
         {
-            this.PlaySingleShotAnimation("click");
+            Animatable?.PlaySingleShotAnimation("click");
         }
 
     }

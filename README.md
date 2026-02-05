@@ -69,7 +69,7 @@ All user-related configuration options are documented in the wiki:
 https://github.com/Ridderrasmus/RPVoiceChat/wiki/User-Guide
 
 Client configuration file location:
-`ModConfig/rpvoicechat-client.json`
+`ModConfig/RPVoiceChat/rpvoicechat-client.json`
 
 ---
 
@@ -79,7 +79,7 @@ All server-side configuration options are documented here:
 https://github.com/Ridderrasmus/RPVoiceChat/wiki/Server-Administration
 
 Server configuration file location:
-`ModConfig/rpvoicechat-server.json`
+`ModConfig/RPVoiceChat/rpvoicechat-server.json`
 
 ### In-game configuration commands
 World-specific `/rpvc` commands are documented here:
@@ -89,14 +89,14 @@ https://github.com/Ridderrasmus/RPVoiceChat/wiki/Server-Administration#in-game-c
 
 ## Maintainers
 Currently maintained by:
-- [Ridderrasmus](https://github.com/Ridderrasmus) – Creator and maintainer
-- [Dmitry221060](https://github.com/Dmitry221060) – Maintainer
-- [RomainOdeval](https://github.com/RomainOdeval) – Maintainer
-- [Faithfulshot](https://github.com/Faithfulshot) – 3D models
-- Nixie – Audio design
+- [Ridderrasmus](https://github.com/Ridderrasmus) - Creator and maintainer
+- [Dmitry221060](https://github.com/Dmitry221060) - Maintainer
+- [RomainOdeval](https://github.com/RomainOdeval) - Maintainer
+- [Faithfulshot](https://github.com/Faithfulshot) - 3D models
+- Nixie - Audio design
 
 Previously maintained by:
-- [blakdragan7](https://github.com/blakdragan7) – Maintainer
+- [blakdragan7](https://github.com/blakdragan7) - Maintainer
 
 Want to contribute?
 https://github.com/Ridderrasmus/RPVoiceChat/pulls
@@ -107,10 +107,11 @@ https://github.com/Ridderrasmus/RPVoiceChat/pulls
 The mod is licensed under the [MIT License](LICENSE).
 
 Used libraries:
-- [Opus](https://opus-codec.org/) – BSD 3-Clause License
-- [RNNoise](https://jmvalin.ca/demo/rnnoise/) – BSD License
+- [Opus](https://opus-codec.org/) - BSD 3-Clause License
+- [RNNoise](https://jmvalin.ca/demo/rnnoise/) - BSD License
 
 Sound effects from [Freesound.org](https://freesound.org/):
-- [Furniture – Drawers open & close](https://freesound.org/people/Vrymaa/sounds/802695/) by Vrymaa – CC0
-- [Dot matrix printer](https://freesound.org/people/DisasterServices/sounds/320008/) by DisasterServices – CC0
+- [Furniture - Drawers open & close](https://freesound.org/people/Vrymaa/sounds/802695/) by Vrymaa - CC0
+- [Dot matrix printer](https://freesound.org/people/DisasterServices/sounds/320008/) by DisasterServices - CC0
+- [Wooden plank snap](https://freesound.org/people/Tomlija/sounds/98056/) by Tomlija - CC BY 3.0
 

@@ -1,4 +1,4 @@
-﻿
+
 using Newtonsoft.Json.Linq;
 using System.Linq;
 using Vintagestory.API.Common;
@@ -10,6 +10,9 @@ public class BlockEntityBehaviorRegistry
     public static void RegisterBlockEntityBehaviors(ICoreAPI api)
     {
         api.RegisterBlockEntityBehaviorClass("BERingable", typeof(BEBehaviorRingable));
+        api.RegisterBlockEntityBehaviorClass("BELightable", typeof(BEBehaviorLightable));
+        api.RegisterBlockEntityBehaviorClass("BEAnimatable", typeof(RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorAnimatable));
+        api.RegisterBlockEntityBehaviorClass("BESoundable", typeof(RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorSoundable));
     }
 
     public static void AddBlockEntityBehaviors(ICoreAPI api)

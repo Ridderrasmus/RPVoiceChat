@@ -39,7 +39,7 @@ namespace RPVoiceChat.Audio
         private void SetNormalQuality()
         {
             encoder.Bitrate = NormalBitrate;
-            encoder.Complexity = 10;
+            encoder.Complexity = 6; // Reduced from 10 to 6 for better CPU performance (10 is maximum, very CPU-intensive)
             encoder.SignalType = OpusSignal.OPUS_SIGNAL_VOICE;
             encoder.ForceMode = OpusMode.MODE_SILK_ONLY;
             encoder.UseDTX = false;
