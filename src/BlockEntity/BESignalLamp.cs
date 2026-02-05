@@ -2,7 +2,6 @@ using RPVoiceChat;
 using RPVoiceChat.GameContent.BlockEntityBehavior;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Client.Tesselation;
 
 namespace RPVoiceChat.GameContent.BlockEntity
 {
@@ -14,10 +13,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
         }
 
-        public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tessThreadTesselator)
+        public override void Initialize(ICoreAPI api)
         {
-            Animatable?.InitializeAnimatorWithRotation("signallamp");
-            return Animatable?.HasActiveAnimations() ?? false;
+            base.Initialize(api);
+            if (api.Side == EnumAppSide.Client)
+                Animatable?.InitializeAnimatorWithRotation("signallamp");
         }
 
         /// <summary>
