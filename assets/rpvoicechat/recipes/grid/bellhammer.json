@@ -1,0 +1,14 @@
+{
+  "name": "bellhammer",
+  "ingredientPattern": "WMP,PTG,PPP",
+  "ingredients": {
+    "W": { "type": "item", "code": "telegraphwire", "quantity": 2 },
+    "M": { "type": "block", "code": "game:metal-parts", "quantity": 2 },
+    "G": { "type": "block", "code": "game:glass-*", "quantity": 1 },
+    "T": { "type": "item", "code": "game:jonasparts-cylinder02", "quantity": 1 },
+    "P": { "type": "item", "code": "game:plank-{wood}", "quantity": 4 }
+  },
+  "width": 3,
+  "height": 3,
+  "output": { "type": "block", "code": "rpvoicechat:bellhammer-north" }
+}

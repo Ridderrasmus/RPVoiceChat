@@ -32,6 +32,16 @@
   "itemdesc-paperslip": "A piece of paper used for printing telegrams.",
   "itemdesc-telegram": "A printed telegram containing a telegraphic message.",
 
+  "block-bellhammer-*": "Bell Hammer",
+  "blockdesc-bellhammer-*": "Hammer powered by mechanical power. Place next to a bell.",
+  "BellHammer.NeedBell": "Place next to a carillon or church bell",
+  "BellHammer.Enabled": "Enabled",
+  "BellHammer.Disabled": "Disabled",
+  "BellHammer.Power": "Power: {0}%",
+  "BellHammer.NoBell": "No bell in front",
+  "Handbook.Usage.block-bellhammer.Title": "Usage",
+  "Handbook.Usage.block-bellhammer.Text": "The bell hammer can only be placed next to a carillon or church bell, facing the bell. Connect it to a mechanical power network (windmills, gears). Above 25% power it strikes the bell: at 25% about once per in-game hour, at 100% about once per second. Right-click to enable or disable.",
+
   "block-churchbellmold-red-raw-part-brass-bottom": "Raw red clay bottom churchbell part mold",
   "block-churchbellmold-blue-raw-part-brass-bottom": "Raw blue clay bottom churchbell part mold",
   "block-churchbellmold-fire-raw-part-brass-bottom": "Raw fire clay bottom churchbell part mold",
