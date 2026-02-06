@@ -235,6 +235,6 @@
   "name": "Carillon Bell mold",
   "output": {
     "type": "block",
-    "code": "carillonbellmold-{color}-raw"
+    "code": "rpvoicechat:carillonbellmold-{color}-raw"
   }
 }

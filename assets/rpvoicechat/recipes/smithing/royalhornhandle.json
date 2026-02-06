@@ -33,6 +33,6 @@
   "name": "Royal Horn Handle",
   "output": {
     "type": "item",
-    "code": "royalhornhandle"
+    "code": "rpvoicechat:royalhornhandle"
   }
 }

@@ -9,33 +9,18 @@
     { "name": "BESoundable" }
   ],
   "behaviors": [
-    {
-      "name": "HorizontalUpDownOrientable"
-    },
+    { "name": "HorizontalUpDownOrientable" },
     {
       "name": "UnstableFalling",
       "properties": {
         "attachableFaces": [ "up", "down" ],
+        "variantAfterFalling": "rpvoicechat:carillonbell-{metal}-down-north",
         "impactDamageMul": 10,
         "fallSound": "block/carillonbell/carillonbell_{metal}",
         "dustIntensity": 1,
         "attachmentAreas": {
-          "up": {
-            "x1": 4.5,
-            "y1": 0,
-            "z1": 4.5,
-            "x2": 5.5,
-            "y2": 0,
-            "z2": 5.5
-          },
-          "down": {
-            "x1": 4.5,
-            "y1": 15,
-            "z1": 4.5,
-            "x2": 5.5,
-            "y2": 15,
-            "z2": 5.5
-          }
+          "up": { "x1": 4.5, "y1": 0, "z1": 4.5, "x2": 5.5, "y2": 0, "z2": 5.5 },
+          "down": { "x1": 4.5, "y1": 15, "z1": 4.5, "x2": 5.5, "y2": 15, "z2": 5.5 }
         }
       }
     }

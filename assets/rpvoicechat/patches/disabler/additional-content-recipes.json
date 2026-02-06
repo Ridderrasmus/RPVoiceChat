@@ -138,6 +138,16 @@
       "when": "rpvoicechat:additional-content",
       "isValue": "false"
     }
-  }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:recipes/grid/bellhammer.json",
+    "condition": {
+      "when": "rpvoicechat:additional-content",
+      "isValue": "false"
+    }
+  },
 ]
 

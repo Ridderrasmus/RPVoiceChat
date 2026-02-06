@@ -3,7 +3,7 @@
   "ingredients": {
     "A": {
       "type": "item",
-      "code": "royalhornhandle",
+      "code": "rpvoicechat:royalhornhandle",
       "quantity": 1
     },
     "H": {
@@ -14,7 +14,7 @@
     },
     "B": {
       "type": "item",
-      "code": "royalhornhead-blackbronze",
+      "code": "rpvoicechat:royalhornhead-blackbronze",
       "quantity": 1
     }
   },
@@ -22,6 +22,6 @@
   "height": 2,
   "output": {
     "type": "item",
-    "code": "royalhorn"
+    "code": "rpvoicechat:royalhorn"
   }
 }

@@ -33,6 +33,6 @@
   "name": "Small bell parts mold",
   "output": {
     "type": "block",
-    "code": "smallbellpartsmold-{color}-raw-smallbellparts"
+    "code": "rpvoicechat:smallbellpartsmold-{color}-raw-smallbellparts"
   }
 }

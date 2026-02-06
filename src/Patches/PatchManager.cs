@@ -21,6 +21,7 @@ namespace RPVoiceChat
 
         private void PatchClient()
         {
+            BEBehaviorMPBasePatch.Patch(harmony);
             EntityNameTagRendererRegistryPatch.Patch(harmony);
             GuiDialogCreateCharacterPatch.Patch(harmony);
             GuiElementSliderPatch.Patch(harmony);
