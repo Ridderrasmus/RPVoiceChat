@@ -19,6 +19,10 @@ namespace RPVoiceChat.Server
         private ConnectionRequest connectionRequest;
         private VoiceBanManager voiceBanManager;
 
+        // Stored players and their associated listeners
+        private long listenerUpdateTickListener = 0;
+        private Dictionary<string, HashSet<IPlayer>> playerListeners = new Dictionary<string, HashSet<IPlayer>>();
+
         public GameServer(ICoreServerAPI sapi, List<INetworkServer> serverTransports)
         {
             api = sapi;
@@ -32,6 +36,67 @@ namespace RPVoiceChat.Server
             voiceBanChannel = sapi.Network
                 .RegisterChannel("RPVoiceBan")
                 .RegisterMessageType<VoiceBanStatusPacket>();
+            listenerUpdateTickListener = sapi.Event.RegisterGameTickListener(CalculateListenersForPlayers, 500);
+        }
+
+        private void CalculateListenersForPlayers(float gameTick)
+        {
+            var allPlayers = api.World.AllOnlinePlayers;
+            var newListeners = new Dictionary<string, HashSet<IPlayer>>();
+
+            foreach (IServerPlayer transmittingPlayer in allPlayers)
+            {
+                if (transmittingPlayer.Entity == null ||
+                    transmittingPlayer.ConnectionState != EnumClientState.Playing)
+                {
+                    newListeners[transmittingPlayer.PlayerUID] = new HashSet<IPlayer>();
+                    continue;
+                }
+
+                bool transmittingIsSpectator = transmittingPlayer.WorldData.CurrentGameMode == EnumGameMode.Spectator;
+
+                var megaphoneInfo = GetPlayerMegaphoneInfo(transmittingPlayer);
+
+                bool isGlobalBroadcast = megaphoneInfo.HasEnhancedMegaphone;
+
+                int effectiveDistance;
+                if (megaphoneInfo.HasMegaphone || megaphoneInfo.HasEnhancedMegaphone)
+                {
+                    effectiveDistance = megaphoneInfo.HasEnhancedMegaphone
+                        ? int.MaxValue
+                        : (ServerConfigManager.MegaphoneAudibleDistance + 10);
+                }
+                else
+                {
+                    effectiveDistance = WorldConfig.GetInt(VoiceLevel.Shouting) + 10;
+                }
+
+                float squareDistance = 0f;
+                if (!isGlobalBroadcast)
+                {
+                    squareDistance = (float)effectiveDistance * effectiveDistance;
+                }
+
+                var listeners = new HashSet<IPlayer>();
+                foreach (IServerPlayer player in allPlayers)
+                {
+                    if (player == transmittingPlayer ||
+                        player.Entity == null ||
+                        player.ConnectionState != EnumClientState.Playing ||
+                        (!WorldConfig.GetBool("others-hear-spectators", true) && transmittingIsSpectator && player.WorldData.CurrentGameMode != EnumGameMode.Spectator))
+                        continue;
+
+                    if (!isGlobalBroadcast &&
+                        transmittingPlayer.Entity.Pos.SquareDistanceTo(player.Entity.Pos.XYZ) > squareDistance)
+                        continue;
+
+                    listeners.Add(player);
+                }
+
+                newListeners[transmittingPlayer.PlayerUID] = listeners;
+            }
+
+            playerListeners = newListeners;
         }
 
         public void Launch()
@@ -66,99 +131,17 @@ namespace RPVoiceChat.Server
 
         public void SendAudioToAllClientsInRange(AudioPacket packet)
         {
-            var transmittingPlayer = api.World.PlayerByUid(packet.PlayerId);
-            bool transmittingIsSpectator = transmittingPlayer?.WorldData.CurrentGameMode == EnumGameMode.Spectator;
-
             // Check if the player is banned - don't send their audio to other players
             if (voiceBanManager.IsPlayerBanned(packet.PlayerId))
             {
                 return;
             }
 
-            // Security checks: Validate megaphone-related parameters on server side
-            // This prevents clients from manipulating audio transmission without having the items
-            var megaphoneInfo = GetPlayerMegaphoneInfo(transmittingPlayer);
-            
-            // Validate global broadcast - only allowed with enhanced megaphone
-            bool isGlobalBroadcast = false;
-            if (packet.IsGlobalBroadcast)
+            if (!playerListeners.TryGetValue(packet.PlayerId, out var recipients)) return;
+
+            foreach (var recipient in recipients)
             {
-                isGlobalBroadcast = megaphoneInfo.HasEnhancedMegaphone;
-                if (!isGlobalBroadcast)
-                {
-                    // Player tried to use global broadcast without having the item - log and ignore
-                    Logger.server.Warning($"Player {packet.PlayerId} attempted to use global broadcast without enhanced megaphone. Request denied.");
-                    packet.IsGlobalBroadcast = false;
-                }
-            }
-
-            // Validate ignoreDistanceReduction - only allowed with enhanced megaphone
-            if (packet.IgnoreDistanceReduction && !megaphoneInfo.HasEnhancedMegaphone)
-            {
-                Logger.server.Warning($"Player {packet.PlayerId} attempted to ignore distance reduction without enhanced megaphone. Request denied.");
-                packet.IgnoreDistanceReduction = false;
-            }
-
-            // Validate wallThicknessOverride - only allowed with enhanced megaphone
-            if (packet.WallThicknessOverride >= 0 && !megaphoneInfo.HasEnhancedMegaphone)
-            {
-                Logger.server.Warning($"Player {packet.PlayerId} attempted to override wall thickness without enhanced megaphone. Request denied.");
-                packet.WallThicknessOverride = -1f;
-            }
-
-            // Validate transmission range - should match configured megaphone range if using megaphone
-            // If player has a megaphone, validate the transmission range
-            if (megaphoneInfo.HasMegaphone || megaphoneInfo.HasEnhancedMegaphone)
-            {
-                int maxAllowedRange = megaphoneInfo.HasEnhancedMegaphone 
-                    ? int.MaxValue // Enhanced megaphone has no range limit (global broadcast)
-                    : ServerConfigManager.MegaphoneAudibleDistance;
-                
-                if (packet.TransmissionRangeBlocks > maxAllowedRange && !megaphoneInfo.HasEnhancedMegaphone)
-                {
-                    Logger.server.Warning($"Player {packet.PlayerId} attempted to use transmission range {packet.TransmissionRangeBlocks} which exceeds megaphone limit {maxAllowedRange}. Request denied.");
-                    packet.TransmissionRangeBlocks = maxAllowedRange;
-                }
-            }
-            else if (packet.TransmissionRangeBlocks > 0)
-            {
-                // Player doesn't have a megaphone but is trying to use custom transmission range
-                // This could be legitimate (from other items) but we should validate it's reasonable
-                int maxNormalRange = WorldConfig.GetInt(VoiceLevel.Shouting);
-                if (packet.TransmissionRangeBlocks > maxNormalRange * 2)
-                {
-                    Logger.server.Warning($"Player {packet.PlayerId} attempted to use transmission range {packet.TransmissionRangeBlocks} without megaphone. Request denied.");
-                    packet.TransmissionRangeBlocks = 0; // Reset to use voice level default
-                }
-            }
-
-            // Calculate effective distance AFTER all validations to ensure consistency
-            int effectiveDistance = packet.TransmissionRangeBlocks > 0
-                ? packet.TransmissionRangeBlocks
-                : WorldConfig.GetInt(packet.VoiceLevel);
-
-            packet.EffectiveRange = effectiveDistance;
-
-            float squareDistance = 0f;
-            if (!isGlobalBroadcast)
-            {
-                squareDistance = effectiveDistance * effectiveDistance;
-            }
-
-            foreach (IServerPlayer player in api.World.AllOnlinePlayers)
-            {
-                if (player == transmittingPlayer ||
-                    player.Entity == null ||
-                    player.ConnectionState != EnumClientState.Playing ||
-                    (!WorldConfig.GetBool("others-hear-spectators", true) && transmittingIsSpectator && player.WorldData.CurrentGameMode != EnumGameMode.Spectator))
-                    continue;
-
-                // Skip distance calculation if it is a global broadcast
-                if (!isGlobalBroadcast &&
-                    transmittingPlayer.Entity.Pos.SquareDistanceTo(player.Entity.Pos.XYZ) > squareDistance)
-                    continue;
-
-                SendPacket(packet, player.PlayerUID);
+                SendPacket(packet, recipient.PlayerUID);
             }
         }
 
@@ -351,6 +334,7 @@ namespace RPVoiceChat.Server
                 {
                     api.Event.PlayerNowPlaying -= PlayerJoined;
                     api.Event.PlayerDisconnect -= PlayerLeft;
+                    api.Event.UnregisterGameTickListener(listenerUpdateTickListener);
                 }
                 catch (Exception e)
                 {
