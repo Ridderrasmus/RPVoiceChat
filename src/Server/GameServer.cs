@@ -2,6 +2,7 @@ using RPVoiceChat.Config;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Util;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
@@ -21,7 +22,7 @@ namespace RPVoiceChat.Server
 
         // Stored players and their associated listeners
         private long listenerUpdateTickListener = 0;
-        private Dictionary<string, HashSet<IPlayer>> playerListeners = new Dictionary<string, HashSet<IPlayer>>();
+        private ConcurrentDictionary<string, HashSet<IPlayer>> playerListeners = new ConcurrentDictionary<string, HashSet<IPlayer>>();
 
         public GameServer(ICoreServerAPI sapi, List<INetworkServer> serverTransports)
         {
@@ -42,7 +43,7 @@ namespace RPVoiceChat.Server
         private void CalculateListenersForPlayers(float gameTick)
         {
             var allPlayers = api.World.AllOnlinePlayers;
-            var newListeners = new Dictionary<string, HashSet<IPlayer>>();
+            var newListeners = new ConcurrentDictionary<string, HashSet<IPlayer>>();
 
             foreach (IServerPlayer transmittingPlayer in allPlayers)
             {
