@@ -45,6 +45,6 @@
   "name": "Bellmold Topmost Part",
   "output": {
     "type": "block",
-    "code": "churchbellmold-{color}-raw-layer-brass-topmost"
+    "code": "rpvoicechat:churchbellmold-{color}-raw-layer-brass-topmost"
   }
 }

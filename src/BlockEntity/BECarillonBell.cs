@@ -26,7 +26,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         }
 
         /// <summary>
-        /// Called when the block is rung. Plays sound and, for rope variant, triggers swing + clapper animations.
+        /// Called when the block is rung. Plays sound and, for rope variant (ceiling), triggers swing + clapper animations.
         /// </summary>
         public void OnRung()
         {
@@ -34,8 +34,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             GetBehavior<BEBehaviorSoundable>()?.OnRung();
 
-            bool usesRopeShape = _shapePath != null &&
-                _shapePath.IndexOf("carillonbell_rope", StringComparison.OrdinalIgnoreCase) >= 0;
+            // Rope shape = ceiling placement (v=down). Use variant so it works regardless of _shapePath init order.
+            bool usesRopeShape = Block?.Variant != null &&
+                Block.Variant.TryGetValue("v", out string v) && string.Equals(v, "down", StringComparison.OrdinalIgnoreCase);
             if (usesRopeShape && Animatable != null)
             {
                 Animatable.PlaySingleShotAnimation("swing");
