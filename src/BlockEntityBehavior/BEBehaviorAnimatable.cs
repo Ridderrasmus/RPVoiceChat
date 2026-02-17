@@ -85,13 +85,15 @@ namespace RPVoiceChat.GameContent.BlockEntityBehavior
         }
 
         /// <summary>Initialize animator with block rotation. Call from Initialize (client) so the shape is ready for animations (InitForAnimations).</summary>
-        public void InitializeAnimatorWithRotation(string shapeCode)
+        /// <param name="shapeCode">Shape path (e.g. block/bellhammer).</param>
+        /// <param name="rotationDegOverride">If set, use this instead of Block.GetRotationAngle() (for blocks with different rotateYByType convention).</param>
+        public void InitializeAnimatorWithRotation(string shapeCode, float? rotationDegOverride = null)
         {
             var animUtil = AnimUtil;
             if (animUtil?.animator == null)
             {
                 EnsureShapeInitForAnimations(shapeCode);
-                var rotYDeg = Blockentity.Block?.GetRotationAngle() ?? 0;
+                var rotYDeg = rotationDegOverride ?? (Blockentity.Block?.GetRotationAngle() ?? 0);
                 animUtil?.InitializeAnimator(shapeCode, null, null, new Vec3f(0, rotYDeg, 0));
             }
         }

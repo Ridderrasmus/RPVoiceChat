@@ -23,7 +23,7 @@
   "height": 3,
   "output": {
     "type": "block",
-    "code": "connector-{glass}-up",
+    "code": "rpvoicechat:connector-{glass}-up",
     "quantity": 2
   }
 }

@@ -28,6 +28,6 @@
   "height": 3,
   "output": {
     "type": "item",
-    "code": "handheldradio"
+    "code": "rpvoicechat:handheldradio"
   }
 }

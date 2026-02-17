@@ -5,7 +5,7 @@
   "ingredients": {
     "P": {
       "type": "item",
-      "code": "smallbellparts-silver",
+      "code": "rpvoicechat:smallbellparts-silver",
       "quantity": 1
     },
     "B": {

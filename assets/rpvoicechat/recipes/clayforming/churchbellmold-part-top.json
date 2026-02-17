@@ -54,6 +54,6 @@
   "name": "Bellmold Top Part",
   "output": {
     "type": "block",
-    "code": "churchbellmold-{color}-raw-part-brass-top"
+    "code": "rpvoicechat:churchbellmold-{color}-raw-part-brass-top"
   }
 }
