@@ -20,7 +20,7 @@
   "name": "Telegraph Wire",
   "output": {
     "type": "item",
-    "code": "telegraphwire",
+    "code": "rpvoicechat:telegraphwire",
     "quantity": 3
   }
 }

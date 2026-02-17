@@ -1,0 +1,13 @@
+{
+  "name": "bellhammer",
+  "ingredientPattern": "PMH,PTP,PPP",
+  "ingredients": {
+    "H": { "type": "item", "code": "game:hammer-copper", "quantity": 1 },
+    "M": { "type": "block", "code": "game:metal-parts", "quantity": 4 },
+    "T": { "type": "item", "code": "game:jonasparts-cylinder02", "quantity": 1 },
+    "P": { "type": "item", "code": "game:plank-{wood}", "quantity": 2 }
+  },
+  "width": 3,
+  "height": 3,
+  "output": { "type": "block", "code": "rpvoicechat:bellhammer-{wood}-up-north" }
+}

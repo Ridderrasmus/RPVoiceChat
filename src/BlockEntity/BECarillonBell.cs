@@ -17,24 +17,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
         }
 
-        public override void OnBlockPlaced(ItemStack byItemStack = null)
-        {
-            base.OnBlockPlaced(byItemStack);
-
-            // When the bell lands after falling (UnstableFalling), convert down -> up so it sits correctly
-            if (Api?.Side != EnumAppSide.Server || Block == null) return;
-            if (byItemStack != null) return; // Placed by player: keep orientation
-
-            if (Block.Variant.TryGetValue("v", out var v) && v == "down")
-            {
-                var upPath = Block.Code.Path.Replace("-down-", "-up-");
-                if (upPath == Block.Code.Path) return;
-                var upBlock = Api.World.GetBlock(Block.Code.WithPath(upPath));
-                if (upBlock != null)
-                    Api.World.BlockAccessor.SetBlock(upBlock.BlockId, Pos);
-            }
-        }
-
         public override void Initialize(ICoreAPI api)
         {
             base.Initialize(api);
@@ -44,7 +26,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         }
 
         /// <summary>
-        /// Called when the block is rung. Plays sound and, for rope variant, triggers swing + clapper animations.
+        /// Called when the block is rung. Plays sound and, for rope variant (ceiling), triggers swing + clapper animations.
         /// </summary>
         public void OnRung()
         {
@@ -52,8 +34,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             GetBehavior<BEBehaviorSoundable>()?.OnRung();
 
-            bool usesRopeShape = _shapePath != null &&
-                _shapePath.IndexOf("carillonbell_rope", StringComparison.OrdinalIgnoreCase) >= 0;
+            // Rope shape = ceiling placement (v=down). Use variant so it works regardless of _shapePath init order.
+            bool usesRopeShape = Block?.Variant != null &&
+                Block.Variant.TryGetValue("v", out string v) && string.Equals(v, "down", StringComparison.OrdinalIgnoreCase);
             if (usesRopeShape && Animatable != null)
             {
                 Animatable.PlaySingleShotAnimation("swing");

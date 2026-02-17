@@ -21,7 +21,7 @@
     },
     "H": {
       "type": "item",
-      "code": "perfectgoathorn",
+      "code": "rpvoicechat:perfectgoathorn",
       "quantity": 1
     }
   },
@@ -29,6 +29,6 @@
   "height": 2,
   "output": {
     "type": "item",
-    "code": "warhorn"
+    "code": "rpvoicechat:warhorn"
   }
 }
