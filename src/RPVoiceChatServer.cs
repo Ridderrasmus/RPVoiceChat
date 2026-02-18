@@ -32,6 +32,7 @@ namespace RPVoiceChat
 
             // Register commands
             registerCommands();
+            registerGroupCommands();
 
 
             WireNetworkHandler.RegisterServerside(api);
@@ -114,6 +115,12 @@ namespace RPVoiceChat
                     .WithArgs(parsers.Bool("state"))
                     .HandleWith(ToggleOthersHearSpectators)
                 .EndSub()
+                .BeginSub("voicegroups")
+                    .WithDesc(UIUtils.I18n("Command.VoiceGroups.Desc"))
+                    .WithAdditionalInformation(UIUtils.I18n("Command.VoiceGroups.Help"))
+                    .WithArgs(parsers.Bool("state"))
+                    .HandleWith(ToggleVoiceGroups)
+                .EndSub()
                 .BeginSub("voiceban")
                     .WithDesc(UIUtils.I18n("Command.VoiceBan.Desc"))
                     .WithArgs(parsers.Word("player"))
@@ -136,6 +143,69 @@ namespace RPVoiceChat
                 .EndSub();
         }
 
+        private void registerGroupCommands()
+        {
+            var parsers = sapi.ChatCommands.Parsers;
+
+            sapi.ChatCommands
+                .GetOrCreate("rpvcgroup")
+                .WithAlias("vcgroup", "vgroup")
+                .RequiresPrivilege(Privilege.chat)
+                .WithDescription(UIUtils.I18n("Command.Group.Root.Desc"))
+                .BeginSub("create")
+                    .WithDesc(UIUtils.I18n("Command.Group.Create.Desc"))
+                    .WithArgs(parsers.Word("groupName"))
+                    .HandleWith(CreateVoiceGroupHandler)
+                .EndSub()
+                .BeginSub("join")
+                    .WithDesc(UIUtils.I18n("Command.Group.Join.Desc"))
+                    .WithArgs(parsers.Word("groupName"))
+                    .HandleWith(JoinVoiceGroupHandler)
+                .EndSub()
+                .BeginSub("leave")
+                    .WithDesc(UIUtils.I18n("Command.Group.Leave.Desc"))
+                    .HandleWith(LeaveVoiceGroupHandler)
+                .EndSub()
+                .BeginSub("delete")
+                    .WithDesc(UIUtils.I18n("Command.Group.Delete.Desc"))
+                    .WithArgs(parsers.Word("groupName"))
+                    .HandleWith(DeleteVoiceGroupHandler)
+                .EndSub()
+                .BeginSub("kick")
+                    .WithDesc(UIUtils.I18n("Command.Group.Kick.Desc"))
+                    .WithArgs(parsers.OnlinePlayer("player"))
+                    .HandleWith(KickVoiceGroupMemberHandler)
+                .EndSub()
+                .BeginSub("invite")
+                    .WithDesc(UIUtils.I18n("Command.Group.Invite.Desc"))
+                    .WithArgs(parsers.OnlinePlayer("player"))
+                    .HandleWith(InviteVoiceGroupMemberHandler)
+                .EndSub()
+                .BeginSub("inviteonly")
+                    .WithDesc(UIUtils.I18n("Command.Group.InviteOnly.Desc"))
+                    .WithArgs(parsers.Bool("state"))
+                    .HandleWith(SetVoiceGroupInviteOnlyHandler)
+                .EndSub()
+                .BeginSub("accept")
+                    .WithDesc(UIUtils.I18n("Command.Group.Accept.Desc"))
+                    .WithArgs(parsers.All("groupName"))
+                    .HandleWith(AcceptVoiceGroupInviteHandler)
+                .EndSub()
+                .BeginSub("decline")
+                    .WithDesc(UIUtils.I18n("Command.Group.Decline.Desc"))
+                    .WithArgs(parsers.All("groupName"))
+                    .HandleWith(DeclineVoiceGroupInviteHandler)
+                .EndSub()
+                .BeginSub("my")
+                    .WithDesc(UIUtils.I18n("Command.Group.My.Desc"))
+                    .HandleWith(MyVoiceGroupHandler)
+                .EndSub()
+                .BeginSub("list")
+                    .WithDesc(UIUtils.I18n("Command.Group.List.Desc"))
+                    .HandleWith(ListVoiceGroupsHandler)
+                .EndSub();
+        }
+
         private TextCommandResult ToggleOthersHearSpectators(TextCommandCallingArgs args)
         {
             const string i18nPrefix = "Command.OthersHearSpectators.Success";
@@ -145,6 +215,31 @@ namespace RPVoiceChat
             string stateAsText = state ? "Enabled" : "Disabled";
 
             return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
+        }
+
+        private TextCommandResult ToggleVoiceGroups(TextCommandCallingArgs args)
+        {
+            bool enabled = (bool)args[0];
+
+            ModConfig.ServerConfig.VoiceGroupsEnabled = enabled;
+            ModConfig.SaveServer(sapi);
+
+            server?.NotifyAllPlayersVoiceGroupsUpdated();
+
+            string stateAsText = enabled ? "Enabled" : "Disabled";
+            return TextCommandResult.Success(UIUtils.I18n($"Command.VoiceGroups.Success.{stateAsText}"));
+        }
+
+        private bool IsVoiceGroupsEnabled()
+        {
+            return ServerConfigManager.VoiceGroupsEnabled;
+        }
+
+        private TextCommandResult EnsureVoiceGroupsEnabled()
+        {
+            return IsVoiceGroupsEnabled()
+                ? null
+                : TextCommandResult.Error(UIUtils.I18n("Command.Group.Error.Disabled"));
         }
 
         private TextCommandResult ToggleAudioEncoding(TextCommandCallingArgs args)
@@ -371,6 +466,265 @@ namespace RPVoiceChat
             {
                 return TextCommandResult.Success(UIUtils.I18n("Command.Announce.SuccessGlass", playerCount, duration));
             }
+        }
+
+        private TextCommandResult CreateVoiceGroupHandler(TextCommandCallingArgs args)
+        {
+            var groupEnabledError = EnsureVoiceGroupsEnabled();
+            if (groupEnabledError != null) return groupEnabledError;
+
+            var caller = GetCallingPlayer(args);
+            if (caller == null)
+            {
+                return TextCommandResult.Error(UIUtils.I18n("Command.Group.Error.PlayersOnly"));
+            }
+
+            string groupName = ((string)args[0])?.Trim();
+            var groupManager = server.GetVoiceGroupManager();
+            if (!groupManager.CreateGroup(caller.PlayerUID, groupName, out var message))
+            {
+                return TextCommandResult.Error(message);
+            }
+
+            server.NotifyAllPlayersVoiceGroupsUpdated();
+            return TextCommandResult.Success(message);
+        }
+
+        private TextCommandResult JoinVoiceGroupHandler(TextCommandCallingArgs args)
+        {
+            var groupEnabledError = EnsureVoiceGroupsEnabled();
+            if (groupEnabledError != null) return groupEnabledError;
+
+            var caller = GetCallingPlayer(args);
+            if (caller == null)
+            {
+                return TextCommandResult.Error(UIUtils.I18n("Command.Group.Error.PlayersOnly"));
+            }
+
+            string groupName = ((string)args[0])?.Trim();
+            var groupManager = server.GetVoiceGroupManager();
+            if (!groupManager.JoinGroup(caller.PlayerUID, groupName, out var message))
+            {
+                return TextCommandResult.Error(message);
+            }
+
+            server.NotifyAllPlayersVoiceGroupsUpdated();
+            return TextCommandResult.Success(message);
+        }
+
+        private TextCommandResult LeaveVoiceGroupHandler(TextCommandCallingArgs args)
+        {
+            var groupEnabledError = EnsureVoiceGroupsEnabled();
+            if (groupEnabledError != null) return groupEnabledError;
+
+            var caller = GetCallingPlayer(args);
+            if (caller == null)
+            {
+                return TextCommandResult.Error(UIUtils.I18n("Command.Group.Error.PlayersOnly"));
+            }
+
+            var groupManager = server.GetVoiceGroupManager();
+            if (!groupManager.LeaveGroup(caller.PlayerUID, out var message))
+            {
+                return TextCommandResult.Error(message);
+            }
+
+            server.NotifyAllPlayersVoiceGroupsUpdated();
+            return TextCommandResult.Success(message);
+        }
+
+        private TextCommandResult DeleteVoiceGroupHandler(TextCommandCallingArgs args)
+        {
+            var groupEnabledError = EnsureVoiceGroupsEnabled();
+            if (groupEnabledError != null) return groupEnabledError;
+
+            var caller = GetCallingPlayer(args);
+            if (caller == null)
+            {
+                return TextCommandResult.Error(UIUtils.I18n("Command.Group.Error.PlayersOnly"));
+            }
+
+            string groupName = ((string)args[0])?.Trim();
+            bool isAdmin = CallerHasServerControl(args);
+
+            var groupManager = server.GetVoiceGroupManager();
+            if (!groupManager.DeleteGroup(caller.PlayerUID, groupName, isAdmin, out var message))
+            {
+                return TextCommandResult.Error(message);
+            }
+
+            server.NotifyAllPlayersVoiceGroupsUpdated();
+            return TextCommandResult.Success(message);
+        }
+
+        private TextCommandResult KickVoiceGroupMemberHandler(TextCommandCallingArgs args)
+        {
+            var groupEnabledError = EnsureVoiceGroupsEnabled();
+            if (groupEnabledError != null) return groupEnabledError;
+
+            var caller = GetCallingPlayer(args);
+            if (caller == null)
+            {
+                return TextCommandResult.Error(UIUtils.I18n("Command.Group.Error.PlayersOnly"));
+            }
+
+            string playerIdentifier = (string)args[0];
+            IPlayer targetPlayer = FindPlayer(playerIdentifier);
+            if (targetPlayer == null)
+            {
+                return TextCommandResult.Error(UIUtils.I18n("Command.Group.Error.PlayerNotFound"));
+            }
+
+            bool isAdmin = CallerHasServerControl(args);
+
+            var groupManager = server.GetVoiceGroupManager();
+            if (!groupManager.KickPlayer(caller.PlayerUID, targetPlayer.PlayerUID, isAdmin, out var message))
+            {
+                return TextCommandResult.Error(message);
+            }
+
+            server.NotifyAllPlayersVoiceGroupsUpdated();
+            return TextCommandResult.Success(message);
+        }
+
+        private TextCommandResult InviteVoiceGroupMemberHandler(TextCommandCallingArgs args)
+        {
+            var groupEnabledError = EnsureVoiceGroupsEnabled();
+            if (groupEnabledError != null) return groupEnabledError;
+
+            var caller = GetCallingPlayer(args);
+            if (caller == null)
+            {
+                return TextCommandResult.Error(UIUtils.I18n("Command.Group.Error.PlayersOnly"));
+            }
+
+            string playerIdentifier = (string)args[0];
+            IPlayer targetPlayer = FindPlayer(playerIdentifier);
+            if (targetPlayer == null)
+            {
+                return TextCommandResult.Error(UIUtils.I18n("Command.Group.Error.PlayerNotFound"));
+            }
+
+            bool isAdmin = CallerHasServerControl(args);
+            var groupManager = server.GetVoiceGroupManager();
+            if (!groupManager.InvitePlayer(caller.PlayerUID, targetPlayer.PlayerUID, isAdmin, out var message))
+            {
+                return TextCommandResult.Error(message);
+            }
+
+            return TextCommandResult.Success(message);
+        }
+
+        private TextCommandResult SetVoiceGroupInviteOnlyHandler(TextCommandCallingArgs args)
+        {
+            var groupEnabledError = EnsureVoiceGroupsEnabled();
+            if (groupEnabledError != null) return groupEnabledError;
+
+            var caller = GetCallingPlayer(args);
+            if (caller == null)
+            {
+                return TextCommandResult.Error(UIUtils.I18n("Command.Group.Error.PlayersOnly"));
+            }
+
+            bool inviteOnly = (bool)args[0];
+            bool isAdmin = CallerHasServerControl(args);
+            var groupManager = server.GetVoiceGroupManager();
+            if (!groupManager.SetInviteOnly(caller.PlayerUID, inviteOnly, isAdmin, out var message))
+            {
+                return TextCommandResult.Error(message);
+            }
+
+            server.NotifyAllPlayersVoiceGroupsUpdated();
+            return TextCommandResult.Success(message);
+        }
+
+        private TextCommandResult AcceptVoiceGroupInviteHandler(TextCommandCallingArgs args)
+        {
+            var groupEnabledError = EnsureVoiceGroupsEnabled();
+            if (groupEnabledError != null) return groupEnabledError;
+
+            var caller = GetCallingPlayer(args);
+            if (caller == null)
+            {
+                return TextCommandResult.Error(UIUtils.I18n("Command.Group.Error.PlayersOnly"));
+            }
+
+            string groupName = GetOptionalTextArgument(args);
+            var groupManager = server.GetVoiceGroupManager();
+            if (!groupManager.AcceptInvite(caller.PlayerUID, groupName, out var message))
+            {
+                return TextCommandResult.Error(message);
+            }
+
+            server.NotifyAllPlayersVoiceGroupsUpdated();
+            return TextCommandResult.Success(message);
+        }
+
+        private TextCommandResult DeclineVoiceGroupInviteHandler(TextCommandCallingArgs args)
+        {
+            var groupEnabledError = EnsureVoiceGroupsEnabled();
+            if (groupEnabledError != null) return groupEnabledError;
+
+            var caller = GetCallingPlayer(args);
+            if (caller == null)
+            {
+                return TextCommandResult.Error(UIUtils.I18n("Command.Group.Error.PlayersOnly"));
+            }
+
+            string groupName = GetOptionalTextArgument(args);
+            var groupManager = server.GetVoiceGroupManager();
+            if (!groupManager.DeclineInvite(caller.PlayerUID, groupName, out var message))
+            {
+                return TextCommandResult.Error(message);
+            }
+
+            return TextCommandResult.Success(message);
+        }
+
+        private string GetOptionalTextArgument(TextCommandCallingArgs args)
+        {
+            try
+            {
+                return ((string)args[0])?.Trim();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private TextCommandResult MyVoiceGroupHandler(TextCommandCallingArgs args)
+        {
+            var groupEnabledError = EnsureVoiceGroupsEnabled();
+            if (groupEnabledError != null) return groupEnabledError;
+
+            var caller = GetCallingPlayer(args);
+            if (caller == null)
+            {
+                return TextCommandResult.Error(UIUtils.I18n("Command.Group.Error.PlayersOnly"));
+            }
+
+            var groupManager = server.GetVoiceGroupManager();
+            return TextCommandResult.Success(groupManager.GetGroupSummaryForPlayer(caller.PlayerUID));
+        }
+
+        private TextCommandResult ListVoiceGroupsHandler(TextCommandCallingArgs args)
+        {
+            var groupEnabledError = EnsureVoiceGroupsEnabled();
+            if (groupEnabledError != null) return groupEnabledError;
+
+            var groupManager = server.GetVoiceGroupManager();
+            return TextCommandResult.Success(groupManager.GetAllGroupsSummary());
+        }
+
+        private IServerPlayer GetCallingPlayer(TextCommandCallingArgs args)
+        {
+            return args.Caller?.Player as IServerPlayer;
+        }
+
+        private bool CallerHasServerControl(TextCommandCallingArgs args)
+        {
+            return args.Caller != null && args.Caller.HasPrivilege(Privilege.controlserver);
         }
 
         public override void Dispose()

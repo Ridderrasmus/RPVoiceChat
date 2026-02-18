@@ -17,6 +17,7 @@ namespace RPVoiceChat.Audio
         public bool ignoreDistanceReduction { get; set; } = false;
         public float wallThicknessOverride { get; set; } = -1f; // -1 = pas d'override
         public bool isGlobalBroadcast { get; set; } = false;
+        public bool forceFlatPlayback { get; set; } = false;
 
         public AudioData() { }
 

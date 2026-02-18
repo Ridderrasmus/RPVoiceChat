@@ -53,6 +53,7 @@ namespace RPVoiceChat.Audio
         private Vec3f lastSpeakerCoords;
         private DateTime? lastSpeakerUpdate;
         private AudioData currentAudio; // Store current audio data for distance factor calculation
+        private bool forceFlatPlayback;
         
         // Performance optimization: throttle expensive calculations
         private DateTime? lastFullUpdate;
@@ -111,8 +112,14 @@ namespace RPVoiceChat.Audio
         {
             EntityPos speakerPos = player.Entity?.SidedPos;
             EntityPos listenerPos = capi.World.Player.Entity?.SidedPos;
-            if (speakerPos == null || listenerPos == null)
+            if (listenerPos == null)
                 return;
+
+            if (forceFlatPlayback || currentAudio?.forceFlatPlayback == true || speakerPos == null)
+            {
+                ApplyFlatPlayback(GetFinalGain());
+                return;
+            }
 
             DateTime now = DateTime.Now;
             bool shouldDoFullUpdate = lastFullUpdate == null || 
@@ -225,6 +232,15 @@ namespace RPVoiceChat.Audio
             OALW.Source(source, ALSourceb.SourceRelative, true);
         }
 
+        private void ApplyFlatPlayback(float gain)
+        {
+            OALW.ClearError();
+            OALW.Source(source, ALSourcef.Gain, gain);
+            OALW.Source(source, ALSource3f.Position, 0f, 0f, 0f);
+            OALW.Source(source, ALSource3f.Velocity, 0f, 0f, 0f);
+            OALW.Source(source, ALSourceb.SourceRelative, true);
+        }
+
         private bool _IsPlaying()
         {
             if (source <= 0) return false; // Source is invalid
@@ -315,6 +331,11 @@ namespace RPVoiceChat.Audio
             {
                 DequeueAudio();
             }
+        }
+
+        public void SetForceFlatPlayback(bool forceFlat)
+        {
+            forceFlatPlayback = forceFlat;
         }
 
         public async void DequeueAudio()
