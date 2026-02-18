@@ -23,6 +23,7 @@ namespace RPVoiceChat.Config
         public static int MaxConnectionAttempts => Config?.MaxConnectionAttempts ?? 5;
 
         // Communication Systems
+        public static bool VoiceGroupsEnabled => Config?.VoiceGroupsEnabled ?? false;
         public static int TelegraphMaxConnectionDistance => Config?.TelegraphMaxConnectionDistance ?? 20;
         public static int TelegraphMaxConnectionsPerNode => Config?.TelegraphMaxConnectionsPerNode ?? 4;
         public static int TelegraphMaxMessageLength => Config?.TelegraphMaxMessageLength ?? 100;

@@ -98,6 +98,7 @@ namespace RPVoiceChat.Audio
             int frequency = packet.Frequency;
             int channels = AudioUtils.ChannelsPerFormat(packet.Format);
             AudioData audioData = AudioData.FromPacket(packet);
+            audioData.forceFlatPlayback = ShouldForceFlatPlayback(packet);
 
             // The server has already calculated the effective range and sent packets only to players within range
             // Here we just need to update the voice level for audio quality
@@ -105,9 +106,37 @@ namespace RPVoiceChat.Audio
             if (source.voiceLevel != packet.VoiceLevel)
                 source.UpdateVoiceLevel(packet.VoiceLevel);
 
+            source.SetForceFlatPlayback(audioData.forceFlatPlayback);
             source.UpdatePlayer();
             source.UpdateAudioFormat(codec, frequency, channels);
             source.EnqueueAudio(audioData, packet.SequenceNumber);
+        }
+
+        private bool ShouldForceFlatPlayback(AudioPacket packet)
+        {
+            var listenerPlayer = capi.World.Player;
+            if (listenerPlayer?.Entity?.SidedPos == null)
+            {
+                return false;
+            }
+
+            var speakerPlayer = capi.World.PlayerByUid(packet.PlayerId);
+            if (speakerPlayer?.Entity?.SidedPos == null)
+            {
+                return true;
+            }
+
+            int effectiveRange = packet.TransmissionRangeBlocks > 0
+                ? packet.TransmissionRangeBlocks
+                : WorldConfig.GetInt(packet.VoiceLevel);
+
+            if (effectiveRange <= 0)
+            {
+                return true;
+            }
+
+            double distance = speakerPlayer.Entity.SidedPos.DistanceTo(listenerPlayer.Entity.SidedPos);
+            return distance > effectiveRange;
         }
 
         public void HandleLoopback(AudioPacket packet)
