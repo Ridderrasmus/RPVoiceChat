@@ -43,7 +43,7 @@ namespace RPVoiceChat.Util
                 return;
 
             int sampleCount = data.Length / sizeof(short);
-            // S'assurer que le fade ne d�passe pas la moiti� des donn�es disponibles
+            // Ensure fade duration does not exceed half of the available data
             int safeFadeDuration = Math.Min(maxFadeDuration, sampleCount / 2);
 
             if (safeFadeDuration <= 0)
