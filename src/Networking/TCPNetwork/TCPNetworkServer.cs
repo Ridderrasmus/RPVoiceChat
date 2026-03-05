@@ -156,6 +156,10 @@ namespace RPVoiceChat.Networking
                     break;
                 case PacketType.Audio:
                     var packet = NetworkPacket.FromBytes<AudioPacket>(msg);
+                    string senderPlayerId = ResolvePlayer(channel);
+                    if (senderPlayerId == null)
+                        break; // drop audio from unauthenticated connection
+                    packet.PlayerId = senderPlayerId;
                     _ = Task.Run(() => AudioPacketReceived?.Invoke(packet));
                     break;
                 default:

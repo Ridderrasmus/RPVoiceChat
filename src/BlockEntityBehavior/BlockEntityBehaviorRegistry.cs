@@ -11,9 +11,9 @@ public class BlockEntityBehaviorRegistry
     {
         api.RegisterBlockEntityBehaviorClass("BERingable", typeof(BEBehaviorRingable));
         api.RegisterBlockEntityBehaviorClass("BELightable", typeof(BEBehaviorLightable));
-        api.RegisterBlockEntityBehaviorClass("BEAnimatable", typeof(RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorAnimatable));
-        api.RegisterBlockEntityBehaviorClass("BESoundable", typeof(RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorSoundable));
-    }
+api.RegisterBlockEntityBehaviorClass("BEAnimatable", typeof(RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorAnimatable));
+            api.RegisterBlockEntityBehaviorClass("BESoundable", typeof(RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorSoundable));
+        }
 
     public static void AddBlockEntityBehaviors(ICoreAPI api)
     {

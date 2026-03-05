@@ -1,5 +1,7 @@
 using RPVoiceChat.GameContent.BlockEntity;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.GameContent;
 
 namespace RPVoiceChat.GameContent.Block
 {
@@ -8,6 +10,18 @@ namespace RPVoiceChat.GameContent.Block
     /// </summary>
     public class CarillonBellBlock : Vintagestory.API.Common.Block
     {
+        public override WorldInteraction[] GetPlacedBlockInteractionHelp(IWorldAccessor world, BlockSelection selection, IPlayer forPlayer)
+        {
+            return new WorldInteraction[]
+            {
+                new WorldInteraction
+                {
+                    ActionLangCode = RPVoiceChatMod.modID + ":Bell.Interaction.Ring",
+                    MouseButton = EnumMouseButton.Right
+                }
+            };
+        }
+
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
             if (base.OnBlockInteractStart(world, byPlayer, blockSel)) return true;
