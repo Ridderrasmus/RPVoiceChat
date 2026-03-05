@@ -11,6 +11,7 @@ namespace RPVoiceChat.Networking
         public event Action<AudioPacket> AudioPacketReceived;
 
         private Dictionary<string, ConnectionInfo> connectionsByPlayer = new Dictionary<string, ConnectionInfo>();
+        private Dictionary<string, string> playerByAddress = new Dictionary<string, string>();
         private IPAddress ip;
         private IPEndPoint ownEndPoint;
         private ConnectionInfo connectionInfo;
@@ -60,14 +61,21 @@ namespace RPVoiceChat.Networking
 
         public void PlayerConnected(string playerId, ConnectionInfo connectionInfo)
         {
-            connectionsByPlayer.Add(playerId, connectionInfo);
+            if (connectionsByPlayer.TryGetValue(playerId, out var oldConn))
+                playerByAddress.Remove(NetworkUtils.GetEndPoint(oldConn).ToString());
+            var addressKey = NetworkUtils.GetEndPoint(connectionInfo).ToString();
+            if (playerByAddress.ContainsKey(addressKey)) playerByAddress.Remove(addressKey);
+            connectionsByPlayer[playerId] = connectionInfo;
+            playerByAddress[addressKey] = playerId;
             logger.VerboseDebug($"{playerId} connected over {_transportID}");
         }
 
         public void PlayerDisconnected(string playerId)
         {
-            if (!connectionsByPlayer.ContainsKey(playerId)) return;
+            if (!connectionsByPlayer.TryGetValue(playerId, out var conn)) return;
+            var addressKey = NetworkUtils.GetEndPoint(conn).ToString();
             connectionsByPlayer.Remove(playerId);
+            playerByAddress.Remove(addressKey);
             logger.VerboseDebug($"{playerId} disconnected from {_transportID} server");
         }
 
@@ -86,6 +94,9 @@ namespace RPVoiceChat.Networking
                     break;
                 case PacketType.Audio:
                     var packet = NetworkPacket.FromBytes<AudioPacket>(msg);
+                    if (!playerByAddress.TryGetValue(sender.ToString(), out string senderPlayerId))
+                        break; // drop audio from unauthenticated connection
+                    packet.PlayerId = senderPlayerId;
                     AudioPacketReceived?.Invoke(packet);
                     break;
                 default:
