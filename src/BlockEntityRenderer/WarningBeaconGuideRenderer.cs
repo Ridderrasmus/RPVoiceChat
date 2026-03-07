@@ -73,7 +73,7 @@ namespace RPVoiceChat.GameContent.Renderers
             // Neutral texture for uniform rendering (avoids odd atlas tint)
             TextureAtlasPosition texPos = default;
             int subId;
-            bool hasTex = capi.BlockTextureAtlas.GetOrInsertTexture(new AssetLocation("game:block/stone/brick/plain"), out subId, out texPos);
+            bool hasTex = capi.BlockTextureAtlas.GetOrInsertTexture(new AssetLocation("game:block/slightlydarker"), out subId, out texPos);
 
             foreach (var local in WarningBeaconStructure.StructurePositions)
             {

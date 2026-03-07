@@ -33,6 +33,7 @@
   "itemdesc-telegram": "A printed telegram containing a telegraphic message.",
 
   "block-bellhammer-aged-*": "Bell Hammer (Aged)",
+  "block-bellhammer-veryaged-*": "Bell Hammer (Very Aged)",
   "block-bellhammer-birch-*": "Bell Hammer (Birch)",
   "block-bellhammer-oak-*": "Bell Hammer (Oak)",
   "block-bellhammer-maple-*": "Bell Hammer (Maple)",
@@ -129,6 +130,7 @@
   "blockdesc-carillonbell-*": "A carillon bell that can ring a melody for an entire village.",
   "block-printer-*": "Printer",
   "block-printer-aged-*": "Printer (Aged)",
+  "block-printer-veryaged-*": "Printer (Very Aged)",
   "block-printer-birch-*": "Printer (Birch)",
   "block-printer-oak-*": "Printer (Oak)",
   "block-printer-maple-*": "Printer (Maple)",
@@ -174,6 +176,7 @@
   "Printer.Telegrams": "Telegrams: {0}/9",
   "block-telegraph-*": "Telegraph Key",
   "block-telegraph-aged-*": "Telegraph Key (Aged)",
+  "block-telegraph-veryaged-*": "Telegraph Key (Very Aged)",
   "block-telegraph-birch-*": "Telegraph Key (Birch)",
   "block-telegraph-oak-*": "Telegraph Key (Oak)",
   "block-telegraph-maple-*": "Telegraph Key (Maple)",
