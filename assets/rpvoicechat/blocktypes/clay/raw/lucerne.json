@@ -1,0 +1,104 @@
+{
+  "code": "lucerne",
+  "enabled": true,
+  "class": "lucerneblock",
+  "behaviors": [
+    { "name": "HorizontalOrientable" }
+  ],
+  "variantgroups": [
+    { "code": "color", "states": [ "blue", "red", "fire" ] },
+    { "code": "materialtype", "states": [ "raw" ] },
+    { "code": "side", "loadFromProperties": "abstract/horizontalorientation" }
+  ],
+  "creativeinventory": {
+    "general": [ "*-*-north" ],
+    "rpvoicechat": [ "*-*-north" ]
+  },
+  "maxstacksize": 1,
+  "blockmaterial": "Ceramic",
+  "drawtype": "json",
+  "shape": {
+    "base": "block/clay/lucerne",
+    "rotateYByType": {
+      "*-*-north": 0,
+      "*-*-east": 270,
+      "*-*-west": 90,
+      "*-*-south": 180
+    }
+  },
+  "textures": {
+    "clay": { "base": "game:block/clay/{color}clay" }
+  },
+  "attributesByType": {
+    "lucerne-red-raw-*": {
+      "beehivekiln": {
+        "0": { "type": "block", "code": "lucerne-tan-fired-{side}" },
+        "1": { "type": "block", "code": "lucerne-orange-fired-{side}" },
+        "2": { "type": "block", "code": "lucerne-red-fired-{side}" },
+        "3": { "type": "block", "code": "lucerne-brown-fired-{side}" }
+      }
+    },
+    "lucerne-blue-raw-*": {
+      "beehivekiln": {
+        "0": { "type": "block", "code": "lucerne-cream-fired-{side}" },
+        "1": { "type": "block", "code": "lucerne-gray-fired-{side}" },
+        "2": { "type": "block", "code": "lucerne-black-fired-{side}" },
+        "3": { "type": "block", "code": "lucerne-black-fired-{side}" }
+      }
+    },
+    "lucerne-fire-raw-*": {
+      "beehivekiln": {
+        "0": { "type": "block", "code": "lucerne-fire-fired-{side}" },
+        "1": { "type": "block", "code": "lucerne-fire-fired-{side}" },
+        "2": { "type": "block", "code": "lucerne-fire-fired-{side}" },
+        "3": { "type": "block", "code": "lucerne-fire-fired-{side}" }
+      }
+    }
+  },
+  "combustiblePropsByType": {
+    "lucerne-red-raw-*": {
+      "meltingPoint": 650,
+      "meltingDuration": 45,
+      "smeltedRatio": 1,
+      "smeltingType": "fire",
+      "smeltedStack": { "type": "block", "code": "lucerne-earthyorange-fired-{side}" },
+      "requiresContainer": false
+    },
+    "lucerne-blue-raw-*": {
+      "meltingPoint": 650,
+      "meltingDuration": 45,
+      "smeltedRatio": 1,
+      "smeltingType": "fire",
+      "smeltedStack": { "type": "block", "code": "lucerne-blue-fired-{side}" },
+      "requiresContainer": false
+    },
+    "lucerne-fire-raw-*": {
+      "meltingPoint": 650,
+      "meltingDuration": 45,
+      "smeltedRatio": 1,
+      "smeltingType": "fire",
+      "smeltedStack": { "type": "block", "code": "lucerne-fire-fired-{side}" },
+      "requiresContainer": false
+    }
+  },
+  "sounds": {
+    "place": "game:block/ceramicplace",
+    "hit": "game:block/ceramichit",
+    "break": "game:block/ceramicbreak",
+    "walk": "game:walk/stone1"
+  },
+  "rainPermeable": false,
+  "sidesolid": { "all": false },
+  "sideopaque": { "all": false },
+  "attributes": {
+    "handbook": {
+      "groupBy": [ "lucerne-*-{materialtype}" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-lucerne.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-lucerne.Text"
+        }
+      ]
+    }
+  }
+}

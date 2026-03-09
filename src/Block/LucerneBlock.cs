@@ -9,7 +9,7 @@ namespace RPVoiceChat.GameContent.Block
 {
     /// <summary>
     /// Lucerne block: base of the Warning Beacon multiblock.
-    /// Place only on stone ground. Sneak + right-click = structure guide; right-click = open UI (when structure complete).
+    /// Place only on stone ground. Sneak + RMB = show structure preview; Ctrl+Shift+RMB = hide preview; RMB = open UI when structure complete.
     /// </summary>
     public class LucerneBlock : Vintagestory.API.Common.Block
     {
@@ -17,6 +17,10 @@ namespace RPVoiceChat.GameContent.Block
         {
             if (!base.CanPlaceBlock(world, byPlayer, blockSel, ref failureCode))
                 return false;
+
+            // Raw lucerne = plain clay block: place anywhere like other molds. Fired = beacon base: stone ground only.
+            if (Variant?["materialtype"] as string != "fired")
+                return true;
 
             var blockAtSel = world.BlockAccessor.GetBlock(blockSel.Position);
             BlockPos placePos = blockAtSel.Replaceable >= 6000 ? blockSel.Position : blockSel.Position.AddCopy(blockSel.Face);
@@ -33,6 +37,10 @@ namespace RPVoiceChat.GameContent.Block
 
         public override WorldInteraction[] GetPlacedBlockInteractionHelp(IWorldAccessor world, BlockSelection selection, IPlayer forPlayer)
         {
+            // Only fired lucernes are the warning beacon (guide + fuel UI).
+            if (Variant?["materialtype"] as string != "fired")
+                return base.GetPlacedBlockInteractionHelp(world, selection, forPlayer);
+
             return new WorldInteraction[]
             {
                 new WorldInteraction
@@ -61,16 +69,29 @@ namespace RPVoiceChat.GameContent.Block
 
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
+            // Raw lucerne must not open structure guide or beacon UI (no alarm fire).
+            if (Variant?["materialtype"] as string != "fired")
+                return base.OnBlockInteractStart(world, byPlayer, blockSel);
+
             var be = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityLucerne;
             if (be == null) return false;
 
-            // Sneak + right-click = structure guide (like vanilla kiln)
-            bool showGuide = byPlayer.Entity.Controls.Sneak;
-            if (showGuide)
+            var ctrls = byPlayer.Entity.Controls;
+            // Ctrl + Shift + RMB = hide preview only (ShiftKey/CtrlKey = mouse modifiers per API)
+            if (be.ShowStructureGuide && ctrls.CtrlKey && ctrls.ShiftKey)
             {
                 be.ToggleStructureGuide(byPlayer);
                 return true;
             }
+            // Sneak + RMB = show preview when hidden (do not toggle off with sneak alone)
+            if (!be.ShowStructureGuide && ctrls.Sneak)
+            {
+                be.ToggleStructureGuide(byPlayer);
+                return true;
+            }
+            // Guide visible but sneak without ctrl+shift: consume to avoid opening nothing
+            if (be.ShowStructureGuide && ctrls.Sneak)
+                return true;
 
             if (be.StructureComplete)
             {

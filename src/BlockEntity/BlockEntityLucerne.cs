@@ -134,7 +134,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (api.Side == EnumAppSide.Server)
             {
                 (api as ICoreServerAPI)?.Event.RegisterGameTickListener(OnServerGameTick, 100);
-                WarningBeaconStructure.RegisterLucerne(Pos, GetFacing());
+                // Only fired lucernes reserve the 3×3 zone and validate the beacon structure.
+                if (IsFired)
+                    WarningBeaconStructure.RegisterLucerne(Pos, GetFacing());
             }
             if (api.Side == EnumAppSide.Client)
             {
@@ -165,7 +167,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public override void OnBlockPlaced(ItemStack byItemStack = null)
         {
             base.OnBlockPlaced(byItemStack);
-            if (Api?.Side == EnumAppSide.Server)
+            if (Api?.Side == EnumAppSide.Server && IsFired)
                 RevalidateStructure();
         }
 
@@ -196,6 +198,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         private void RevalidateStructure()
         {
+            if (!IsFired) return;
             var accessor = Api?.World?.BlockAccessor;
             var block = accessor?.GetBlock(Pos);
             if (accessor == null || block == null) return;
@@ -215,7 +218,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public override bool OnPlayerRightClick(IPlayer byPlayer, BlockSelection blockSel)
         {
-            if (!_structureComplete) return false;
+            if (!IsFired || !_structureComplete) return false;
 
             if (Api.World is IServerWorldAccessor)
             {
@@ -306,7 +309,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public bool TryLightBeacon()
         {
-            if (Api?.Side != EnumAppSide.Server || !_structureComplete) return false;
+            if (!IsFired || Api?.Side != EnumAppSide.Server || !_structureComplete) return false;
             if (_inventory.FatSlot.StackSize < FatRequired || _inventory.FirewoodSlot.StackSize < FirewoodRequired)
                 return false;
 
@@ -416,7 +419,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public override void OnBlockBroken(IPlayer byPlayer)
         {
-            if (Api?.Side == EnumAppSide.Server)
+            if (Api?.Side == EnumAppSide.Server && IsFired)
                 WarningBeaconStructure.UnregisterLucerne(Pos);
             DisposeClientRenderers();
             base.OnBlockBroken(byPlayer);
@@ -424,7 +427,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public override void OnBlockUnloaded()
         {
-            if (Api?.Side == EnumAppSide.Server)
+            if (Api?.Side == EnumAppSide.Server && IsFired)
                 WarningBeaconStructure.UnregisterLucerne(Pos);
             DisposeClientRenderers();
             base.OnBlockUnloaded();
