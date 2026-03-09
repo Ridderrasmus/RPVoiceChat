@@ -90,13 +90,13 @@ https://github.com/Ridderrasmus/RPVoiceChat/wiki/Server-Administration#in-game-c
 ## Maintainers
 Currently maintained by:
 - [Ridderrasmus](https://github.com/Ridderrasmus) - Creator and maintainer
-- [Dmitry221060](https://github.com/Dmitry221060) - Maintainer
 - [RomainOdeval](https://github.com/RomainOdeval) - Maintainer
 - [Faithfulshot](https://github.com/Faithfulshot) - 3D models
 - Nixie - Audio design
 - [Alconchloe](https://github.com/Alconchloe) - Goblin bug hunter
 
 Previously maintained by:
+- [Dmitry221060](https://github.com/Dmitry221060) - Maintainer
 - [blakdragan7](https://github.com/blakdragan7) - Maintainer
 
 Want to contribute?

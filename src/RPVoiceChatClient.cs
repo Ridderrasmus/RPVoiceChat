@@ -23,6 +23,7 @@ namespace RPVoiceChat
         private PlayerNetworkClient client;
         private GuiManager guiManager;
         private VoiceBanClientManager voiceBanManager;
+        private VoiceGroupClientManager voiceGroupManager;
         private bool isReady = false;
         private bool mutePressed = false;
         private bool voiceMenuPressed = false;
@@ -31,6 +32,7 @@ namespace RPVoiceChat
         public static AudioOutputManager AudioOutputManagerInstance { get; private set; }
         public static MicrophoneManager MicrophoneManagerInstance { get; private set; }
         public static VoiceBanClientManager VoiceBanManagerInstance { get; private set; }
+        public static VoiceGroupClientManager VoiceGroupManagerInstance { get; private set; }
 
         public override bool ShouldLoad(EnumAppSide forSide)
         {
@@ -81,6 +83,10 @@ namespace RPVoiceChat
             // Initialize voice ban manager
             voiceBanManager = new VoiceBanClientManager(capi);
             VoiceBanManagerInstance = voiceBanManager;
+
+            // Initialize voice group manager
+            voiceGroupManager = new VoiceGroupClientManager(capi);
+            VoiceGroupManagerInstance = voiceGroupManager;
 
             // Initialize gui
             guiManager = new GuiManager(capi, microphoneManager, audioOutputManager, clientSettingsRepository);
