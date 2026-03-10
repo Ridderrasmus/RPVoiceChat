@@ -9,7 +9,7 @@
     { "name": "HeatSource", "properties": { "heatStrength": 0 } }
   ],
   "entityBehaviors": [
-    { "name": "BELightable", "properties": { "lightLevel": 1, "lightRadius": 16 } }
+    { "name": "BELightable", "properties": { "lightLevel": 1, "lightIntensityScale": 6 } }
   ],
   "variantgroups": [
     { "code": "color", "states": [ "blue", "red", "fire", "tan", "orange", "brown", "earthyorange", "cream", "gray", "black" ] },

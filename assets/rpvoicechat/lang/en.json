@@ -225,7 +225,7 @@
   "WarningBeacon.HoursRemaining": "{0} h remaining",
   "WarningBeacon.Burning": "Burning: {0} h remaining",
   "WarningBeacon.Ready": "Ready to light",
-  "WarningBeacon.BuildStructure": "Build the structure",
+  "WarningBeacon.StructureIncomplete": "Structure incomplete!",
   "WarningBeacon.Interaction.LoadFuel": "Load fuel",
   "WarningBeacon.Interaction.ShowGuide": "Show structure preview",
   "WarningBeacon.Interaction.HideGuide": "Hide structure preview",

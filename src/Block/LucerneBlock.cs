@@ -61,7 +61,19 @@ namespace RPVoiceChat.GameContent.Block
                     ShouldApply = (wi, bs, es) =>
                     {
                         var be = world.BlockAccessor.GetBlockEntity(bs.Position) as BlockEntityLucerne;
-                        return be != null && !be.StructureComplete;
+                        return be != null && !be.StructureComplete && !be.ShowStructureGuide;
+                    }
+                },
+                // Ctrl + Shift + RMB = hide preview (HotKeyCodes so both modifiers show in the HUD)
+                new WorldInteraction
+                {
+                    ActionLangCode = RPVoiceChatMod.modID + ":WarningBeacon.Interaction.HideGuide",
+                    HotKeyCodes = new[] { "ctrl", "shift" },
+                    MouseButton = EnumMouseButton.Right,
+                    ShouldApply = (wi, bs, es) =>
+                    {
+                        var be = world.BlockAccessor.GetBlockEntity(bs.Position) as BlockEntityLucerne;
+                        return be != null && !be.StructureComplete && be.ShowStructureGuide;
                     }
                 }
             };

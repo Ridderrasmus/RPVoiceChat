@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using RPVoiceChat.GameContent.Inventory;
@@ -24,7 +25,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private bool _structureComplete;
         private double _burnEndTotalHours;
         private bool _showAshes; // true when beacon just went out, show ashes until 32 firewood is added again and lit
-        private WarningBeaconGuideRenderer _guideRenderer;
+        /// <summary>Slot ID for World.HighlightBlocks — unique to avoid clashing with vanilla highlights.</summary>
+        private const int StructureGuideHighlightSlotId = 0x52505643; // 'RPVC'
+        private static readonly List<BlockPos> EmptyBlockPosList = new List<BlockPos>();
         private WarningBeaconBonfireRenderer _bonfireRenderer;
         private long _flameParticlesTickListenerId;
 
@@ -145,7 +148,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 {
                     capi.Event.EnqueueMainThreadTask(() =>
                     {
-                        UpdateGuideRenderer();
+                        UpdateStructureGuideHighlight();
                         UpdateBonfireRenderer();
                         _flameParticlesTickListenerId = capi.Event.RegisterGameTickListener(OnClientGameTickFlames, 4);
                     }, "rpvoicechat:InitBeaconRenderers");
@@ -191,9 +194,10 @@ namespace RPVoiceChat.GameContent.BlockEntity
             return WarningBeaconStructure.LocalToWorld(Pos, c.X, c.Y, c.Z, GetFacing());
         }
 
-        /// <summary>Geometric center of the reserved 3×3 zone (above platform), used for light position, particles and fire damage.</summary>
+        /// <summary>Geometric center of the reserved 3×3 zone (above platform), used for light, particles and fire damage.</summary>
         public Vec3d GetStructureCenter3x3WorldPos() => GetStructureCenterWorldPos().ToWorldCenter();
 
+        /// <summary>BELightable: point light at center of 3×3×3 above platform. Intensity scaled via JSON lightIntensityScale (IPointLight has no radius).</summary>
         Vec3d IBlockEntityWithCustomLightPosition.GetLightOrigin() => GetStructureCenter3x3WorldPos();
 
         private void RevalidateStructure()
@@ -372,25 +376,41 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     lightBhv.SetLightActive(beaconLightActive);
                 var capi = Api as ICoreClientAPI;
                 if (capi != null)
-                    capi.Event.EnqueueMainThreadTask(() => { UpdateGuideRenderer(); UpdateBonfireRenderer(); }, "rpvoicechat:UpdateBeaconRenderers");
+                    capi.Event.EnqueueMainThreadTask(() => { UpdateStructureGuideHighlight(); UpdateBonfireRenderer(); }, "rpvoicechat:UpdateBeaconRenderers");
             }
         }
 
         public bool ShowAshes => _showAshes;
         public bool HasEnoughFirewoodForBonfire => (_inventory?.FirewoodSlot?.StackSize ?? 0) >= FirewoodRequired;
 
-        private void UpdateGuideRenderer()
+        /// <summary>
+        /// Shows or clears vanilla-style block highlights for the structure guide (same system as bloomery/kiln previews).
+        /// </summary>
+        private void UpdateStructureGuideHighlight()
         {
             if (Api?.Side != EnumAppSide.Client) return;
             var capi = Api as ICoreClientAPI;
-            if (capi == null) return;
-            if (_showStructureGuide && _guideRenderer == null)
-                _guideRenderer = new WarningBeaconGuideRenderer(this, capi);
-            else if (!_showStructureGuide && _guideRenderer != null)
+            if (capi?.World == null) return;
+            var player = capi.World.Player;
+            if (player == null) return;
+
+            // Clear when guide off, not fired, or structure already complete
+            if (!_showStructureGuide || !IsFired || _structureComplete)
             {
-                _guideRenderer.Dispose();
-                _guideRenderer = null;
+                capi.World.HighlightBlocks(player, StructureGuideHighlightSlotId, EmptyBlockPosList,
+                    EnumHighlightBlocksMode.Absolute, EnumHighlightShape.Arbitrary);
+                return;
             }
+
+            var facing = GetFacing();
+            var blocks = new List<BlockPos>(WarningBeaconStructure.StructurePositions.Count);
+            foreach (var local in WarningBeaconStructure.StructurePositions)
+            {
+                blocks.Add(WarningBeaconStructure.LocalToWorld(Pos, local.X, local.Y, local.Z, facing));
+            }
+
+            capi.World.HighlightBlocks(player, StructureGuideHighlightSlotId, blocks,
+                EnumHighlightBlocksMode.Absolute, EnumHighlightShape.Arbitrary);
         }
 
         private void UpdateBonfireRenderer()
@@ -440,8 +460,12 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 (Api as ICoreClientAPI)?.Event.UnregisterGameTickListener(_flameParticlesTickListenerId);
                 _flameParticlesTickListenerId = 0;
             }
-            _guideRenderer?.Dispose();
-            _guideRenderer = null;
+            // Clear structure guide highlights (vanilla HighlightBlocks slot)
+            if (Api is ICoreClientAPI capi && capi.World?.Player != null)
+            {
+                capi.World.HighlightBlocks(capi.World.Player, StructureGuideHighlightSlotId, EmptyBlockPosList,
+                    EnumHighlightBlocksMode.Absolute, EnumHighlightShape.Arbitrary);
+            }
             _bonfireRenderer?.Dispose();
             _bonfireRenderer = null;
         }
@@ -541,8 +565,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
             else
             {
-                dsc.AppendLine(Lang.Get(RPVoiceChatMod.modID + ":WarningBeacon.BuildStructure"));
-                dsc.AppendLine(Lang.Get(RPVoiceChatMod.modID + ":WarningBeacon.Interaction.ShowGuide"));
+                dsc.AppendLine(Lang.Get(RPVoiceChatMod.modID + ":WarningBeacon.StructureIncomplete"));
             }
         }
     }
