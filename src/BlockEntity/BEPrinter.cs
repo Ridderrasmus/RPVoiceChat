@@ -22,6 +22,24 @@ namespace RPVoiceChat.GameContent.BlockEntity
     {
         private InventoryPrinter inventory;
         private const int PaperSlotId = 0;
+
+        /// <summary>Full inventory sync like BlockEntityLucerne.PacketIdInventory; custom dialog uses AddItemSlotGrid(..., "slots").</summary>
+        public static readonly int PacketIdPrinterInventory = GetPrinterPacketIdBase() + 0;
+
+        private static int GetPrinterPacketIdBase()
+        {
+            try
+            {
+                var enumType = typeof(EnumBlockContainerPacketId);
+                if (enumType == null || !enumType.IsEnum) return 10000;
+                var values = Enum.GetValues(enumType);
+                int max = 0;
+                foreach (var v in values) { int i = (int)v; if (i > max) max = i; }
+                // Offset after lucerne's +2 so no collision with other mod BEs using same pattern
+                return max + 10;
+            }
+            catch { return 10010; }
+        }
         
         public virtual string DialogTitle => Lang.Get($"{RPVoiceChatMod.modID}:Printer.Contents");
         
@@ -166,6 +184,25 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 byPlayer.InventoryManager.OpenInventory(inventory);
             }
             return true;
+        }
+
+        public override void OnReceivedClientPacket(IPlayer fromPlayer, int packetid, byte[] data)
+        {
+            if (packetid == PacketIdPrinterInventory && data != null && data.Length > 0 && inventory != null)
+            {
+                try
+                {
+                    var tree = new TreeAttribute();
+                    using (var ms = new MemoryStream(data))
+                        tree.FromBytes(new BinaryReader(ms));
+                    inventory.FromTreeAttributes(tree);
+                    inventory.ResolveBlocksOrItems();
+                    MarkDirty();
+                }
+                catch { /* ignore */ }
+                return;
+            }
+            base.OnReceivedClientPacket(fromPlayer, packetid, data);
         }
 
         public override void OnReceivedServerPacket(int packetid, byte[] data)
