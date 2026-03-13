@@ -33,7 +33,17 @@
     "op": "add",
     "path": "/enabled",
     "value": false,
-    "file": "rpvoicechat:blocktypes/claymold/wirecutterjawmold.json",
+    "file": "rpvoicechat:blocktypes/clay/raw/wirecutterjawmold.json",
+    "condition": {
+      "when": "rpvoicechat:telegraph-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:blocktypes/clay/fired/wirecutterjawmold.json",
     "condition": {
       "when": "rpvoicechat:telegraph-content",
       "isValue": "false"
@@ -73,11 +83,20 @@
     "op": "add",
     "path": "/enabled",
     "value": false,
-    "file": "rpvoicechat:blocktypes/claymold/wirecutterjawmold.json",
+    "file": "rpvoicechat:blocktypes/clay/raw/wirecutterjawmold.json",
+    "condition": {
+      "when": "rpvoicechat:additional-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:blocktypes/clay/fired/wirecutterjawmold.json",
     "condition": {
       "when": "rpvoicechat:additional-content",
       "isValue": "false"
     }
   }
 ]
-

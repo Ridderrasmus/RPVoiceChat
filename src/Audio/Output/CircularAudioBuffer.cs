@@ -38,7 +38,8 @@ namespace RPVoiceChat.Audio
 
             lock (buffer_queue_lock)
             {
-                var currentBuffer = availableBuffers.PopOne();
+                int currentBuffer = availableBuffers[0];
+                availableBuffers.RemoveAt(0);
                 OALW.ClearError();
                 
                 // Check for errors after BufferData

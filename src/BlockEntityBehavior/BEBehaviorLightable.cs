@@ -17,7 +17,11 @@ public class BEBehaviorLightable : BlockEntityBehavior, IPointLight
     private bool lightInRenderList; // avoids Remove then re-Add same instance
     private Vec3f lightColor = new Vec3f(1.0f, 0.9f, 0.7f); // Warm color by default
     private float lightLevel = 1.0f;
-    private float lightRadius = 10.0f;
+    /// <summary>
+    /// IPointLight has no radius: engine often uses Color magnitude as intensity/ falloff proxy.
+    /// Scale &gt; 1 makes the dynamic light much brighter / larger-looking (optional JSON lightIntensityScale).
+    /// </summary>
+    private float lightIntensityScale = 1.0f;
     private ICoreClientAPI capi;
 
     // IPointLight implementation
@@ -76,19 +80,6 @@ public class BEBehaviorLightable : BlockEntityBehavior, IPointLight
         Blockentity.MarkDirty();
     }
 
-    /// <summary>
-    /// Sets the light radius
-    /// </summary>
-    public void SetLightRadius(float radius)
-    {
-        lightRadius = Math.Max(0.1f, radius);
-        if (isLightActive && Blockentity.Api?.Side == EnumAppSide.Client)
-        {
-            UpdateLight();
-        }
-        Blockentity.MarkDirty();
-    }
-
     public bool IsLightActive => isLightActive;
 
     public override void Initialize(ICoreAPI api, JsonObject properties)
@@ -99,13 +90,13 @@ public class BEBehaviorLightable : BlockEntityBehavior, IPointLight
         {
             if (properties["lightLevel"].Exists)
                 lightLevel = properties["lightLevel"].AsFloat(1.0f);
-            if (properties["lightRadius"].Exists)
-                lightRadius = properties["lightRadius"].AsFloat(10.0f);
             if (properties["lightColorX"].Exists || properties["lightColorY"].Exists || properties["lightColorZ"].Exists)
                 lightColor = new Vec3f(
                     properties["lightColorX"].AsFloat(1.0f),
                     properties["lightColorY"].AsFloat(0.9f),
                     properties["lightColorZ"].AsFloat(0.7f));
+            if (properties["lightIntensityScale"].Exists)
+                lightIntensityScale = GameMath.Clamp(properties["lightIntensityScale"].AsFloat(1.0f), 0.1f, 25f);
         }
 
         if (api.Side == EnumAppSide.Client)
@@ -135,14 +126,16 @@ public class BEBehaviorLightable : BlockEntityBehavior, IPointLight
             }
             return;
         }
+        float s = lightLevel * lightIntensityScale;
+        var c = new Vec3f(lightColor.X * s, lightColor.Y * s, lightColor.Z * s);
         if (lightInRenderList)
         {
             Pos = GetLightOrigin();
-            Color = new Vec3f(lightColor.X * lightLevel, lightColor.Y * lightLevel, lightColor.Z * lightLevel);
+            Color = c;
             return;
         }
         Pos = GetLightOrigin();
-        Color = new Vec3f(lightColor.X * lightLevel, lightColor.Y * lightLevel, lightColor.Z * lightLevel);
+        Color = c;
         capi.Render.AddPointLight(this);
         lightInRenderList = true;
     }
@@ -179,7 +172,6 @@ public class BEBehaviorLightable : BlockEntityBehavior, IPointLight
             tree.GetFloat("lightColorZ", 0.7f)
         );
         lightLevel = tree.GetFloat("lightLevel", 1.0f);
-        lightRadius = tree.GetFloat("lightRadius", 10.0f);
 
         if (Blockentity.Api?.Side == EnumAppSide.Client)
         {
@@ -197,6 +189,6 @@ public class BEBehaviorLightable : BlockEntityBehavior, IPointLight
         tree.SetFloat("lightColorY", lightColor.Y);
         tree.SetFloat("lightColorZ", lightColor.Z);
         tree.SetFloat("lightLevel", lightLevel);
-        tree.SetFloat("lightRadius", lightRadius);
+        tree.SetFloat("lightIntensityScale", lightIntensityScale);
     }
 }

@@ -67,7 +67,7 @@ namespace RPVoiceChat.Audio
             this.capi = capi;
             this.clientSettingsRepo = clientSettingsRepo;
 
-            lastSpeakerCoords = player.Entity?.SidedPos?.XYZFloat;
+            lastSpeakerCoords = player.Entity?.Pos?.XYZFloat;
             lastSpeakerUpdate = DateTime.Now;
 
             source = OALW.GenSource();
@@ -109,8 +109,8 @@ namespace RPVoiceChat.Audio
 
         public void UpdatePlayer()
         {
-            EntityPos speakerPos = player.Entity?.SidedPos;
-            EntityPos listenerPos = capi.World.Player.Entity?.SidedPos;
+            EntityPos speakerPos = player.Entity?.Pos;
+            EntityPos listenerPos = capi.World.Player.Entity?.Pos;
             if (speakerPos == null || listenerPos == null)
                 return;
 
