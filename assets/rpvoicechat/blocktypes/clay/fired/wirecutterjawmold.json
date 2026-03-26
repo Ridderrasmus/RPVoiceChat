@@ -15,9 +15,8 @@
   "entityClass": "ToolMold",
   "attributesByType": {
     "wirecutterjawmold-*-fired-wirecutterjaw": {
-      "requiredUnits": 100,
-      "fillHeight": 2,
-      "fillQuadsByLevel": [ { "x1": 6, "z1": 4, "x2": 10, "z2": 12 } ],
+      "requiredUnits": 50,
+      "fillHeight": 1,
       "moldrackable": true,
       "drop": { "type": "item", "code": "{tooltype}-{metal}", "quantity": 1 }
     }

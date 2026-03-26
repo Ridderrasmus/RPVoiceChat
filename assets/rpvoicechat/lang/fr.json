@@ -427,7 +427,7 @@
   "Handbook.Usage.item-telegraphwire.Title": "Utilisation",
   "Handbook.Usage.item-telegraphwire.Text": "Cette bobine de fil télégraphique permet d'étendre un réseau sur une distance maximale de 20 blocs, en effectuant un clic droit sur le premier puis le deuxième élément à connecter. Pour couvrir des distances plus importantes, des isolateurs (relais) sont nécessaires pour prolonger le réseau.",
   "Handbook.Usage.item-wirecutter.Title": "Utilisation",
-  "Handbook.Usage.item-wirecutter.Text": "Un outil spécialisé pour couper les connexions de câbles dans les réseaux télégraphiques. Faites un clic droit sur n'importe quel bloc de réseau de communication ou isolateur connecté pour retirer toutes ses connexions de câbles. Cela vous permet de reconfigurer votre réseau ou de retirer les connexions avant de casser les blocs.",
+  "Handbook.Usage.item-wirecutter.Text": "Un outil spécialisé pour couper les connexions de câbles dans les réseaux télégraphiques. Faites un clic droit sur un bloc de réseau connecté ou un isolateur pour retirer toutes ses connexions. Pour chaque câble coupé : 75 % de chances de récupérer 1 fil télégraphique, sinon 3 à 7 fragments de cuivre.",
   "Handbook.Usage.item-wirecutterjaw.Title": "Utilisation",
   "Handbook.Usage.item-wirecutterjaw.Text": "Une mâchoire de pince coupe-câble coulée dans un moule. Combinez-en deux avec d'autres éléments dans une grille pour fabriquer une pince coupe-câble.",
   "Handbook.Usage.item-megaphone.Title": "Utilisation",

@@ -450,7 +450,7 @@
   "Handbook.Usage.item-telegraphwire.Title": "Usage",
   "Handbook.Usage.item-telegraphwire.Text": "This telegraph wire spool allows extending a network over a maximum distance of 20 blocks, by right-clicking on the first then the second element to connect. To cover greater distances, insulators (relays) are necessary to extend the network.",
   "Handbook.Usage.item-wirecutter.Title": "Usage",
-  "Handbook.Usage.item-wirecutter.Text": "A specialized tool for cutting wire connections in telegraph networks. Right-click on any connected communication network block or insulator to remove all its wire connections. This allows you to reconfigure your network or remove connections before breaking blocks.",
+  "Handbook.Usage.item-wirecutter.Text": "A specialized tool for cutting wire connections in telegraph networks. Right-click a connected network block or insulator to remove all its wire connections. For each cut cable: 75% chance to recover 1 telegraph wire, otherwise 3 to 7 copper bits.",
   "Handbook.Usage.item-wirecutterjaw.Title": "Usage",
   "Handbook.Usage.item-wirecutterjaw.Text": "A wire cutter jaw cast from a mold. Combine two with other elements in a grid to craft a wire cutter.",
   "Handbook.Usage.item-megaphone.Title": "Usage",
