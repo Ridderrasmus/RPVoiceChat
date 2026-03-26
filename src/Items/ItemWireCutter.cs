@@ -10,6 +10,8 @@ namespace RPVoiceChat.GameContent.Items
 {
     public class ItemWireCutter : Item
     {
+        private const double ReturnWireChance = 0.75;
+
         public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handling)
         {
             if (blockSel == null || byEntity?.World == null)
@@ -51,12 +53,42 @@ namespace RPVoiceChat.GameContent.Items
             if (byEntity.World.Side == EnumAppSide.Server && connectionCount > 0)
             {
                 DamageItem(byEntity.World, byEntity, slot);
+                DropRecoveredCableLoot(byEntity.World, blockSel.Position, connectionCount);
             }
 
             // Show message on client side
             if (byEntity?.Api is ICoreClientAPI capi)
             {
                 capi.TriggerChatMessage(UIUtils.I18n("Wire.ConnectionsRemoved", connectionCount));
+            }
+        }
+
+        private static void DropRecoveredCableLoot(IWorldAccessor world, BlockPos atPos, int removedConnections)
+        {
+            var wireItem = world.GetItem(new AssetLocation(RPVoiceChatMod.modID, "telegraphwire"));
+            var copperBits = world.GetItem(new AssetLocation("game", "metalbit-copper"));
+            if (wireItem == null && copperBits == null) return;
+
+            for (int i = 0; i < removedConnections; i++)
+            {
+                ItemStack dropStack = null;
+                if (world.Rand.NextDouble() < ReturnWireChance)
+                {
+                    if (wireItem != null) dropStack = new ItemStack(wireItem, 1);
+                }
+                else
+                {
+                    if (copperBits != null)
+                    {
+                        int copperAmount = 3 + world.Rand.Next(5);
+                        dropStack = new ItemStack(copperBits, copperAmount);
+                    }
+                }
+
+                if (dropStack != null)
+                {
+                    world.SpawnItemEntity(dropStack, atPos.ToVec3d().Add(0.5, 0.5, 0.5));
+                }
             }
         }
     }
