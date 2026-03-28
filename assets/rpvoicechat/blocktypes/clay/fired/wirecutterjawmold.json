@@ -15,10 +15,10 @@
   "entityClass": "ToolMold",
   "attributesByType": {
     "wirecutterjawmold-*-fired-wirecutterjaw": {
-      "requiredUnits": 50,
+      "requiredUnits": 100,
       "fillHeight": 1,
       "moldrackable": true,
-      "drop": { "type": "item", "code": "{tooltype}-{metal}", "quantity": 1 }
+      "drop": { "type": "item", "code": "{tooltype}-{metal}", "quantity": 2 }
     }
   },
   "blockmaterial": "Ceramic",
