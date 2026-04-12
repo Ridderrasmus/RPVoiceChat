@@ -25,6 +25,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private readonly List<WireConnection> connections = new();
         private List<BlockPos> pendingConnectionPositions = new();
         private IRenderer renderer;
+        /// <summary>Client/server: retries resolving wire peers when their chunks are not loaded yet.</summary>
+        private long pendingConnectionResolveListenerId;
 
         protected EventHandler<WireNetworkMessage> OnReceivedSignalEvent { get; set; }
         public event Action OnConnectionsChanged;
@@ -77,6 +79,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
 
             ResolvePendingConnectionsAndNotify();
+            UpdatePendingConnectionResolveListener();
         }
 
         public void MarkForUpdate()
@@ -101,23 +104,54 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         private void ResolvePendingConnectionsAndNotify()
         {
-            if (pendingConnectionPositions == null || pendingConnectionPositions.Count == 0) return;
+            if (pendingConnectionPositions == null || pendingConnectionPositions.Count == 0)
+            {
+                StopPendingConnectionResolveListener();
+                return;
+            }
+
+            var stillPending = new List<BlockPos>();
             foreach (var otherPos in pendingConnectionPositions)
             {
                 var otherBe = Api.World.BlockAccessor.GetBlockEntity(otherPos) as BEWireNode;
                 if (otherBe != null)
                 {
                     var connection = new WireConnection(this, otherBe);
-                    // AddConnection already checks if the connection exists
                     AddConnection(connection);
                     otherBe.AddConnection(connection);
                 }
+                else
+                {
+                    stillPending.Add(otherPos);
+                }
             }
-            if (connections.Count > 0)
+
+            pendingConnectionPositions = stillPending;
+
+            UpdatePendingConnectionResolveListener();
+        }
+
+        private void UpdatePendingConnectionResolveListener()
+        {
+            if (pendingConnectionPositions == null || pendingConnectionPositions.Count == 0)
             {
-                OnConnectionsChanged?.Invoke();
+                StopPendingConnectionResolveListener();
+                return;
             }
-            pendingConnectionPositions.Clear();
+
+            if (pendingConnectionResolveListenerId != 0) return;
+
+            pendingConnectionResolveListenerId = RegisterGameTickListener(
+                _ => ResolvePendingConnectionsAndNotify(),
+                250,
+                250);
+        }
+
+        private void StopPendingConnectionResolveListener()
+        {
+            if (pendingConnectionResolveListenerId == 0) return;
+            UnregisterGameTickListener(pendingConnectionResolveListenerId);
+            pendingConnectionResolveListenerId = 0;
         }
 
         public void AddConnection(WireConnection connection)
@@ -236,6 +270,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public override void OnBlockRemoved()
         {
+            StopPendingConnectionResolveListener();
             base.OnBlockRemoved();
 
             if (Api.Side == EnumAppSide.Client)
@@ -637,6 +672,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public override void OnBlockUnloaded()
         {
+            StopPendingConnectionResolveListener();
             base.OnBlockUnloaded();
             if (Api.Side == EnumAppSide.Client)
                 WireNetworkHandler.ClientSideMessageReceived -= OnReceivedMessage;
