@@ -47,6 +47,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private int sentCountdownSeconds = 0;
         private long sentCountdownEndTime = 0;
         private bool telegramPrinted = false; // Flag to track if telegram has been created
+        private bool printPacketSentForCurrentMessage = false;
 
         private RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorAnimatable Animatable => GetBehavior<RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorAnimatable>();
 
@@ -216,6 +217,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 UpdateDisplayMessages();
                 MarkDirty();
                 dialog?.UpdateReceivedText(receivedMessage);
+                printPacketSentForCurrentMessage = false;
                 if (Pos.Equals(senderPos))
                     TriggerKeyClickAnimation();
             }
@@ -275,6 +277,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             isReceivedCountdownActive = false;
             receivedCountdownSeconds = 0;
             receivedCountdownEndTime = 0;
+            printPacketSentForCurrentMessage = false;
             MarkDirty();
         }
 
@@ -307,6 +310,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             sentCountdownSeconds = 0;
             sentCountdownEndTime = 0;
             telegramPrinted = false; // Reset flag
+            printPacketSentForCurrentMessage = false;
             dialog?.UpdateCountdown(-1);
             dialog?.UpdateSentCountdown(-1);
         }
@@ -477,7 +481,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             double secondsSinceLastReceivedActivity = timeSinceLastReceivedActivity / 1000.0;
 
             // Start countdown if received message is complete and countdown not already active
-            if (!string.IsNullOrEmpty(receivedMessageOriginal) && !isReceivedCountdownActive && secondsSinceLastReceivedActivity >= 2.0)
+            if (!string.IsNullOrEmpty(receivedMessageOriginal) && !isReceivedCountdownActive && !printPacketSentForCurrentMessage && secondsSinceLastReceivedActivity >= 2.0)
             {
                 StartReceivedCountdown();
             }
@@ -516,7 +520,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             double secondsSinceLastReceivedActivity = timeSinceLastReceivedActivity / 1000.0;
 
             // Start countdown if received message is complete and countdown not already active
-            if (!string.IsNullOrEmpty(receivedMessageOriginal) && !isReceivedCountdownActive && secondsSinceLastReceivedActivity >= 2.0)
+            if (!string.IsNullOrEmpty(receivedMessageOriginal) && !isReceivedCountdownActive && !printPacketSentForCurrentMessage && secondsSinceLastReceivedActivity >= 2.0)
             {
                 StartReceivedCountdown();
             }
@@ -537,6 +541,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 receivedCountdownSeconds = 0;
                 receivedCountdownEndTime = 0;
                 telegramPrinted = false; // Reset flag for next message
+                printPacketSentForCurrentMessage = false;
                 MarkDirty();
                 dialog?.UpdateReceivedText("");
                 dialog?.UpdateCountdown(-1); // Hide countdown completely
@@ -578,7 +583,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     receivedCountdownEndTime = currentTime;
                     
                     // Send packet to server to trigger printing
-                    if (Api.Side == EnumAppSide.Client)
+                    if (Api.Side == EnumAppSide.Client && !printPacketSentForCurrentMessage && !string.IsNullOrEmpty(receivedMessageOriginal))
                     {
                         var packet = new TelegraphPrintPacket
                         {
@@ -586,6 +591,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                             TelegraphPos = Pos
                         };
                         RPVoiceChatMod.TelegraphPrintClientChannel.SendPacket(packet);
+                        printPacketSentForCurrentMessage = true;
                     }
                 }
             }

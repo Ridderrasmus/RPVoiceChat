@@ -25,6 +25,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private readonly List<WireConnection> connections = new();
         private List<BlockPos> pendingConnectionPositions = new();
         private IRenderer renderer;
+        private long pendingConnectionRetryListener;
 
         protected EventHandler<WireNetworkMessage> OnReceivedSignalEvent { get; set; }
         public event Action OnConnectionsChanged;
@@ -77,6 +78,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
 
             ResolvePendingConnectionsAndNotify();
+            EnsurePendingConnectionRetryListener();
         }
 
         public void MarkForUpdate()
@@ -101,23 +103,54 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         private void ResolvePendingConnectionsAndNotify()
         {
+            if (Api?.World?.BlockAccessor == null) return;
             if (pendingConnectionPositions == null || pendingConnectionPositions.Count == 0) return;
-            foreach (var otherPos in pendingConnectionPositions)
+
+            for (int i = pendingConnectionPositions.Count - 1; i >= 0; i--)
             {
-                var otherBe = Api.World.BlockAccessor.GetBlockEntity(otherPos) as BEWireNode;
-                if (otherBe != null)
+                var otherPos = pendingConnectionPositions[i];
+                if (otherPos == null || otherPos.Equals(Pos))
                 {
-                    var connection = new WireConnection(this, otherBe);
-                    // AddConnection already checks if the connection exists
-                    AddConnection(connection);
-                    otherBe.AddConnection(connection);
+                    pendingConnectionPositions.RemoveAt(i);
+                    continue;
                 }
+
+                var otherBe = Api.World.BlockAccessor.GetBlockEntity(otherPos) as BEWireNode;
+                if (otherBe == null) continue;
+
+                var connection = new WireConnection(this, otherBe);
+                AddConnection(connection);
+                otherBe.AddConnection(connection);
+                pendingConnectionPositions.RemoveAt(i);
             }
-            if (connections.Count > 0)
+
+            EnsurePendingConnectionRetryListener();
+        }
+
+        /// <summary>
+        /// Retries resolving serialized neighbour links when their chunks load later (load order / view distance).
+        /// </summary>
+        private void EnsurePendingConnectionRetryListener()
+        {
+            // FromTreeAttributes runs before Initialize(), so Api can be null here.
+            if (Api == null) return;
+
+            if (pendingConnectionPositions == null || pendingConnectionPositions.Count == 0)
             {
-                OnConnectionsChanged?.Invoke();
+                if (pendingConnectionRetryListener != 0)
+                {
+                    UnregisterGameTickListener(pendingConnectionRetryListener);
+                    pendingConnectionRetryListener = 0;
+                }
+                return;
             }
-            pendingConnectionPositions.Clear();
+
+            if (pendingConnectionRetryListener != 0) return;
+
+            pendingConnectionRetryListener = RegisterGameTickListener(_ =>
+            {
+                ResolvePendingConnectionsAndNotify();
+            }, 2000);
         }
 
         public void AddConnection(WireConnection connection)
@@ -237,6 +270,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public override void OnBlockRemoved()
         {
             base.OnBlockRemoved();
+            pendingConnectionRetryListener = 0;
 
             if (Api.Side == EnumAppSide.Client)
             {
@@ -638,6 +672,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public override void OnBlockUnloaded()
         {
             base.OnBlockUnloaded();
+            pendingConnectionRetryListener = 0;
             if (Api.Side == EnumAppSide.Client)
                 WireNetworkHandler.ClientSideMessageReceived -= OnReceivedMessage;
         }
@@ -682,7 +717,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             foreach (TreeAttribute connAttr in connArray.value)
             {
                 var otherPos = connAttr.GetBlockPos("otherNodePos");
-                if (otherPos != null)
+                if (otherPos != null && !otherPos.Equals(Pos))
                 {
                     pendingConnectionPositions.Add(otherPos);
                 }
@@ -705,11 +740,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             foreach (var conn in connections)
             {
-                var other = conn.GetOtherNode(this);
-                if (other == null) continue;
+                var otherPos = conn.GetOtherBlockPos(Pos);
+                if (otherPos == null) continue;
 
                 var connAttr = new TreeAttribute();
-                connAttr.SetBlockPos("otherNodePos", other.Pos);
+                connAttr.SetBlockPos("otherNodePos", otherPos);
                 connectionList.Add(connAttr);
             }
 

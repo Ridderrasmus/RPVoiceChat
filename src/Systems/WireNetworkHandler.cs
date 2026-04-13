@@ -118,6 +118,7 @@ namespace RPVoiceChat.Systems
                 foreach (var conn in current.GetConnections())
                 {
                     var other = conn.GetOtherNode(current);
+
                     if (other != null && !visited.Contains(other))
                     {
                         visited.Add(other);

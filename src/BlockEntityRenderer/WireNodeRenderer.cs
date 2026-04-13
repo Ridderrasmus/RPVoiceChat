@@ -89,11 +89,15 @@ namespace RPVoiceChat.GameContent.Renderers
 
             foreach (var conn in connections)
             {
-                var other = conn.GetOtherNode(node);
-                if (other == null || other.Position == null) continue;
+                BlockPos otherBlockPos = conn.GetOtherBlockPos(node.Pos);
+                if (otherBlockPos == null) continue;
+
+                // Always resolve the other BE via the accessor: conn.GetOtherNode can be wrong after chunk unload.
+                var otherBe = capi.World.BlockAccessor.GetBlockEntity(otherBlockPos) as BEWireNode;
+                Vec3f otherOffset = otherBe?.WireAttachmentOffset ?? new Vec3f(0.5f, 0.5f, 0.5f);
 
                 Vec3f startLocal = origin - origin; // always (0,0,0) in local space
-                Vec3f endLocal = other.Position.ToVec3f().Add(other.WireAttachmentOffset) - origin;
+                Vec3f endLocal = otherBlockPos.ToVec3f().Add(otherOffset) - origin;
 
                 MeshData wireMesh = WireMesh.MakeWireMesh(startLocal, endLocal, 0.05f);
 

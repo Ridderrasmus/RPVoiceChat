@@ -42,7 +42,12 @@ namespace RPVoiceChat.GameContent.Items
             }
 
             // Second click
-            var firstNode = byEntity.World.BlockAccessor.GetBlockEntity(firstNodePos) as BEWireNode;
+            var firstNode = byEntity.World.BlockAccessor.GetBlockEntity(firstNodePos) as IWireConnectable;
+            if (firstNode == null)
+            {
+                firstNodePos = null;
+                return;
+            }
 
             if (firstNode != null && firstNode != node)
             {
@@ -54,7 +59,22 @@ namespace RPVoiceChat.GameContent.Items
                 else
                 {
                     WireConnection connection = new WireConnection(firstNode, node);
-                    firstNode.Connect(connection); // Connect() method handles adding to network and fusion
+
+                    // Keep item logic generic (IWireConnectable) while still using BEWireNode network logic.
+                    if (firstNode is BEWireNode firstWireNode)
+                    {
+                        firstWireNode.Connect(connection); // Connect() handles network creation/merge
+                    }
+                    else if (node is BEWireNode secondWireNode)
+                    {
+                        secondWireNode.Connect(connection);
+                    }
+                    else
+                    {
+                        firstNodePos = null;
+                        return;
+                    }
+
                     (byEntity.Api as ICoreClientAPI)?.TriggerChatMessage(UIUtils.I18n("Wire.ConnectionSuccess"));
 
                     slot.TakeOut(1);
