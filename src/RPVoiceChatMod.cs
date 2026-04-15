@@ -22,6 +22,8 @@ namespace RPVoiceChat
         internal static IServerNetworkChannel ServerChannel;
         internal static IClientNetworkChannel TelegraphPrintClientChannel;
         internal static IServerNetworkChannel TelegraphPrintServerChannel;
+        internal static IClientNetworkChannel TelegraphSettingsClientChannel;
+        internal static IServerNetworkChannel TelegraphSettingsServerChannel;
         internal static IClientNetworkChannel AnnounceClientChannel;
         internal static IServerNetworkChannel AnnounceServerChannel;
 
@@ -48,6 +50,8 @@ namespace RPVoiceChat
                     
                 TelegraphPrintClientChannel = capi.Network.RegisterChannel("telegraphprint")
                     .RegisterMessageType<TelegraphPrintPacket>();
+                TelegraphSettingsClientChannel = capi.Network.RegisterChannel("telegraphsettings")
+                    .RegisterMessageType<TelegraphSettingsPacket>();
 
                 AnnounceClientChannel = capi.Network.RegisterChannel("announce")
                     .RegisterMessageType<AnnouncePacket>();
@@ -62,6 +66,9 @@ namespace RPVoiceChat
                 TelegraphPrintServerChannel = sapi.Network.RegisterChannel("telegraphprint")
                     .RegisterMessageType<TelegraphPrintPacket>()
                     .SetMessageHandler<TelegraphPrintPacket>(OnTelegraphPrintPacket);
+                TelegraphSettingsServerChannel = sapi.Network.RegisterChannel("telegraphsettings")
+                    .RegisterMessageType<TelegraphSettingsPacket>()
+                    .SetMessageHandler<TelegraphSettingsPacket>(OnTelegraphSettingsPacket);
 
                 AnnounceServerChannel = sapi.Network.RegisterChannel("announce")
                     .RegisterMessageType<AnnouncePacket>();
@@ -113,6 +120,26 @@ namespace RPVoiceChat
             else
             {
                 sapi.Logger.Warning($"Telegraph at {packet.TelegraphPos} not found for print packet");
+            }
+        }
+
+        private void OnTelegraphSettingsPacket(IServerPlayer player, TelegraphSettingsPacket packet)
+        {
+            var telegraph = sapi.World.BlockAccessor.GetBlockEntity(packet.TelegraphPos) as BlockEntityTelegraph;
+            if (telegraph == null)
+            {
+                sapi.Logger.Warning($"Telegraph at {packet.TelegraphPos} not found for settings packet");
+                return;
+            }
+
+            switch (packet.Operation)
+            {
+                case TelegraphSettingsOperation.SetCustomName:
+                    telegraph.SetCustomEndpointName(packet.Value, out _);
+                    break;
+                case TelegraphSettingsOperation.SetTarget:
+                    telegraph.SetTargetEndpointName(packet.Value);
+                    break;
             }
         }
 

@@ -20,7 +20,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public long NetworkUID { get; set; } = 0;
         public BlockPos Position => Pos;
         public string NodeUID => Pos.ToString();
-        private int MaxConnections => ServerConfigManager.TelegraphMaxConnectionsPerNode;
+        protected virtual int MaxConnections => ServerConfigManager.TelegraphMaxConnectionsPerNode;
 
         private readonly List<WireConnection> connections = new();
         private List<BlockPos> pendingConnectionPositions = new();
@@ -172,13 +172,23 @@ namespace RPVoiceChat.GameContent.BlockEntity
             return connections.Contains(connection);
         }
 
-        public void Connect(WireConnection connection)
+        public bool Connect(WireConnection connection, out string failureLangKey, out object[] failureArgs)
         {
+            failureLangKey = null;
+            failureArgs = Array.Empty<object>();
+
             if (connection == null || connection.Node1 == null || connection.Node2 == null)
-                return;
+                return false;
 
             if (connections.Count >= MaxConnections || HasConnection(connection))
-                return;
+                return false;
+
+            if (connection.Node2 is BEWireNode node2 &&
+                connection.Node1 is BEWireNode node1 &&
+                !WireNetworkHandler.CanConnectNodes(node1, node2, out failureLangKey, out failureArgs))
+            {
+                return false;
+            }
 
             // Adds the connection on both nodes (AddConnection already checks if connection exists and calls MarkForUpdate)
             connection.Node1.AddConnection(connection);
@@ -187,31 +197,31 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             if (Api.Side == EnumAppSide.Server)
             {
-                var node1 = connection.Node1 as BEWireNode;
-                var node2 = connection.Node2 as BEWireNode;
-                if (node1 == null || node2 == null) return;
+                var wireNode1 = connection.Node1 as BEWireNode;
+                var wireNode2 = connection.Node2 as BEWireNode;
+                if (wireNode1 == null || wireNode2 == null) return false;
 
-                var net1 = WireNetworkHandler.GetNetwork(node1.NetworkUID);
-                var net2 = WireNetworkHandler.GetNetwork(node2.NetworkUID);
+                var net1 = WireNetworkHandler.GetNetwork(wireNode1.NetworkUID);
+                var net2 = WireNetworkHandler.GetNetwork(wireNode2.NetworkUID);
 
                 // Cases where neither has a network AND neither is INetworkRoot -> no network creation
-                if (net1 == null && net2 == null && !IsNetworkRoot(node1) && !IsNetworkRoot(node2))
-                    return;
+                if (net1 == null && net2 == null && !IsNetworkRoot(wireNode1) && !IsNetworkRoot(wireNode2))
+                    return false;
 
                 // Manage network creation/merging/propagation
                 if (net1 == null && net2 == null)
                 {
-                    CreateNetworkForComponent(new HashSet<BEWireNode> { node1, node2 });
+                    CreateNetworkForComponent(new HashSet<BEWireNode> { wireNode1, wireNode2 });
                 }
                 else if (net1 != null && net2 == null)
                 {
-                    net1.AddNode(node2);
-                    WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(node2, net1);
+                    net1.AddNode(wireNode2);
+                    WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(wireNode2, net1);
                 }
                 else if (net1 == null && net2 != null)
                 {
-                    net2.AddNode(node1);
-                    WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(node1, net2);
+                    net2.AddNode(wireNode1);
+                    WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(wireNode1, net2);
                 }
                 else if (net1 != null && net2 != null && net1 != net2)
                 {
@@ -219,21 +229,30 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     if (net1.Nodes.Count >= net2.Nodes.Count)
                     {
                         net1.MergeFrom(net2);
-                        WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(node1, net1);
+                        WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(wireNode1, net1);
                     }
                     else
                     {
                         net2.MergeFrom(net1);
-                        WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(node2, net2);
+                        WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(wireNode2, net2);
                     }
                 }
             }
+
+            if (NetworkUID != 0)
+            {
+                WireNetworkHandler.RebuildNetworkState(NetworkUID);
+            }
+
+            return true;
         }
 
 
         private void OnReceivedMessage(object sender, WireNetworkMessage e)
         {
             if (e.NetworkUID != NetworkUID)
+                return;
+            if (e.RouteMode == WireRouteMode.NamedEndpoint && e.TargetPos != null && !Pos.Equals(e.TargetPos))
                 return;
             // Only skip if we are the sender (avoids duplicate for the player who pressed)
             if (e.SenderPos == Pos && Api.Side == EnumAppSide.Client &&
@@ -252,7 +271,10 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     {
                         NetworkUID = this.NetworkUID,
                         SenderPos = this.Pos,
-                        Message = e.Message
+                        Message = e.Message,
+                        RouteMode = e.RouteMode,
+                        TargetEndpointName = e.TargetEndpointName,
+                        TargetPos = e.TargetPos
                     });
                 }
             }
@@ -329,6 +351,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 if (Api.Side == EnumAppSide.Server)
                 {
                     RecalculateNetworksAfterDisconnection();
+                    WireNetworkHandler.RebuildNetworkState(NetworkUID);
                 }
             }
         }

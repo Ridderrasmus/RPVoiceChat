@@ -61,16 +61,34 @@ namespace RPVoiceChat.GameContent.Items
                     WireConnection connection = new WireConnection(firstNode, node);
 
                     // Keep item logic generic (IWireConnectable) while still using BEWireNode network logic.
+                    bool connected = false;
+                    string failureLangKey = null;
+                    object[] failureArgs = System.Array.Empty<object>();
+
                     if (firstNode is BEWireNode firstWireNode)
                     {
-                        firstWireNode.Connect(connection); // Connect() handles network creation/merge
+                        connected = firstWireNode.Connect(connection, out failureLangKey, out failureArgs); // Connect() handles network creation/merge
                     }
                     else if (node is BEWireNode secondWireNode)
                     {
-                        secondWireNode.Connect(connection);
+                        connected = secondWireNode.Connect(connection, out failureLangKey, out failureArgs);
                     }
                     else
                     {
+                        firstNodePos = null;
+                        return;
+                    }
+
+                    if (!connected)
+                    {
+                        if (!string.IsNullOrWhiteSpace(failureLangKey))
+                        {
+                            (byEntity.Api as ICoreClientAPI)?.TriggerChatMessage(UIUtils.I18n(failureLangKey, failureArgs));
+                        }
+                        else
+                        {
+                            (byEntity.Api as ICoreClientAPI)?.TriggerChatMessage(UIUtils.I18n("Wire.ConnectionFailed"));
+                        }
                         firstNodePos = null;
                         return;
                     }

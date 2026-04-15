@@ -21,7 +21,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
     public class BlockEntityPrinter : BlockEntityOpenableContainer
     {
         private InventoryPrinter inventory;
-        private const int PaperSlotId = 0;
 
         /// <summary>Full inventory sync like BlockEntityLucerne.PacketIdInventory; custom dialog uses AddItemSlotGrid(..., "slots").</summary>
         public static readonly int PacketIdPrinterInventory = GetPrinterPacketIdBase() + 0;
@@ -119,9 +118,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 inventory.ToTreeAttributes(invTree);
                 tree["inventory"] = invTree;
             }
-            
-            // Save animation state
-            tree.SetBool("isDrawerOpen", isDrawerOpen);
         }
 
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
@@ -143,9 +139,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 inventory.FromTreeAttributes(tree["inventory"] as TreeAttribute);
                 inventory.ResolveBlocksOrItems();
             }
-            
-            // Load animation state from server sync (drawer animation applied by BEAnimatable behavior)
-            isDrawerOpen = tree.GetBool("isDrawerOpen", false);
             
             // Now call LateInitInventory after Pos is set by base.FromTreeAttributes
             if (inventory != null)
@@ -212,7 +205,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 ICoreClientAPI capi = Api as ICoreClientAPI;
                 if (capi == null) return;
                 
-                string dialogClassName;
                 string dialogTitle;
                 int cols;
                 TreeAttribute tree = new TreeAttribute();
@@ -220,7 +212,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 using (MemoryStream ms = new MemoryStream(data))
                 {
                     BinaryReader reader = new BinaryReader(ms);
-                    dialogClassName = reader.ReadString();
+                    reader.ReadString();
                     dialogTitle = reader.ReadString();
                     cols = reader.ReadByte();
                     tree.FromBytes(reader);
@@ -237,12 +229,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 {
                     inventory.FromTreeAttributes(tree);
                     inventory.ResolveBlocksOrItems();
-                    
-                    // Server opened the drawer; trigger animation and sound on this client so they play on first open
-                    // (block entity sync may not have arrived yet)
-                    isDrawerOpen = true;
-                    TriggerAnimation("open-drawer");
-                    
+
                     var invDialog = new PrinterInventoryDialog(dialogTitle, inventory, Pos, cols, capi, () => {
                         // Toggle drawer closed on client side
                         isDrawerOpen = false;
@@ -263,8 +250,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
             this.isDrawerOpen = newState;
             TriggerDrawerAnimation(isDrawerOpen);
             
-            // Play sound with pitch variation like trapdoor
-            float pitch = isDrawerOpen ? 1.1f : 0.9f;
             playDrawerSound();
             
             MarkDirty(true);

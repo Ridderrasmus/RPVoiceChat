@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.GameContent.Systems;
+using RPVoiceChat.Util;
 using Vintagestory.API.Client;
 using Vintagestory.API.Server;
 
@@ -39,7 +40,33 @@ namespace RPVoiceChat.Systems
 
         private static void OnReceivedMessage_Server(IServerPlayer fromPlayer, WireNetworkMessage packet)
         {
+            packet = ApplyRoutingOnServer(packet);
             ServerChannel.BroadcastPacket(packet);
+        }
+
+        private static WireNetworkMessage ApplyRoutingOnServer(WireNetworkMessage packet)
+        {
+            if (packet == null) return null;
+
+            if (packet.RouteMode != WireRouteMode.NamedEndpoint || string.IsNullOrWhiteSpace(packet.TargetEndpointName))
+            {
+                packet.RouteMode = WireRouteMode.All;
+                packet.TargetEndpointName = null;
+                packet.TargetPos = null;
+                return packet;
+            }
+
+            var target = ResolveTelegraphByName(packet.NetworkUID, packet.TargetEndpointName);
+            if (target == null)
+            {
+                packet.RouteMode = WireRouteMode.All;
+                packet.TargetEndpointName = null;
+                packet.TargetPos = null;
+                return packet;
+            }
+
+            packet.TargetPos = target.Pos.Copy();
+            return packet;
         }
 
         public static WireNetwork AddNewNetwork(BEWireNode wireNode)
@@ -71,6 +98,7 @@ namespace RPVoiceChat.Systems
             if (network == null) return;
             if (Networks.ContainsKey(network.networkID)) return;
             Networks.Add(network.networkID, network);
+            network.RebuildTypedState();
         }
 
         public static void RemoveNetwork(WireNetwork network)
@@ -127,6 +155,166 @@ namespace RPVoiceChat.Systems
                     }
                 }
             }
+
+            network.RebuildTypedState();
+        }
+
+        public static void RebuildNetworkState(long networkId)
+        {
+            var network = GetNetwork(networkId);
+            network?.RebuildTypedState();
+        }
+
+        public static bool CanConnectNodes(BEWireNode node1, BEWireNode node2, out string denialLangKey, out object[] denialArgs)
+        {
+            denialLangKey = null;
+            denialArgs = Array.Empty<object>();
+
+            if (node1 == null || node2 == null)
+                return false;
+
+            // Hybrid mode: if no switchboard in resulting component, allow baseline behavior.
+            HashSet<BEWireNode> prospectiveComponent = GetProspectiveComponent(node1, node2);
+            bool hasSwitchboard = prospectiveComponent.Any(n => GetNodeKind(n) == WireNodeKind.Switchboard);
+            if (!hasSwitchboard)
+                return true;
+
+            int telegraphCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Telegraph);
+            int telephoneCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Telephone);
+            int wirelessCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Wireless);
+
+            int activeKinds = 0;
+            if (telegraphCount > 0) activeKinds++;
+            if (telephoneCount > 0) activeKinds++;
+            if (wirelessCount > 0) activeKinds++;
+
+            if (activeKinds > 1)
+            {
+                denialLangKey = "Wire.ConnectionDenied.MixedTypes";
+                return false;
+            }
+
+            WireNetworkKind targetKind = ResolveProspectiveKind(telegraphCount, telephoneCount, wirelessCount);
+            WireNetworkRequirements requirements = WireNetworkTypeRules.GetRequirements(targetKind);
+            int endpointCount = GetEndpointCountByKind(targetKind, telegraphCount, telephoneCount, wirelessCount);
+
+            if (requirements.MaxEndpoints > 0 && endpointCount > requirements.MaxEndpoints)
+            {
+                denialLangKey = targetKind == WireNetworkKind.Telegraph
+                    ? "Wire.ConnectionDenied.TelegraphCapacity"
+                    : "Wire.ConnectionDenied.NetworkCapacity";
+                denialArgs = targetKind == WireNetworkKind.Telegraph
+                    ? new object[] { requirements.MaxEndpoints }
+                    : new object[] { GetKindDisplayName(targetKind), requirements.MaxEndpoints };
+                return false;
+            }
+
+            return true;
+        }
+
+        private static WireNetworkKind ResolveProspectiveKind(int telegraphCount, int telephoneCount, int wirelessCount)
+        {
+            if (telegraphCount > 0) return WireNetworkKind.Telegraph;
+            if (telephoneCount > 0) return WireNetworkKind.Telephone;
+            if (wirelessCount > 0) return WireNetworkKind.Wireless;
+            return WireNetworkKind.None;
+        }
+
+        private static int GetEndpointCountByKind(WireNetworkKind kind, int telegraphCount, int telephoneCount, int wirelessCount)
+        {
+            switch (kind)
+            {
+                case WireNetworkKind.Telegraph:
+                    return telegraphCount;
+                case WireNetworkKind.Telephone:
+                    return telephoneCount;
+                case WireNetworkKind.Wireless:
+                    return wirelessCount;
+                default:
+                    return 0;
+            }
+        }
+
+        private static string GetKindDisplayName(WireNetworkKind kind)
+        {
+            switch (kind)
+            {
+                case WireNetworkKind.Telephone:
+                    return "telephone";
+                case WireNetworkKind.Wireless:
+                    return "wireless";
+                case WireNetworkKind.Telegraph:
+                    return "telegraph";
+                default:
+                    return "network";
+            }
+        }
+
+        public static BlockEntityTelegraph ResolveTelegraphByName(long networkUID, string endpointName)
+        {
+            if (networkUID == 0 || string.IsNullOrWhiteSpace(endpointName))
+                return null;
+
+            var network = GetNetwork(networkUID);
+            if (network == null)
+                return null;
+
+            return network.Nodes
+                .OfType<BlockEntityTelegraph>()
+                .FirstOrDefault(t => string.Equals(t.CustomEndpointName, endpointName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public static bool IsEndpointNameTaken(long networkUID, string candidate, BlockEntityTelegraph except = null)
+        {
+            if (networkUID == 0 || string.IsNullOrWhiteSpace(candidate))
+                return false;
+
+            var network = GetNetwork(networkUID);
+            if (network == null)
+                return false;
+
+            return network.Nodes
+                .OfType<BlockEntityTelegraph>()
+                .Any(t => !ReferenceEquals(t, except) &&
+                          string.Equals(t.CustomEndpointName, candidate, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static HashSet<BEWireNode> GetProspectiveComponent(BEWireNode node1, BEWireNode node2)
+        {
+            var result = new HashSet<BEWireNode>();
+            AddReachable(node1, result);
+            AddReachable(node2, result);
+            return result;
+        }
+
+        private static void AddReachable(BEWireNode startNode, HashSet<BEWireNode> output)
+        {
+            if (startNode == null || output.Contains(startNode))
+                return;
+
+            var queue = new Queue<BEWireNode>();
+            queue.Enqueue(startNode);
+            output.Add(startNode);
+
+            while (queue.Count > 0)
+            {
+                var node = queue.Dequeue();
+                foreach (var connection in node.GetConnections())
+                {
+                    var other = connection.GetOtherNode(node);
+                    if (other != null && output.Add(other))
+                    {
+                        queue.Enqueue(other);
+                    }
+                }
+            }
+        }
+
+        private static WireNodeKind GetNodeKind(BEWireNode node)
+        {
+            if (node is IWireTypedNode typedNode)
+                return typedNode.WireNodeKind;
+            return WireNodeKind.Infrastructure;
         }
 
     }

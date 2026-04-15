@@ -31,6 +31,12 @@ namespace RPVoiceChat.Config
         public double BellRingCooldownSeconds { get; set; } = 1.5;
         public bool TelegraphGenuineMorseCharacters { get; set; } = false;
         public int TelegraphMessageDeletionDelaySeconds { get; set; } = 10;
+        public int TelegraphNetworkMinPowerPercent { get; set; } = 10;
+        public int TelegraphNetworkMaxEndpoints { get; set; } = 8;
+        public int TelephoneNetworkMinPowerPercent { get; set; } = 25;
+        public int TelephoneNetworkMaxEndpoints { get; set; } = 16;
+        public int WirelessNetworkMinPowerPercent { get; set; } = 50;
+        public int WirelessNetworkMaxEndpoints { get; set; } = 16;
 
         // Sound Emitting Objects Range Settings
         public int HandbellAudibleDistance { get; set; } = 16;
@@ -73,6 +79,13 @@ namespace RPVoiceChat.Config
             TelegraphMinDelayBetweenKeysMs = previousConfig.TelegraphMinDelayBetweenKeysMs;
             BellRingCooldownSeconds = previousConfig.BellRingCooldownSeconds;
             TelegraphGenuineMorseCharacters = previousConfig.TelegraphGenuineMorseCharacters;
+            TelegraphMessageDeletionDelaySeconds = previousConfig.TelegraphMessageDeletionDelaySeconds;
+            TelegraphNetworkMinPowerPercent = previousConfig.TelegraphNetworkMinPowerPercent;
+            TelegraphNetworkMaxEndpoints = previousConfig.TelegraphNetworkMaxEndpoints;
+            TelephoneNetworkMinPowerPercent = previousConfig.TelephoneNetworkMinPowerPercent;
+            TelephoneNetworkMaxEndpoints = previousConfig.TelephoneNetworkMaxEndpoints;
+            WirelessNetworkMinPowerPercent = previousConfig.WirelessNetworkMinPowerPercent;
+            WirelessNetworkMaxEndpoints = previousConfig.WirelessNetworkMaxEndpoints;
 
             // Sound Emitting Objects Range Settings
             HandbellAudibleDistance = previousConfig.HandbellAudibleDistance;

@@ -1,0 +1,48 @@
+{
+  "code": "switchboard",
+  "enabled": true,
+  "class": "switchboardblock",
+  "entityClass": "BlockEntitySwitchboard",
+  "behaviors": [
+    { "name": "HorizontalOrientable" }
+  ],
+  "entityBehaviors": [
+    { "name": "MPConsumer" }
+  ],
+  "creativeinventory": {
+    "general": [ "*-north" ],
+    "rpvoicechat": [ "*-north" ]
+  },
+  "maxstacksize": 1,
+  "blockmaterial": "wood",
+  "variantgroups": [
+    {
+      "code": "wood",
+      "states": [ "aged", "veryaged" ],
+      "loadFromProperties": "block/wood"
+    },
+    {
+      "code": "side",
+      "loadFromProperties": "abstract/horizontalorientation"
+    }
+  ],
+  "drawtype": "cube",
+  "sounds": {
+    "place": "game:block/planks",
+    "hit": "game:block/planks",
+    "break": "game:block/planks",
+    "walk": "game:walk/wood"
+  },
+  "textures": {
+    "all": { "base": "game:block/wood/debarked/{wood}" }
+  },
+  "rainPermeable": false,
+  "sidesolid": {
+    "all": true
+  },
+  "sideopaque": {
+    "all": true
+  },
+  "lightAbsorption": 15,
+  "resistance": 1
+}
