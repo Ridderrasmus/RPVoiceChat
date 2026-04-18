@@ -20,7 +20,7 @@
   },
   "entityBehaviors": [
     { "name": "Animatable" },
-    { "name": "BEAnimatable", "properties": { "animationCodes": "open-drawer" } }
+    { "name": "BEAnimatable" }
   ],
   "creativeinventory": { "general": ["*-north"], "rpvoicechat": ["*-north"] },
   "maxstacksize": 1,

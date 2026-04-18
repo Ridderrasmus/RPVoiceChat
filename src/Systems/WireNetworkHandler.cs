@@ -5,6 +5,7 @@ using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Util;
 using Vintagestory.API.Client;
+using Vintagestory.API.Common;
 using Vintagestory.API.Server;
 
 namespace RPVoiceChat.Systems
@@ -15,6 +16,7 @@ namespace RPVoiceChat.Systems
         private static IServerNetworkChannel ServerChannel;
 
         public static Dictionary<long, WireNetwork> Networks = new Dictionary<long, WireNetwork>();
+        private static readonly Dictionary<long, string> PersistedCustomNames = new Dictionary<long, string>();
 
         public static EventHandler<WireNetworkMessage> ClientSideMessageReceived;
         public static string NetworkChannel = "rpvc:wire-network";
@@ -97,6 +99,10 @@ namespace RPVoiceChat.Systems
         {
             if (network == null) return;
             if (Networks.ContainsKey(network.networkID)) return;
+            if (PersistedCustomNames.TryGetValue(network.networkID, out string customName))
+            {
+                network.SetCustomName(customName);
+            }
             Networks.Add(network.networkID, network);
             network.RebuildTypedState();
         }
@@ -165,6 +171,36 @@ namespace RPVoiceChat.Systems
             network?.RebuildTypedState();
         }
 
+        /// <summary>
+        /// Server-only: copies switchboard routing capability from the authoritative in-memory network
+        /// onto every telegraph in that network so clients receive it via normal BE sync (no stale client-side inference).
+        /// </summary>
+        public static void RefreshTelegraphRoutingSnapshot(long networkId)
+        {
+            var network = GetNetwork(networkId);
+            if (network == null || network.Nodes.Count == 0)
+            {
+                return;
+            }
+
+            ICoreAPI api = network.Nodes[0].Api;
+            if (api?.Side != EnumAppSide.Server)
+            {
+                return;
+            }
+
+            bool managed = network.IsManagedBySwitchboard;
+            bool advanced = network.AdvancedTelegraphFeaturesEnabled;
+
+            foreach (var node in network.Nodes.ToArray())
+            {
+                if (node is BlockEntityTelegraph telegraph)
+                {
+                    telegraph.ApplyServerRoutingFlags(managed, advanced);
+                }
+            }
+        }
+
         public static bool CanConnectNodes(BEWireNode node1, BEWireNode node2, out string denialLangKey, out object[] denialArgs)
         {
             denialLangKey = null;
@@ -181,12 +217,12 @@ namespace RPVoiceChat.Systems
 
             int telegraphCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Telegraph);
             int telephoneCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Telephone);
-            int wirelessCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Wireless);
+            int radioCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Radio);
 
             int activeKinds = 0;
             if (telegraphCount > 0) activeKinds++;
             if (telephoneCount > 0) activeKinds++;
-            if (wirelessCount > 0) activeKinds++;
+            if (radioCount > 0) activeKinds++;
 
             if (activeKinds > 1)
             {
@@ -194,9 +230,9 @@ namespace RPVoiceChat.Systems
                 return false;
             }
 
-            WireNetworkKind targetKind = ResolveProspectiveKind(telegraphCount, telephoneCount, wirelessCount);
+            WireNetworkKind targetKind = ResolveProspectiveKind(telegraphCount, telephoneCount, radioCount);
             WireNetworkRequirements requirements = WireNetworkTypeRules.GetRequirements(targetKind);
-            int endpointCount = GetEndpointCountByKind(targetKind, telegraphCount, telephoneCount, wirelessCount);
+            int endpointCount = GetEndpointCountByKind(targetKind, telegraphCount, telephoneCount, radioCount);
 
             if (requirements.MaxEndpoints > 0 && endpointCount > requirements.MaxEndpoints)
             {
@@ -212,15 +248,15 @@ namespace RPVoiceChat.Systems
             return true;
         }
 
-        private static WireNetworkKind ResolveProspectiveKind(int telegraphCount, int telephoneCount, int wirelessCount)
+        private static WireNetworkKind ResolveProspectiveKind(int telegraphCount, int telephoneCount, int radioCount)
         {
             if (telegraphCount > 0) return WireNetworkKind.Telegraph;
             if (telephoneCount > 0) return WireNetworkKind.Telephone;
-            if (wirelessCount > 0) return WireNetworkKind.Wireless;
+            if (radioCount > 0) return WireNetworkKind.Radio;
             return WireNetworkKind.None;
         }
 
-        private static int GetEndpointCountByKind(WireNetworkKind kind, int telegraphCount, int telephoneCount, int wirelessCount)
+        private static int GetEndpointCountByKind(WireNetworkKind kind, int telegraphCount, int telephoneCount, int radioCount)
         {
             switch (kind)
             {
@@ -228,8 +264,8 @@ namespace RPVoiceChat.Systems
                     return telegraphCount;
                 case WireNetworkKind.Telephone:
                     return telephoneCount;
-                case WireNetworkKind.Wireless:
-                    return wirelessCount;
+                case WireNetworkKind.Radio:
+                    return radioCount;
                 default:
                     return 0;
             }
@@ -241,8 +277,8 @@ namespace RPVoiceChat.Systems
             {
                 case WireNetworkKind.Telephone:
                     return "telephone";
-                case WireNetworkKind.Wireless:
-                    return "wireless";
+                case WireNetworkKind.Radio:
+                    return "radio";
                 case WireNetworkKind.Telegraph:
                     return "telegraph";
                 default:
@@ -262,6 +298,111 @@ namespace RPVoiceChat.Systems
             return network.Nodes
                 .OfType<BlockEntityTelegraph>()
                 .FirstOrDefault(t => string.Equals(t.CustomEndpointName, endpointName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public static bool IsNetworkNameTaken(long exceptNetworkId, string candidate)
+        {
+            if (string.IsNullOrWhiteSpace(candidate))
+            {
+                return false;
+            }
+
+            string normalized = candidate.Trim();
+            bool usedByLoadedNetwork = Networks.Values.Any(network =>
+                network != null &&
+                network.networkID != exceptNetworkId &&
+                !string.IsNullOrWhiteSpace(network.CustomName) &&
+                string.Equals(network.CustomName, normalized, StringComparison.OrdinalIgnoreCase));
+            if (usedByLoadedNetwork)
+            {
+                return true;
+            }
+
+            return PersistedCustomNames.Any(entry =>
+                entry.Key != exceptNetworkId &&
+                !string.IsNullOrWhiteSpace(entry.Value) &&
+                string.Equals(entry.Value, normalized, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public static bool TryRenameNetwork(long networkId, string candidate, out string failureLangKey)
+        {
+            failureLangKey = null;
+            var network = GetNetwork(networkId);
+            if (network == null)
+            {
+                failureLangKey = "Network.NoNetwork";
+                return false;
+            }
+
+            string normalized = (candidate ?? "").Trim();
+            if (normalized.Length == 0)
+            {
+                network.SetCustomName("");
+                PersistedCustomNames[networkId] = "";
+                return true;
+            }
+
+            if (IsNetworkNameTaken(networkId, normalized))
+            {
+                failureLangKey = "Switchboard.Settings.NameAlreadyUsed";
+                return false;
+            }
+
+            network.SetCustomName(normalized);
+            PersistedCustomNames[networkId] = normalized;
+            return true;
+        }
+
+        public static string GetDisplayName(long networkId)
+        {
+            var network = GetNetwork(networkId);
+            if (network == null)
+            {
+                if (PersistedCustomNames.TryGetValue(networkId, out string persistedName) && !string.IsNullOrWhiteSpace(persistedName))
+                {
+                    return persistedName;
+                }
+                return networkId.ToString();
+            }
+
+            if (!string.IsNullOrWhiteSpace(network.CustomName))
+            {
+                return network.CustomName;
+            }
+
+            return network.networkID.ToString();
+        }
+
+        public static void SetPersistedNetworkName(long networkId, string customName)
+        {
+            if (networkId == 0)
+            {
+                return;
+            }
+
+            string normalized = (customName ?? "").Trim();
+            PersistedCustomNames[networkId] = normalized;
+
+            var network = GetNetwork(networkId);
+            if (network != null)
+            {
+                network.SetCustomName(normalized);
+            }
+        }
+
+        public static string GetPersistedNetworkName(long networkId)
+        {
+            if (networkId == 0)
+            {
+                return "";
+            }
+
+            if (PersistedCustomNames.TryGetValue(networkId, out string persistedName))
+            {
+                return persistedName ?? "";
+            }
+
+            return "";
         }
 
         public static bool IsEndpointNameTaken(long networkUID, string candidate, BlockEntityTelegraph except = null)

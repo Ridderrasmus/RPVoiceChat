@@ -35,8 +35,8 @@ namespace RPVoiceChat.Config
         public int TelegraphNetworkMaxEndpoints { get; set; } = 8;
         public int TelephoneNetworkMinPowerPercent { get; set; } = 25;
         public int TelephoneNetworkMaxEndpoints { get; set; } = 16;
-        public int WirelessNetworkMinPowerPercent { get; set; } = 50;
-        public int WirelessNetworkMaxEndpoints { get; set; } = 16;
+        public int RadioNetworkMinPowerPercent { get; set; } = 50;
+        public int RadioNetworkMaxEndpoints { get; set; } = 16;
 
         // Sound Emitting Objects Range Settings
         public int HandbellAudibleDistance { get; set; } = 16;
@@ -84,8 +84,8 @@ namespace RPVoiceChat.Config
             TelegraphNetworkMaxEndpoints = previousConfig.TelegraphNetworkMaxEndpoints;
             TelephoneNetworkMinPowerPercent = previousConfig.TelephoneNetworkMinPowerPercent;
             TelephoneNetworkMaxEndpoints = previousConfig.TelephoneNetworkMaxEndpoints;
-            WirelessNetworkMinPowerPercent = previousConfig.WirelessNetworkMinPowerPercent;
-            WirelessNetworkMaxEndpoints = previousConfig.WirelessNetworkMaxEndpoints;
+            RadioNetworkMinPowerPercent = previousConfig.RadioNetworkMinPowerPercent;
+            RadioNetworkMaxEndpoints = previousConfig.RadioNetworkMaxEndpoints;
 
             // Sound Emitting Objects Range Settings
             HandbellAudibleDistance = previousConfig.HandbellAudibleDistance;

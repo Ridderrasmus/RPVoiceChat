@@ -15,7 +15,9 @@ namespace RPVoiceChat.GameContent.Block
                 return false;
             }
 
-            return base.OnBlockInteractStart(world, byPlayer, blockSel);
+            var switchboard = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntitySwitchboard;
+            switchboard?.OnInteract();
+            return true;
         }
 
         public bool HasMechPowerConnectorAt(IWorldAccessor world, BlockPos pos, BlockFacing face, BlockMPBase forBlock)

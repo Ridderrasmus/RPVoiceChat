@@ -153,7 +153,12 @@ namespace RPVoiceChat.Gui
             }
         }
 
-        public override void OnKeyPress(KeyEvent args)
+        /// <summary>
+        /// Escape must be handled on key-down, not key-press: in OnKeyPress, KeyCode can collide with
+        /// printable characters (e.g. GlKeys.Escape and the character '2' both use code 50 in some paths),
+        /// which incorrectly closed the dialog when typing "2" in the endpoint name field.
+        /// </summary>
+        public override void OnKeyDown(KeyEvent args)
         {
             if (args.KeyCode == (int)GlKeys.Escape)
             {
@@ -161,6 +166,11 @@ namespace RPVoiceChat.Gui
                 return;
             }
 
+            base.OnKeyDown(args);
+        }
+
+        public override void OnKeyPress(KeyEvent args)
+        {
             if (IsEndpointInputFocused())
             {
                 if (!telegraphBlock.HasAdvancedRoutingEnabled())
@@ -204,14 +214,12 @@ namespace RPVoiceChat.Gui
                 return;
             }
 
-            // Keep behavior simple and stable: if power drops while UI is open, close dialog.
-            if (lastCanEditRouting.Value && !canEdit)
+            // Routing policy changed (e.g. power level): close so the player reopens and gets the correct layout.
+            if (lastCanEditRouting.Value != canEdit)
             {
                 TryClose();
                 return;
             }
-
-            lastCanEditRouting = canEdit;
         }
 
         public void RefreshRoutingControls()

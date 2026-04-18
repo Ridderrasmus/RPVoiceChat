@@ -7,9 +7,9 @@ using Vintagestory.API.Common;
 
 namespace RPVoiceChat.GameContent.Systems
 {
-    public class WireNetwork
+    public class WireNetwork : CommunicationNetworkBase
     {
-        public long networkID;
+        public override NetworkTransportType TransportType => NetworkTransportType.Wired;
         public List<BEWireNode> Nodes { get; private set; } = new List<BEWireNode>();
         public event Action<BEWireNode, string> OnReceivedSignal;
         public WireNetworkKind CurrentType { get; private set; } = WireNetworkKind.None;
@@ -17,7 +17,7 @@ namespace RPVoiceChat.GameContent.Systems
         public bool HasPoweredSwitchboard { get; private set; }
         public int TelegraphEndpointCount { get; private set; }
         public int TelephoneEndpointCount { get; private set; }
-        public int WirelessEndpointCount { get; private set; }
+        public int RadioEndpointCount { get; private set; }
         public bool AdvancedTelegraphFeaturesEnabled => IsManagedBySwitchboard && HasPoweredSwitchboard;
 
         public WireNetwork() { }
@@ -29,19 +29,19 @@ namespace RPVoiceChat.GameContent.Systems
 
             Nodes.Add(node);
             node.NetworkUID = networkID;
-            
-            // Ensure MarkDirty is called on the main thread to avoid texture upload errors
+
+            // Rebuild routing snapshots before syncing BE data so rpvc:routing* and related flags are not one tick stale.
+            RebuildTypedState();
+
             if (node.Api?.Side == EnumAppSide.Client)
             {
-                ((Vintagestory.API.Client.ICoreClientAPI)node.Api).Event.EnqueueMainThreadTask(() => 
+                ((Vintagestory.API.Client.ICoreClientAPI)node.Api).Event.EnqueueMainThreadTask(() =>
                     node.MarkDirty(true), "MarkDirty");
             }
             else
             {
                 node.MarkDirty(true);
             }
-
-            RebuildTypedState();
         }
 
         public void RemoveNode(BEWireNode node)
@@ -51,6 +51,11 @@ namespace RPVoiceChat.GameContent.Systems
 
             Nodes.Remove(node);
             node.NetworkUID = 0;
+
+            if (node.Api?.Side == EnumAppSide.Server && node is BlockEntityTelegraph detachedTelegraph)
+            {
+                detachedTelegraph.ApplyServerRoutingFlags(false, false);
+            }
             
             // Ensure MarkDirty is called on the main thread to avoid texture upload errors
             if (node.Api?.Side == EnumAppSide.Client)
@@ -109,7 +114,7 @@ namespace RPVoiceChat.GameContent.Systems
         {
             int telegraph = 0;
             int telephone = 0;
-            int wireless = 0;
+            int radio = 0;
             bool hasSwitchboard = false;
 
             foreach (var node in Nodes)
@@ -124,8 +129,8 @@ namespace RPVoiceChat.GameContent.Systems
                         case WireNodeKind.Telephone:
                             telephone++;
                             break;
-                        case WireNodeKind.Wireless:
-                            wireless++;
+                        case WireNodeKind.Radio:
+                            radio++;
                             break;
                         case WireNodeKind.Switchboard:
                             hasSwitchboard = true;
@@ -136,17 +141,18 @@ namespace RPVoiceChat.GameContent.Systems
 
             TelegraphEndpointCount = telegraph;
             TelephoneEndpointCount = telephone;
-            WirelessEndpointCount = wireless;
+            RadioEndpointCount = radio;
             IsManagedBySwitchboard = hasSwitchboard;
 
             int activeKinds = 0;
             if (telegraph > 0) activeKinds++;
             if (telephone > 0) activeKinds++;
-            if (wireless > 0) activeKinds++;
+            if (radio > 0) activeKinds++;
 
             if (activeKinds > 1)
             {
-                CurrentType = WireNetworkKind.Mixed;
+                // Guard state: mixed networks are forbidden by connection rules.
+                CurrentType = WireNetworkKind.None;
             }
             else if (telegraph > 0)
             {
@@ -156,9 +162,9 @@ namespace RPVoiceChat.GameContent.Systems
             {
                 CurrentType = WireNetworkKind.Telephone;
             }
-            else if (wireless > 0)
+            else if (radio > 0)
             {
-                CurrentType = WireNetworkKind.Wireless;
+                CurrentType = WireNetworkKind.Radio;
             }
             else
             {
@@ -166,19 +172,21 @@ namespace RPVoiceChat.GameContent.Systems
             }
 
             HasPoweredSwitchboard = false;
-            if (!hasSwitchboard)
+            if (hasSwitchboard)
             {
-                return;
-            }
-
-            foreach (var node in Nodes)
-            {
-                if (node is ISwitchboardNode switchboardNode && switchboardNode.HasSufficientPowerFor(CurrentType))
+                foreach (var node in Nodes)
                 {
-                    HasPoweredSwitchboard = true;
-                    break;
+                    if (node is ISwitchboardNode switchboardNode && switchboardNode.HasSufficientPowerFor(CurrentType))
+                    {
+                        HasPoweredSwitchboard = true;
+                        break;
+                    }
                 }
             }
+
+            // Must run even when there is no switchboard (e.g. reset flags after removal, or first telegraph-only net).
+            WireNetworkHandler.RefreshTelegraphRoutingSnapshot(networkID);
         }
+
     }
 }

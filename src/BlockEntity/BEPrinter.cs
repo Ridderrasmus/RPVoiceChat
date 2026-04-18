@@ -25,6 +25,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
         /// <summary>Full inventory sync like BlockEntityLucerne.PacketIdInventory; custom dialog uses AddItemSlotGrid(..., "slots").</summary>
         public static readonly int PacketIdPrinterInventory = GetPrinterPacketIdBase() + 0;
 
+        /// <summary>Client → server: inventory closed, drawer must be closed on server so tree sync does not reopen it for others.</summary>
+        public static readonly int PacketIdPrinterDrawerClose = GetPrinterPacketIdBase() + 1;
+
+        private const string TreeKeyDrawerOpen = "rpvcDrawerOpen";
+
         private static int GetPrinterPacketIdBase()
         {
             try
@@ -45,6 +50,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
         // Animation state
         private bool isDrawerOpen = false;
         public bool IsDrawerOpen => isDrawerOpen;
+        private bool isPrinterDialogOpenClient = false;
+        /// <summary>Client: millis when the player right-clicked the printer; consumed when we actually open the inventory dialog so duplicate OpenInventory packets cannot reopen the drawer.</summary>
+        private long lastClientInventoryOpenRequestMs = -1L;
         
         
         private RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorAnimatable Animatable => GetBehavior<RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorAnimatable>();
@@ -118,6 +126,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 inventory.ToTreeAttributes(invTree);
                 tree["inventory"] = invTree;
             }
+
+            tree.SetBool(TreeKeyDrawerOpen, isDrawerOpen);
         }
 
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
@@ -139,6 +149,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 inventory.FromTreeAttributes(tree["inventory"] as TreeAttribute);
                 inventory.ResolveBlocksOrItems();
             }
+
+            ApplyDrawerStateFromTree(tree);
             
             // Now call LateInitInventory after Pos is set by base.FromTreeAttributes
             if (inventory != null)
@@ -146,9 +158,42 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 LateInitInventory();
             }
         }
+
+        /// <summary>
+        /// Sync drawer open state from server tree. Only runs drawer animation when the value <i>changes</i> on the client,
+        /// so inventory/print <see cref="MarkDirty"/> resyncs do not retrigger the drawer anim.
+        /// Sounds for open/close are handled by the interaction path (server plays drawer sound on close packet).
+        /// </summary>
+        private void ApplyDrawerStateFromTree(ITreeAttribute tree)
+        {
+            bool incoming = tree.GetBool(TreeKeyDrawerOpen, false);
+            bool prev = isDrawerOpen;
+            isDrawerOpen = incoming;
+
+            if (Api?.Side != EnumAppSide.Client || prev == incoming)
+            {
+                return;
+            }
+
+            TriggerDrawerAnimation(isDrawerOpen);
+        }
         
+        /// <summary>Called from <see cref="PrinterBlock"/> on the client before the server handles the click so we can correlate OpenInventory packets with a real interaction.</summary>
+        public void NotifyClientInventoryOpenIntent()
+        {
+            if (Api?.Side == EnumAppSide.Client)
+            {
+                lastClientInventoryOpenRequestMs = Api.World.ElapsedMilliseconds;
+            }
+        }
+
         public override bool OnPlayerRightClick(IPlayer byPlayer, BlockSelection blockSel)
         {
+            if (Api.World is IClientWorldAccessor)
+            {
+                NotifyClientInventoryOpenIntent();
+            }
+
             // Only toggle if drawer is currently closed
             if (!isDrawerOpen)
             {
@@ -181,6 +226,29 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public override void OnReceivedClientPacket(IPlayer fromPlayer, int packetid, byte[] data)
         {
+            if (packetid == PacketIdPrinterDrawerClose)
+            {
+                if (fromPlayer?.Entity?.Pos == null)
+                {
+                    return;
+                }
+
+                if (fromPlayer.Entity.Pos.SquareDistanceTo(Pos.X + 0.5, Pos.Y + 0.5, Pos.Z + 0.5) > 6 * 6)
+                {
+                    return;
+                }
+
+                if (!isDrawerOpen)
+                {
+                    return;
+                }
+
+                isDrawerOpen = false;
+                playDrawerSound();
+                MarkDirty(true);
+                return;
+            }
+
             if (packetid == PacketIdPrinterInventory && data != null && data.Length > 0 && inventory != null)
             {
                 try
@@ -212,7 +280,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 using (MemoryStream ms = new MemoryStream(data))
                 {
                     BinaryReader reader = new BinaryReader(ms);
-                    reader.ReadString();
+                    string packetType = reader.ReadString();
+                    if (!string.Equals(packetType, "BlockEntityInventory", StringComparison.Ordinal))
+                    {
+                        return;
+                    }
                     dialogTitle = reader.ReadString();
                     cols = reader.ReadByte();
                     tree.FromBytes(reader);
@@ -230,11 +302,23 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     inventory.FromTreeAttributes(tree);
                     inventory.ResolveBlocksOrItems();
 
+                    long nowMs = Api.World.ElapsedMilliseconds;
+                    bool recentLocalRequest = lastClientInventoryOpenRequestMs >= 0L
+                        && nowMs - lastClientInventoryOpenRequestMs <= 1500L;
+                    if (!recentLocalRequest || isPrinterDialogOpenClient)
+                    {
+                        return;
+                    }
+
+                    // One open per click: consume intent so a second OpenInventory (e.g. inventory resync) does not pop the GUI again.
+                    lastClientInventoryOpenRequestMs = -1L;
+
+                    isPrinterDialogOpenClient = true;
                     var invDialog = new PrinterInventoryDialog(dialogTitle, inventory, Pos, cols, capi, () => {
-                        // Toggle drawer closed on client side
+                        isPrinterDialogOpenClient = false;
                         isDrawerOpen = false;
                         TriggerDrawerAnimation(false);
-                        MarkDirty(true);
+                        capi.Network.SendBlockEntityPacket(Pos, PacketIdPrinterDrawerClose, Array.Empty<byte>());
                     });
                     
                     invDialog.TryOpen();
@@ -295,14 +379,14 @@ namespace RPVoiceChat.GameContent.BlockEntity
             return result;
         }
 
-        public bool StoreTelegram(string message, string networkUID = "")
+        public bool StoreTelegram(string message, string networkUID = "", string networkName = "", string sourceEndpointName = "", string targetEndpointName = "")
         {
             // Try to find an empty telegram slot
             foreach (var slot in inventory.TelegramSlots)
             {
                 if (slot.Empty)
                 {
-                    bool result = slot.TryStoreTelegram(message, networkUID);
+                    bool result = slot.TryStoreTelegram(message, networkUID, networkName, sourceEndpointName, targetEndpointName);
                     if (result)
                     {
                         MarkDirty(); // Mark block entity as dirty when inventory changes
@@ -313,11 +397,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
             return false;
         }
 
-        public void CreateTelegram(string message, string networkUID = "")
+        public void CreateTelegram(string message, string networkUID = "", string networkName = "", string sourceEndpointName = "", string targetEndpointName = "")
         {
             if (Api.Side == EnumAppSide.Server)
             {
-                if (StoreTelegram(message, networkUID))
+                if (StoreTelegram(message, networkUID, networkName, sourceEndpointName, targetEndpointName))
                 {
                     // Consume paper only when telegram is actually stored
                     if (ConsumePaperSlip())

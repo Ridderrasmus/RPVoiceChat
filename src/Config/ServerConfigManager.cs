@@ -34,8 +34,8 @@ namespace RPVoiceChat.Config
         public static int TelegraphNetworkMaxEndpoints => Config?.TelegraphNetworkMaxEndpoints ?? 8;
         public static int TelephoneNetworkMinPowerPercent => Config?.TelephoneNetworkMinPowerPercent ?? 25;
         public static int TelephoneNetworkMaxEndpoints => Config?.TelephoneNetworkMaxEndpoints ?? 16;
-        public static int WirelessNetworkMinPowerPercent => Config?.WirelessNetworkMinPowerPercent ?? 50;
-        public static int WirelessNetworkMaxEndpoints => Config?.WirelessNetworkMaxEndpoints ?? 16;
+        public static int RadioNetworkMinPowerPercent => Config?.RadioNetworkMinPowerPercent ?? 50;
+        public static int RadioNetworkMaxEndpoints => Config?.RadioNetworkMaxEndpoints ?? 16;
 
         // Sound Emitting Objects Range Settings
         public static int HandbellAudibleDistance => Config?.HandbellAudibleDistance ?? 16;
@@ -121,10 +121,10 @@ namespace RPVoiceChat.Config
                 Config.TelephoneNetworkMinPowerPercent = 25;
             }
 
-            if (WirelessNetworkMinPowerPercent < 0 || WirelessNetworkMinPowerPercent > 100)
+            if (RadioNetworkMinPowerPercent < 0 || RadioNetworkMinPowerPercent > 100)
             {
-                Logger.server.Warning($"WirelessNetworkMinPowerPercent ({WirelessNetworkMinPowerPercent}) should be between 0 and 100. Using default (50).");
-                Config.WirelessNetworkMinPowerPercent = 50;
+                Logger.server.Warning($"RadioNetworkMinPowerPercent ({RadioNetworkMinPowerPercent}) should be between 0 and 100. Using default (50).");
+                Config.RadioNetworkMinPowerPercent = 50;
             }
 
             if (TelegraphNetworkMaxEndpoints < 1 || TelegraphNetworkMaxEndpoints > 256)
@@ -139,10 +139,10 @@ namespace RPVoiceChat.Config
                 Config.TelephoneNetworkMaxEndpoints = 16;
             }
 
-            if (WirelessNetworkMaxEndpoints < 1 || WirelessNetworkMaxEndpoints > 256)
+            if (RadioNetworkMaxEndpoints < 1 || RadioNetworkMaxEndpoints > 256)
             {
-                Logger.server.Warning($"WirelessNetworkMaxEndpoints ({WirelessNetworkMaxEndpoints}) should be between 1 and 256. Using default (16).");
-                Config.WirelessNetworkMaxEndpoints = 16;
+                Logger.server.Warning($"RadioNetworkMaxEndpoints ({RadioNetworkMaxEndpoints}) should be between 1 and 256. Using default (16).");
+                Config.RadioNetworkMaxEndpoints = 16;
             }
 
             // Sound emitting objects range validation

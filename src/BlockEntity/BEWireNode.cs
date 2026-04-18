@@ -809,6 +809,13 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 }
             }
             
+            var resolvedNetwork = WireNetworkHandler.GetNetwork(NetworkUID);
+            if (resolvedNetwork != null && resolvedNetwork.IsManagedBySwitchboard && resolvedNetwork.HasPoweredSwitchboard)
+            {
+                dsc.AppendLine(UIUtils.I18n("Network.NetworkId", WireNetworkHandler.GetDisplayName(NetworkUID)));
+                return;
+            }
+
             dsc.AppendLine(UIUtils.I18n("Network.NetworkId", NetworkUID));
         }
 

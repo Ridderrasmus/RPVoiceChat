@@ -36,6 +36,13 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private string receivedMessageOriginal = ""; // Store original latin characters
         private string customEndpointName = "";
         private string targetEndpointName = "all";
+        /// <summary>Server-pushed mirror of <see cref="WireNetwork.IsManagedBySwitchboard"/>; replicated to clients via BE data.</summary>
+        private bool routingManagedBySwitchboard;
+        /// <summary>Server-pushed mirror of <see cref="WireNetwork.AdvancedTelegraphFeaturesEnabled"/>; replicated to clients via BE data.</summary>
+        private bool routingAdvancedUnlocked;
+        private WireRouteMode lastReceivedRouteMode = WireRouteMode.All;
+        private string lastReceivedSourceEndpointName = null;
+        private string lastReceivedTargetEndpointName = null;
         private Queue<char> pendingSignals = new Queue<char>();
         
         // Printer functionality
@@ -92,6 +99,10 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 // Register client-side countdown update timer
                 api.Event.RegisterGameTickListener(OnClientGameTick, 1000); // Every second
             }
+            else if (NetworkUID != 0)
+            {
+                WireNetworkHandler.RefreshTelegraphRoutingSnapshot(NetworkUID);
+            }
             
             // Check for printer below
             CheckForPrinterBelow();
@@ -109,6 +120,12 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (savedOriginalCreatedNetworkID != 0)
             {
                 originalCreatedNetworkID = savedOriginalCreatedNetworkID;
+            }
+            routingManagedBySwitchboard = tree.GetBool("rpvc:routingManaged", false);
+            routingAdvancedUnlocked = tree.GetBool("rpvc:routingAdvanced", false);
+            if (Api?.Side == EnumAppSide.Server && NetworkUID != 0)
+            {
+                WireNetworkHandler.RefreshTelegraphRoutingSnapshot(NetworkUID);
             }
             UpdateDisplayMessages();
             
@@ -129,35 +146,31 @@ namespace RPVoiceChat.GameContent.BlockEntity
             tree.SetString("customEndpointName", customEndpointName);
             tree.SetString("targetEndpointName", targetEndpointName);
             tree.SetLong("originalCreatedNetworkID", originalCreatedNetworkID);
+            tree.SetBool("rpvc:routingManaged", routingManagedBySwitchboard);
+            tree.SetBool("rpvc:routingAdvanced", routingAdvancedUnlocked);
         }
 
-        public bool IsManagedBySwitchboard()
+        /// <summary>Called from <see cref="WireNetworkHandler.RefreshTelegraphRoutingSnapshot"/> on the server after the wire network state is rebuilt.</summary>
+        public void ApplyServerRoutingFlags(bool managedBySwitchboard, bool advancedRoutingUnlocked)
         {
-            try
+            if (Api?.Side != EnumAppSide.Server)
             {
-                ComputeRoutingState(out bool managed, out _);
-                return managed;
+                return;
             }
-            catch (Exception e)
+
+            bool changed = routingManagedBySwitchboard != managedBySwitchboard
+                || routingAdvancedUnlocked != advancedRoutingUnlocked;
+            routingManagedBySwitchboard = managedBySwitchboard;
+            routingAdvancedUnlocked = advancedRoutingUnlocked;
+            if (changed)
             {
-                Api?.Logger?.Warning($"[RPVoiceChat] IsManagedBySwitchboard failed at {Pos}: {e.Message}");
-                return false;
+                MarkDirty(true);
             }
         }
 
-        public bool HasAdvancedRoutingEnabled()
-        {
-            try
-            {
-                ComputeRoutingState(out _, out bool enabled);
-                return enabled;
-            }
-            catch (Exception e)
-            {
-                Api?.Logger?.Warning($"[RPVoiceChat] HasAdvancedRoutingEnabled failed at {Pos}: {e.Message}");
-                return false;
-            }
-        }
+        public bool IsManagedBySwitchboard() => routingManagedBySwitchboard;
+
+        public bool HasAdvancedRoutingEnabled() => routingAdvancedUnlocked;
 
         public string GetTargetEndpointName()
         {
@@ -272,30 +285,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
 
             MarkDirty();
-        }
-
-        private void ComputeRoutingState(out bool managed, out bool enabled)
-        {
-            managed = false;
-            enabled = false;
-
-            var network = WireNetworkHandler.GetNetwork(NetworkUID);
-            if (network == null) return;
-
-            foreach (var node in network.Nodes.ToArray())
-            {
-                if (node == null) continue;
-
-                if (node is not IWireTypedNode typed || typed.WireNodeKind != WireNodeKind.Switchboard)
-                    continue;
-
-                managed = true;
-                if (node is ISwitchboardNode switchboard && switchboard.HasSufficientPowerFor(WireNetworkKind.Telegraph))
-                {
-                    enabled = true;
-                    return;
-                }
-            }
         }
 
         protected override void SetWireAttachmentOffset()
@@ -446,6 +435,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
             if (e?.Message == null || e.Message.Length == 0) return;
 
+            lastReceivedRouteMode = e.RouteMode;
+            lastReceivedSourceEndpointName = ResolveTelegraphNameAt(e.SenderPos);
+            lastReceivedTargetEndpointName = e.TargetEndpointName;
             char keyChar = e.Message[0];
             OnReceivedSignal(keyChar, e.SenderPos);
         }
@@ -476,14 +468,16 @@ namespace RPVoiceChat.GameContent.BlockEntity
             IsPlaying = false;
         }
 
-        public void ProcessPrintPacket(string message)
+        public void ProcessPrintPacket(string message, string sourceEndpointName = null, string targetEndpointName = null, string networkName = null)
         {
             // Trigger message printing/deletion
             if (connectedPrinter != null && !string.IsNullOrEmpty(message))
             {
                 // Convert to morse for printing if GenuineMorseCharacters is enabled
                 string messageToPrint = GenuineMorseCharacters ? ConvertStringToMorse(message) : message;
-                connectedPrinter.CreateTelegram(messageToPrint, NetworkUID.ToString());
+                string networkUid = NetworkUID.ToString();
+                string resolvedNetworkName = !string.IsNullOrWhiteSpace(networkName) ? networkName : ResolvePrintableNetworkName();
+                connectedPrinter.CreateTelegram(messageToPrint, networkUid, resolvedNetworkName, sourceEndpointName, targetEndpointName);
                 telegramPrinted = true; // Mark that telegram has been created
             }
             
@@ -815,10 +809,17 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     // Send packet to server to trigger printing
                     if (Api.Side == EnumAppSide.Client && !printPacketSentForCurrentMessage && !string.IsNullOrEmpty(receivedMessageOriginal))
                     {
-                        var packet = new TelegraphPrintPacket
+                        var packet = new CommDeliveryPacket
                         {
-                            Message = receivedMessageOriginal,
-                            TelegraphPos = Pos
+                            DevicePos = Pos,
+                            PayloadType = CommPayloadType.Text,
+                            TextMessage = receivedMessageOriginal,
+                            NetworkName = ResolvePrintableNetworkName(),
+                            // Always carry sender display name for telegram headers (broadcast or named route).
+                            SourceEndpointName = lastReceivedSourceEndpointName,
+                            TargetEndpointName = lastReceivedRouteMode == WireRouteMode.NamedEndpoint
+                                ? lastReceivedTargetEndpointName
+                                : null
                         };
                         RPVoiceChatMod.TelegraphPrintClientChannel.SendPacket(packet);
                         printPacketSentForCurrentMessage = true;
@@ -837,6 +838,48 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     receivedCountdownEndTime = 0;
                 }
             }
+        }
+
+        private string ResolveTelegraphNameAt(BlockPos nodePos)
+        {
+            if (nodePos == null)
+            {
+                return null;
+            }
+
+            var network = WireNetworkHandler.GetNetwork(NetworkUID);
+            if (network == null)
+            {
+                return null;
+            }
+
+            var endpoint = network.Nodes
+                .OfType<BlockEntityTelegraph>()
+                .FirstOrDefault(t => t.Pos != null && t.Pos.Equals(nodePos));
+
+            if (endpoint == null)
+            {
+                return null;
+            }
+
+            string name = endpoint.GetCustomEndpointName();
+            return string.IsNullOrWhiteSpace(name) ? null : name;
+        }
+
+        private string ResolvePrintableNetworkName()
+        {
+            if (!routingAdvancedUnlocked)
+            {
+                return null;
+            }
+
+            string displayName = WireNetworkHandler.GetDisplayName(NetworkUID);
+            if (!string.Equals(displayName, NetworkUID.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
+                return displayName;
+            }
+
+            return null;
         }
 
         private void UpdateSentCountdown()

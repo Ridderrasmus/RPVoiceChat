@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using RPVoiceChat.Config;
 using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.GameContent.Block;
@@ -24,6 +24,8 @@ namespace RPVoiceChat
         internal static IServerNetworkChannel TelegraphPrintServerChannel;
         internal static IClientNetworkChannel TelegraphSettingsClientChannel;
         internal static IServerNetworkChannel TelegraphSettingsServerChannel;
+        internal static IClientNetworkChannel SwitchboardClientChannel;
+        internal static IServerNetworkChannel SwitchboardServerChannel;
         internal static IClientNetworkChannel AnnounceClientChannel;
         internal static IServerNetworkChannel AnnounceServerChannel;
 
@@ -49,9 +51,12 @@ namespace RPVoiceChat
                     .RegisterMessageType<WeldingHitPacket>();
                     
                 TelegraphPrintClientChannel = capi.Network.RegisterChannel("telegraphprint")
-                    .RegisterMessageType<TelegraphPrintPacket>();
+                    .RegisterMessageType<CommDeliveryPacket>();
                 TelegraphSettingsClientChannel = capi.Network.RegisterChannel("telegraphsettings")
                     .RegisterMessageType<TelegraphSettingsPacket>();
+                SwitchboardClientChannel = capi.Network.RegisterChannel("switchboardsettings")
+                    .RegisterMessageType<SwitchboardRenameNetworkPacket>()
+                    .RegisterMessageType<SwitchboardPowerModePacket>();
 
                 AnnounceClientChannel = capi.Network.RegisterChannel("announce")
                     .RegisterMessageType<AnnouncePacket>();
@@ -64,11 +69,16 @@ namespace RPVoiceChat
                     .SetMessageHandler<WeldingHitPacket>(OnWeldingHitReceived);
                     
                 TelegraphPrintServerChannel = sapi.Network.RegisterChannel("telegraphprint")
-                    .RegisterMessageType<TelegraphPrintPacket>()
-                    .SetMessageHandler<TelegraphPrintPacket>(OnTelegraphPrintPacket);
+                    .RegisterMessageType<CommDeliveryPacket>()
+                    .SetMessageHandler<CommDeliveryPacket>(OnCommDeliveryPacket);
                 TelegraphSettingsServerChannel = sapi.Network.RegisterChannel("telegraphsettings")
                     .RegisterMessageType<TelegraphSettingsPacket>()
                     .SetMessageHandler<TelegraphSettingsPacket>(OnTelegraphSettingsPacket);
+                SwitchboardServerChannel = sapi.Network.RegisterChannel("switchboardsettings")
+                    .RegisterMessageType<SwitchboardRenameNetworkPacket>()
+                    .RegisterMessageType<SwitchboardPowerModePacket>()
+                    .SetMessageHandler<SwitchboardRenameNetworkPacket>(OnSwitchboardRenameNetworkPacket)
+                    .SetMessageHandler<SwitchboardPowerModePacket>(OnSwitchboardPowerModePacket);
 
                 AnnounceServerChannel = sapi.Network.RegisterChannel("announce")
                     .RegisterMessageType<AnnouncePacket>();
@@ -109,17 +119,21 @@ namespace RPVoiceChat
             }
         }
 
-        private void OnTelegraphPrintPacket(IServerPlayer player, TelegraphPrintPacket packet)
+        private void OnCommDeliveryPacket(IServerPlayer player, CommDeliveryPacket packet)
         {
-            // Find the telegraph block entity
-            var telegraph = sapi.World.BlockAccessor.GetBlockEntity(packet.TelegraphPos) as BlockEntityTelegraph;
+            if (packet == null || packet.PayloadType != CommPayloadType.Text || string.IsNullOrEmpty(packet.TextMessage))
+            {
+                return;
+            }
+
+            var telegraph = sapi.World.BlockAccessor.GetBlockEntity(packet.DevicePos) as BlockEntityTelegraph;
             if (telegraph != null)
             {
-                telegraph.ProcessPrintPacket(packet.Message);
+                telegraph.ProcessPrintPacket(packet.TextMessage, packet.SourceEndpointName, packet.TargetEndpointName, packet.NetworkName);
             }
             else
             {
-                sapi.Logger.Warning($"Telegraph at {packet.TelegraphPos} not found for print packet");
+                sapi.Logger.Warning($"Telegraph at {packet.DevicePos} not found for comm delivery packet");
             }
         }
 
@@ -143,5 +157,30 @@ namespace RPVoiceChat
             }
         }
 
+        private void OnSwitchboardRenameNetworkPacket(IServerPlayer player, SwitchboardRenameNetworkPacket packet)
+        {
+            var switchboard = sapi.World.BlockAccessor.GetBlockEntity(packet.SwitchboardPos) as BlockEntitySwitchboard;
+            if (switchboard == null)
+            {
+                sapi.Logger.Warning($"Switchboard at {packet.SwitchboardPos} not found for rename packet");
+                return;
+            }
+
+            switchboard.RenameNetwork(packet.NetworkName, out _);
+        }
+
+        private void OnSwitchboardPowerModePacket(IServerPlayer player, SwitchboardPowerModePacket packet)
+        {
+            var switchboard = sapi.World.BlockAccessor.GetBlockEntity(packet.SwitchboardPos) as BlockEntitySwitchboard;
+            if (switchboard == null)
+            {
+                sapi.Logger.Warning($"Switchboard at {packet.SwitchboardPos} not found for power-mode packet");
+                return;
+            }
+
+            switchboard.SetUsePowerRequirements(packet.UsePowerRequirements);
+        }
+
     }
 }
+
