@@ -26,7 +26,16 @@
       "loadFromProperties": "abstract/horizontalorientation"
     }
   ],
-  "drawtype": "cube",
+  "drawtype": "json",
+  "shape": {
+    "base": "block/switchboard/switchboard",
+    "rotateYByType": { 
+      "*-north": 0,
+      "*-east": 270,
+      "*-west": 90,
+      "*-south": 180 
+    }
+  },
   "sounds": {
     "place": "game:block/planks",
     "hit": "game:block/planks",
@@ -34,15 +43,23 @@
     "walk": "game:walk/wood"
   },
   "textures": {
-    "all": { "base": "game:block/wood/debarked/{wood}" }
+    "wood": { "base": "game:block/wood/debarked/{wood}" },
+    "gold": { "base": "game:block/metal/plate/gold" },
+    "copper": { "base": "game:block/metal/plate/copper" },
+    "glass": { "base": "game:block/glass/plain" },
+    "bakelite": { "base": "game:block/coal/bituminous" },
+    "silver": { "base": "game:block/metal/ingot/silver" }
   },
   "rainPermeable": false,
   "sidesolid": {
-    "all": true
+    "all": false
   },
   "sideopaque": {
-    "all": true
+    "all": false
   },
   "lightAbsorption": 15,
-  "resistance": 1
+  "resistance": 1,
+  "guiTransform": {
+		"rotation": { "x": -22.6, "y": 145, "z": 0 }
+	}
 }

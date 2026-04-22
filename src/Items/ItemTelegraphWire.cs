@@ -36,6 +36,16 @@ namespace RPVoiceChat.GameContent.Items
             // First click
             if (firstNodePos == null)
             {
+                if (node is BEWireNode firstWireNode && !firstWireNode.CanAcceptMoreConnections())
+                {
+                    (byEntity.World.Api as ICoreClientAPI)?.TriggerIngameError(
+                        this,
+                        "wire-max-connections",
+                        UIUtils.I18n("Wire.ConnectionDenied.MaxConnections", firstWireNode.GetMaxConnections())
+                    );
+                    return;
+                }
+
                 firstNodePos = blockSel.Position.Copy();
                 (byEntity.World.Api as ICoreClientAPI)?.TriggerChatMessage(UIUtils.I18n("Wire.StartConnection"));
                 return;
@@ -83,7 +93,17 @@ namespace RPVoiceChat.GameContent.Items
                     {
                         if (!string.IsNullOrWhiteSpace(failureLangKey))
                         {
-                            (byEntity.Api as ICoreClientAPI)?.TriggerChatMessage(UIUtils.I18n(failureLangKey, failureArgs));
+                            var capi = byEntity.Api as ICoreClientAPI;
+                            string message = UIUtils.I18n(failureLangKey, failureArgs);
+
+                            if (failureLangKey == "Wire.ConnectionDenied.MaxConnections")
+                            {
+                                capi?.TriggerIngameError(this, "wire-max-connections", message);
+                            }
+                            else
+                            {
+                                capi?.TriggerChatMessage(message);
+                            }
                         }
                         else
                         {

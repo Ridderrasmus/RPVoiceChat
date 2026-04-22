@@ -212,12 +212,32 @@ namespace RPVoiceChat.Systems
             // Hybrid mode: if no switchboard in resulting component, allow baseline behavior.
             HashSet<BEWireNode> prospectiveComponent = GetProspectiveComponent(node1, node2);
             bool hasSwitchboard = prospectiveComponent.Any(n => GetNodeKind(n) == WireNodeKind.Switchboard);
-            if (!hasSwitchboard)
-                return true;
-
             int telegraphCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Telegraph);
             int telephoneCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Telephone);
             int radioCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Radio);
+
+            if (!hasSwitchboard)
+            {
+                // No switchboard:
+                // - Telegraph networks: unlimited
+                // - Telephone networks: max 2 endpoints
+                // - Radio networks: max 1 endpoint
+                if (telephoneCount > 2)
+                {
+                    denialLangKey = "Wire.ConnectionDenied.NetworkCapacity";
+                    denialArgs = new object[] { GetKindDisplayName(WireNetworkKind.Telephone), 2 };
+                    return false;
+                }
+
+                if (radioCount > 1)
+                {
+                    denialLangKey = "Wire.ConnectionDenied.NetworkCapacity";
+                    denialArgs = new object[] { GetKindDisplayName(WireNetworkKind.Radio), 1 };
+                    return false;
+                }
+
+                return true;
+            }
 
             int activeKinds = 0;
             if (telegraphCount > 0) activeKinds++;

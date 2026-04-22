@@ -34,7 +34,16 @@ namespace RPVoiceChat.GameContent.BlockEntity
         protected virtual void SetWireAttachmentOffset()
         {
             // by default : block center
-            WireAttachmentOffset = new Vec3f(0.5f, 0.5f, 0.5f);
+            WireAttachmentOffset = new Vec3f(0.5f, 0.45f, 0.5f);
+        }
+
+        /// <summary>
+        /// Per-connection wire attachment offset (block-local, 0..1-ish).
+        /// By default every connection uses the same center offset.
+        /// </summary>
+        public virtual Vec3f GetWireAttachmentOffsetFor(BlockPos otherNodePos)
+        {
+            return WireAttachmentOffset;
         }
 
         public override void Initialize(ICoreAPI api)
@@ -172,6 +181,16 @@ namespace RPVoiceChat.GameContent.BlockEntity
             return connections.Contains(connection);
         }
 
+        public bool CanAcceptMoreConnections()
+        {
+            return connections.Count < MaxConnections;
+        }
+
+        public int GetMaxConnections()
+        {
+            return MaxConnections;
+        }
+
         public bool Connect(WireConnection connection, out string failureLangKey, out object[] failureArgs)
         {
             failureLangKey = null;
@@ -180,12 +199,20 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (connection == null || connection.Node1 == null || connection.Node2 == null)
                 return false;
 
-            if (connections.Count >= MaxConnections || HasConnection(connection))
+            if (connection.Node1 is not BEWireNode node1 || connection.Node2 is not BEWireNode node2)
                 return false;
 
-            if (connection.Node2 is BEWireNode node2 &&
-                connection.Node1 is BEWireNode node1 &&
-                !WireNetworkHandler.CanConnectNodes(node1, node2, out failureLangKey, out failureArgs))
+            if (!node1.CanAcceptMoreConnections() || !node2.CanAcceptMoreConnections())
+            {
+                failureLangKey = "Wire.ConnectionDenied.MaxConnections";
+                failureArgs = new object[] { Math.Min(node1.GetMaxConnections(), node2.GetMaxConnections()) };
+                return false;
+            }
+
+            if (node1.HasConnection(connection) || node2.HasConnection(connection))
+                return false;
+
+            if (!WireNetworkHandler.CanConnectNodes(node1, node2, out failureLangKey, out failureArgs))
             {
                 return false;
             }
@@ -197,9 +224,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             if (Api.Side == EnumAppSide.Server)
             {
-                var wireNode1 = connection.Node1 as BEWireNode;
-                var wireNode2 = connection.Node2 as BEWireNode;
-                if (wireNode1 == null || wireNode2 == null) return false;
+                var wireNode1 = node1;
+                var wireNode2 = node2;
 
                 var net1 = WireNetworkHandler.GetNetwork(wireNode1.NetworkUID);
                 var net2 = WireNetworkHandler.GetNetwork(wireNode2.NetworkUID);
@@ -506,11 +532,12 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
             if (IsNetworkRoot(this))
             {
-                // If already in a network with the original ID, keep it
+                // If this root already owns a standalone network with its original ID, keep it.
+                // Do not early-return when that network has other nodes: this node is isolated now.
                 if (this is INetworkRoot networkRoot && networkRoot.CreatedNetworkID != 0)
                 {
                     var existingNetwork = WireNetworkHandler.GetNetwork(networkRoot.CreatedNetworkID);
-                    if (existingNetwork != null && existingNetwork.Nodes.Contains(this))
+                    if (existingNetwork != null && existingNetwork.Nodes.Contains(this) && existingNetwork.Nodes.Count == 1)
                     {
                         // Already in the correct network, nothing to do
                         return;
@@ -554,30 +581,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
         }
 
         /// <summary>
-        /// Finds the original network root that should keep its network.
-        /// Returns the root with the oldest CreatedNetworkID (the one that created the network first).
-        /// </summary>
-        private static BEWireNode FindOriginalNetworkRoot(HashSet<BEWireNode> component1, HashSet<BEWireNode> component2)
-        {
-            BEWireNode oldestRoot = null;
-            long oldestID = long.MaxValue;
-            
-            foreach (var node in component1.Concat(component2))
-            {
-                if (node is INetworkRoot networkRoot && networkRoot.CreatedNetworkID != 0)
-                {
-                    if (networkRoot.CreatedNetworkID < oldestID)
-                    {
-                        oldestID = networkRoot.CreatedNetworkID;
-                        oldestRoot = node;
-                    }
-                }
-            }
-            
-            return oldestRoot;
-        }
-
-        /// <summary>
         /// Removes a component from a network and sets all nodes' NetworkUID to 0.
         /// </summary>
         private static void RemoveComponentFromNetwork(HashSet<BEWireNode> component, WireNetwork network)
@@ -607,26 +610,25 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         /// <summary>
         /// Handles network splitting when both components have INetworkRoot nodes.
-        /// The component with the oldest CreatedNetworkID keeps its network, the other gets a new one or reuses its original.
+        /// Keeps the current network ID on the largest remaining component, and recreates the detached one.
         /// </summary>
         private static void SplitNetworkWithBothRoots(HashSet<BEWireNode> component, HashSet<BEWireNode> otherComponent, WireNetwork network)
         {
-            var originalRoot = FindOriginalNetworkRoot(component, otherComponent);
-            if (originalRoot == null) return;
-            
-            bool originalRootInComponent = component.Contains(originalRoot);
-            long originalNetworkID = ((INetworkRoot)originalRoot).CreatedNetworkID;
-            
-            if (originalRootInComponent)
+            // Generic connector-like behavior:
+            // Keep current network ID on the largest remaining component.
+            // The detached side is removed and recreated with a different network ID.
+            bool keepComponent = component.Count >= otherComponent.Count;
+
+            if (keepComponent)
             {
                 RemoveComponentFromNetwork(otherComponent, network);
-                EnsureComponentHasNetworkUID(component, network, originalNetworkID);
+                EnsureComponentHasNetworkUID(component, network, network.networkID);
                 CreateNetworkForComponent(otherComponent);
             }
             else
             {
                 RemoveComponentFromNetwork(component, network);
-                EnsureComponentHasNetworkUID(otherComponent, network, originalNetworkID);
+                EnsureComponentHasNetworkUID(otherComponent, network, network.networkID);
                 CreateNetworkForComponent(component);
             }
         }

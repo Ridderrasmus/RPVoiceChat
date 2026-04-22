@@ -26,7 +26,8 @@ namespace RPVoiceChat.GameContent.Block
             if (blockAtPos?.Variant == null || !blockAtPos.Variant.TryGetValue("side", out string sideStr)) return false;
             BlockFacing frontFace = BlockFacing.FromCode(sideStr);
             if (frontFace == null) return false;
-            return face == frontFace.Opposite;
+            // Switchboard accepts mechanical input on its "back" side as authored by shape orientation.
+            return face == frontFace;
         }
 
         public void DidConnectAt(IWorldAccessor world, BlockPos pos, BlockFacing face)

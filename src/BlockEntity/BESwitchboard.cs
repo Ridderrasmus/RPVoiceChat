@@ -1,4 +1,5 @@
 ﻿using RPVoiceChat.GameContent.Systems;
+using RPVoiceChat.GameContent.Renderers;
 
 using RPVoiceChat.Gui;
 
@@ -62,6 +63,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         /// <summary>Detects crossing the configured min-power threshold when the integer % is unchanged.</summary>
         private bool _lastAboveMinPower;
+        private RotatingMechPartRenderer _mechPartRenderer;
 
 
 
@@ -73,6 +75,14 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
 
         protected override int MaxConnections => 4;
+        private static readonly Vec3f[] AxisOffsetsNorth =
+        {
+            // Axis1..4 centers computed from the shape with their own local 45deg rotation.
+            ComputeRotatedAxisCenter(4.5f, 5.5f, 3.0f, 4.0f, 9.5f, 6.0f, 45f),
+            ComputeRotatedAxisCenter(11.5f, 12.5f, 3.0f, 4.0f, 16.5f, 6.0f, 45f),
+            ComputeRotatedAxisCenter(4.5f, 5.5f, -1.0f, 0.0f, 9.5f, 2.0f, 45f),
+            ComputeRotatedAxisCenter(11.5f, 12.5f, -1.0f, 0.0f, 16.5f, 2.0f, 45f)
+        };
 
 
 
@@ -81,6 +91,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
 
             base.Initialize(api);
+            DisableConsumerInstancedRenderer();
 
             if (api.Side == EnumAppSide.Server)
 
@@ -95,6 +106,15 @@ namespace RPVoiceChat.GameContent.BlockEntity
             else
 
             {
+                if (api is ICoreClientAPI capi)
+                {
+                    _mechPartRenderer = new RotatingMechPartRenderer(
+                        this,
+                        capi,
+                        new AssetLocation("rpvoicechat:shapes/block/switchboard/switchboard_mechpart.json"),
+                        GetMechPartBaseRotY()
+                    );
+                }
 
                 RegisterGameTickListener(_ => TryApplyPersistedNetworkName(), 1000);
 
@@ -102,6 +122,171 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         }
 
+        public override Vec3f GetWireAttachmentOffsetFor(BlockPos otherNodePos)
+        {
+            if (otherNodePos == null) return base.GetWireAttachmentOffsetFor(otherNodePos);
+
+            Vec3f[] axisOffsetsCurrent = AxisOffsetsNorth
+                .Select(RotateLocalOffsetByBlockSide)
+                .ToArray();
+
+            var entries = GetConnections()
+                .Select(c => c.GetOtherBlockPos(Pos))
+                .Where(p => p != null)
+                .Select(p => (
+                    Pos: p,
+                    LocalCurrent: new Vec3f(
+                        p.X - Pos.X + 0.5f,
+                        0.5f,
+                        p.Z - Pos.Z + 0.5f
+                    )
+                ))
+                .OrderBy(entry => entry.LocalCurrent.X)
+                .ThenBy(entry => entry.LocalCurrent.Z)
+                .ThenBy(entry => entry.Pos.X)
+                .ThenBy(entry => entry.Pos.Y)
+                .ThenBy(entry => entry.Pos.Z)
+                .ToList();
+
+            if (entries.Count == 0) return base.GetWireAttachmentOffsetFor(otherNodePos);
+
+            var assignedAxisByNode = AssignAxesByBestGlobalDistance(entries, axisOffsetsCurrent);
+
+            if (!assignedAxisByNode.TryGetValue(GetPosKey(otherNodePos), out int index))
+            {
+                return base.GetWireAttachmentOffsetFor(otherNodePos);
+            }
+
+            index = GameMath.Clamp(index, 0, AxisOffsetsNorth.Length - 1);
+
+            return axisOffsetsCurrent[index];
+        }
+
+        private static (int X, int Y, int Z) GetPosKey(BlockPos pos)
+        {
+            return (pos.X, pos.Y, pos.Z);
+        }
+
+        private static float DistanceSqXZ(Vec3f a, Vec3f b)
+        {
+            // Cost metric used by the axis assignment solver (minimum total XZ distance).
+            float dx = a.X - b.X;
+            float dz = a.Z - b.Z;
+            return dx * dx + dz * dz;
+        }
+
+        private Dictionary<(int X, int Y, int Z), int> AssignAxesByBestGlobalDistance(
+            IReadOnlyList<(BlockPos Pos, Vec3f LocalCurrent)> entries,
+            IReadOnlyList<Vec3f> axisOffsetsCurrent)
+        {
+            int count = Math.Min(entries.Count, axisOffsetsCurrent.Count);
+            var assignedAxisByNode = new Dictionary<(int X, int Y, int Z), int>();
+            if (count == 0) return assignedAxisByNode;
+
+            var usedAxes = new bool[axisOffsetsCurrent.Count];
+            var current = new int[count];
+            var best = new int[count];
+            Array.Fill(best, -1);
+            float bestCost = float.MaxValue;
+
+            void Search(int depth, float cost)
+            {
+                if (depth == count)
+                {
+                    if (cost < bestCost)
+                    {
+                        bestCost = cost;
+                        Array.Copy(current, best, count);
+                    }
+                    return;
+                }
+
+                for (int axisIndex = 0; axisIndex < axisOffsetsCurrent.Count; axisIndex++)
+                {
+                    if (usedAxes[axisIndex]) continue;
+
+                    float nextCost = cost + DistanceSqXZ(entries[depth].LocalCurrent, axisOffsetsCurrent[axisIndex]);
+                    if (nextCost >= bestCost) continue;
+
+                    usedAxes[axisIndex] = true;
+                    current[depth] = axisIndex;
+                    Search(depth + 1, nextCost);
+                    usedAxes[axisIndex] = false;
+                }
+            }
+
+            Search(0, 0f);
+
+            for (int i = 0; i < count; i++)
+            {
+                int axisIndex = best[i];
+                if (axisIndex < 0) continue;
+                assignedAxisByNode[GetPosKey(entries[i].Pos)] = axisIndex;
+            }
+
+            return assignedAxisByNode;
+        }
+
+        private static Vec3f ComputeRotatedAxisCenter(
+            float fromX, float toX,
+            float fromZ, float toZ,
+            float rotationOriginX, float rotationOriginZ,
+            float rotYDeg)
+        {
+            float cx = (fromX + toX) * 0.5f / 16f;
+            float cz = (fromZ + toZ) * 0.5f / 16f;
+            var center = new Vec3f(cx, 14.625f / 16f, cz);
+            var origin = new Vec3f(rotationOriginX / 16f, center.Y, rotationOriginZ / 16f);
+            return RotateAroundPointXZ(center, origin, rotYDeg);
+        }
+
+        private static Vec3f RotateAroundPointXZ(Vec3f point, Vec3f origin, float rotDeg)
+        {
+            if (Math.Abs(rotDeg) < 0.001f) return point;
+
+            float rad = rotDeg * GameMath.DEG2RAD;
+            float cos = GameMath.Cos(rad);
+            float sin = GameMath.Sin(rad);
+
+            float dx = point.X - origin.X;
+            float dz = point.Z - origin.Z;
+
+            // Vintage Story Y-rotation behaves as clockwise in this local X/Z frame.
+            float x = dx * cos + dz * sin;
+            float z = -dx * sin + dz * cos;
+
+            return new Vec3f(x + origin.X, point.Y, z + origin.Z);
+        }
+
+
+
+        public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tesselator)
+
+        {
+
+            if (Block == null) return false;
+
+            // Quern-style: tesselate static mesh explicitly, skip default aggregation.
+            CompositeShape blockShape = Block.Shape;
+            if (blockShape?.Base == null) return false;
+
+            AssetLocation shapeLoc = blockShape.Base.Clone().WithPathPrefixOnce("shapes/").WithPathAppendixOnce(".json");
+            Shape shape = Shape.TryGet(Api, shapeLoc);
+            if (shape == null) return false;
+
+            tesselator.TesselateShape(
+                Block,
+                shape,
+                out MeshData mesh,
+                new Vec3f(blockShape.rotateX, blockShape.rotateY, blockShape.rotateZ),
+                blockShape.QuantityElements,
+                blockShape.SelectiveElements
+            );
+            mesher.AddMeshData(mesh);
+
+            return true;
+
+        }
 
 
         public void TryDiscoverNetwork()
@@ -114,7 +299,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             if (frontFace == null) return;
 
-            BlockFacing connectorFace = frontFace.Opposite;
+            // Keep network discovery aligned with SwitchboardBlock connector side.
+            BlockFacing connectorFace = frontFace;
 
 
 
@@ -258,6 +444,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 dialog?.RefreshData();
 
             }
+            DisableConsumerInstancedRenderer();
 
         }
 
@@ -670,6 +857,77 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             return network.CurrentType;
 
+        }
+
+        public override void OnBlockRemoved()
+        {
+            base.OnBlockRemoved();
+            _mechPartRenderer?.Dispose();
+            _mechPartRenderer = null;
+        }
+
+        public override void OnBlockUnloaded()
+        {
+            base.OnBlockUnloaded();
+            _mechPartRenderer?.Dispose();
+            _mechPartRenderer = null;
+        }
+
+        private void DisableConsumerInstancedRenderer()
+        {
+            var consumer = GetBehavior<BEBehaviorMPConsumer>();
+            if (consumer == null) return;
+            consumer.Shape = null;
+        }
+
+        private float GetMechPartBaseRotY()
+        {
+            if (Block?.Variant?.TryGetValue("side", out string side) != true) return 0f;
+            return side switch
+            {
+                "north" => 0f,
+                "east" => 270f,
+                "west" => 90f,
+                "south" => 180f,
+                _ => 0f
+            };
+        }
+
+        private float GetBlockSideRotY()
+        {
+            return Block?.Variant?.TryGetValue("side", out string side) == true
+                ? side switch
+                {
+                    "north" => 0f,
+                    "east" => 270f,
+                    "west" => 90f,
+                    "south" => 180f,
+                    _ => 0f
+                }
+                : 0f;
+        }
+
+        private static Vec3f RotateAroundCenter(Vec3f point, float rotDeg)
+        {
+            if (Math.Abs(rotDeg) < 0.001f) return point;
+
+            float rad = rotDeg * GameMath.DEG2RAD;
+            float cos = GameMath.Cos(rad);
+            float sin = GameMath.Sin(rad);
+
+            float dx = point.X - 0.5f;
+            float dz = point.Z - 0.5f;
+
+            // Match in-game rotation handedness used by rotateY / rotateYByType.
+            float x = dx * cos + dz * sin;
+            float z = -dx * sin + dz * cos;
+
+            return new Vec3f(x + 0.5f, point.Y, z + 0.5f);
+        }
+
+        private Vec3f RotateLocalOffsetByBlockSide(Vec3f offsetNorth)
+        {
+            return RotateAroundCenter(offsetNorth, GetBlockSideRotY());
         }
 
     }

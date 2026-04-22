@@ -20,6 +20,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
     public class BlockEntityTelegraph : BEWireNode, INetworkRoot, IWireTypedNode, ITelegraphEndpoint
     {
         TelegraphMenuDialog dialog;
+        protected override int MaxConnections => 1;
 
         // INetworkRoot implementation - stores the original network ID created by this root
         private long originalCreatedNetworkID = 0;
