@@ -6,11 +6,11 @@ using RPVoiceChat.Gui;
 using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Networking.Packets;
 using RPVoiceChat.Systems;
+using RPVoiceChat.Util;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
-using RPVoiceChat.Util;
 
 namespace RPVoiceChat.GameContent.BlockEntity
 {
@@ -23,8 +23,10 @@ namespace RPVoiceChat.GameContent.BlockEntity
             InCall
         }
 
-        private const int RingDurationMs = 3000;
-        private const int InCallDurationMs = 5000;
+        // Auto-hangup timeout while waiting for answer.
+        private const int RingDurationMs = 20000;
+        private const int IncomingRingRepeatMs = 2000;
+        private const int RingbackRepeatMs = 2000;
         private TelephoneMenuDialog dialog;
         private TelephoneCallState callState = TelephoneCallState.Idle;
         private long stateUntilMs;
@@ -36,6 +38,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private string activeCallerPlayerUid = "";
         private string incomingCallerPlayerUid = "";
         private BlockPos incomingCallerTelephonePos;
+        private BlockPos activePeerTelephonePos;
+        private long nextRingingSoundAtMs;
         private long originalCreatedNetworkID = 0;
 
         public override bool IsActiveEndpoint => true;
@@ -79,11 +83,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
             if (Api?.Side == EnumAppSide.Server)
             {
-                if (TryAcceptIncomingCall(byPlayer))
-                {
-                    return true;
-                }
-                StartCall(byPlayer);
+                // Telephone calls are explicitly controlled from the GUI actions.
                 return true;
             }
 
@@ -115,6 +115,10 @@ namespace RPVoiceChat.GameContent.BlockEntity
             int incomingY = tree.GetInt("rpvc:telephoneIncomingCallerPosY", int.MinValue);
             int incomingZ = tree.GetInt("rpvc:telephoneIncomingCallerPosZ", int.MinValue);
             incomingCallerTelephonePos = incomingX == int.MinValue ? null : new BlockPos(incomingX, incomingY, incomingZ);
+            int peerX = tree.GetInt("rpvc:telephonePeerPosX", int.MinValue);
+            int peerY = tree.GetInt("rpvc:telephonePeerPosY", int.MinValue);
+            int peerZ = tree.GetInt("rpvc:telephonePeerPosZ", int.MinValue);
+            activePeerTelephonePos = peerX == int.MinValue ? null : new BlockPos(peerX, peerY, peerZ);
             long savedOriginalCreatedNetworkID = tree.GetLong("rpvc:telephoneOriginalCreatedNetworkID", 0);
             if (savedOriginalCreatedNetworkID != 0)
             {
@@ -147,6 +151,18 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 tree.SetInt("rpvc:telephoneIncomingCallerPosY", int.MinValue);
                 tree.SetInt("rpvc:telephoneIncomingCallerPosZ", int.MinValue);
             }
+            if (activePeerTelephonePos != null)
+            {
+                tree.SetInt("rpvc:telephonePeerPosX", activePeerTelephonePos.X);
+                tree.SetInt("rpvc:telephonePeerPosY", activePeerTelephonePos.Y);
+                tree.SetInt("rpvc:telephonePeerPosZ", activePeerTelephonePos.Z);
+            }
+            else
+            {
+                tree.SetInt("rpvc:telephonePeerPosX", int.MinValue);
+                tree.SetInt("rpvc:telephonePeerPosY", int.MinValue);
+                tree.SetInt("rpvc:telephonePeerPosZ", int.MinValue);
+            }
             tree.SetLong("rpvc:telephoneOriginalCreatedNetworkID", originalCreatedNetworkID);
         }
 
@@ -163,10 +179,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             ringable.LastRung = DateTime.Now;
             SetState(TelephoneCallState.Ringing, RingDurationMs);
-
-            int rand = Api.World.Rand.Next(1, 3);
             Api.World.PlaySoundAt(
-                new AssetLocation(RPVoiceChatMod.modID, $"sounds/block/callbell/callbell_{rand}.ogg"),
+                new AssetLocation(RPVoiceChatMod.modID, "sounds/block/callbell/callbell_1.ogg"),
                 Pos.X + 0.5,
                 Pos.Y + 0.5,
                 Pos.Z + 0.5,
@@ -175,6 +189,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 2f,
                 0.6f
             );
+            // Prevent immediate overlap on next server tick after initial ring.
+            nextRingingSoundAtMs = Api.World.ElapsedMilliseconds + IncomingRingRepeatMs;
 
             MarkDirty(true);
         }
@@ -182,18 +198,16 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private void OnServerTick(float _dt)
         {
             if (callState == TelephoneCallState.Idle || Api?.World == null) return;
+
+            if (callState == TelephoneCallState.Ringing)
+            {
+                TryPlayLoopingRingingSounds();
+            }
+
+            if (stateUntilMs <= 0) return;
             if (Api.World.ElapsedMilliseconds < stateUntilMs) return;
 
-            callState = TelephoneCallState.Idle;
-            stateUntilMs = 0;
-            incomingCallerPlayerUid = "";
-            incomingCallerTelephonePos = null;
-            if (!string.IsNullOrWhiteSpace(activeCallerPlayerUid))
-            {
-                Api?.ModLoader.GetModSystem<TelephoneVoiceRoutingSystem>()?.ClearRoute(activeCallerPlayerUid);
-                activeCallerPlayerUid = "";
-            }
-            MarkDirty(true);
+            EndCall();
         }
 
         private void SetState(TelephoneCallState newState, int durationMs)
@@ -202,6 +216,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             stateUntilMs = durationMs > 0 && Api?.World != null
                 ? Api.World.ElapsedMilliseconds + durationMs
                 : 0;
+            nextRingingSoundAtMs = 0;
         }
 
         public void ApplyServerComposeFlags(bool managedBySwitchboard, bool canCompose, string disabledReasonLangKey = null)
@@ -225,6 +240,10 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public string GetComposeDisabledReasonLangKey() => composeDisabledReasonLangKey ?? "Telegraph.Settings.DisabledNoPower";
         public string GetPhoneNumber() => phoneNumber ?? "";
         public string GetTargetNumber() => targetNumber ?? "";
+        public bool IsInCall() => callState == TelephoneCallState.InCall;
+        public bool IsWaitingForAnswer() => callState == TelephoneCallState.Ringing && incomingCallerTelephonePos == null;
+        public bool HasIncomingCall() => callState == TelephoneCallState.Ringing && incomingCallerTelephonePos != null;
+        public bool IsCallSessionActive() => callState != TelephoneCallState.Idle;
 
         public string[] GetAvailableTargetNumbers()
         {
@@ -351,10 +370,25 @@ namespace RPVoiceChat.GameContent.BlockEntity
             });
         }
 
+        public void RequestEndCall()
+        {
+            if (Api?.Side != EnumAppSide.Client) return;
+            RPVoiceChatMod.TelephoneSettingsClientChannel?.SendPacket(new TelephoneSettingsPacket
+            {
+                TelephonePos = Pos,
+                Operation = TelephoneSettingsOperation.EndCall,
+                Value = ""
+            });
+        }
+
         public bool StartCall(IPlayer byPlayer)
         {
             if (Api?.Side != EnumAppSide.Server) return false;
             if (NetworkUID == 0) return false;
+            if (HasIncomingCall())
+            {
+                return TryAcceptIncomingCall(byPlayer);
+            }
             if (callState != TelephoneCallState.Idle) return false;
 
             var network = WireNetworkHandler.GetNetwork(NetworkUID);
@@ -405,6 +439,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 targetPhone.RingFromNetwork(byPlayer);
                 targetPhone.incomingCallerPlayerUid = byPlayer.PlayerUID;
                 targetPhone.incomingCallerTelephonePos = Pos.Copy();
+                targetPhone.activePeerTelephonePos = Pos.Copy();
+                activePeerTelephonePos = targetPhone.Pos.Copy();
                 SetState(TelephoneCallState.Ringing, RingDurationMs);
                 activeCallerPlayerUid = byPlayer.PlayerUID;
                 targetPhone.MarkDirty(true);
@@ -413,7 +449,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
 
             // Telephone <-> speaker (or other non-phone voice endpoint): auto-answer.
-            SetState(TelephoneCallState.InCall, InCallDurationMs);
+            SetState(TelephoneCallState.InCall, 0);
             if (!string.IsNullOrWhiteSpace(byPlayer?.PlayerUID))
             {
                 activeCallerPlayerUid = byPlayer.PlayerUID;
@@ -423,6 +459,46 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
             MarkDirty(true);
             return true;
+        }
+
+        public void EndCall()
+        {
+            if (Api?.Side != EnumAppSide.Server)
+            {
+                return;
+            }
+
+            EndCallInternal(true);
+        }
+
+        private void EndCallInternal(bool notifyPeer)
+        {
+            if (callState == TelephoneCallState.Idle && string.IsNullOrWhiteSpace(activeCallerPlayerUid) && incomingCallerTelephonePos == null)
+            {
+                return;
+            }
+
+            BlockPos peerPos = activePeerTelephonePos ?? incomingCallerTelephonePos;
+            if (!string.IsNullOrWhiteSpace(activeCallerPlayerUid))
+            {
+                Api?.ModLoader.GetModSystem<TelephoneVoiceRoutingSystem>()?.ClearRoute(activeCallerPlayerUid);
+            }
+
+            callState = TelephoneCallState.Idle;
+            stateUntilMs = 0;
+            activeCallerPlayerUid = "";
+            incomingCallerPlayerUid = "";
+            incomingCallerTelephonePos = null;
+            activePeerTelephonePos = null;
+            MarkDirty(true);
+
+            if (!notifyPeer || peerPos == null)
+            {
+                return;
+            }
+
+            var peerTelephone = Api?.World?.BlockAccessor?.GetBlockEntity(peerPos) as BlockEntityTelephone;
+            peerTelephone?.EndCallInternal(false);
         }
 
         private bool TryResolveDirectPeerEndpoint(out BEWireNode targetNode, out string failureLangKey)
@@ -456,6 +532,51 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             targetNode = peers[0];
             return true;
+        }
+
+        private void TryPlayLoopingRingingSounds()
+        {
+            if (Api?.World == null || callState != TelephoneCallState.Ringing)
+            {
+                return;
+            }
+
+            long now = Api.World.ElapsedMilliseconds;
+            if (nextRingingSoundAtMs > now)
+            {
+                return;
+            }
+
+            if (HasIncomingCall())
+            {
+                Api.World.PlaySoundAt(
+                    new AssetLocation(RPVoiceChatMod.modID, "sounds/block/callbell/callbell_1.ogg"),
+                    Pos.X + 0.5,
+                    Pos.Y + 0.5,
+                    Pos.Z + 0.5,
+                    null,
+                    false,
+                    2f,
+                    0.6f
+                );
+                nextRingingSoundAtMs = now + IncomingRingRepeatMs;
+                return;
+            }
+
+            if (IsWaitingForAnswer())
+            {
+                Api.World.PlaySoundAt(
+                    new AssetLocation(RPVoiceChatMod.modID, "sounds/block/telephone/ringback-tone.ogg"),
+                    Pos.X + 0.5,
+                    Pos.Y + 0.5,
+                    Pos.Z + 0.5,
+                    null,
+                    false,
+                    2f,
+                    0.6f
+                );
+                nextRingingSoundAtMs = now + RingbackRepeatMs;
+            }
         }
 
         private System.Collections.Generic.IEnumerable<BEWireNode> GetReachableTelephoneVoiceEndpoints()
@@ -530,6 +651,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public override void OnBlockRemoved()
         {
+            EndCall();
             base.OnBlockRemoved();
             if (!string.IsNullOrWhiteSpace(activeCallerPlayerUid))
             {
@@ -539,6 +661,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public override void OnBlockUnloaded()
         {
+            EndCall();
             base.OnBlockUnloaded();
             if (!string.IsNullOrWhiteSpace(activeCallerPlayerUid))
             {
@@ -561,8 +684,10 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 return false;
             }
 
-            SetState(TelephoneCallState.InCall, InCallDurationMs);
-            callerTelephone.SetState(TelephoneCallState.InCall, InCallDurationMs);
+            SetState(TelephoneCallState.InCall, 0);
+            callerTelephone.SetState(TelephoneCallState.InCall, 0);
+            activePeerTelephonePos = callerTelephone.Pos.Copy();
+            callerTelephone.activePeerTelephonePos = Pos.Copy();
 
             if (!string.IsNullOrWhiteSpace(incomingCallerPlayerUid))
             {

@@ -7,7 +7,8 @@ namespace RPVoiceChat.Networking.Packets
     {
         SetNumber = 0,
         SetTarget = 1,
-        StartCall = 2
+        StartCall = 2,
+        EndCall = 3
     }
 
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]

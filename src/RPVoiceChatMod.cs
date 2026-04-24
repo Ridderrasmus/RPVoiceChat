@@ -196,6 +196,9 @@ namespace RPVoiceChat
                 case TelephoneSettingsOperation.StartCall:
                     telephone.StartCall(player);
                     break;
+                case TelephoneSettingsOperation.EndCall:
+                    telephone.EndCall();
+                    break;
             }
         }
 
