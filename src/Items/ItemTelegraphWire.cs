@@ -95,10 +95,10 @@ namespace RPVoiceChat.GameContent.Items
                         {
                             var capi = byEntity.Api as ICoreClientAPI;
                             string message = UIUtils.I18n(failureLangKey, failureArgs);
-
-                            if (failureLangKey == "Wire.ConnectionDenied.MaxConnections")
+                            bool isConnectionDenied = failureLangKey.StartsWith("Wire.ConnectionDenied.", System.StringComparison.Ordinal);
+                            if (isConnectionDenied)
                             {
-                                capi?.TriggerIngameError(this, "wire-max-connections", message);
+                                capi?.TriggerIngameError(this, "wire-connection-denied", message);
                             }
                             else
                             {

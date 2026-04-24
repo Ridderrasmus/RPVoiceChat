@@ -21,6 +21,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public BlockPos Position => Pos;
         public string NodeUID => Pos.ToString();
         protected virtual int MaxConnections => ServerConfigManager.TelegraphMaxConnectionsPerNode;
+        public virtual bool IsActiveEndpoint => false;
 
         private readonly List<WireConnection> connections = new();
         private List<BlockPos> pendingConnectionPositions = new();
@@ -815,10 +816,20 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (resolvedNetwork != null && resolvedNetwork.IsManagedBySwitchboard && resolvedNetwork.HasPoweredSwitchboard)
             {
                 dsc.AppendLine(UIUtils.I18n("Network.NetworkId", WireNetworkHandler.GetDisplayName(NetworkUID)));
+                string ownerName = WireNetworkHandler.GetOwnerDisplayName(this);
+                if (!string.IsNullOrWhiteSpace(ownerName))
+                {
+                    dsc.AppendLine(UIUtils.I18n("Network.Owner", ownerName));
+                }
                 return;
             }
 
             dsc.AppendLine(UIUtils.I18n("Network.NetworkId", NetworkUID));
+            string ownerNameFallback = WireNetworkHandler.GetOwnerDisplayName(this);
+            if (!string.IsNullOrWhiteSpace(ownerNameFallback))
+            {
+                dsc.AppendLine(UIUtils.I18n("Network.Owner", ownerNameFallback));
+            }
         }
 
         protected void DisplayConnections(IPlayer forPlayer, StringBuilder dsc)

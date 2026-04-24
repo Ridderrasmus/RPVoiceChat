@@ -54,7 +54,7 @@ namespace RPVoiceChat.GameContent.Systems
 
             if (node.Api?.Side == EnumAppSide.Server && node is BlockEntityTelegraph detachedTelegraph)
             {
-                detachedTelegraph.ApplyServerRoutingFlags(false, false);
+                detachedTelegraph.ApplyServerRoutingFlags(false, false, "Telegraph.Settings.DisabledNoPower");
             }
             
             // Ensure MarkDirty is called on the main thread to avoid texture upload errors

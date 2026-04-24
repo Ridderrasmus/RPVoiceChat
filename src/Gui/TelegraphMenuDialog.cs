@@ -96,7 +96,7 @@ namespace RPVoiceChat.Gui
                     composer = composer
                         .AddStaticText(UIUtils.I18n("Telegraph.Gui.EndpointReadOnly", telegraphBlock.GetCustomEndpointName()), CairoFont.WhiteSmallText(), endpointNameInputBounds)
                         .AddStaticText(UIUtils.I18n("Telegraph.Gui.TargetReadOnly", UIUtils.I18n("Telegraph.Gui.TargetAll")), CairoFont.WhiteSmallText(), endpointTargetLabelBounds)
-                        .AddStaticText(UIUtils.I18n("Telegraph.Gui.SwitchboardNoPower"), CairoFont.WhiteSmallText(), noPowerInfoBounds);
+                        .AddStaticText(UIUtils.I18n(telegraphBlock.GetRoutingDisabledReasonLangKey()), CairoFont.WhiteSmallText(), noPowerInfoBounds);
                 }
             }
 
@@ -273,7 +273,7 @@ namespace RPVoiceChat.Gui
         {
             if (!telegraphBlock.HasAdvancedRoutingEnabled())
             {
-                capi?.TriggerChatMessage(UIUtils.I18n("Telegraph.Settings.DisabledNoPower"));
+                capi?.TriggerChatMessage(UIUtils.I18n(telegraphBlock.GetRoutingDisabledReasonLangKey()));
                 return true;
             }
 

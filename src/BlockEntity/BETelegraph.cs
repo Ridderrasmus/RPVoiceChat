@@ -21,6 +21,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
     {
         TelegraphMenuDialog dialog;
         protected override int MaxConnections => 1;
+        public override bool IsActiveEndpoint => true;
 
         // INetworkRoot implementation - stores the original network ID created by this root
         private long originalCreatedNetworkID = 0;
@@ -41,6 +42,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private bool routingManagedBySwitchboard;
         /// <summary>Server-pushed mirror of <see cref="WireNetwork.AdvancedTelegraphFeaturesEnabled"/>; replicated to clients via BE data.</summary>
         private bool routingAdvancedUnlocked;
+        private string routingDisabledReasonLangKey = "Telegraph.Settings.DisabledNoPower";
         private WireRouteMode lastReceivedRouteMode = WireRouteMode.All;
         private string lastReceivedSourceEndpointName = null;
         private string lastReceivedTargetEndpointName = null;
@@ -124,6 +126,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
             routingManagedBySwitchboard = tree.GetBool("rpvc:routingManaged", false);
             routingAdvancedUnlocked = tree.GetBool("rpvc:routingAdvanced", false);
+            routingDisabledReasonLangKey = tree.GetString("rpvc:routingDisabledReason", "Telegraph.Settings.DisabledNoPower");
             if (Api?.Side == EnumAppSide.Server && NetworkUID != 0)
             {
                 WireNetworkHandler.RefreshTelegraphRoutingSnapshot(NetworkUID);
@@ -149,10 +152,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
             tree.SetLong("originalCreatedNetworkID", originalCreatedNetworkID);
             tree.SetBool("rpvc:routingManaged", routingManagedBySwitchboard);
             tree.SetBool("rpvc:routingAdvanced", routingAdvancedUnlocked);
+            tree.SetString("rpvc:routingDisabledReason", routingDisabledReasonLangKey ?? "Telegraph.Settings.DisabledNoPower");
         }
 
         /// <summary>Called from <see cref="WireNetworkHandler.RefreshTelegraphRoutingSnapshot"/> on the server after the wire network state is rebuilt.</summary>
-        public void ApplyServerRoutingFlags(bool managedBySwitchboard, bool advancedRoutingUnlocked)
+        public void ApplyServerRoutingFlags(bool managedBySwitchboard, bool advancedRoutingUnlocked, string disabledReasonLangKey = null)
         {
             if (Api?.Side != EnumAppSide.Server)
             {
@@ -160,9 +164,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
 
             bool changed = routingManagedBySwitchboard != managedBySwitchboard
-                || routingAdvancedUnlocked != advancedRoutingUnlocked;
+                || routingAdvancedUnlocked != advancedRoutingUnlocked
+                || !string.Equals(routingDisabledReasonLangKey, disabledReasonLangKey ?? "Telegraph.Settings.DisabledNoPower", StringComparison.Ordinal);
             routingManagedBySwitchboard = managedBySwitchboard;
             routingAdvancedUnlocked = advancedRoutingUnlocked;
+            routingDisabledReasonLangKey = disabledReasonLangKey ?? "Telegraph.Settings.DisabledNoPower";
             if (changed)
             {
                 MarkDirty(true);
@@ -172,6 +178,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public bool IsManagedBySwitchboard() => routingManagedBySwitchboard;
 
         public bool HasAdvancedRoutingEnabled() => routingAdvancedUnlocked;
+
+        public string GetRoutingDisabledReasonLangKey() => routingDisabledReasonLangKey ?? "Telegraph.Settings.DisabledNoPower";
 
         public string GetTargetEndpointName()
         {
@@ -227,7 +235,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             if (!HasAdvancedRoutingEnabled())
             {
-                failureLangKey = "Telegraph.Settings.DisabledNoPower";
+                failureLangKey = GetRoutingDisabledReasonLangKey();
                 return false;
             }
 

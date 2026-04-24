@@ -189,16 +189,140 @@ namespace RPVoiceChat.Systems
                 return;
             }
 
-            bool managed = network.IsManagedBySwitchboard;
-            bool advanced = network.AdvancedTelegraphFeaturesEnabled;
+            var activeEndpointOwners = ResolveOwnersForActiveEndpoints(network.Nodes);
+            WireNetworkKind kindForPower = network.CurrentType == WireNetworkKind.None
+                ? WireNetworkKind.Telegraph
+                : network.CurrentType;
 
             foreach (var node in network.Nodes.ToArray())
             {
                 if (node is BlockEntityTelegraph telegraph)
                 {
-                    telegraph.ApplyServerRoutingFlags(managed, advanced);
+                    bool managed = activeEndpointOwners.TryGetValue(telegraph, out BlockEntitySwitchboard owner) && owner != null;
+                    bool overCapacity = IsOverCapacityForManagedComponent(network, kindForPower);
+                    bool advanced = managed && !overCapacity && owner.HasSufficientPowerFor(kindForPower);
+                    string disabledReason = overCapacity ? "Telegraph.Settings.DisabledCapacity" : "Telegraph.Settings.DisabledNoPower";
+                    telegraph.ApplyServerRoutingFlags(managed, advanced, disabledReason);
                 }
             }
+        }
+
+        private static Dictionary<BEWireNode, BlockEntitySwitchboard> ResolveOwnersForActiveEndpoints(IEnumerable<BEWireNode> nodes)
+        {
+            var nodeList = nodes?.Where(n => n != null).ToList() ?? new List<BEWireNode>();
+            var owners = new Dictionary<BEWireNode, BlockEntitySwitchboard>();
+            var switchboards = nodeList.OfType<BlockEntitySwitchboard>().ToList();
+            var activeEndpoints = nodeList.Where(IsActiveEndpoint).ToList();
+
+            if (switchboards.Count == 0)
+            {
+                foreach (var endpoint in activeEndpoints) owners[endpoint] = null;
+                return owners;
+            }
+
+            foreach (var endpoint in activeEndpoints)
+            {
+                owners[endpoint] = FindNearestSwitchboardOwner(endpoint, switchboards);
+            }
+
+            return owners;
+        }
+
+        private static BlockEntitySwitchboard FindNearestSwitchboardOwner(BEWireNode startNode, List<BlockEntitySwitchboard> allSwitchboards)
+        {
+            var visited = new HashSet<BEWireNode>();
+            var queue = new Queue<BEWireNode>();
+
+            queue.Enqueue(startNode);
+            visited.Add(startNode);
+
+            while (queue.Count > 0)
+            {
+                int levelCount = queue.Count;
+                var levelCandidates = new List<BlockEntitySwitchboard>();
+
+                for (int i = 0; i < levelCount; i++)
+                {
+                    var current = queue.Dequeue();
+                    if (current is BlockEntitySwitchboard switchboard)
+                    {
+                        levelCandidates.Add(switchboard);
+                    }
+
+                    foreach (var connection in current.GetConnections())
+                    {
+                        var other = connection.GetOtherNode(current);
+                        if (other != null && visited.Add(other))
+                        {
+                            queue.Enqueue(other);
+                        }
+                    }
+                }
+
+                if (levelCandidates.Count > 0)
+                {
+                    return levelCandidates
+                        .OrderBy(sb => sb.Pos.X)
+                        .ThenBy(sb => sb.Pos.Y)
+                        .ThenBy(sb => sb.Pos.Z)
+                        .First();
+                }
+            }
+
+            return allSwitchboards
+                .OrderBy(sb => sb.Pos.X)
+                .ThenBy(sb => sb.Pos.Y)
+                .ThenBy(sb => sb.Pos.Z)
+                .FirstOrDefault();
+        }
+
+        private static bool IsActiveEndpoint(BEWireNode node)
+        {
+            return node?.IsActiveEndpoint ?? false;
+        }
+
+        public static BlockEntitySwitchboard ResolveOwnerSwitchboard(BEWireNode endpointNode)
+        {
+            if (endpointNode == null || !IsActiveEndpoint(endpointNode) || endpointNode.NetworkUID == 0)
+            {
+                return null;
+            }
+
+            var network = GetNetwork(endpointNode.NetworkUID);
+            if (network == null)
+            {
+                return null;
+            }
+
+            var owners = ResolveOwnersForActiveEndpoints(network.Nodes);
+            owners.TryGetValue(endpointNode, out BlockEntitySwitchboard owner);
+            return owner;
+        }
+
+        public static string GetOwnerDisplayName(BEWireNode endpointNode)
+        {
+            var owner = ResolveOwnerSwitchboard(endpointNode);
+            return owner?.GetNetworkCustomNameForEditor() ?? "";
+        }
+
+        public static string GetManagedRoutingDisabledReason(long networkId)
+        {
+            var network = GetNetwork(networkId);
+            if (network == null || !network.IsManagedBySwitchboard)
+            {
+                return null;
+            }
+
+            WireNetworkKind kind = network.CurrentType == WireNetworkKind.None
+                ? WireNetworkKind.Telegraph
+                : network.CurrentType;
+
+            if (IsOverCapacityForManagedComponent(network, kind))
+            {
+                return "Telegraph.Settings.DisabledCapacity";
+            }
+
+            return network.HasPoweredSwitchboard ? null : "Telegraph.Settings.DisabledNoPower";
         }
 
         public static bool CanConnectNodes(BEWireNode node1, BEWireNode node2, out string denialLangKey, out object[] denialArgs)
@@ -252,20 +376,67 @@ namespace RPVoiceChat.Systems
 
             WireNetworkKind targetKind = ResolveProspectiveKind(telegraphCount, telephoneCount, radioCount);
             WireNetworkRequirements requirements = WireNetworkTypeRules.GetRequirements(targetKind);
-            int endpointCount = GetEndpointCountByKind(targetKind, telegraphCount, telephoneCount, radioCount);
-
-            if (requirements.MaxEndpoints > 0 && endpointCount > requirements.MaxEndpoints)
+            if (requirements.MaxEndpoints > 0)
             {
-                denialLangKey = targetKind == WireNetworkKind.Telegraph
-                    ? "Wire.ConnectionDenied.TelegraphCapacity"
-                    : "Wire.ConnectionDenied.NetworkCapacity";
-                denialArgs = targetKind == WireNetworkKind.Telegraph
-                    ? new object[] { requirements.MaxEndpoints }
-                    : new object[] { GetKindDisplayName(targetKind), requirements.MaxEndpoints };
-                return false;
+                int switchboardCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Switchboard);
+                int endpointCount = GetEndpointCountByKind(targetKind, telegraphCount, telephoneCount, radioCount);
+                int componentCapacity = requirements.MaxEndpoints * Math.Max(1, switchboardCount);
+                if (endpointCount > componentCapacity)
+                {
+                    denialLangKey = targetKind == WireNetworkKind.Telegraph
+                        ? "Wire.ConnectionDenied.TelegraphCapacity"
+                        : "Wire.ConnectionDenied.NetworkCapacity";
+                    denialArgs = targetKind == WireNetworkKind.Telegraph
+                        ? new object[] { componentCapacity }
+                        : new object[] { GetKindDisplayName(targetKind), componentCapacity };
+                    return false;
+                }
             }
 
             return true;
+        }
+
+        private static bool IsOverCapacityForManagedComponent(WireNetwork network, WireNetworkKind kind)
+        {
+            if (network == null || !network.IsManagedBySwitchboard || kind == WireNetworkKind.None)
+            {
+                return false;
+            }
+
+            WireNetworkRequirements requirements = WireNetworkTypeRules.GetRequirements(kind);
+            if (requirements.MaxEndpoints <= 0)
+            {
+                return false;
+            }
+
+            int switchboardCount = network.Nodes.Count(n => GetNodeKind(n) == WireNodeKind.Switchboard);
+            if (switchboardCount <= 0) return false;
+
+            int endpointCount = kind switch
+            {
+                WireNetworkKind.Telegraph => network.TelegraphEndpointCount,
+                WireNetworkKind.Telephone => network.TelephoneEndpointCount,
+                WireNetworkKind.Radio => network.RadioEndpointCount,
+                _ => 0
+            };
+
+            int capacity = requirements.MaxEndpoints * switchboardCount;
+            return endpointCount > capacity;
+        }
+
+        private static bool IsEndpointOfKind(BEWireNode endpoint, WireNetworkKind kind)
+        {
+            switch (kind)
+            {
+                case WireNetworkKind.Telegraph:
+                    return GetNodeKind(endpoint) == WireNodeKind.Telegraph;
+                case WireNetworkKind.Telephone:
+                    return GetNodeKind(endpoint) == WireNodeKind.Telephone;
+                case WireNetworkKind.Radio:
+                    return GetNodeKind(endpoint) == WireNodeKind.Radio;
+                default:
+                    return false;
+            }
         }
 
         private static WireNetworkKind ResolveProspectiveKind(int telegraphCount, int telephoneCount, int radioCount)

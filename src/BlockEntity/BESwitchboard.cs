@@ -383,25 +383,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         {
 
-            if (Api?.Side == EnumAppSide.Server && NetworkUID != 0)
-
-            {
-
-                var n = WireNetworkHandler.GetNetwork(NetworkUID);
-
-                if (n != null)
-
-                {
-
-                    persistedNetworkCustomName = n.CustomName ?? "";
-                    WireNetworkHandler.SetPersistedNetworkName(NetworkUID, persistedNetworkCustomName);
-
-                }
-
-            }
-
-
-
             base.ToTreeAttributes(tree);
 
             tree.SetFloat("switchboardPowerPercent", PowerPercent);
@@ -429,12 +410,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
             usePowerRequirements = tree.GetBool("switchboardUsePowerRequirements", true);
 
             if (NetworkUID != 0)
-
             {
-
-                WireNetworkHandler.SetPersistedNetworkName(NetworkUID, persistedNetworkCustomName);
                 WireNetworkHandler.RebuildNetworkState(NetworkUID);
-
             }
 
             if (IsDialogOpen())
@@ -470,30 +447,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
 
 
-            if (NetworkUID == 0)
-
-            {
-
-                return;
-
-            }
-
-
-
-            var net = WireNetworkHandler.GetNetwork(NetworkUID);
-
-            if (net == null)
-
-            {
-
-                return;
-
-            }
-
-
-
-            WireNetworkHandler.SetPersistedNetworkName(NetworkUID, persistedNetworkCustomName);
-
             networkNameApplyPending = false;
 
         }
@@ -504,6 +457,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         {
 
+            if (NetworkUID != 0)
+            {
+                dsc.AppendLine(UIUtils.I18n("Network.NetworkId", NetworkUID));
+            }
+
             string displayName = GetNetworkDisplayName();
 
             if (!string.IsNullOrWhiteSpace(displayName))
@@ -512,6 +470,15 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
                 dsc.AppendLine(UIUtils.I18n("Switchboard.NetworkName", displayName));
 
+            }
+
+            if (NetworkUID != 0)
+            {
+                string disabledReason = WireNetworkHandler.GetManagedRoutingDisabledReason(NetworkUID);
+                if (!string.IsNullOrWhiteSpace(disabledReason))
+                {
+                    dsc.AppendLine(UIUtils.I18n(disabledReason));
+                }
             }
 
         }
@@ -584,17 +551,10 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         {
 
-            if (NetworkUID == 0)
-
-            {
-
-                return "";
-
-            }
-
-
-
-            return WireNetworkHandler.GetDisplayName(NetworkUID);
+            string custom = (persistedNetworkCustomName ?? "").Trim();
+            if (custom.Length > 0) return custom;
+            if (NetworkUID == 0) return "";
+            return NetworkUID.ToString();
 
         }
 
@@ -606,23 +566,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         {
 
-            if (NetworkUID == 0)
-
-            {
-
-                return "";
-
-            }
-
-
-
-            var network = WireNetworkHandler.GetNetwork(NetworkUID);
-            if (network != null)
-            {
-                return network.CustomName ?? "";
-            }
-
-            return WireNetworkHandler.GetPersistedNetworkName(NetworkUID);
+            return (persistedNetworkCustomName ?? "").Trim();
 
         }
 
@@ -632,36 +576,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         {
 
-            if (NetworkUID == 0)
-
-            {
-
-                failureLangKey = "Network.NoNetwork";
-
-                return false;
-
-            }
-
-
-
-            bool success = WireNetworkHandler.TryRenameNetwork(NetworkUID, name, out failureLangKey);
-
-            if (success)
-
-            {
-
-                var net = WireNetworkHandler.GetNetwork(NetworkUID);
-
-                persistedNetworkCustomName = net?.CustomName ?? "";
-                WireNetworkHandler.SetPersistedNetworkName(NetworkUID, persistedNetworkCustomName);
-
-                networkNameApplyPending = false;
-
-                MarkDirty(true);
-
-            }
-
-            return success;
+            persistedNetworkCustomName = (name ?? "").Trim();
+            networkNameApplyPending = false;
+            failureLangKey = null;
+            MarkDirty(true);
+            return true;
 
         }
 
