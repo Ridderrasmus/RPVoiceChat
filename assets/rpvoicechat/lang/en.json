@@ -475,7 +475,7 @@
   "Wire.ConnectionSuccess": "Connection successful!",
   "Wire.ConnectionFailed": "Connection failed.",
   "Wire.ConnectionTooFar": "Too far! Max distance is {0} blocks.",
-  "Wire.ConnectionDenied.MixedTypes": "Connection denied: incompatible endpoint types in the same managed network.",
+  "Wire.ConnectionDenied.MixedTypes": "Connection denied: invalid network composition (mixed endpoint types).",
   "Wire.ConnectionDenied.TelegraphCapacity": "Connection denied: telegraph network capacity is limited to {0} keys.",
   "Wire.ConnectionDenied.NetworkCapacity": "Connection denied: {0} network capacity is limited to {1} endpoints.",
   "Wire.ConnectionDenied.MaxConnections": "Connection denied: this block has reached its maximum of {0} connection(s).",
