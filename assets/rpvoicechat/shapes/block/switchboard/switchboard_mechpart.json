@@ -1,0 +1,27 @@
+{
+	"editor": {
+		"allAngles": false,
+		"entityTextureMode": false
+	},
+	"textureWidth": 16,
+	"textureHeight": 16,
+	"textureSizes": {
+	},
+	"textures": {
+	},
+	"elements": [
+		{
+			"name": "axle",
+			"from": [ 7.25, 7.25, 0.0 ],
+			"to": [ 8.75, 8.75, 2.25 ],
+			"rotationOrigin": [ 0.0, 0.0, -10.0 ],
+			"faces": {
+				"north": { "texture": "#wood", "uv": [ 0.0, 0.0, 1.5, 1.5 ] },
+				"east": { "texture": "#wood", "uv": [ 0.0, 0.0, 2.0, 1.5 ] },
+				"south": { "texture": "#wood", "uv": [ 0.0, 0.0, 1.5, 1.5 ] },
+				"west": { "texture": "#wood", "uv": [ 0.0, 0.0, 2.0, 1.5 ] },
+				"up": { "texture": "#wood", "uv": [ 0.0, 0.0, 1.5, 2.0 ] },
+				"down": { "texture": "#wood", "uv": [ 0.0, 0.0, 1.5, 2.0 ] }
+			}
+		}
+	]}

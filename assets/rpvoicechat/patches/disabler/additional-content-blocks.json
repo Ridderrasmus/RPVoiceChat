@@ -53,7 +53,7 @@
     "op": "add",
     "path": "/enabled",
     "value": false,
-    "file": "rpvoicechat:blocktypes/claymold/smallbellpartsmold.json",
+    "file": "rpvoicechat:blocktypes/clay/raw/smallbellpartsmold.json",
     "condition": {
       "when": "rpvoicechat:additional-content",
       "isValue": "false"
@@ -63,7 +63,7 @@
     "op": "add",
     "path": "/enabled",
     "value": false,
-    "file": "rpvoicechat:blocktypes/claymold/royalhornheadmold.json",
+    "file": "rpvoicechat:blocktypes/clay/fired/smallbellpartsmold.json",
     "condition": {
       "when": "rpvoicechat:additional-content",
       "isValue": "false"
@@ -73,7 +73,7 @@
     "op": "add",
     "path": "/enabled",
     "value": false,
-    "file": "rpvoicechat:blocktypes/claymold/carillonbellmold.json",
+    "file": "rpvoicechat:blocktypes/clay/raw/royalhornheadmold.json",
     "condition": {
       "when": "rpvoicechat:additional-content",
       "isValue": "false"
@@ -83,7 +83,47 @@
     "op": "add",
     "path": "/enabled",
     "value": false,
-    "file": "rpvoicechat:blocktypes/claymold/churchbellpartmold.json",
+    "file": "rpvoicechat:blocktypes/clay/fired/royalhornheadmold.json",
+    "condition": {
+      "when": "rpvoicechat:additional-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:blocktypes/clay/raw/carillonbellmold.json",
+    "condition": {
+      "when": "rpvoicechat:additional-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:blocktypes/clay/fired/carillonbellmold.json",
+    "condition": {
+      "when": "rpvoicechat:additional-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:blocktypes/clay/raw/churchbellmold.json",
+    "condition": {
+      "when": "rpvoicechat:additional-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:blocktypes/clay/fired/churchbellmold.json",
     "condition": {
       "when": "rpvoicechat:additional-content",
       "isValue": "false"
@@ -98,6 +138,5 @@
       "when": "rpvoicechat:additional-content",
       "isValue": "false"
     }
-  },
+  }
 ]
-

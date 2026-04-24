@@ -1,4 +1,5 @@
 ﻿{
+  "code": "rpvoicechat:royalhornhandle-smithing",
   "enabled": true,
   "ingredient": {
     "type": "item",

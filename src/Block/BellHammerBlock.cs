@@ -138,8 +138,8 @@ namespace RPVoiceChat.GameContent.Block
             return base.OnBlockInteractStart(world, byPlayer, blockSel);
         }
 
-        // IMechanicalPowerBlock: connector is always on the horizontal face opposite to "side" (bell in front, axle on the other side).
-        public bool HasMechPowerConnectorAt(IWorldAccessor world, BlockPos pos, BlockFacing face)
+        // IMechanicalPowerBlock (1.22+): connector is always on the horizontal face opposite to "side" (bell in front, axle on the other side).
+        public bool HasMechPowerConnectorAt(IWorldAccessor world, BlockPos pos, BlockFacing face, BlockMPBase forBlock)
         {
             Vintagestory.API.Common.Block blockAtPos = world.BlockAccessor.GetBlock(pos);
             if (blockAtPos?.Variant == null || !blockAtPos.Variant.TryGetValue("side", out string sideStr)) return false;
