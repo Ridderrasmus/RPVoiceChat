@@ -13,26 +13,26 @@
   "attributesByType": {
     "carillonbellmold-red-raw": {
       "beehivekiln": {
-        "0": { "type": "block", "code": "carillonbellmold-tan-fired" },
-        "1": { "type": "block", "code": "carillonbellmold-orange-fired" },
-        "2": { "type": "block", "code": "carillonbellmold-red-fired" },
-        "3": { "type": "block", "code": "carillonbellmold-brown-fired" }
+        "0": { "type": "block", "code": "rpvoicechat:carillonbellmold-tan-fired" },
+        "1": { "type": "block", "code": "rpvoicechat:carillonbellmold-orange-fired" },
+        "2": { "type": "block", "code": "rpvoicechat:carillonbellmold-red-fired" },
+        "3": { "type": "block", "code": "rpvoicechat:carillonbellmold-brown-fired" }
       }
     },
     "carillonbellmold-blue-raw": {
       "beehivekiln": {
-        "0": { "type": "block", "code": "carillonbellmold-cream-fired" },
-        "1": { "type": "block", "code": "carillonbellmold-gray-fired" },
-        "2": { "type": "block", "code": "carillonbellmold-black-fired" },
-        "3": { "type": "block", "code": "carillonbellmold-black-fired" }
+        "0": { "type": "block", "code": "rpvoicechat:carillonbellmold-cream-fired" },
+        "1": { "type": "block", "code": "rpvoicechat:carillonbellmold-gray-fired" },
+        "2": { "type": "block", "code": "rpvoicechat:carillonbellmold-black-fired" },
+        "3": { "type": "block", "code": "rpvoicechat:carillonbellmold-black-fired" }
       }
     },
     "carillonbellmold-fire-raw": {
       "beehivekiln": {
-        "0": { "type": "block", "code": "carillonbellmold-fire-fired" },
-        "1": { "type": "block", "code": "carillonbellmold-fire-fired" },
-        "2": { "type": "block", "code": "carillonbellmold-fire-fired" },
-        "3": { "type": "block", "code": "carillonbellmold-fire-fired" }
+        "0": { "type": "block", "code": "rpvoicechat:carillonbellmold-fire-fired" },
+        "1": { "type": "block", "code": "rpvoicechat:carillonbellmold-fire-fired" },
+        "2": { "type": "block", "code": "rpvoicechat:carillonbellmold-fire-fired" },
+        "3": { "type": "block", "code": "rpvoicechat:carillonbellmold-fire-fired" }
       }
     }
   },
@@ -42,7 +42,7 @@
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
-      "smeltedStack": { "type": "block", "code": "carillonbellmold-earthyorange-fired" },
+      "smeltedStack": { "type": "block", "code": "rpvoicechat:carillonbellmold-earthyorange-fired" },
       "requiresContainer": false
     },
     "carillonbellmold-blue-raw": {
@@ -50,7 +50,7 @@
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
-      "smeltedStack": { "type": "block", "code": "carillonbellmold-blue-fired" },
+      "smeltedStack": { "type": "block", "code": "rpvoicechat:carillonbellmold-blue-fired" },
       "requiresContainer": false
     },
     "carillonbellmold-fire-raw": {
@@ -58,7 +58,7 @@
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
-      "smeltedStack": { "type": "block", "code": "carillonbellmold-fire-fired" },
+      "smeltedStack": { "type": "block", "code": "rpvoicechat:carillonbellmold-fire-fired" },
       "requiresContainer": false
     }
   },

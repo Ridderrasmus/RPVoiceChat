@@ -14,26 +14,26 @@
   "attributesByType": {
     "churchbellmold-red-raw-*": {
       "beehivekiln": {
-        "0": { "type": "block", "code": "churchbellmold-tan-fired-{layer}" },
-        "1": { "type": "block", "code": "churchbellmold-orange-fired-{layer}" },
-        "2": { "type": "block", "code": "churchbellmold-red-fired-{layer}" },
-        "3": { "type": "block", "code": "churchbellmold-brown-fired-{layer}" }
+        "0": { "type": "block", "code": "rpvoicechat:churchbellmold-tan-fired-{layer}" },
+        "1": { "type": "block", "code": "rpvoicechat:churchbellmold-orange-fired-{layer}" },
+        "2": { "type": "block", "code": "rpvoicechat:churchbellmold-red-fired-{layer}" },
+        "3": { "type": "block", "code": "rpvoicechat:churchbellmold-brown-fired-{layer}" }
       }
     },
     "churchbellmold-blue-raw-*": {
       "beehivekiln": {
-        "0": { "type": "block", "code": "churchbellmold-cream-fired-{layer}" },
-        "1": { "type": "block", "code": "churchbellmold-gray-fired-{layer}" },
-        "2": { "type": "block", "code": "churchbellmold-black-fired-{layer}" },
-        "3": { "type": "block", "code": "churchbellmold-black-fired-{layer}" }
+        "0": { "type": "block", "code": "rpvoicechat:churchbellmold-cream-fired-{layer}" },
+        "1": { "type": "block", "code": "rpvoicechat:churchbellmold-gray-fired-{layer}" },
+        "2": { "type": "block", "code": "rpvoicechat:churchbellmold-black-fired-{layer}" },
+        "3": { "type": "block", "code": "rpvoicechat:churchbellmold-black-fired-{layer}" }
       }
     },
     "churchbellmold-fire-raw-*": {
       "beehivekiln": {
-        "0": { "type": "block", "code": "churchbellmold-fire-fired-{layer}" },
-        "1": { "type": "block", "code": "churchbellmold-fire-fired-{layer}" },
-        "2": { "type": "block", "code": "churchbellmold-fire-fired-{layer}" },
-        "3": { "type": "block", "code": "churchbellmold-fire-fired-{layer}" }
+        "0": { "type": "block", "code": "rpvoicechat:churchbellmold-fire-fired-{layer}" },
+        "1": { "type": "block", "code": "rpvoicechat:churchbellmold-fire-fired-{layer}" },
+        "2": { "type": "block", "code": "rpvoicechat:churchbellmold-fire-fired-{layer}" },
+        "3": { "type": "block", "code": "rpvoicechat:churchbellmold-fire-fired-{layer}" }
       }
     }
   },
@@ -43,7 +43,7 @@
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
-      "smeltedStack": { "type": "block", "code": "churchbellmold-earthyorange-fired-{layer}" },
+      "smeltedStack": { "type": "block", "code": "rpvoicechat:churchbellmold-earthyorange-fired-{layer}" },
       "requiresContainer": false
     },
     "churchbellmold-blue-raw-*": {
@@ -51,7 +51,7 @@
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
-      "smeltedStack": { "type": "block", "code": "churchbellmold-blue-fired-{layer}" },
+      "smeltedStack": { "type": "block", "code": "rpvoicechat:churchbellmold-blue-fired-{layer}" },
       "requiresContainer": false
     },
     "churchbellmold-fire-raw-*": {
@@ -59,7 +59,7 @@
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
-      "smeltedStack": { "type": "block", "code": "churchbellmold-fire-fired-{layer}" },
+      "smeltedStack": { "type": "block", "code": "rpvoicechat:churchbellmold-fire-fired-{layer}" },
       "requiresContainer": false
     }
   },

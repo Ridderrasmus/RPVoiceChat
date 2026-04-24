@@ -14,26 +14,26 @@
   "attributesByType": {
     "wirecutterjawmold-red-raw-*": {
       "beehivekiln": {
-        "0": { "type": "block", "code": "wirecutterjawmold-tan-fired-{tooltype}" },
-        "1": { "type": "block", "code": "wirecutterjawmold-orange-fired-{tooltype}" },
-        "2": { "type": "block", "code": "wirecutterjawmold-red-fired-{tooltype}" },
-        "3": { "type": "block", "code": "wirecutterjawmold-brown-fired-{tooltype}" }
+        "0": { "type": "block", "code": "rpvoicechat:wirecutterjawmold-tan-fired-{tooltype}" },
+        "1": { "type": "block", "code": "rpvoicechat:wirecutterjawmold-orange-fired-{tooltype}" },
+        "2": { "type": "block", "code": "rpvoicechat:wirecutterjawmold-red-fired-{tooltype}" },
+        "3": { "type": "block", "code": "rpvoicechat:wirecutterjawmold-brown-fired-{tooltype}" }
       }
     },
     "wirecutterjawmold-blue-raw-*": {
       "beehivekiln": {
-        "0": { "type": "block", "code": "wirecutterjawmold-cream-fired-{tooltype}" },
-        "1": { "type": "block", "code": "wirecutterjawmold-gray-fired-{tooltype}" },
-        "2": { "type": "block", "code": "wirecutterjawmold-black-fired-{tooltype}" },
-        "3": { "type": "block", "code": "wirecutterjawmold-black-fired-{tooltype}" }
+        "0": { "type": "block", "code": "rpvoicechat:wirecutterjawmold-cream-fired-{tooltype}" },
+        "1": { "type": "block", "code": "rpvoicechat:wirecutterjawmold-gray-fired-{tooltype}" },
+        "2": { "type": "block", "code": "rpvoicechat:wirecutterjawmold-black-fired-{tooltype}" },
+        "3": { "type": "block", "code": "rpvoicechat:wirecutterjawmold-black-fired-{tooltype}" }
       }
     },
     "wirecutterjawmold-fire-raw-*": {
       "beehivekiln": {
-        "0": { "type": "block", "code": "wirecutterjawmold-fire-fired-{tooltype}" },
-        "1": { "type": "block", "code": "wirecutterjawmold-fire-fired-{tooltype}" },
-        "2": { "type": "block", "code": "wirecutterjawmold-fire-fired-{tooltype}" },
-        "3": { "type": "block", "code": "wirecutterjawmold-fire-fired-{tooltype}" }
+        "0": { "type": "block", "code": "rpvoicechat:wirecutterjawmold-fire-fired-{tooltype}" },
+        "1": { "type": "block", "code": "rpvoicechat:wirecutterjawmold-fire-fired-{tooltype}" },
+        "2": { "type": "block", "code": "rpvoicechat:wirecutterjawmold-fire-fired-{tooltype}" },
+        "3": { "type": "block", "code": "rpvoicechat:wirecutterjawmold-fire-fired-{tooltype}" }
       }
     }
   },
@@ -43,7 +43,7 @@
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
-      "smeltedStack": { "type": "block", "code": "wirecutterjawmold-earthyorange-fired-{tooltype}" },
+      "smeltedStack": { "type": "block", "code": "rpvoicechat:wirecutterjawmold-earthyorange-fired-{tooltype}" },
       "requiresContainer": false
     },
     "wirecutterjawmold-blue-raw-*": {
@@ -51,7 +51,7 @@
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
-      "smeltedStack": { "type": "block", "code": "wirecutterjawmold-blue-fired-{tooltype}" },
+      "smeltedStack": { "type": "block", "code": "rpvoicechat:wirecutterjawmold-blue-fired-{tooltype}" },
       "requiresContainer": false
     },
     "wirecutterjawmold-fire-raw-*": {
@@ -59,7 +59,7 @@
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
-      "smeltedStack": { "type": "block", "code": "wirecutterjawmold-fire-fired-{tooltype}" },
+      "smeltedStack": { "type": "block", "code": "rpvoicechat:wirecutterjawmold-fire-fired-{tooltype}" },
       "requiresContainer": false
     }
   },

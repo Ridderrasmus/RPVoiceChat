@@ -299,7 +299,7 @@ namespace RPVoiceChat.Systems
             return owner;
         }
 
-        public static string GetOwnerDisplayName(BEWireNode endpointNode)
+        public static string GetSubNetworkDisplayName(BEWireNode endpointNode)
         {
             var owner = ResolveOwnerSwitchboard(endpointNode);
             return owner?.GetNetworkCustomNameForEditor() ?? "";

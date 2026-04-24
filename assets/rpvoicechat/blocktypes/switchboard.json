@@ -59,6 +59,17 @@
   },
   "lightAbsorption": 15,
   "resistance": 1,
+  "attributes": {
+    "handbook": {
+      "groupBy": [ "switchboard-*" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-switchboard.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-switchboard.Text"
+        }
+      ]
+    }
+  },
   "guiTransform": {
 		"rotation": { "x": -22.6, "y": 145, "z": 0 }
 	}
