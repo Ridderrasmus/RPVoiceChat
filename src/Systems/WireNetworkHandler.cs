@@ -352,8 +352,8 @@ namespace RPVoiceChat.Systems
             if (telephoneCount > 0) activeKinds++;
             if (radioCount > 0) activeKinds++;
 
-            // Dedicated networks: never mix telegraph/telephone/radio in the same connected component.
-            // This applies with and without switchboard.
+            // Defensive guard: dedicated network rules should prevent mixed endpoint families
+            // in normal gameplay. Keep this to reject legacy/invalid graph states.
             if (activeKinds > 1)
             {
                 denialLangKey = "Wire.ConnectionDenied.MixedTypes";
@@ -625,6 +625,17 @@ namespace RPVoiceChat.Systems
             var result = new HashSet<BEWireNode>();
             AddReachable(node1, result);
             AddReachable(node2, result);
+            return result;
+        }
+
+        /// <summary>
+        /// Returns all nodes reachable from a start node through wire connections.
+        /// Useful for endpoint queries that must traverse connectors/infrastructure.
+        /// </summary>
+        public static HashSet<BEWireNode> GetReachableNodes(BEWireNode startNode)
+        {
+            var result = new HashSet<BEWireNode>();
+            AddReachable(startNode, result);
             return result;
         }
 

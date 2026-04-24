@@ -397,31 +397,13 @@ namespace RPVoiceChat.GameContent.BlockEntity
         /// </summary>
         private static HashSet<BEWireNode> FindConnectedComponent(BEWireNode startNode, HashSet<BEWireNode> filterNodes = null)
         {
-            var component = new HashSet<BEWireNode>();
-            var queue = new Queue<BEWireNode>();
-            
-            queue.Enqueue(startNode);
-            component.Add(startNode);
-            
-            while (queue.Count > 0)
+            var component = WireNetworkHandler.GetReachableNodes(startNode);
+            if (filterNodes == null)
             {
-                var current = queue.Dequeue();
-                
-                foreach (var conn in current.GetConnections())
-                {
-                    var other = conn.GetOtherNode(current);
-                    if (other != null && !component.Contains(other))
-                    {
-                        // If filterNodes is provided, only include nodes that are in the filter
-                        if (filterNodes == null || filterNodes.Contains(other))
-                        {
-                            component.Add(other);
-                            queue.Enqueue(other);
-                        }
-                    }
-                }
+                return component;
             }
-            
+
+            component.RemoveWhere(node => node != startNode && !filterNodes.Contains(node));
             return component;
         }
 

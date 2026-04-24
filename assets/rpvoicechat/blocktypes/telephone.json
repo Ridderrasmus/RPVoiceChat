@@ -44,9 +44,11 @@
   },
   "textures": {
     "wood": { "base": "game:block/wood/debarked/{wood}" },
-    "gold": { "base": "game:block/metal/plate/gold" },
-    "copper": { "base": "game:block/metal/plate/copper" },
-    "bakelite": { "base": "game:block/coal/bituminous" }
+    "lead": { "base": "game:block/metal/ingot/lead" },
+    "steel": { "base": "game:block/metal/ingot/steel" },
+    "gold": { "base": "game:block/metal/tarnished/gold" },
+    "rusty-iron": { "base": "game:block/metal/tarnished/rusty-iron" },
+    "basalt1": { "base": "game:block/stone/cobblestone/basalt1" }
   },
   "rainPermeable": false,
   "sidesolid": {

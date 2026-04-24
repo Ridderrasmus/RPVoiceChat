@@ -453,7 +453,7 @@
   "Wire.ConnectionSuccess": "Connexion établie !",
   "Wire.ConnectionFailed": "Connexion impossible.",
   "Wire.ConnectionTooFar": "Trop loin ! La distance maximale est de {0} blocs.",
-  "Wire.ConnectionDenied.MixedTypes": "Connexion refusée : types de terminaux incompatibles dans le même réseau géré.",
+  "Wire.ConnectionDenied.MixedTypes": "Connexion refusée : composition réseau invalide (types de terminaux mélangés).",
   "Wire.ConnectionDenied.TelegraphCapacity": "Connexion refusée : le réseau télégraphique est limité à {0} clés.",
   "Wire.ConnectionDenied.NetworkCapacity": "Connexion refusée : le réseau {0} est limité à {1} terminaux.",
   "Wire.ConnectionDenied.MaxConnections": "Connexion refusée : ce bloc a atteint sa limite de {0} connexion(s).",
