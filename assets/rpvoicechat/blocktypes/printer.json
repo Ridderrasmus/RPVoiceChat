@@ -20,7 +20,7 @@
   },
   "entityBehaviors": [
     { "name": "Animatable" },
-    { "name": "BEAnimatable", "properties": { "animationCodes": "open-drawer" } }
+    { "name": "BEAnimatable" }
   ],
   "creativeinventory": { "general": ["*-north"], "rpvoicechat": ["*-north"] },
   "maxstacksize": 1,
@@ -29,7 +29,7 @@
   "heldTpUseAnimation": "twohandplaceblock",
   "blockmaterial": "wood",
   "variantgroups": [
-    { "code": "wood", "states": ["aged"], "loadFromProperties": "block/wood" },
+    { "code": "wood", "states": ["aged", "veryaged"], "loadFromProperties": "block/wood" },
     { "code": "side", "loadFromProperties": "abstract/horizontalorientation" }
   ],
   "drawtype": "json",

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using RPVoiceChat.Config;
@@ -16,9 +17,11 @@ using Vintagestory.API.Server;
 using Vintagestory.GameContent;
 namespace RPVoiceChat.GameContent.BlockEntity
 {
-    public class BlockEntityTelegraph : BEWireNode, INetworkRoot
+    public class BlockEntityTelegraph : BEWireNode, INetworkRoot, IWireTypedNode, ITelegraphEndpoint
     {
         TelegraphMenuDialog dialog;
+        protected override int MaxConnections => 1;
+        public override bool IsActiveEndpoint => true;
 
         // INetworkRoot implementation - stores the original network ID created by this root
         private long originalCreatedNetworkID = 0;
@@ -33,6 +36,16 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private string receivedMessage = "";
         private string sentMessageOriginal = ""; // Store original latin characters
         private string receivedMessageOriginal = ""; // Store original latin characters
+        private string customEndpointName = "";
+        private string targetEndpointName = "all";
+        /// <summary>Server-pushed mirror of <see cref="WireNetwork.IsManagedBySwitchboard"/>; replicated to clients via BE data.</summary>
+        private bool routingManagedBySwitchboard;
+        /// <summary>Server-pushed mirror of <see cref="WireNetwork.AdvancedTelegraphFeaturesEnabled"/>; replicated to clients via BE data.</summary>
+        private bool routingAdvancedUnlocked;
+        private string routingDisabledReasonLangKey = "Telegraph.Settings.DisabledNoPower";
+        private WireRouteMode lastReceivedRouteMode = WireRouteMode.All;
+        private string lastReceivedSourceEndpointName = null;
+        private string lastReceivedTargetEndpointName = null;
         private Queue<char> pendingSignals = new Queue<char>();
         
         // Printer functionality
@@ -47,8 +60,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private int sentCountdownSeconds = 0;
         private long sentCountdownEndTime = 0;
         private bool telegramPrinted = false; // Flag to track if telegram has been created
+        private bool printPacketSentForCurrentMessage = false;
 
         private RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorAnimatable Animatable => GetBehavior<RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorAnimatable>();
+        public WireNodeKind WireNodeKind => WireNodeKind.Telegraph;
+        public string CustomEndpointName => customEndpointName;
 
         public BlockEntityTelegraph() : base()
         {
@@ -81,13 +97,14 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (api.Side == EnumAppSide.Client)
             {
                 Animatable?.InitializeAnimatorWithRotation("telegraphkey");
-                dialog = new TelegraphMenuDialog((ICoreClientAPI)api, this);
                 UpdateDisplayMessages();
-                dialog.UpdateSentText(sentMessage);
-                dialog.UpdateReceivedText(receivedMessage);
                 
                 // Register client-side countdown update timer
                 api.Event.RegisterGameTickListener(OnClientGameTick, 1000); // Every second
+            }
+            else if (NetworkUID != 0)
+            {
+                WireNetworkHandler.RefreshTelegraphRoutingSnapshot(NetworkUID);
             }
             
             // Check for printer below
@@ -99,19 +116,29 @@ namespace RPVoiceChat.GameContent.BlockEntity
             base.FromTreeAttributes(tree, worldForResolving);
             sentMessageOriginal = tree.GetString("sentMessage");
             receivedMessageOriginal = tree.GetString("receivedMessage");
+            customEndpointName = tree.GetString("customEndpointName", "");
+            targetEndpointName = tree.GetString("targetEndpointName", "all");
             long savedOriginalCreatedNetworkID = tree.GetLong("originalCreatedNetworkID", 0);
             // Only restore if it's not 0 (meaning this root actually created a network)
             if (savedOriginalCreatedNetworkID != 0)
             {
                 originalCreatedNetworkID = savedOriginalCreatedNetworkID;
             }
+            routingManagedBySwitchboard = tree.GetBool("rpvc:routingManaged", false);
+            routingAdvancedUnlocked = tree.GetBool("rpvc:routingAdvanced", false);
+            routingDisabledReasonLangKey = tree.GetString("rpvc:routingDisabledReason", "Telegraph.Settings.DisabledNoPower");
+            if (Api?.Side == EnumAppSide.Server && NetworkUID != 0)
+            {
+                WireNetworkHandler.RefreshTelegraphRoutingSnapshot(NetworkUID);
+            }
             UpdateDisplayMessages();
             
             // Update dialog if it exists
-            if (Api?.Side == EnumAppSide.Client)
+            if (IsDialogOpen())
             {
                 dialog?.UpdateSentText(sentMessage);
                 dialog?.UpdateReceivedText(receivedMessage);
+                dialog?.RefreshRoutingControls();
             }
         }
 
@@ -120,7 +147,153 @@ namespace RPVoiceChat.GameContent.BlockEntity
             base.ToTreeAttributes(tree);
             tree.SetString("sentMessage", sentMessageOriginal);
             tree.SetString("receivedMessage", receivedMessageOriginal);
+            tree.SetString("customEndpointName", customEndpointName);
+            tree.SetString("targetEndpointName", targetEndpointName);
             tree.SetLong("originalCreatedNetworkID", originalCreatedNetworkID);
+            tree.SetBool("rpvc:routingManaged", routingManagedBySwitchboard);
+            tree.SetBool("rpvc:routingAdvanced", routingAdvancedUnlocked);
+            tree.SetString("rpvc:routingDisabledReason", routingDisabledReasonLangKey ?? "Telegraph.Settings.DisabledNoPower");
+        }
+
+        /// <summary>Called from <see cref="WireNetworkHandler.RefreshTelegraphRoutingSnapshot"/> on the server after the wire network state is rebuilt.</summary>
+        public void ApplyServerRoutingFlags(bool managedBySwitchboard, bool advancedRoutingUnlocked, string disabledReasonLangKey = null)
+        {
+            if (Api?.Side != EnumAppSide.Server)
+            {
+                return;
+            }
+
+            bool changed = routingManagedBySwitchboard != managedBySwitchboard
+                || routingAdvancedUnlocked != advancedRoutingUnlocked
+                || !string.Equals(routingDisabledReasonLangKey, disabledReasonLangKey ?? "Telegraph.Settings.DisabledNoPower", StringComparison.Ordinal);
+            routingManagedBySwitchboard = managedBySwitchboard;
+            routingAdvancedUnlocked = advancedRoutingUnlocked;
+            routingDisabledReasonLangKey = disabledReasonLangKey ?? "Telegraph.Settings.DisabledNoPower";
+            if (changed)
+            {
+                MarkDirty(true);
+            }
+        }
+
+        public bool IsManagedBySwitchboard() => routingManagedBySwitchboard;
+
+        public bool HasAdvancedRoutingEnabled() => routingAdvancedUnlocked;
+
+        public string GetRoutingDisabledReasonLangKey() => routingDisabledReasonLangKey ?? "Telegraph.Settings.DisabledNoPower";
+
+        public string GetTargetEndpointName()
+        {
+            if (!HasAdvancedRoutingEnabled())
+            {
+                return "all";
+            }
+
+            if (string.IsNullOrWhiteSpace(targetEndpointName))
+            {
+                return "all";
+            }
+
+            return targetEndpointName;
+        }
+
+        public string[] GetAvailableEndpointNames()
+        {
+            var network = WireNetworkHandler.GetNetwork(NetworkUID);
+            if (network == null)
+            {
+                return System.Array.Empty<string>();
+            }
+
+            var names = new List<string>();
+            foreach (var endpoint in network.Nodes.ToArray().OfType<BlockEntityTelegraph>())
+            {
+                if (endpoint.Pos.Equals(Pos))
+                    continue;
+
+                if (string.IsNullOrWhiteSpace(endpoint.CustomEndpointName))
+                    continue;
+
+                if (!names.Contains(endpoint.CustomEndpointName))
+                {
+                    names.Add(endpoint.CustomEndpointName);
+                }
+            }
+
+            names.Sort(System.StringComparer.OrdinalIgnoreCase);
+            return names.ToArray();
+        }
+
+        public bool SetCustomEndpointName(string desiredName, out string failureLangKey)
+        {
+            failureLangKey = null;
+            desiredName = desiredName?.Trim() ?? "";
+
+            if (!IsManagedBySwitchboard())
+            {
+                return false;
+            }
+
+            if (!HasAdvancedRoutingEnabled())
+            {
+                failureLangKey = GetRoutingDisabledReasonLangKey();
+                return false;
+            }
+
+            if (desiredName.Length == 0)
+            {
+                customEndpointName = "";
+                MarkDirty();
+                return true;
+            }
+
+            if (WireNetworkHandler.IsEndpointNameTaken(NetworkUID, desiredName, this))
+            {
+                failureLangKey = "Telegraph.Settings.NameAlreadyUsed";
+                return false;
+            }
+
+            customEndpointName = desiredName;
+            MarkDirty();
+
+            if (!string.Equals(targetEndpointName, "all", System.StringComparison.OrdinalIgnoreCase))
+            {
+                var names = GetAvailableEndpointNames();
+                if (!names.Contains(targetEndpointName, System.StringComparer.OrdinalIgnoreCase))
+                {
+                    targetEndpointName = "all";
+                }
+            }
+
+            return true;
+        }
+
+        public void SetTargetEndpointName(string name)
+        {
+            if (!IsManagedBySwitchboard() || !HasAdvancedRoutingEnabled())
+            {
+                targetEndpointName = "all";
+                MarkDirty();
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(name) || string.Equals(name, "all", System.StringComparison.OrdinalIgnoreCase))
+            {
+                targetEndpointName = "all";
+                MarkDirty();
+                return;
+            }
+
+            var names = GetAvailableEndpointNames();
+            if (names.Contains(name, System.StringComparer.OrdinalIgnoreCase))
+            {
+                targetEndpointName = name;
+            }
+            else
+            {
+                targetEndpointName = "all";
+            }
+
+            MarkDirty();
         }
 
         protected override void SetWireAttachmentOffset()
@@ -133,14 +306,49 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (Api.Side == EnumAppSide.Server)
                 return true;
 
+            if (Api is not ICoreClientAPI capi)
+                return true;
+
+            if (dialog?.IsOpened() == true)
+            {
+                return true;
+            }
+
+            // Recreate the GUI each open to avoid stale control references
+            // when power mode switches between editable and read-only.
+            dialog = new TelegraphMenuDialog(capi, this);
+
             // Update display messages before opening dialog
             UpdateDisplayMessages();
             MarkDirty(); // Mark as dirty after updating display messages
             dialog?.UpdateSentText(sentMessage);
             dialog?.UpdateReceivedText(receivedMessage);
+            dialog?.RefreshRoutingControls();
             
             dialog.TryOpen();
             return true;
+        }
+
+        public void RequestSaveCustomEndpointName(string desiredName)
+        {
+            if (Api.Side != EnumAppSide.Client) return;
+            RPVoiceChatMod.TelegraphSettingsClientChannel?.SendPacket(new TelegraphSettingsPacket
+            {
+                TelegraphPos = Pos,
+                Operation = TelegraphSettingsOperation.SetCustomName,
+                Value = desiredName ?? ""
+            });
+        }
+
+        public void RequestTargetEndpointChange(string targetName)
+        {
+            if (Api.Side != EnumAppSide.Client) return;
+            RPVoiceChatMod.TelegraphSettingsClientChannel?.SendPacket(new TelegraphSettingsPacket
+            {
+                TelegraphPos = Pos,
+                Operation = TelegraphSettingsOperation.SetTarget,
+                Value = targetName ?? "all"
+            });
         }
 
 
@@ -181,19 +389,26 @@ namespace RPVoiceChat.GameContent.BlockEntity
             sentMessageOriginal += keyChar.ToString(); // Store original latin character
             UpdateDisplayMessages(); // Rebuild display messages from original
             MarkDirty();
-            dialog?.UpdateSentText(sentMessage);
+            if (IsDialogOpen()) dialog?.UpdateSentText(sentMessage);
             
             TriggerKeyClickAnimation();
 
             if (!string.IsNullOrEmpty(messageToSend))
             {
+                string resolvedTarget = GetTargetEndpointName();
+                WireRouteMode routeMode = string.Equals(resolvedTarget, "all", StringComparison.OrdinalIgnoreCase)
+                    ? WireRouteMode.All
+                    : WireRouteMode.NamedEndpoint;
+
                 clientApi.Network.GetChannel(WireNetworkHandler.NetworkChannel)
                     .SendPacket(new WireNetworkMessage()
                     {
                         NetworkUID = NetworkUID,
                         Message = messageToSend,
                         SenderPos = Pos,
-                        SenderPlayerUID = clientApi.World.Player?.PlayerUID
+                        SenderPlayerUID = clientApi.World.Player?.PlayerUID,
+                        RouteMode = routeMode,
+                        TargetEndpointName = routeMode == WireRouteMode.NamedEndpoint ? resolvedTarget : null
                     });
             }
 
@@ -215,7 +430,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 receivedMessageOriginal += keyChar.ToString();
                 UpdateDisplayMessages();
                 MarkDirty();
-                dialog?.UpdateReceivedText(receivedMessage);
+                if (IsDialogOpen()) dialog?.UpdateReceivedText(receivedMessage);
+                printPacketSentForCurrentMessage = false;
                 if (Pos.Equals(senderPos))
                     TriggerKeyClickAnimation();
             }
@@ -228,6 +444,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
             if (e?.Message == null || e.Message.Length == 0) return;
 
+            lastReceivedRouteMode = e.RouteMode;
+            lastReceivedSourceEndpointName = ResolveTelegraphNameAt(e.SenderPos);
+            lastReceivedTargetEndpointName = e.TargetEndpointName;
             char keyChar = e.Message[0];
             OnReceivedSignal(keyChar, e.SenderPos);
         }
@@ -258,14 +477,16 @@ namespace RPVoiceChat.GameContent.BlockEntity
             IsPlaying = false;
         }
 
-        public void ProcessPrintPacket(string message)
+        public void ProcessPrintPacket(string message, string sourceEndpointName = null, string targetEndpointName = null, string networkName = null)
         {
             // Trigger message printing/deletion
             if (connectedPrinter != null && !string.IsNullOrEmpty(message))
             {
                 // Convert to morse for printing if GenuineMorseCharacters is enabled
                 string messageToPrint = GenuineMorseCharacters ? ConvertStringToMorse(message) : message;
-                connectedPrinter.CreateTelegram(messageToPrint, NetworkUID.ToString());
+                string networkUid = NetworkUID.ToString();
+                string resolvedNetworkName = !string.IsNullOrWhiteSpace(networkName) ? networkName : ResolvePrintableNetworkName();
+                connectedPrinter.CreateTelegram(messageToPrint, networkUid, resolvedNetworkName, sourceEndpointName, targetEndpointName);
                 telegramPrinted = true; // Mark that telegram has been created
             }
             
@@ -275,6 +496,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             isReceivedCountdownActive = false;
             receivedCountdownSeconds = 0;
             receivedCountdownEndTime = 0;
+            printPacketSentForCurrentMessage = false;
             MarkDirty();
         }
 
@@ -288,6 +510,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
             return receivedMessage;
         }
 
+        public string GetCustomEndpointName()
+        {
+            return customEndpointName ?? "";
+        }
+
         public void ClearMessages()
         {
             sentMessage = "";
@@ -296,8 +523,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
             receivedMessageOriginal = "";
             MarkDirty();
             pendingSignals.Clear();
-            dialog?.UpdateSentText("");
-            dialog?.UpdateReceivedText("");
+            if (IsDialogOpen())
+            {
+                dialog?.UpdateSentText("");
+                dialog?.UpdateReceivedText("");
+            }
             
             // Reset countdowns
             isReceivedCountdownActive = false;
@@ -307,8 +537,12 @@ namespace RPVoiceChat.GameContent.BlockEntity
             sentCountdownSeconds = 0;
             sentCountdownEndTime = 0;
             telegramPrinted = false; // Reset flag
-            dialog?.UpdateCountdown(-1);
-            dialog?.UpdateSentCountdown(-1);
+            printPacketSentForCurrentMessage = false;
+            if (IsDialogOpen())
+            {
+                dialog?.UpdateCountdown(-1);
+                dialog?.UpdateSentCountdown(-1);
+            }
         }
 
         private void UpdateDisplayMessages()
@@ -477,7 +711,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             double secondsSinceLastReceivedActivity = timeSinceLastReceivedActivity / 1000.0;
 
             // Start countdown if received message is complete and countdown not already active
-            if (!string.IsNullOrEmpty(receivedMessageOriginal) && !isReceivedCountdownActive && secondsSinceLastReceivedActivity >= 2.0)
+            if (!string.IsNullOrEmpty(receivedMessageOriginal) && !isReceivedCountdownActive && !printPacketSentForCurrentMessage && secondsSinceLastReceivedActivity >= 2.0)
             {
                 StartReceivedCountdown();
             }
@@ -516,7 +750,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             double secondsSinceLastReceivedActivity = timeSinceLastReceivedActivity / 1000.0;
 
             // Start countdown if received message is complete and countdown not already active
-            if (!string.IsNullOrEmpty(receivedMessageOriginal) && !isReceivedCountdownActive && secondsSinceLastReceivedActivity >= 2.0)
+            if (!string.IsNullOrEmpty(receivedMessageOriginal) && !isReceivedCountdownActive && !printPacketSentForCurrentMessage && secondsSinceLastReceivedActivity >= 2.0)
             {
                 StartReceivedCountdown();
             }
@@ -537,9 +771,13 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 receivedCountdownSeconds = 0;
                 receivedCountdownEndTime = 0;
                 telegramPrinted = false; // Reset flag for next message
+                printPacketSentForCurrentMessage = false;
                 MarkDirty();
-                dialog?.UpdateReceivedText("");
-                dialog?.UpdateCountdown(-1); // Hide countdown completely
+                if (IsDialogOpen())
+                {
+                    dialog?.UpdateReceivedText("");
+                    dialog?.UpdateCountdown(-1); // Hide countdown completely
+                }
             }
         }
 
@@ -547,14 +785,14 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
             isReceivedCountdownActive = true;
             receivedCountdownSeconds = MessageDeletionDelaySeconds; // Start from the delay (e.g., 10 seconds)
-            dialog?.UpdateCountdown(receivedCountdownSeconds);
+            if (IsDialogOpen()) dialog?.UpdateCountdown(receivedCountdownSeconds);
         }
 
         private void StartSentCountdown()
         {
             isSentCountdownActive = true;
             sentCountdownSeconds = MessageDeletionDelaySeconds; // Start from the delay (e.g., 10 seconds)
-            dialog?.UpdateSentCountdown(sentCountdownSeconds);
+            if (IsDialogOpen()) dialog?.UpdateSentCountdown(sentCountdownSeconds);
         }
 
         private void UpdateReceivedCountdown()
@@ -570,7 +808,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (newCountdown != receivedCountdownSeconds)
             {
                 receivedCountdownSeconds = newCountdown;
-                dialog?.UpdateCountdown(receivedCountdownSeconds);
+                if (IsDialogOpen()) dialog?.UpdateCountdown(receivedCountdownSeconds);
                 
                 // If countdown just reached 0, record the time
                 if (receivedCountdownSeconds == 0 && receivedCountdownEndTime == 0)
@@ -578,14 +816,22 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     receivedCountdownEndTime = currentTime;
                     
                     // Send packet to server to trigger printing
-                    if (Api.Side == EnumAppSide.Client)
+                    if (Api.Side == EnumAppSide.Client && !printPacketSentForCurrentMessage && !string.IsNullOrEmpty(receivedMessageOriginal))
                     {
-                        var packet = new TelegraphPrintPacket
+                        var packet = new CommDeliveryPacket
                         {
-                            Message = receivedMessageOriginal,
-                            TelegraphPos = Pos
+                            DevicePos = Pos,
+                            PayloadType = CommPayloadType.Text,
+                            TextMessage = receivedMessageOriginal,
+                            NetworkName = ResolvePrintableNetworkName(),
+                            // Always carry sender display name for telegram headers (broadcast or named route).
+                            SourceEndpointName = lastReceivedSourceEndpointName,
+                            TargetEndpointName = lastReceivedRouteMode == WireRouteMode.NamedEndpoint
+                                ? lastReceivedTargetEndpointName
+                                : null
                         };
                         RPVoiceChatMod.TelegraphPrintClientChannel.SendPacket(packet);
+                        printPacketSentForCurrentMessage = true;
                     }
                 }
             }
@@ -596,11 +842,53 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 double timeSinceCountdownEnd = (currentTime - receivedCountdownEndTime) / 1000.0;
                 if (timeSinceCountdownEnd >= 2.0)
                 {
-                    dialog?.UpdateCountdown(-1); // Hide countdown
+                    if (IsDialogOpen()) dialog?.UpdateCountdown(-1); // Hide countdown
                     isReceivedCountdownActive = false;
                     receivedCountdownEndTime = 0;
                 }
             }
+        }
+
+        private string ResolveTelegraphNameAt(BlockPos nodePos)
+        {
+            if (nodePos == null)
+            {
+                return null;
+            }
+
+            var network = WireNetworkHandler.GetNetwork(NetworkUID);
+            if (network == null)
+            {
+                return null;
+            }
+
+            var endpoint = network.Nodes
+                .OfType<BlockEntityTelegraph>()
+                .FirstOrDefault(t => t.Pos != null && t.Pos.Equals(nodePos));
+
+            if (endpoint == null)
+            {
+                return null;
+            }
+
+            string name = endpoint.GetCustomEndpointName();
+            return string.IsNullOrWhiteSpace(name) ? null : name;
+        }
+
+        private string ResolvePrintableNetworkName()
+        {
+            if (!routingAdvancedUnlocked)
+            {
+                return null;
+            }
+
+            string displayName = WireNetworkHandler.GetDisplayName(NetworkUID);
+            if (!string.Equals(displayName, NetworkUID.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
+                return displayName;
+            }
+
+            return null;
         }
 
         private void UpdateSentCountdown()
@@ -616,7 +904,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (newCountdown != sentCountdownSeconds)
             {
                 sentCountdownSeconds = newCountdown;
-                dialog?.UpdateSentCountdown(sentCountdownSeconds);
+                if (IsDialogOpen()) dialog?.UpdateSentCountdown(sentCountdownSeconds);
                 
                 // If countdown just reached 0, record the time
                 if (sentCountdownSeconds == 0 && sentCountdownEndTime == 0)
@@ -638,8 +926,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     sentCountdownSeconds = 0;
                     sentCountdownEndTime = 0;
                     MarkDirty();
-                    dialog?.UpdateSentText("");
-                    dialog?.UpdateSentCountdown(-1); // Hide countdown
+                    if (IsDialogOpen())
+                    {
+                        dialog?.UpdateSentText("");
+                        dialog?.UpdateSentCountdown(-1); // Hide countdown
+                    }
                 }
             }
         }
@@ -647,6 +938,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private void TriggerKeyClickAnimation()
         {
             Animatable?.PlaySingleShotAnimation("click");
+        }
+
+        private bool IsDialogOpen()
+        {
+            return dialog != null && dialog.IsOpened();
         }
 
     }

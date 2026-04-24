@@ -1,0 +1,68 @@
+{
+  "code": "lucerne",
+  "enabled": true,
+  "class": "lucerneblock",
+  "entityClass": "BlockEntityLucerne",
+  "behaviors": [
+    { "name": "HorizontalOrientable" },
+    { "name": "Container" },
+    { "name": "HeatSource", "properties": { "heatStrength": 0 } }
+  ],
+  "entityBehaviors": [
+    { "name": "BELightable", "properties": { "lightLevel": 1, "lightIntensityScale": 6 } }
+  ],
+  "variantgroups": [
+    { "code": "color", "states": [ "blue", "red", "fire", "tan", "orange", "brown", "earthyorange", "cream", "gray", "black" ] },
+    { "code": "materialtype", "states": [ "fired" ] },
+    { "code": "side", "loadFromProperties": "abstract/horizontalorientation" }
+  ],
+  "creativeinventory": {
+    "general": [ "*-*-north" ],
+    "rpvoicechat": [ "*-*-north" ]
+  },
+  "maxstacksize": 1,
+  "blockmaterial": "Ceramic",
+  "drawtype": "json",
+  "shape": {
+    "base": "block/clay/lucerne",
+    "rotateYByType": {
+      "*-*-north": 0,
+      "*-*-east": 270,
+      "*-*-west": 90,
+      "*-*-south": 180
+    }
+  },
+  "textures": {
+    "clay": { "base": "game:block/clay/hardened/{color}" },
+    "side": { "base": "rpvoicechat:block/warningbeacon/bonfire_side" },
+    "top": { "base": "rpvoicechat:block/warningbeacon/bonfire_top" },
+    "firewood_side": { "base": "game:block/wood/firewood/side" },
+    "firewood_south": { "base": "game:block/wood/firewood/south" },
+    "firewood_bark": { "base": "game:block/wood/firewood/bark" },
+    "firewood_north": { "base": "game:block/wood/firewood/north" },
+    "hay": { "base": "game:block/hay/normal-top" },
+    "singlehay": { "base": "game:block/wood/trough/large/singlehay" },
+    "ashes": { "base": "rpvoicechat:block/warningbeacon/ashes" },
+    "ember": { "base": "game:block/coal/ember" }
+  },
+  "sounds": {
+    "place": "game:block/ceramicplace",
+    "hit": "game:block/ceramichit",
+    "break": "game:block/ceramicbreak",
+    "walk": "game:walk/stone1"
+  },
+  "rainPermeable": false,
+  "sidesolid": { "all": false },
+  "sideopaque": { "all": false },
+  "attributes": {
+    "handbook": {
+      "groupBy": [ "lucerne-*-{materialtype}" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-lucerne.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-lucerne.Text"
+        }
+      ]
+    }
+  }
+}

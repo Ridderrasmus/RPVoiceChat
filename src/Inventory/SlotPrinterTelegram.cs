@@ -1,38 +1,34 @@
 using System;
 using Vintagestory.API.Common;
-using Vintagestory.API.Client;
 
 namespace RPVoiceChat.GameContent.Inventory
 {
-    public class SlotPrinterTelegram : ItemSlot
+    public class SlotPrinterTelegram : SlotRestrictedItemPath
     {
-        public SlotPrinterTelegram(InventoryBase inventory) : base(inventory)
-        {
-            MaxSlotStackSize = 1;
-        }
+        public SlotPrinterTelegram(InventoryBase inventory) : base(inventory, "telegram", 1) { }
 
-        public bool TryStoreTelegram(string message, string networkUID = "")
+        public bool TryStoreTelegram(string message, string networkUID = "", string networkName = "", string sourceEndpointName = "", string targetEndpointName = "")
         {
             if (Empty)
             {
                 ItemStack telegramStack = new ItemStack(
-                    inventory.Api.World.GetItem(new AssetLocation("rpvoicechat:telegram"))
-                );
-                
-                // Store message content
+                    inventory.Api.World.GetItem(new AssetLocation("rpvoicechat:telegram")));
+
                 telegramStack.Attributes.SetString("message", message);
-                
-                // Store timestamp (current world time)
                 telegramStack.Attributes.SetLong("timestamp", (long)inventory.Api.World.Calendar.TotalDays);
-                
-                // Store network UID if provided
                 if (!string.IsNullOrEmpty(networkUID))
-                {
                     telegramStack.Attributes.SetString("networkUID", networkUID);
-                }
-                
-                // Create localized description with network info and timestamp
-                string description = CreateTelegramDescription(message, networkUID);
+                if (!string.IsNullOrWhiteSpace(networkName))
+                    telegramStack.Attributes.SetString("networkName", networkName);
+                if (!string.IsNullOrWhiteSpace(sourceEndpointName))
+                    telegramStack.Attributes.SetString("sourceEndpointName", sourceEndpointName);
+                if (!string.IsNullOrWhiteSpace(targetEndpointName))
+                    telegramStack.Attributes.SetString("targetEndpointName", targetEndpointName);
+
+                telegramStack.Attributes.SetString("text", message);
+                telegramStack.Attributes.SetString("title", CreateTelegramTitle(networkUID, networkName, sourceEndpointName, targetEndpointName));
+
+                string description = CreateTelegramDescription(message, networkUID, networkName, sourceEndpointName, targetEndpointName);
                 telegramStack.Attributes.SetString("description", description);
 
                 Itemstack = telegramStack;
@@ -42,17 +38,65 @@ namespace RPVoiceChat.GameContent.Inventory
             return false;
         }
 
-        private string CreateTelegramDescription(string message, string networkUID)
+        private static string CreateTelegramDescription(string message, string networkUID, string networkName, string sourceEndpointName, string targetEndpointName)
         {
-            // Create simple description with network info
-            string description = $"Network: {networkUID}\nMessage: {message}";
-            
-            return description;
+            string networkLabel = ResolveNetworkLabel(networkUID, networkName);
+            if (!string.IsNullOrWhiteSpace(sourceEndpointName))
+            {
+                return $"Network: {sourceEndpointName} ({networkLabel})\nMessage: {message}";
+            }
+
+            if (!string.IsNullOrWhiteSpace(targetEndpointName))
+            {
+                return $"Network: {targetEndpointName} ({networkLabel})\nMessage: {message}";
+            }
+
+            return $"Network: {networkLabel}\nMessage: {message}";
         }
 
-        public override bool CanHold(ItemSlot sourceSlot)
+        private static string CreateTelegramTitle(string networkUID, string networkName, string sourceEndpointName, string targetEndpointName)
         {
-            return sourceSlot.Itemstack?.Collectible.Code?.Path == "telegram";
+            string networkLabel = ResolveNetworkLabel(networkUID, networkName);
+            if (!string.IsNullOrWhiteSpace(sourceEndpointName))
+            {
+                if (!string.IsNullOrWhiteSpace(networkLabel))
+                {
+                    return $"Telegram - {sourceEndpointName} (Network {networkLabel})";
+                }
+
+                return $"Telegram - {sourceEndpointName}";
+            }
+
+            if (!string.IsNullOrWhiteSpace(targetEndpointName))
+            {
+                if (!string.IsNullOrWhiteSpace(networkLabel))
+                {
+                    return $"Telegram - {targetEndpointName} (Network {networkLabel})";
+                }
+
+                return $"Telegram - {targetEndpointName}";
+            }
+
+            if (!string.IsNullOrWhiteSpace(networkLabel))
+            {
+                return $"Telegram - Network {networkLabel}";
+            }
+
+            return "Telegram";
+        }
+
+        private static string ResolveNetworkLabel(string networkUID, string networkName)
+        {
+            if (!string.IsNullOrWhiteSpace(networkName))
+            {
+                return networkName;
+            }
+            if (!string.IsNullOrWhiteSpace(networkUID))
+            {
+                return networkUID;
+            }
+
+            return "Unknown";
         }
     }
 }

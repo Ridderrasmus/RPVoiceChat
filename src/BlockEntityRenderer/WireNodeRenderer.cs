@@ -80,7 +80,7 @@ namespace RPVoiceChat.GameContent.Renderers
             var connections = node.GetConnections();
             if (connections == null || connections.Count == 0) return;
 
-            Vec3f origin = node.Position.ToVec3f().Add(node.WireAttachmentOffset);
+            Vec3f origin = node.Position.ToVec3f();
             meshOrigin = origin;
 
             // Combined MeshData to render all wires at once
@@ -89,13 +89,18 @@ namespace RPVoiceChat.GameContent.Renderers
 
             foreach (var conn in connections)
             {
-                var other = conn.GetOtherNode(node);
-                if (other == null || other.Position == null) continue;
+                BlockPos otherBlockPos = conn.GetOtherBlockPos(node.Pos);
+                if (otherBlockPos == null) continue;
 
-                Vec3f startLocal = origin - origin; // always (0,0,0) in local space
-                Vec3f endLocal = other.Position.ToVec3f().Add(other.WireAttachmentOffset) - origin;
+                // Always resolve the other BE via the accessor: conn.GetOtherNode can be wrong after chunk unload.
+                var otherBe = capi.World.BlockAccessor.GetBlockEntity(otherBlockPos) as BEWireNode;
+                Vec3f startOffset = node.GetWireAttachmentOffsetFor(otherBlockPos);
+                Vec3f otherOffset = otherBe?.GetWireAttachmentOffsetFor(node.Pos) ?? new Vec3f(0.5f, 0.5f, 0.5f);
 
-                MeshData wireMesh = WireMesh.MakeWireMesh(startLocal, endLocal, 0.05f);
+                Vec3f startLocal = startOffset;
+                Vec3f endLocal = otherBlockPos.ToVec3f().Add(otherOffset) - origin;
+
+                MeshData wireMesh = WireMesh.MakeWireMesh(startLocal, endLocal, 0.025f);
 
                 combinedMesh.AddMeshData(wireMesh);
             }

@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.GameContent.Inventory;
+using RPVoiceChat.Gui.CustomElements;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -21,9 +22,9 @@ namespace RPVoiceChat.Gui
         private readonly BlockEntityLucerne _be;
         private readonly Action _onClose;
         private GuiElement _lightButton;
-        private GuiElementStatbar _progressBar;
-        private const int ProgressBarSteps = 100;
-
+        private LinearGauge _burnGauge;
+        private ItemStack _ghostFat;
+        private ItemStack _ghostFirewood;
         public WarningBeaconDialog(string title, InventoryLucerne inventory, BlockPos blockPos, ICoreClientAPI capi, BlockEntityLucerne be, Action onClose)
             : base(title, inventory, blockPos, 2, capi)
         {
@@ -61,21 +62,24 @@ namespace RPVoiceChat.Gui
             bgBounds.BothSizing = ElementSizing.FitToChildren;
             bgBounds.WithChildren(slotGridBounds, progressBounds, buttonBounds);
 
-            var progressBar = new GuiElementStatbar(capi, progressBounds, new double[3] { 0.1, 0.4, 0.1 }, false, false);
-            progressBar.ShowValueOnHover = false;
-            progressBar.SetValues(0, 0, ProgressBarSteps);
+            _burnGauge = new LinearGauge(capi, progressBounds, false);
 
             SingleComposer = capi.Gui.CreateCompo("warningbeacon", dialogBounds)
                 .AddShadedDialogBG(bgBounds)
                 .AddDialogTitleBar(_title, () => { TryClose(); })
                 .AddItemSlotGrid(Inventory, SendInvPacket, 2, slotGridBounds, "slots")
-                .AddInteractiveElement(progressBar, "progressBar")
+                .AddInteractiveElement(_burnGauge.Element, "progressBar")
                 .AddDynamicText("", CairoFont.WhiteSmallText().WithFontSize(14).WithOrientation(EnumTextOrientation.Center), progressBounds.FlatCopy(), "hoursLabel")
                 .AddButton(Lang.Get(RPVoiceChatMod.modID + ":WarningBeacon.LightButton") ?? "Allumer", () => { OnLightClicked(); return true; }, buttonBounds, EnumButtonStyle.Normal, "lightButton")
                 .Compose();
 
-            _progressBar = SingleComposer.GetStatbar("progressBar");
             _lightButton = SingleComposer.GetButton("lightButton");
+
+            var world = capi.World;
+            var fat = world.GetItem(new AssetLocation("game", "fat"));
+            var firewood = world.GetItem(new AssetLocation("game", "firewood"));
+            if (fat != null) _ghostFat = new ItemStack(fat, 1);
+            if (firewood != null) _ghostFirewood = new ItemStack(firewood, 1);
 
             UpdateState();
         }
@@ -90,6 +94,25 @@ namespace RPVoiceChat.Gui
         {
             base.OnRenderGUI(deltaTime);
             UpdateState();
+            DrawSlotGhosts();
+        }
+
+        /// <summary>Semi-transparent allowed-item icons over empty slots (slot grid 2×1, bounds match OnGuiOpened).</summary>
+        private void DrawSlotGhosts()
+        {
+            var inv = Inventory as InventoryLucerne;
+            if (inv == null || SingleComposer == null) return;
+            var slotEl = SingleComposer.GetElement("slots");
+            if (slotEl?.Bounds == null) return;
+            double gx = slotEl.Bounds.renderX;
+            double gy = slotEl.Bounds.renderY;
+            double cellW = slotEl.Bounds.OuterWidth / 2;
+            double cellH = slotEl.Bounds.OuterHeight;
+            // Grille 2×1. Graisse OK. Bois : fantôme trop à droite → nudge gauche (constant, une seule fois).
+            const float firewoodNudgeX = -32f; // 1 px vers la droite
+            AllowedItemGhostDraw.DrawInRect(capi, inv.FatSlot, _ghostFat, gx, gy, cellW, cellH, offsetX: -1f);
+            AllowedItemGhostDraw.DrawInRect(capi, inv.FirewoodSlot, _ghostFirewood, gx + cellW, gy, cellW, cellH,
+                offsetX: firewoodNudgeX);
         }
 
         private void UpdateState()
@@ -101,8 +124,7 @@ namespace RPVoiceChat.Gui
             double fillRatio = be.IsBurning
                 ? Math.Max(0, Math.Min(1, remainingHours / BlockEntityLucerne.BurnDurationGameHours))
                 : 0;
-            if (_progressBar != null)
-                _progressBar.SetValue((int)(fillRatio * ProgressBarSteps));
+            _burnGauge?.SetRatio01((float)fillRatio);
 
             var hoursLabel = SingleComposer?.GetDynamicText("hoursLabel");
             if (hoursLabel != null)

@@ -4,6 +4,7 @@ using System;
 using System.Text;
 using RPVoiceChat;
 using RPVoiceChat.GameContent.BlockEntityBehavior;
+using RPVoiceChat.GameContent.Renderers;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
@@ -37,6 +38,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private long _animationEndCallbackId = -1;
         private int _lastSyncedPowerPercent = -1;
         private bool _lastGearActive;
+        private RotatingMechPartRenderer? _mechPartRenderer;
 
         private BEBehaviorAnimatable Animatable => GetBehavior<BEBehaviorAnimatable>();
 
@@ -50,6 +52,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public override void Initialize(ICoreAPI api)
         {
             base.Initialize(api);
+            DisableConsumerInstancedRenderer();
             if (api.Side == EnumAppSide.Client)
             {
                 string shapePath = Block?.Shape?.Base?.Path ?? "block/bellhammer/bellhammer";
@@ -60,12 +63,52 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     ? side switch { "north" => 90f, "east" => 0f, "south" => 270f, "west" => 180f, _ => 0f }
                     : 0f;
                 Animatable?.InitializeAnimatorWithRotation(shapePath, rotDeg);
+
+                if (api is ICoreClientAPI capi)
+                {
+                    _mechPartRenderer = new RotatingMechPartRenderer(
+                        this,
+                        capi,
+                        new AssetLocation("rpvoicechat:shapes/block/bellhammer/bellhammer_mechpart.json"),
+                        GetMechPartBaseRotY()
+                    );
+                }
             }
             if (api.Side == EnumAppSide.Server)
             {
                 (api as ICoreServerAPI)?.Event.RegisterGameTickListener(OnServerGameTick, 100);
                 TryDiscoverNetwork();
             }
+        }
+
+        public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tesselator)
+        {
+            if (Block == null) return false;
+            if (Animatable?.HasActiveAnimations() == true)
+            {
+                // Avoid a second static copy while Animatable renders the animated mesh.
+                return true;
+            }
+
+            // Quern-style: tesselate static mesh explicitly, skip default aggregation.
+            CompositeShape blockShape = Block.Shape;
+            if (blockShape?.Base == null) return false;
+
+            AssetLocation shapeLoc = blockShape.Base.Clone().WithPathPrefixOnce("shapes/").WithPathAppendixOnce(".json");
+            Shape shape = Shape.TryGet(Api, shapeLoc);
+            if (shape == null) return false;
+
+            tesselator.TesselateShape(
+                Block,
+                shape,
+                out MeshData mesh,
+                new Vec3f(blockShape.rotateX, blockShape.rotateY, blockShape.rotateZ),
+                blockShape.QuantityElements,
+                blockShape.SelectiveElements
+            );
+            mesher.AddMeshData(mesh);
+
+            return true;
         }
 
         /// <summary>
@@ -88,8 +131,17 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public override void OnBlockRemoved()
         {
             base.OnBlockRemoved();
+            _mechPartRenderer?.Dispose();
+            _mechPartRenderer = null;
             if (Api?.Side == EnumAppSide.Server && _animationEndCallbackId >= 0)
                 Api.World.UnregisterCallback(_animationEndCallbackId);
+        }
+
+        public override void OnBlockUnloaded()
+        {
+            base.OnBlockUnloaded();
+            _mechPartRenderer?.Dispose();
+            _mechPartRenderer = null;
         }
 
         public override void ToTreeAttributes(ITreeAttribute tree)
@@ -104,6 +156,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             base.FromTreeAttributes(tree, worldForResolving);
             _enabled = tree.GetBool("enabled", false);
             PowerPercent = tree.GetFloat("powerPercent", 0f);
+            DisableConsumerInstancedRenderer();
             bool gearActive = _enabled && PowerPercent >= MinSpeedThreshold;
             if (gearActive != _lastGearActive)
             {
@@ -292,5 +345,26 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (GetAdjacentBellPosition() == null)
                 dsc.AppendLine(UIUtils.I18n("BellHammer.NoBell"));
         }
+
+        private void DisableConsumerInstancedRenderer()
+        {
+            var consumer = GetBehavior<BEBehaviorMPConsumer>();
+            if (consumer == null) return;
+            consumer.Shape = null;
+        }
+
+        private float GetMechPartBaseRotY()
+        {
+            if (Block?.Variant?.TryGetValue("side", out var side) != true) return 0f;
+            return side switch
+            {
+                "north" => 90f,
+                "east" => 0f,
+                "south" => 270f,
+                "west" => 180f,
+                _ => 0f
+            };
+        }
+
     }
 }

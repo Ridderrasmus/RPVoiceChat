@@ -16,7 +16,7 @@
   "maxstacksize": 1,
   "blockmaterial": "metal",
   "variantgroups": [
-    { "code": "wood", "states": ["aged"], "loadFromProperties": "block/wood" },
+    { "code": "wood", "states": ["aged", "veryaged"], "loadFromProperties": "block/wood" },
     { "code": "v", "loadFromProperties": "abstract/verticalorientation" },
     { "code": "side", "loadFromProperties": "abstract/horizontalorientation" }
   ],
@@ -44,6 +44,7 @@
         "iron": { "base": "game:block/metal/plate/iron" },
         "rusty-iron": { "base": "game:block/metal/tarnished/rusty-iron" },
         "gold": { "base": "game:block/metal/plate/gold" },
+        "bituminous": { "base": "game:block/coal/bituminous" },
         "wood": { "base": "game:block/wood/debarked/{wood}" },
         "wood2": { "base": "game:block/wood-generic" }
     },

@@ -7,7 +7,7 @@
     { "name": "HorizontalOrientable" }
   ],
   "entityBehaviors": [
-    { "name": "BELightable", "properties": { "lightLevel": 0.8, "lightRadius": 5 } },
+    { "name": "BELightable", "properties": { "lightLevel": 0.8, "lightIntensityScale": 1.45 } },
     { "name": "Animatable" },
     { "name": "BEAnimatable", "properties": { "animationCodes": "slates" } }
   ],

@@ -1,0 +1,89 @@
+{
+  "code": "churchbellmold",
+  "enabled": true,
+  "behaviors": [
+    { "name": "GroundStorable", "properties": { "layout": "SingleCenter" } },
+    { "name": "Unplaceable" },
+    { "name": "RightClickPickup" }
+  ],
+  "variantgroups": [
+    { "code": "color", "states": [ "blue", "red", "fire" ] },
+    { "code": "materialtype", "states": [ "raw" ] },
+    { "code": "layer", "states": [ "part-brass-bottom", "part-brass-middle", "part-brass-top", "layer-brass-topmost" ] }
+  ],
+  "attributesByType": {
+    "churchbellmold-red-raw-*": {
+      "beehivekiln": {
+        "0": { "type": "block", "code": "rpvoicechat:churchbellmold-tan-fired-{layer}" },
+        "1": { "type": "block", "code": "rpvoicechat:churchbellmold-orange-fired-{layer}" },
+        "2": { "type": "block", "code": "rpvoicechat:churchbellmold-red-fired-{layer}" },
+        "3": { "type": "block", "code": "rpvoicechat:churchbellmold-brown-fired-{layer}" }
+      }
+    },
+    "churchbellmold-blue-raw-*": {
+      "beehivekiln": {
+        "0": { "type": "block", "code": "rpvoicechat:churchbellmold-cream-fired-{layer}" },
+        "1": { "type": "block", "code": "rpvoicechat:churchbellmold-gray-fired-{layer}" },
+        "2": { "type": "block", "code": "rpvoicechat:churchbellmold-black-fired-{layer}" },
+        "3": { "type": "block", "code": "rpvoicechat:churchbellmold-black-fired-{layer}" }
+      }
+    },
+    "churchbellmold-fire-raw-*": {
+      "beehivekiln": {
+        "0": { "type": "block", "code": "rpvoicechat:churchbellmold-fire-fired-{layer}" },
+        "1": { "type": "block", "code": "rpvoicechat:churchbellmold-fire-fired-{layer}" },
+        "2": { "type": "block", "code": "rpvoicechat:churchbellmold-fire-fired-{layer}" },
+        "3": { "type": "block", "code": "rpvoicechat:churchbellmold-fire-fired-{layer}" }
+      }
+    }
+  },
+  "combustiblePropsByType": {
+    "churchbellmold-red-raw-*": {
+      "meltingPoint": 650,
+      "meltingDuration": 45,
+      "smeltedRatio": 1,
+      "smeltingType": "fire",
+      "smeltedStack": { "type": "block", "code": "rpvoicechat:churchbellmold-earthyorange-fired-{layer}" },
+      "requiresContainer": false
+    },
+    "churchbellmold-blue-raw-*": {
+      "meltingPoint": 650,
+      "meltingDuration": 45,
+      "smeltedRatio": 1,
+      "smeltingType": "fire",
+      "smeltedStack": { "type": "block", "code": "rpvoicechat:churchbellmold-blue-fired-{layer}" },
+      "requiresContainer": false
+    },
+    "churchbellmold-fire-raw-*": {
+      "meltingPoint": 650,
+      "meltingDuration": 45,
+      "smeltedRatio": 1,
+      "smeltingType": "fire",
+      "smeltedStack": { "type": "block", "code": "rpvoicechat:churchbellmold-fire-fired-{layer}" },
+      "requiresContainer": false
+    }
+  },
+  "blockmaterial": "Ceramic",
+  "creativeinventory": { "general": [ "*" ], "construction": [ "*" ], "rpvoicechat": [ "*" ] },
+  "replaceable": 700,
+  "resistance": 1.5,
+  "maxStackSize": 8,
+  "lightAbsorption": 0,
+  "textures": { "all": { "base": "game:block/clay/{color}clay" } },
+  "shapeByType": {
+    "churchbellmold-*-part-*-bottom": { "base": "block/clay/mold/churchbell-part-bottom" },
+    "churchbellmold-*-part-*-middle": { "base": "block/clay/mold/churchbell-part-middle" },
+    "churchbellmold-*-part-*-top": { "base": "block/clay/mold/churchbell-part-top" },
+    "churchbellmold-*-layer-*-topmost": { "base": "block/clay/mold/churchbell-layer-topmost" }
+  },
+  "sounds": { "walk": "game:walk/stone" },
+  "handbook": { "groupBy": [ "churchbellmold-*-{materialtype}-{layer}" ] },
+  "collisionboxByType": { "*": { "x1": 0, "y1": 0, "z1": 0, "x2": 1, "y2": 0.1875, "z2": 1 } },
+  "selectionboxByType": { "*": { "x1": 0, "y1": 0, "z1": 0, "x2": 1, "y2": 0.1875, "z2": 1 } },
+  "sideopaque": { "all": false },
+  "sidesolid": { "all": false },
+  "guiTransformByType": { "*": { "translation": { "x": 0, "y": 3, "z": 0 }, "origin": { "x": 0.5, "y": 0.0625, "z": 0.5 }, "scale": 1.33 } },
+  "tpHandTransformByType": { "*": { "translation": { "x": -1, "y": 0.2, "z": -0.9 }, "rotation": { "x": -87, "y": 9, "z": 4 }, "origin": { "x": 0.5, "y": 0.125, "z": 0.5 }, "scale": 0.5 } },
+  "fpHandTransformByType": { "*": { "translation": { "x": -0.3, "y": 0, "z": 0.5 }, "rotation": { "x": 16, "y": -51, "z": 91 }, "origin": { "x": 0.5, "y": 0.125, "z": 0.5 } } },
+  "groundTransform": { "translation": { "x": 0, "y": 0, "z": 0 }, "rotation": { "x": 0, "y": -45, "z": 0 }, "origin": { "x": 0.5, "y": 0, "z": 0.5 }, "scale": 1 }
+}
