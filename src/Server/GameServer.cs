@@ -173,6 +173,8 @@ namespace RPVoiceChat.Server
                     continue;
                 }
 
+                // TODO: Decide whether we keep this exclusion or keep a different
+                // approach (e.g. attenuation handling) for the emitter.
                 if (packet.PlayerId == player.PlayerUID)
                 {
                     continue;

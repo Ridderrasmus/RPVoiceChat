@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.Util;
 using Vintagestory.API.Client;
@@ -10,7 +11,13 @@ namespace RPVoiceChat.Gui
         private readonly BlockEntityTelephone telephoneBlock;
         private GuiElementTextInput numberInput;
         private GuiElementDropDown targetDropDown;
+        private GuiElementDynamicText statusTextElem;
+        private GuiElement actionButtonElem;
         private string pendingNumber = "";
+        private string actionButtonLangKey = "Telephone.Gui.Call";
+        private bool actionButtonInteractive = true;
+        private bool managedBySwitchboard;
+        private bool canEditManagedOptions;
 
         public TelephoneMenuDialog(ICoreClientAPI capi, BlockEntityTelephone telephoneBlock) : base(capi)
         {
@@ -20,7 +27,14 @@ namespace RPVoiceChat.Gui
         public override void OnGuiOpened()
         {
             base.OnGuiOpened();
+            BuildComposer();
+            pendingNumber = telephoneBlock.GetPhoneNumber();
+            numberInput?.SetValue(pendingNumber);
+            RefreshData();
+        }
 
+        private void BuildComposer()
+        {
             ElementBounds dialogBounds = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.CenterMiddle);
             ElementBounds statusBounds = ElementBounds.Fixed(0, 35, 420, 18);
             ElementBounds numberLabelBounds = ElementBounds.Fixed(0, 62, 420, 18);
@@ -32,46 +46,81 @@ namespace RPVoiceChat.Gui
 
             ElementBounds bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
             bgBounds.BothSizing = ElementSizing.FitToChildren;
-            bgBounds.WithChildren(
-                statusBounds,
-                numberLabelBounds,
-                numberInputBounds,
-                numberSaveBounds,
-                targetLabelBounds,
-                targetDropDownBounds,
-                callButtonBounds
-            );
+            managedBySwitchboard = telephoneBlock.IsManagedBySwitchboard();
+            canEditManagedOptions = managedBySwitchboard && telephoneBlock.CanCompose();
+            if (managedBySwitchboard)
+            {
+                bgBounds.WithChildren(
+                    statusBounds,
+                    numberLabelBounds,
+                    numberInputBounds,
+                    numberSaveBounds,
+                    targetLabelBounds,
+                    targetDropDownBounds,
+                    callButtonBounds
+                );
+            }
+            else
+            {
+                bgBounds.WithChildren(
+                    statusBounds,
+                    callButtonBounds
+                );
+            }
 
-            string statusText = telephoneBlock.CanCompose()
-                ? UIUtils.I18n("Telephone.Gui.ComposeReady")
-                : UIUtils.I18n(telephoneBlock.GetComposeDisabledReasonLangKey());
+            actionButtonLangKey = ResolveActionButtonLangKey();
+            actionButtonInteractive = !telephoneBlock.IsWaitingForAnswer();
 
-            SingleComposer = capi.Gui.CreateCompo("telephonemenu", dialogBounds)
+            var composer = capi.Gui.CreateCompo("telephonemenu", dialogBounds)
                 .AddShadedDialogBG(bgBounds)
                 .AddDialogTitleBar(UIUtils.I18n("Telephone.Gui.Title"), OnTitleBarCloseClicked)
-                .AddStaticText(statusText, CairoFont.WhiteSmallText(), statusBounds)
-                .AddStaticText(UIUtils.I18n("Telephone.Gui.Number"), CairoFont.WhiteSmallText(), numberLabelBounds)
-                .AddTextInput(numberInputBounds, OnNumberInputChanged, CairoFont.TextInput(), "telephoneNumberInput")
-                .AddSmallButton(UIUtils.I18n("Telephone.Gui.Save"), OnSaveNumberClicked, numberSaveBounds)
-                .AddStaticText(UIUtils.I18n("Telephone.Gui.Target"), CairoFont.WhiteSmallText(), targetLabelBounds)
-                .AddDropDown(new[] { "" }, new[] { UIUtils.I18n("Telephone.Gui.AutoOrNone") }, 0, OnTargetSelected, targetDropDownBounds, "telephoneTargetDropdown")
-                .AddSmallButton(UIUtils.I18n("Telephone.Gui.Call"), OnCallClicked, callButtonBounds)
-                .Compose();
+                .AddDynamicText(ResolveStatusText(), CairoFont.WhiteSmallText(), statusBounds, "telephoneStatusText");
+
+            if (managedBySwitchboard)
+            {
+                if (canEditManagedOptions)
+                {
+                    composer = composer
+                        .AddStaticText(UIUtils.I18n("Telephone.Gui.Number"), CairoFont.WhiteSmallText(), numberLabelBounds)
+                        .AddTextInput(numberInputBounds, OnNumberInputChanged, CairoFont.TextInput(), "telephoneNumberInput")
+                        .AddSmallButton(UIUtils.I18n("Telephone.Gui.Save"), OnSaveNumberClicked, numberSaveBounds)
+                        .AddStaticText(UIUtils.I18n("Telephone.Gui.Target"), CairoFont.WhiteSmallText(), targetLabelBounds)
+                        .AddDropDown(new[] { "" }, new[] { UIUtils.I18n("Telephone.Gui.AutoOrNone") }, 0, OnTargetSelected, targetDropDownBounds, "telephoneTargetDropdown");
+                }
+                else
+                {
+                    composer = composer
+                        .AddStaticText(UIUtils.I18n("Telephone.Gui.NumberReadOnly", telephoneBlock.GetPhoneNumber()), CairoFont.WhiteSmallText(), numberInputBounds)
+                        .AddStaticText(UIUtils.I18n("Telephone.Gui.TargetReadOnly", telephoneBlock.GetTargetNumber()), CairoFont.WhiteSmallText(), targetDropDownBounds);
+                }
+            }
+
+            // Always bind the same click handler so transitions (Call <-> Hang up) keep working.
+            // Waiting state is still guarded by OnCallClicked and visual enabled-state toggling.
+            composer.AddSmallButton(UIUtils.I18n(actionButtonLangKey), OnCallClicked, callButtonBounds, key: "telephoneActionButton");
+
+            SingleComposer = composer.Compose();
 
             numberInput = SingleComposer.GetElement("telephoneNumberInput") as GuiElementTextInput;
             targetDropDown = SingleComposer.GetElement("telephoneTargetDropdown") as GuiElementDropDown;
-
-            pendingNumber = telephoneBlock.GetPhoneNumber();
-            numberInput?.SetValue(pendingNumber);
-            RefreshData();
+            statusTextElem = SingleComposer.GetDynamicText("telephoneStatusText");
+            actionButtonElem = SingleComposer.GetElement("telephoneActionButton");
         }
 
         public void RefreshData()
         {
             if (SingleComposer == null) return;
 
+            if (!canEditManagedOptions || numberInput == null || targetDropDown == null)
+            {
+                RefreshActionUi();
+                return;
+            }
+
+            RefreshActionUi();
+
             pendingNumber = telephoneBlock.GetPhoneNumber();
-            numberInput?.SetValue(pendingNumber);
+            numberInput.SetValue(pendingNumber);
 
             string[] numbers = telephoneBlock.GetAvailableTargetNumbers();
             string[] values = new string[numbers.Length + 1];
@@ -86,12 +135,31 @@ namespace RPVoiceChat.Gui
                     ? $"{numbers[i]} {UIUtils.I18n("Telephone.Gui.TargetBusySuffix")}"
                     : numbers[i];
             }
-            targetDropDown?.SetList(values, names);
+            targetDropDown.SetList(values, names);
 
             string currentTarget = telephoneBlock.GetTargetNumber() ?? "";
             int selected = Array.IndexOf(values, currentTarget);
             if (selected < 0) selected = 0;
-            targetDropDown?.SetSelectedIndex(selected);
+            targetDropDown.SetSelectedIndex(selected);
+        }
+
+        private void RefreshActionUi()
+        {
+            statusTextElem?.SetNewText(ResolveStatusText());
+
+            string desiredButton = ResolveActionButtonLangKey();
+            bool shouldBeInteractive = !telephoneBlock.IsWaitingForAnswer();
+            if (desiredButton != actionButtonLangKey)
+            {
+                actionButtonLangKey = desiredButton;
+                TrySetActionButtonText(UIUtils.I18n(actionButtonLangKey));
+            }
+
+            if (shouldBeInteractive != actionButtonInteractive)
+            {
+                actionButtonInteractive = shouldBeInteractive;
+                TrySetActionButtonEnabled(actionButtonInteractive);
+            }
         }
 
         public override string ToggleKeyCombinationCode => null;
@@ -101,11 +169,26 @@ namespace RPVoiceChat.Gui
             TryClose();
         }
 
+        public override void OnGuiClosed()
+        {
+            base.OnGuiClosed();
+            if (telephoneBlock.IsCallSessionActive())
+            {
+                telephoneBlock.RequestEndCall();
+            }
+        }
+
         private void OnNumberInputChanged(string value)
         {
-            if (telephoneBlock.IsManagedBySwitchboard() && !telephoneBlock.CanCompose())
+            if (!canEditManagedOptions)
             {
-                numberInput?.SetValue(telephoneBlock.GetPhoneNumber());
+                return;
+            }
+
+            if (telephoneBlock.IsCallSessionActive())
+            {
+                // Never call SetValue from inside the text-changed callback.
+                // Doing so can recurse through the same callback path and overflow the stack.
                 return;
             }
 
@@ -116,21 +199,21 @@ namespace RPVoiceChat.Gui
 
         private bool OnSaveNumberClicked()
         {
-            if (telephoneBlock.IsManagedBySwitchboard() && !telephoneBlock.CanCompose())
+            if (!canEditManagedOptions)
             {
-                capi?.TriggerIngameError(this, "telephone-number-disabled", UIUtils.I18n(telephoneBlock.GetComposeDisabledReasonLangKey()));
                 return true;
             }
 
-            if (telephoneBlock.IsManagedBySwitchboard())
+            if (telephoneBlock.IsCallSessionActive())
             {
-                foreach (string existing in telephoneBlock.GetAvailableTargetNumbers())
+                return true;
+            }
+            foreach (string existing in telephoneBlock.GetAvailableTargetNumbers())
+            {
+                if (string.Equals(existing, pendingNumber, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (string.Equals(existing, pendingNumber, StringComparison.OrdinalIgnoreCase))
-                    {
-                        capi?.TriggerIngameError(this, "telephone-number-used", UIUtils.I18n("Telegraph.Settings.NameAlreadyUsed"));
-                        return true;
-                    }
+                    capi?.TriggerIngameError(this, "telephone-number-used", UIUtils.I18n("Telegraph.Settings.NameAlreadyUsed"));
+                    return true;
                 }
             }
 
@@ -141,7 +224,11 @@ namespace RPVoiceChat.Gui
         private void OnTargetSelected(string value, bool selected)
         {
             if (!selected) return;
-            if (telephoneBlock.IsManagedBySwitchboard() && !telephoneBlock.CanCompose())
+            if (!canEditManagedOptions)
+            {
+                return;
+            }
+            if (telephoneBlock.IsCallSessionActive())
             {
                 RefreshData();
                 return;
@@ -151,6 +238,23 @@ namespace RPVoiceChat.Gui
 
         private bool OnCallClicked()
         {
+            if (telephoneBlock.IsWaitingForAnswer())
+            {
+                return true;
+            }
+
+            if (telephoneBlock.IsInCall())
+            {
+                telephoneBlock.RequestEndCall();
+                return true;
+            }
+
+            if (telephoneBlock.HasIncomingCall())
+            {
+                telephoneBlock.RequestStartCall();
+                return true;
+            }
+
             string failureLangKey = telephoneBlock.GetCallFailureLangKeyForUi();
             if (!string.IsNullOrWhiteSpace(failureLangKey))
             {
@@ -161,5 +265,91 @@ namespace RPVoiceChat.Gui
             telephoneBlock.RequestStartCall();
             return true;
         }
+
+        private void TrySetActionButtonText(string text)
+        {
+            if (actionButtonElem == null || string.IsNullOrEmpty(text))
+            {
+                return;
+            }
+
+            Type type = actionButtonElem.GetType();
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+            try
+            {
+                MethodInfo setNewText = type.GetMethod("SetNewText", flags, null, new[] { typeof(string) }, null);
+                if (setNewText != null)
+                {
+                    setNewText.Invoke(actionButtonElem, new object[] { text });
+                    return;
+                }
+
+                MethodInfo setText = type.GetMethod("SetText", flags, null, new[] { typeof(string) }, null);
+                if (setText != null)
+                {
+                    setText.Invoke(actionButtonElem, new object[] { text });
+                }
+            }
+            catch
+            {
+                // Ignore API differences; button remains functional even without runtime label update.
+            }
+        }
+
+        private void TrySetActionButtonEnabled(bool enabled)
+        {
+            if (actionButtonElem == null)
+            {
+                return;
+            }
+
+            Type type = actionButtonElem.GetType();
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+            try
+            {
+                PropertyInfo enabledProp = type.GetProperty("Enabled", flags);
+                if (enabledProp != null && enabledProp.PropertyType == typeof(bool) && enabledProp.CanWrite)
+                {
+                    enabledProp.SetValue(actionButtonElem, enabled);
+                    return;
+                }
+
+                FieldInfo enabledField = type.GetField("Enabled", flags);
+                if (enabledField != null && enabledField.FieldType == typeof(bool))
+                {
+                    enabledField.SetValue(actionButtonElem, enabled);
+                }
+            }
+            catch
+            {
+                // Ignore API differences; click handler still guards state transitions.
+            }
+        }
+
+        private string ResolveActionButtonLangKey()
+        {
+            if (telephoneBlock.IsInCall()) return "Telephone.Gui.Hangup";
+            if (telephoneBlock.HasIncomingCall()) return "Telephone.Gui.Answer";
+            if (telephoneBlock.IsWaitingForAnswer()) return "Telephone.Gui.Waiting";
+            return "Telephone.Gui.Call";
+        }
+
+        private string ResolveStatusText()
+        {
+            if (telephoneBlock.IsInCall()) return UIUtils.I18n("Telephone.Gui.InCall");
+            if (telephoneBlock.HasIncomingCall()) return UIUtils.I18n("Telephone.Gui.IncomingCall");
+            if (telephoneBlock.IsWaitingForAnswer()) return UIUtils.I18n("Telephone.Gui.WaitingStatus");
+            if (!managedBySwitchboard)
+            {
+                return UIUtils.I18n("Telephone.Gui.DirectModeReady");
+            }
+
+            return telephoneBlock.CanCompose()
+                ? UIUtils.I18n("Telephone.Gui.ComposeReady")
+                : UIUtils.I18n(telephoneBlock.GetComposeDisabledReasonLangKey());
+        }
+
     }
 }
