@@ -19,6 +19,7 @@ namespace RPVoiceChat.GameContent.Block
             api.RegisterBlockClass("signallampblock", typeof(SignalLampBlock));
             api.RegisterBlockClass("bellhammerblock", typeof(BellHammerBlock));
             api.RegisterBlockClass("lucerneblock", typeof(LucerneBlock));
+            api.RegisterBlockClass("switchboardblock", typeof(SwitchboardBlock));
         }
     }
 }

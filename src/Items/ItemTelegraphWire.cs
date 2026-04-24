@@ -36,13 +36,28 @@ namespace RPVoiceChat.GameContent.Items
             // First click
             if (firstNodePos == null)
             {
+                if (node is BEWireNode firstWireNode && !firstWireNode.CanAcceptMoreConnections())
+                {
+                    (byEntity.World.Api as ICoreClientAPI)?.TriggerIngameError(
+                        this,
+                        "wire-max-connections",
+                        UIUtils.I18n("Wire.ConnectionDenied.MaxConnections", firstWireNode.GetMaxConnections())
+                    );
+                    return;
+                }
+
                 firstNodePos = blockSel.Position.Copy();
                 (byEntity.World.Api as ICoreClientAPI)?.TriggerChatMessage(UIUtils.I18n("Wire.StartConnection"));
                 return;
             }
 
             // Second click
-            var firstNode = byEntity.World.BlockAccessor.GetBlockEntity(firstNodePos) as BEWireNode;
+            var firstNode = byEntity.World.BlockAccessor.GetBlockEntity(firstNodePos) as IWireConnectable;
+            if (firstNode == null)
+            {
+                firstNodePos = null;
+                return;
+            }
 
             if (firstNode != null && firstNode != node)
             {
@@ -54,7 +69,50 @@ namespace RPVoiceChat.GameContent.Items
                 else
                 {
                     WireConnection connection = new WireConnection(firstNode, node);
-                    firstNode.Connect(connection); // Connect() method handles adding to network and fusion
+
+                    // Keep item logic generic (IWireConnectable) while still using BEWireNode network logic.
+                    bool connected = false;
+                    string failureLangKey = null;
+                    object[] failureArgs = System.Array.Empty<object>();
+
+                    if (firstNode is BEWireNode firstWireNode)
+                    {
+                        connected = firstWireNode.Connect(connection, out failureLangKey, out failureArgs); // Connect() handles network creation/merge
+                    }
+                    else if (node is BEWireNode secondWireNode)
+                    {
+                        connected = secondWireNode.Connect(connection, out failureLangKey, out failureArgs);
+                    }
+                    else
+                    {
+                        firstNodePos = null;
+                        return;
+                    }
+
+                    if (!connected)
+                    {
+                        if (!string.IsNullOrWhiteSpace(failureLangKey))
+                        {
+                            var capi = byEntity.Api as ICoreClientAPI;
+                            string message = UIUtils.I18n(failureLangKey, failureArgs);
+                            bool isConnectionDenied = failureLangKey.StartsWith("Wire.ConnectionDenied.", System.StringComparison.Ordinal);
+                            if (isConnectionDenied)
+                            {
+                                capi?.TriggerIngameError(this, "wire-connection-denied", message);
+                            }
+                            else
+                            {
+                                capi?.TriggerChatMessage(message);
+                            }
+                        }
+                        else
+                        {
+                            (byEntity.Api as ICoreClientAPI)?.TriggerChatMessage(UIUtils.I18n("Wire.ConnectionFailed"));
+                        }
+                        firstNodePos = null;
+                        return;
+                    }
+
                     (byEntity.Api as ICoreClientAPI)?.TriggerChatMessage(UIUtils.I18n("Wire.ConnectionSuccess"));
 
                     slot.TakeOut(1);

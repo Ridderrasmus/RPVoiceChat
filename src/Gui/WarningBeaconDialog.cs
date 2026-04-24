@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.GameContent.Inventory;
+using RPVoiceChat.Gui.CustomElements;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -21,11 +22,9 @@ namespace RPVoiceChat.Gui
         private readonly BlockEntityLucerne _be;
         private readonly Action _onClose;
         private GuiElement _lightButton;
-        private GuiElementStatbar _progressBar;
+        private LinearGauge _burnGauge;
         private ItemStack _ghostFat;
         private ItemStack _ghostFirewood;
-        private const int ProgressBarSteps = 100;
-
         public WarningBeaconDialog(string title, InventoryLucerne inventory, BlockPos blockPos, ICoreClientAPI capi, BlockEntityLucerne be, Action onClose)
             : base(title, inventory, blockPos, 2, capi)
         {
@@ -63,20 +62,17 @@ namespace RPVoiceChat.Gui
             bgBounds.BothSizing = ElementSizing.FitToChildren;
             bgBounds.WithChildren(slotGridBounds, progressBounds, buttonBounds);
 
-            var progressBar = new GuiElementStatbar(capi, progressBounds, new double[3] { 0.1, 0.4, 0.1 }, false, false);
-            progressBar.ShowValueOnHover = false;
-            progressBar.SetValues(0, 0, ProgressBarSteps);
+            _burnGauge = new LinearGauge(capi, progressBounds, false);
 
             SingleComposer = capi.Gui.CreateCompo("warningbeacon", dialogBounds)
                 .AddShadedDialogBG(bgBounds)
                 .AddDialogTitleBar(_title, () => { TryClose(); })
                 .AddItemSlotGrid(Inventory, SendInvPacket, 2, slotGridBounds, "slots")
-                .AddInteractiveElement(progressBar, "progressBar")
+                .AddInteractiveElement(_burnGauge.Element, "progressBar")
                 .AddDynamicText("", CairoFont.WhiteSmallText().WithFontSize(14).WithOrientation(EnumTextOrientation.Center), progressBounds.FlatCopy(), "hoursLabel")
                 .AddButton(Lang.Get(RPVoiceChatMod.modID + ":WarningBeacon.LightButton") ?? "Allumer", () => { OnLightClicked(); return true; }, buttonBounds, EnumButtonStyle.Normal, "lightButton")
                 .Compose();
 
-            _progressBar = SingleComposer.GetStatbar("progressBar");
             _lightButton = SingleComposer.GetButton("lightButton");
 
             var world = capi.World;
@@ -128,8 +124,7 @@ namespace RPVoiceChat.Gui
             double fillRatio = be.IsBurning
                 ? Math.Max(0, Math.Min(1, remainingHours / BlockEntityLucerne.BurnDurationGameHours))
                 : 0;
-            if (_progressBar != null)
-                _progressBar.SetValue((int)(fillRatio * ProgressBarSteps));
+            _burnGauge?.SetRatio01((float)fillRatio);
 
             var hoursLabel = SingleComposer?.GetDynamicText("hoursLabel");
             if (hoursLabel != null)

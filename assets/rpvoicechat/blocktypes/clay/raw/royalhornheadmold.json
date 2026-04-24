@@ -14,26 +14,26 @@
   "attributesByType": {
     "royalhornheadmold-red-raw-*": {
       "beehivekiln": {
-        "0": { "type": "block", "code": "royalhornheadmold-tan-fired-{tooltype}" },
-        "1": { "type": "block", "code": "royalhornheadmold-orange-fired-{tooltype}" },
-        "2": { "type": "block", "code": "royalhornheadmold-red-fired-{tooltype}" },
-        "3": { "type": "block", "code": "royalhornheadmold-brown-fired-{tooltype}" }
+        "0": { "type": "block", "code": "rpvoicechat:royalhornheadmold-tan-fired-{tooltype}" },
+        "1": { "type": "block", "code": "rpvoicechat:royalhornheadmold-orange-fired-{tooltype}" },
+        "2": { "type": "block", "code": "rpvoicechat:royalhornheadmold-red-fired-{tooltype}" },
+        "3": { "type": "block", "code": "rpvoicechat:royalhornheadmold-brown-fired-{tooltype}" }
       }
     },
     "royalhornheadmold-blue-raw-*": {
       "beehivekiln": {
-        "0": { "type": "block", "code": "royalhornheadmold-cream-fired-{tooltype}" },
-        "1": { "type": "block", "code": "royalhornheadmold-gray-fired-{tooltype}" },
-        "2": { "type": "block", "code": "royalhornheadmold-black-fired-{tooltype}" },
-        "3": { "type": "block", "code": "royalhornheadmold-black-fired-{tooltype}" }
+        "0": { "type": "block", "code": "rpvoicechat:royalhornheadmold-cream-fired-{tooltype}" },
+        "1": { "type": "block", "code": "rpvoicechat:royalhornheadmold-gray-fired-{tooltype}" },
+        "2": { "type": "block", "code": "rpvoicechat:royalhornheadmold-black-fired-{tooltype}" },
+        "3": { "type": "block", "code": "rpvoicechat:royalhornheadmold-black-fired-{tooltype}" }
       }
     },
     "royalhornheadmold-fire-raw-*": {
       "beehivekiln": {
-        "0": { "type": "block", "code": "royalhornheadmold-fire-fired-{tooltype}" },
-        "1": { "type": "block", "code": "royalhornheadmold-fire-fired-{tooltype}" },
-        "2": { "type": "block", "code": "royalhornheadmold-fire-fired-{tooltype}" },
-        "3": { "type": "block", "code": "royalhornheadmold-fire-fired-{tooltype}" }
+        "0": { "type": "block", "code": "rpvoicechat:royalhornheadmold-fire-fired-{tooltype}" },
+        "1": { "type": "block", "code": "rpvoicechat:royalhornheadmold-fire-fired-{tooltype}" },
+        "2": { "type": "block", "code": "rpvoicechat:royalhornheadmold-fire-fired-{tooltype}" },
+        "3": { "type": "block", "code": "rpvoicechat:royalhornheadmold-fire-fired-{tooltype}" }
       }
     }
   },
@@ -43,7 +43,7 @@
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
-      "smeltedStack": { "type": "block", "code": "royalhornheadmold-earthyorange-fired-{tooltype}" },
+      "smeltedStack": { "type": "block", "code": "rpvoicechat:royalhornheadmold-earthyorange-fired-{tooltype}" },
       "requiresContainer": false
     },
     "royalhornheadmold-blue-raw-*": {
@@ -51,7 +51,7 @@
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
-      "smeltedStack": { "type": "block", "code": "royalhornheadmold-blue-fired-{tooltype}" },
+      "smeltedStack": { "type": "block", "code": "rpvoicechat:royalhornheadmold-blue-fired-{tooltype}" },
       "requiresContainer": false
     },
     "royalhornheadmold-fire-raw-*": {
@@ -59,7 +59,7 @@
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
-      "smeltedStack": { "type": "block", "code": "royalhornheadmold-fire-fired-{tooltype}" },
+      "smeltedStack": { "type": "block", "code": "rpvoicechat:royalhornheadmold-fire-fired-{tooltype}" },
       "requiresContainer": false
     }
   },

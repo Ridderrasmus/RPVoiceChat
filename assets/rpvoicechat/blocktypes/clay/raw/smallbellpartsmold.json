@@ -13,26 +13,26 @@
   "attributesByType": {
     "smallbellpartsmold-red-raw-*": {
       "beehivekiln": {
-        "0": { "type": "block", "code": "smallbellpartsmold-tan-fired-{tooltype}" },
-        "1": { "type": "block", "code": "smallbellpartsmold-orange-fired-{tooltype}" },
-        "2": { "type": "block", "code": "smallbellpartsmold-red-fired-{tooltype}" },
-        "3": { "type": "block", "code": "smallbellpartsmold-brown-fired-{tooltype}" }
+        "0": { "type": "block", "code": "rpvoicechat:smallbellpartsmold-tan-fired-{tooltype}" },
+        "1": { "type": "block", "code": "rpvoicechat:smallbellpartsmold-orange-fired-{tooltype}" },
+        "2": { "type": "block", "code": "rpvoicechat:smallbellpartsmold-red-fired-{tooltype}" },
+        "3": { "type": "block", "code": "rpvoicechat:smallbellpartsmold-brown-fired-{tooltype}" }
       }
     },
     "smallbellpartsmold-blue-raw-*": {
       "beehivekiln": {
-        "0": { "type": "block", "code": "smallbellpartsmold-cream-fired-{tooltype}" },
-        "1": { "type": "block", "code": "smallbellpartsmold-gray-fired-{tooltype}" },
-        "2": { "type": "block", "code": "smallbellpartsmold-black-fired-{tooltype}" },
-        "3": { "type": "block", "code": "smallbellpartsmold-black-fired-{tooltype}" }
+        "0": { "type": "block", "code": "rpvoicechat:smallbellpartsmold-cream-fired-{tooltype}" },
+        "1": { "type": "block", "code": "rpvoicechat:smallbellpartsmold-gray-fired-{tooltype}" },
+        "2": { "type": "block", "code": "rpvoicechat:smallbellpartsmold-black-fired-{tooltype}" },
+        "3": { "type": "block", "code": "rpvoicechat:smallbellpartsmold-black-fired-{tooltype}" }
       }
     },
     "smallbellpartsmold-fire-raw-*": {
       "beehivekiln": {
-        "0": { "type": "block", "code": "smallbellpartsmold-fire-fired-{tooltype}" },
-        "1": { "type": "block", "code": "smallbellpartsmold-fire-fired-{tooltype}" },
-        "2": { "type": "block", "code": "smallbellpartsmold-fire-fired-{tooltype}" },
-        "3": { "type": "block", "code": "smallbellpartsmold-fire-fired-{tooltype}" }
+        "0": { "type": "block", "code": "rpvoicechat:smallbellpartsmold-fire-fired-{tooltype}" },
+        "1": { "type": "block", "code": "rpvoicechat:smallbellpartsmold-fire-fired-{tooltype}" },
+        "2": { "type": "block", "code": "rpvoicechat:smallbellpartsmold-fire-fired-{tooltype}" },
+        "3": { "type": "block", "code": "rpvoicechat:smallbellpartsmold-fire-fired-{tooltype}" }
       }
     }
   },
@@ -42,7 +42,7 @@
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
-      "smeltedStack": { "type": "block", "code": "smallbellpartsmold-earthyorange-fired-{tooltype}" },
+      "smeltedStack": { "type": "block", "code": "rpvoicechat:smallbellpartsmold-earthyorange-fired-{tooltype}" },
       "requiresContainer": false
     },
     "smallbellpartsmold-blue-raw-*": {
@@ -50,7 +50,7 @@
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
-      "smeltedStack": { "type": "block", "code": "smallbellpartsmold-blue-fired-{tooltype}" },
+      "smeltedStack": { "type": "block", "code": "rpvoicechat:smallbellpartsmold-blue-fired-{tooltype}" },
       "requiresContainer": false
     },
     "smallbellpartsmold-fire-raw-*": {
@@ -58,7 +58,7 @@
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
-      "smeltedStack": { "type": "block", "code": "smallbellpartsmold-fire-fired-{tooltype}" },
+      "smeltedStack": { "type": "block", "code": "rpvoicechat:smallbellpartsmold-fire-fired-{tooltype}" },
       "requiresContainer": false
     }
   },

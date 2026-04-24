@@ -40,6 +40,7 @@ namespace RPVoiceChat.GameContent.Items
             foreach (var connection in connections)
             {
                 BEWireNode other = connection.GetOtherNode(wireNode);
+
                 if (other != null)
                 {
                     other.RemoveConnection(connection);

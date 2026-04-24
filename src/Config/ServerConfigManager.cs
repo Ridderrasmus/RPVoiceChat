@@ -30,6 +30,12 @@ namespace RPVoiceChat.Config
         public static double BellRingCooldownSeconds => Config?.BellRingCooldownSeconds ?? 1.5;
         public static bool TelegraphGenuineMorseCharacters => Config?.TelegraphGenuineMorseCharacters ?? false;
         public static int TelegraphMessageDeletionDelaySeconds => Config?.TelegraphMessageDeletionDelaySeconds ?? 10;
+        public static int TelegraphNetworkMinPowerPercent => Config?.TelegraphNetworkMinPowerPercent ?? 10;
+        public static int TelegraphNetworkMaxEndpoints => Config?.TelegraphNetworkMaxEndpoints ?? 8;
+        public static int TelephoneNetworkMinPowerPercent => Config?.TelephoneNetworkMinPowerPercent ?? 25;
+        public static int TelephoneNetworkMaxEndpoints => Config?.TelephoneNetworkMaxEndpoints ?? 16;
+        public static int RadioNetworkMinPowerPercent => Config?.RadioNetworkMinPowerPercent ?? 50;
+        public static int RadioNetworkMaxEndpoints => Config?.RadioNetworkMaxEndpoints ?? 16;
 
         // Sound Emitting Objects Range Settings
         public static int HandbellAudibleDistance => Config?.HandbellAudibleDistance ?? 16;
@@ -101,6 +107,42 @@ namespace RPVoiceChat.Config
             {
                 Logger.server.Warning($"TelegraphMessageDeletionDelaySeconds ({TelegraphMessageDeletionDelaySeconds}) should be between 1 and 300. Using default (10).");
                 Config.TelegraphMessageDeletionDelaySeconds = 10;
+            }
+
+            if (TelegraphNetworkMinPowerPercent < 0 || TelegraphNetworkMinPowerPercent > 100)
+            {
+                Logger.server.Warning($"TelegraphNetworkMinPowerPercent ({TelegraphNetworkMinPowerPercent}) should be between 0 and 100. Using default (10).");
+                Config.TelegraphNetworkMinPowerPercent = 10;
+            }
+
+            if (TelephoneNetworkMinPowerPercent < 0 || TelephoneNetworkMinPowerPercent > 100)
+            {
+                Logger.server.Warning($"TelephoneNetworkMinPowerPercent ({TelephoneNetworkMinPowerPercent}) should be between 0 and 100. Using default (25).");
+                Config.TelephoneNetworkMinPowerPercent = 25;
+            }
+
+            if (RadioNetworkMinPowerPercent < 0 || RadioNetworkMinPowerPercent > 100)
+            {
+                Logger.server.Warning($"RadioNetworkMinPowerPercent ({RadioNetworkMinPowerPercent}) should be between 0 and 100. Using default (50).");
+                Config.RadioNetworkMinPowerPercent = 50;
+            }
+
+            if (TelegraphNetworkMaxEndpoints < 1 || TelegraphNetworkMaxEndpoints > 256)
+            {
+                Logger.server.Warning($"TelegraphNetworkMaxEndpoints ({TelegraphNetworkMaxEndpoints}) should be between 1 and 256. Using default (8).");
+                Config.TelegraphNetworkMaxEndpoints = 8;
+            }
+
+            if (TelephoneNetworkMaxEndpoints < 1 || TelephoneNetworkMaxEndpoints > 256)
+            {
+                Logger.server.Warning($"TelephoneNetworkMaxEndpoints ({TelephoneNetworkMaxEndpoints}) should be between 1 and 256. Using default (16).");
+                Config.TelephoneNetworkMaxEndpoints = 16;
+            }
+
+            if (RadioNetworkMaxEndpoints < 1 || RadioNetworkMaxEndpoints > 256)
+            {
+                Logger.server.Warning($"RadioNetworkMaxEndpoints ({RadioNetworkMaxEndpoints}) should be between 1 and 256. Using default (16).");
+                Config.RadioNetworkMaxEndpoints = 16;
             }
 
             // Sound emitting objects range validation

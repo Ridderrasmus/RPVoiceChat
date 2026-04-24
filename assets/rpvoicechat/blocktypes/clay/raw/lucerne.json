@@ -32,26 +32,26 @@
   "attributesByType": {
     "lucerne-red-raw-*": {
       "beehivekiln": {
-        "0": { "type": "block", "code": "lucerne-tan-fired-{side}" },
-        "1": { "type": "block", "code": "lucerne-orange-fired-{side}" },
-        "2": { "type": "block", "code": "lucerne-red-fired-{side}" },
-        "3": { "type": "block", "code": "lucerne-brown-fired-{side}" }
+        "0": { "type": "block", "code": "rpvoicechat:lucerne-tan-fired-{side}" },
+        "1": { "type": "block", "code": "rpvoicechat:lucerne-orange-fired-{side}" },
+        "2": { "type": "block", "code": "rpvoicechat:lucerne-red-fired-{side}" },
+        "3": { "type": "block", "code": "rpvoicechat:lucerne-brown-fired-{side}" }
       }
     },
     "lucerne-blue-raw-*": {
       "beehivekiln": {
-        "0": { "type": "block", "code": "lucerne-cream-fired-{side}" },
-        "1": { "type": "block", "code": "lucerne-gray-fired-{side}" },
-        "2": { "type": "block", "code": "lucerne-black-fired-{side}" },
-        "3": { "type": "block", "code": "lucerne-black-fired-{side}" }
+        "0": { "type": "block", "code": "rpvoicechat:lucerne-cream-fired-{side}" },
+        "1": { "type": "block", "code": "rpvoicechat:lucerne-gray-fired-{side}" },
+        "2": { "type": "block", "code": "rpvoicechat:lucerne-black-fired-{side}" },
+        "3": { "type": "block", "code": "rpvoicechat:lucerne-black-fired-{side}" }
       }
     },
     "lucerne-fire-raw-*": {
       "beehivekiln": {
-        "0": { "type": "block", "code": "lucerne-fire-fired-{side}" },
-        "1": { "type": "block", "code": "lucerne-fire-fired-{side}" },
-        "2": { "type": "block", "code": "lucerne-fire-fired-{side}" },
-        "3": { "type": "block", "code": "lucerne-fire-fired-{side}" }
+        "0": { "type": "block", "code": "rpvoicechat:lucerne-fire-fired-{side}" },
+        "1": { "type": "block", "code": "rpvoicechat:lucerne-fire-fired-{side}" },
+        "2": { "type": "block", "code": "rpvoicechat:lucerne-fire-fired-{side}" },
+        "3": { "type": "block", "code": "rpvoicechat:lucerne-fire-fired-{side}" }
       }
     }
   },
@@ -61,7 +61,7 @@
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
-      "smeltedStack": { "type": "block", "code": "lucerne-earthyorange-fired-{side}" },
+      "smeltedStack": { "type": "block", "code": "rpvoicechat:lucerne-earthyorange-fired-{side}" },
       "requiresContainer": false
     },
     "lucerne-blue-raw-*": {
@@ -69,7 +69,7 @@
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
-      "smeltedStack": { "type": "block", "code": "lucerne-blue-fired-{side}" },
+      "smeltedStack": { "type": "block", "code": "rpvoicechat:lucerne-blue-fired-{side}" },
       "requiresContainer": false
     },
     "lucerne-fire-raw-*": {
@@ -77,7 +77,7 @@
       "meltingDuration": 45,
       "smeltedRatio": 1,
       "smeltingType": "fire",
-      "smeltedStack": { "type": "block", "code": "lucerne-fire-fired-{side}" },
+      "smeltedStack": { "type": "block", "code": "rpvoicechat:lucerne-fire-fired-{side}" },
       "requiresContainer": false
     }
   },

@@ -53,6 +53,16 @@
     "op": "add",
     "path": "/enabled",
     "value": false,
+    "file": "rpvoicechat:blocktypes/switchboard.json",
+    "condition": {
+      "when": "rpvoicechat:telegraph-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
     "file": "rpvoicechat:blocktypes/telegraph.json",
     "condition": {
       "when": "rpvoicechat:additional-content",
@@ -94,6 +104,16 @@
     "path": "/enabled",
     "value": false,
     "file": "rpvoicechat:blocktypes/clay/fired/wirecutterjawmold.json",
+    "condition": {
+      "when": "rpvoicechat:additional-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:blocktypes/switchboard.json",
     "condition": {
       "when": "rpvoicechat:additional-content",
       "isValue": "false"

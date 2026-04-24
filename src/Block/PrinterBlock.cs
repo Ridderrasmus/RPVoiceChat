@@ -19,11 +19,23 @@ public class PrinterBlock : Block
 
     public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
     {
-        BlockEntityPrinter bePrinter = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityPrinter;
-        if (bePrinter != null)
+        if (blockSel == null)
         {
-            return bePrinter.OnPlayerRightClick(byPlayer, blockSel);
+            return false;
         }
+
+        if (world.Side == EnumAppSide.Client)
+        {
+            BlockEntityPrinter bePrinter = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityPrinter;
+            bePrinter?.NotifyClientInventoryOpenIntent();
+        }
+
+        BlockEntityPrinter printer = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityPrinter;
+        if (printer != null)
+        {
+            return printer.OnPlayerRightClick(byPlayer, blockSel);
+        }
+
         return false;
     }
 }
