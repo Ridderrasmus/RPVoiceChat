@@ -1,0 +1,25 @@
+{
+  "code": "speaker",
+  "enabled": true,
+  "class": "speakerblock",
+  "entityClass": "BlockEntitySpeaker",
+  "creativeinventory": {
+    "general": [ "*" ],
+    "rpvoicechat": [ "*" ]
+  },
+  "maxstacksize": 1,
+  "blockmaterial": "wood",
+  "shape": { "base": "game:block/basic/cube" },
+  "textures": {
+    "all": { "base": "game:block/wood/debarked/oak" }
+  },
+  "sounds": {
+    "place": "game:block/planks",
+    "hit": "game:block/planks",
+    "break": "game:block/planks",
+    "walk": "game:walk/wood"
+  },
+  "sidesolid": { "all": true },
+  "sideopaque": { "all": true },
+  "resistance": 1
+}

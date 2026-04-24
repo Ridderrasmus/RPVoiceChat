@@ -4,7 +4,9 @@ using RPVoiceChat.Util;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 
 namespace RPVoiceChat.Server
@@ -23,11 +25,15 @@ namespace RPVoiceChat.Server
         // Stored players and their associated listeners
         private long listenerUpdateTickListener = 0;
         private ConcurrentDictionary<string, HashSet<IPlayer>> playerListeners = new ConcurrentDictionary<string, HashSet<IPlayer>>();
+        private readonly IReadOnlyList<IVoiceRouteProvider> voiceRouteProviders;
 
-        public GameServer(ICoreServerAPI sapi, List<INetworkServer> serverTransports)
+        public GameServer(ICoreServerAPI sapi, List<INetworkServer> serverTransports, IEnumerable<IVoiceRouteProvider> voiceRouteProviders)
         {
             api = sapi;
             _initialTransports = serverTransports;
+            this.voiceRouteProviders = voiceRouteProviders
+                .Where(provider => provider != null)
+                .ToList();
             voiceBanManager = new VoiceBanManager(sapi);
             handshakeChannel = sapi.Network
                 .RegisterChannel("RPVCHandshake")
@@ -138,12 +144,98 @@ namespace RPVoiceChat.Server
                 return;
             }
 
+            if (TryResolveVoiceRoute(packet.PlayerId, out Vec3d emissionPos, out int rangeBlocks))
+            {
+                SendRoutedVoiceAudio(packet, emissionPos, rangeBlocks);
+                return;
+            }
+
             if (!playerListeners.TryGetValue(packet.PlayerId, out var recipients)) return;
 
             foreach (var recipient in recipients)
             {
                 SendPacket(packet, recipient.PlayerUID);
             }
+        }
+
+        private void SendRoutedVoiceAudio(AudioPacket packet, Vec3d emissionPos, int rangeBlocks)
+        {
+            if (emissionPos == null || rangeBlocks <= 0)
+            {
+                return;
+            }
+
+            float maxDistanceSq = rangeBlocks * rangeBlocks;
+            foreach (IServerPlayer player in api.World.AllOnlinePlayers)
+            {
+                if (player?.Entity == null || player.ConnectionState != EnumClientState.Playing)
+                {
+                    continue;
+                }
+
+                if (packet.PlayerId == player.PlayerUID)
+                {
+                    continue;
+                }
+
+                if (player.Entity.Pos.SquareDistanceTo(emissionPos) > maxDistanceSq)
+                {
+                    continue;
+                }
+
+                var routedPacket = CloneAudioPacket(packet);
+                routedPacket.TransmissionRangeBlocks = rangeBlocks;
+                routedPacket.HasSourcePositionOverride = true;
+                routedPacket.SourcePosX = emissionPos.X;
+                routedPacket.SourcePosY = emissionPos.Y;
+                routedPacket.SourcePosZ = emissionPos.Z;
+                SendPacket(routedPacket, player.PlayerUID);
+            }
+        }
+
+        private static AudioPacket CloneAudioPacket(AudioPacket src)
+        {
+            return new AudioPacket
+            {
+                PlayerId = src.PlayerId,
+                AudioData = src.AudioData,
+                Length = src.Length,
+                VoiceLevel = src.VoiceLevel,
+                Frequency = src.Frequency,
+                Format = src.Format,
+                SequenceNumber = src.SequenceNumber,
+                Codec = src.Codec,
+                TransmissionRangeBlocks = src.TransmissionRangeBlocks,
+                EffectiveRange = src.EffectiveRange,
+                IgnoreDistanceReduction = src.IgnoreDistanceReduction,
+                WallThicknessOverride = src.WallThicknessOverride,
+                IsGlobalBroadcast = src.IsGlobalBroadcast,
+                HasSourcePositionOverride = src.HasSourcePositionOverride,
+                SourcePosX = src.SourcePosX,
+                SourcePosY = src.SourcePosY,
+                SourcePosZ = src.SourcePosZ
+            };
+        }
+
+        private bool TryResolveVoiceRoute(string playerUid, out Vec3d emissionPos, out int rangeBlocks)
+        {
+            emissionPos = null;
+            rangeBlocks = 0;
+
+            if (voiceRouteProviders.Count == 0)
+            {
+                return false;
+            }
+
+            foreach (var provider in voiceRouteProviders)
+            {
+                if (provider.TryGetRoute(playerUid, out emissionPos, out rangeBlocks))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void LaunchServers()

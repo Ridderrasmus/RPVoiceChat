@@ -204,6 +204,14 @@ namespace RPVoiceChat.Systems
                     string disabledReason = overCapacity ? "Telegraph.Settings.DisabledCapacity" : "Telegraph.Settings.DisabledNoPower";
                     telegraph.ApplyServerRoutingFlags(managed, advanced, disabledReason);
                 }
+                else if (node is BlockEntityTelephone telephone)
+                {
+                    bool managed = activeEndpointOwners.TryGetValue(telephone, out BlockEntitySwitchboard owner) && owner != null;
+                    bool overCapacity = IsOverCapacityForManagedComponent(network, WireNetworkKind.Telephone);
+                    bool composeEnabled = managed && !overCapacity && owner.HasSufficientPowerFor(WireNetworkKind.Telephone);
+                    string disabledReason = overCapacity ? "Telegraph.Settings.DisabledCapacity" : "Telegraph.Settings.DisabledNoPower";
+                    telephone.ApplyServerComposeFlags(managed, composeEnabled, disabledReason);
+                }
             }
         }
 

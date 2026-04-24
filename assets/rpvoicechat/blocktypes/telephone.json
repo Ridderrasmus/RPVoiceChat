@@ -1,0 +1,76 @@
+{
+  "code": "telephone",
+  "enabled": true,
+  "class": "telephoneblock",
+  "entityClass": "BlockEntityTelephone",
+  "behaviors": [
+    { "name": "HorizontalOrientable" },
+    { "name": "Ringable" }
+  ],
+  "entityBehaviors": [
+    { "name": "BERingable" }
+  ],
+  "creativeinventory": {
+    "general": [ "*-north" ],
+    "rpvoicechat": [ "*-north" ]
+  },
+  "maxstacksize": 1,
+  "blockmaterial": "wood",
+  "variantgroups": [
+    {
+      "code": "wood",
+      "states": [ "aged", "veryaged" ],
+      "loadFromProperties": "block/wood"
+    },
+    {
+      "code": "side",
+      "loadFromProperties": "abstract/horizontalorientation"
+    }
+  ],
+  "shape": {
+    "base": "block/telephone",
+    "rotateYByType": {
+      "*-north": 0,
+      "*-east": 270,
+      "*-west": 90,
+      "*-south": 180
+    }
+  },
+  "sounds": {
+    "place": "game:block/planks",
+    "hit": "game:block/planks",
+    "break": "game:block/planks",
+    "walk": "game:walk/wood"
+  },
+  "textures": {
+    "wood": { "base": "game:block/wood/debarked/{wood}" },
+    "gold": { "base": "game:block/metal/plate/gold" },
+    "copper": { "base": "game:block/metal/plate/copper" },
+    "bakelite": { "base": "game:block/coal/bituminous" }
+  },
+  "rainPermeable": false,
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "lightAbsorption": 15,
+  "resistance": 1,
+  "attributes": {
+    "handbook": {
+      "groupBy": [ "telephone-*" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-telephone.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-telephone.Text"
+        }
+      ]
+    }
+  },
+  "guiTransform": {
+    "translation": { "x": 0, "y": -10, "z": 0 },
+    "rotation": { "x": -22.6, "y": -45, "z": 0 },
+    "scale": 1.16
+  }
+}
