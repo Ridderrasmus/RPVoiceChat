@@ -347,6 +347,18 @@ namespace RPVoiceChat.Systems
             int telegraphCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Telegraph);
             int telephoneCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Telephone);
             int radioCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Radio);
+            int activeKinds = 0;
+            if (telegraphCount > 0) activeKinds++;
+            if (telephoneCount > 0) activeKinds++;
+            if (radioCount > 0) activeKinds++;
+
+            // Dedicated networks: never mix telegraph/telephone/radio in the same connected component.
+            // This applies with and without switchboard.
+            if (activeKinds > 1)
+            {
+                denialLangKey = "Wire.ConnectionDenied.MixedTypes";
+                return false;
+            }
 
             if (!hasSwitchboard)
             {
@@ -369,17 +381,6 @@ namespace RPVoiceChat.Systems
                 }
 
                 return true;
-            }
-
-            int activeKinds = 0;
-            if (telegraphCount > 0) activeKinds++;
-            if (telephoneCount > 0) activeKinds++;
-            if (radioCount > 0) activeKinds++;
-
-            if (activeKinds > 1)
-            {
-                denialLangKey = "Wire.ConnectionDenied.MixedTypes";
-                return false;
             }
 
             WireNetworkKind targetKind = ResolveProspectiveKind(telegraphCount, telephoneCount, radioCount);
