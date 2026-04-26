@@ -348,6 +348,7 @@
   "Gui.AudioWizardDialog.FirstParagraph": "Bienvenue dans l'assistant de configuration audio, il vous aidera à configurer votre périphérique d'entrée. Vous devriez être en mesure de vous entendre dès maintenant. Si ce n'est pas le cas, assurez-vous que c'est votre appareil :",
   "Gui.AudioWizardDialog.SecondParagraph": "Configurons votre volume d'enregistrement. Appuyez sur le bouton ci-dessous et commencez à parler comme vous le feriez normalement. Continuez à parler jusqu'à ce que la barre de progression soit remplie. Ne vous inquiétez pas : les autres joueurs ne peuvent pas vous entendre pour le moment.",
   "Gui.AudioWizardDialog.Done": "Terminé ! Votre volume d'enregistrement a été automatiquement calibré, bon jeu ~",
+  "Gui.AudioWizardDialog.NoInputData": "Impossible de calibrer : aucun signal micro détecté. Vérifiez le périphérique d'entrée et ses autorisations.",
   "Gui.Button.NotNow": "Plus tard",
   "Gui.Button.Sure": "Bien sûr",
   "Gui.FirstLaunchDialog.TitleBar": "Bienvenue sur RPVoiceChat !",
