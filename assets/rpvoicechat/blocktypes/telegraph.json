@@ -7,8 +7,7 @@
     { "name": "HorizontalOrientable" }
   ],
   "entityBehaviors": [
-    { "name": "Animatable" },
-    { "name": "BEAnimatable", "properties": { "animationCodes": "click" } }
+    { "name": "Animatable" }
   ],
   "creativeinventory": {
     "general": [ "*-north" ],

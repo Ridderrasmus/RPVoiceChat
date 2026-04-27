@@ -10,6 +10,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
+using Vintagestory.GameContent;
 using Vintagestory.GameContent.Mechanics;
 using RPVoiceChat.Util;
 
@@ -22,6 +23,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
     /// </summary>
     public class BlockEntityBellHammer : Vintagestory.API.Common.BlockEntity
     {
+        private const string StrikeAnimationCode = "strike";
+        private const string GearAnimationCode = "gear";
         /// <summary>Minimum rotational speed (TrueSpeed) required to operate, same as Quern logic.</summary>
         public const float MinSpeedThreshold = 0.25f;
         /// <summary>Strikes per in-game hour at minimum speed (25%).</summary>
@@ -37,10 +40,13 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private bool _hadBellLastTick;
         private long _animationEndCallbackId = -1;
         private int _lastSyncedPowerPercent = -1;
-        private bool _lastGearActive;
+        private int _strikeSequence;
+        private int _clientLastStrikeSequence = -1;
+        private bool _syncedGearActive;
         private RotatingMechPartRenderer? _mechPartRenderer;
 
-        private BEBehaviorAnimatable Animatable => GetBehavior<BEBehaviorAnimatable>();
+        private Vintagestory.GameContent.BEBehaviorAnimatable? Animatable => GetBehavior<Vintagestory.GameContent.BEBehaviorAnimatable>();
+        private BlockEntityAnimationUtil? AnimUtil => Animatable?.animUtil;
 
         public bool Enabled => _enabled;
         public float PowerPercent { get; private set; }
@@ -62,7 +68,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 float rotDeg = Block?.Variant?.TryGetValue("side", out var side) == true
                     ? side switch { "north" => 90f, "east" => 0f, "south" => 270f, "west" => 180f, _ => 0f }
                     : 0f;
-                Animatable?.InitializeAnimatorWithRotation(shapePath, rotDeg);
+                InitializeClientAnimator(shapePath, rotDeg);
 
                 if (api is ICoreClientAPI capi)
                 {
@@ -84,7 +90,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tesselator)
         {
             if (Block == null) return false;
-            if (Animatable?.HasActiveAnimations() == true)
+            if (AnimUtil?.activeAnimationsByAnimCode?.Count > 0 ||
+                (AnimUtil?.animator != null && AnimUtil.animator.ActiveAnimationCount > 0))
             {
                 // Avoid a second static copy while Animatable renders the animated mesh.
                 return true;
@@ -149,6 +156,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
             base.ToTreeAttributes(tree);
             tree.SetBool("enabled", _enabled);
             tree.SetFloat("powerPercent", PowerPercent);
+            tree.SetBool("rpvc:bhGearActive", _syncedGearActive);
+            tree.SetInt("rpvc:bhStrikeSequence", _strikeSequence);
         }
 
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
@@ -156,15 +165,35 @@ namespace RPVoiceChat.GameContent.BlockEntity
             base.FromTreeAttributes(tree, worldForResolving);
             _enabled = tree.GetBool("enabled", false);
             PowerPercent = tree.GetFloat("powerPercent", 0f);
+            _syncedGearActive = tree.GetBool("rpvc:bhGearActive", false);
+            _strikeSequence = tree.GetInt("rpvc:bhStrikeSequence", 0);
             DisableConsumerInstancedRenderer();
-            bool gearActive = _enabled && PowerPercent >= MinSpeedThreshold;
-            if (gearActive != _lastGearActive)
+
+            if (worldForResolving.Side == EnumAppSide.Client)
             {
-                _lastGearActive = gearActive;
-                if (gearActive)
-                    Animatable?.StartAnimationIfNotRunning("gear");
+                string shapePath = Block?.Shape?.Base?.Path ?? "block/bellhammer/bellhammer";
+                bool isCeiling = Block?.Variant?.TryGetValue("v", out var v) == true && string.Equals(v, "down", StringComparison.OrdinalIgnoreCase);
+                if (isCeiling && (shapePath == null || shapePath.IndexOf("bellhammer_chains", StringComparison.OrdinalIgnoreCase) < 0))
+                    shapePath = "block/bellhammer/bellhammer_chains";
+                float rotDeg = Block?.Variant?.TryGetValue("side", out var side) == true
+                    ? side switch { "north" => 90f, "east" => 0f, "south" => 270f, "west" => 180f, _ => 0f }
+                    : 0f;
+                InitializeClientAnimator(shapePath, rotDeg);
+
+                if (_syncedGearActive)
+                    StartAnimationIfNotRunning(GearAnimationCode);
                 else
-                    Animatable?.StopAnimation("gear");
+                    StopAnimation(GearAnimationCode);
+
+                if (_clientLastStrikeSequence < 0)
+                {
+                    _clientLastStrikeSequence = _strikeSequence;
+                }
+                else if (_strikeSequence != _clientLastStrikeSequence)
+                {
+                    PlaySingleShotAnimation(StrikeAnimationCode);
+                    _clientLastStrikeSequence = _strikeSequence;
+                }
             }
         }
 
@@ -178,6 +207,12 @@ namespace RPVoiceChat.GameContent.BlockEntity
             PowerPercent = speed;
 
             int percentDisplay = (int)(speed * 100);
+            bool gearActiveNow = _enabled && speed >= MinSpeedThreshold;
+            if (gearActiveNow != _syncedGearActive)
+            {
+                _syncedGearActive = gearActiveNow;
+                MarkDirty();
+            }
             if (percentDisplay != _lastSyncedPowerPercent)
             {
                 _lastSyncedPowerPercent = percentDisplay;
@@ -280,8 +315,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private void StartStrikeSequence(BlockPos bellPos)
         {
             _animationPlaying = true;
-            Animatable?.PlaySingleShotAnimation("strike");
-            MarkDirty();
+            _strikeSequence++;
+            _syncedGearActive = false;
+            MarkDirty(true);
 
             if (_animationEndCallbackId >= 0)
                 Api.World.UnregisterCallback(_animationEndCallbackId);
@@ -293,8 +329,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 if (Api?.World?.BlockAccessor?.GetBlockEntity(Pos) == this)
                 {
                     TriggerBell(bellPos);
-                    if (_enabled && PowerPercent >= MinSpeedThreshold)
-                        Animatable?.StartAnimationIfNotRunning("gear");
+                    _syncedGearActive = _enabled && PowerPercent >= MinSpeedThreshold;
                     MarkDirty();
                 }
             }, (int)(AnimationToBellDelaySeconds * 1000));
@@ -327,11 +362,66 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
             else
             {
-                _lastGearActive = false;
-                Animatable?.StopAnimation("gear");
+                _syncedGearActive = false;
+                StopAnimation(GearAnimationCode);
             }
             MarkDirty();
             return true;
+        }
+
+        private void InitializeClientAnimator(string shapePath, float rotDeg)
+        {
+            var animUtil = AnimUtil;
+            if (animUtil == null || animUtil.animator != null || Api?.Side != EnumAppSide.Client)
+            {
+                return;
+            }
+
+            if (Block?.Code != null && !string.IsNullOrWhiteSpace(shapePath))
+            {
+                var assetLoc = new AssetLocation(Block.Code.Domain, "shapes/" + shapePath + ".json");
+                var shape = Shape.TryGet(Api, assetLoc);
+                if (shape?.Animations != null && shape.Animations.Length > 0)
+                {
+                    shape.InitForAnimations(Api.Logger, shapePath, Array.Empty<string>());
+                }
+            }
+
+            animUtil.InitializeAnimator(shapePath, null, null, new Vec3f(0, rotDeg, 0));
+        }
+
+        private void StartAnimationIfNotRunning(string animationCode)
+        {
+            var animUtil = AnimUtil;
+            if (animUtil == null) return;
+            if (animUtil.activeAnimationsByAnimCode.ContainsKey(animationCode)) return;
+
+            animUtil.StartAnimation(new AnimationMetaData
+            {
+                Animation = animationCode,
+                Code = animationCode
+            });
+        }
+
+        private void StopAnimation(string animationCode)
+        {
+            AnimUtil?.StopAnimation(animationCode);
+        }
+
+        private void PlaySingleShotAnimation(string animationCode)
+        {
+            var animUtil = AnimUtil;
+            if (animUtil == null) return;
+            if (animUtil.activeAnimationsByAnimCode.ContainsKey(animationCode))
+            {
+                animUtil.StopAnimation(animationCode);
+            }
+
+            animUtil.StartAnimation(new AnimationMetaData
+            {
+                Animation = animationCode,
+                Code = animationCode
+            });
         }
 
         public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)

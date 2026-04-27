@@ -6,7 +6,6 @@
   "behaviors": [{"name": "HorizontalUpDownOrientable", "properties": {"attachableFaces": ["up", "down"]}}],
   "entityBehaviors": [
     { "name": "Animatable" },
-    { "name": "BEAnimatable", "properties": { "animationCodes": "strike,gear" } },
     { "name": "MPConsumer" }
   ],
     "creativeinventory": {
