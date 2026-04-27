@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Text;
+using System.Collections.Generic;
 using RPVoiceChat.Config;
 using RPVoiceChat.Gui;
 using RPVoiceChat.GameContent.Systems;
@@ -11,11 +12,16 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
+using Vintagestory.GameContent;
 
 namespace RPVoiceChat.GameContent.BlockEntity
 {
     public class BlockEntityTelephone : BEWireNode, INetworkRoot, IWireTypedNode, ITelephoneVoiceEndpoint
     {
+        private const string TelephoneShapeCode = "block/telephone";
+        private const string InCallAnimationCode = "PlayingSound";
+        private static readonly Vec3f CoilWireOffsetNorth = new Vec3f(11.9f / 16f, 5.485f / 16f, 4.175f / 16f);
+
         private enum TelephoneCallState
         {
             Idle,
@@ -41,6 +47,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private BlockPos activePeerTelephonePos;
         private long nextRingingSoundAtMs;
         private long originalCreatedNetworkID = 0;
+        private TelephoneCallState lastClientAnimationSyncedState = TelephoneCallState.Idle;
+        private Vintagestory.GameContent.BEBehaviorAnimatable Animatable => GetBehavior<Vintagestory.GameContent.BEBehaviorAnimatable>();
+        private BlockEntityAnimationUtil AnimUtil => Animatable?.animUtil;
 
         public override bool IsActiveEndpoint => true;
         protected override int MaxConnections => 1;
@@ -62,6 +71,12 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
             base.Initialize(api);
 
+            if (api.Side == EnumAppSide.Client)
+            {
+                InitializeClientAnimator();
+                SyncInCallAnimationState();
+            }
+
             if (api.Side == EnumAppSide.Server)
             {
                 RegisterGameTickListener(OnServerTick, 250);
@@ -77,6 +92,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
             {
                 ringable.BellPartCode = "smallbellparts-silver";
             }
+        }
+
+        protected override void SetWireAttachmentOffset()
+        {
+            WireAttachmentOffset = RotateLocalOffsetByBlockSide(CoilWireOffsetNorth);
         }
 
         public bool OnInteract(IPlayer byPlayer)
@@ -102,6 +122,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
         {
             base.FromTreeAttributes(tree, worldForResolving);
+            TelephoneCallState previousState = callState;
             phoneNumber = tree.GetString("rpvc:phoneNumber", "");
             targetNumber = tree.GetString("rpvc:targetNumber", "");
             composeManagedBySwitchboard = tree.GetBool("rpvc:telephoneManaged", false);
@@ -123,6 +144,14 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (savedOriginalCreatedNetworkID != 0)
             {
                 originalCreatedNetworkID = savedOriginalCreatedNetworkID;
+            }
+            if (worldForResolving.Side == EnumAppSide.Client)
+            {
+                SyncInCallAnimationState();
+                if (previousState != callState)
+                {
+                    MarkDirty(true);
+                }
             }
             dialog?.RefreshData();
         }
@@ -484,8 +513,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 Api?.ModLoader.GetModSystem<TelephoneVoiceRoutingSystem>()?.ClearRoute(activeCallerPlayerUid);
             }
 
-            callState = TelephoneCallState.Idle;
-            stateUntilMs = 0;
+            SetState(TelephoneCallState.Idle, 0);
             activeCallerPlayerUid = "";
             incomingCallerPlayerUid = "";
             incomingCallerTelephonePos = null;
@@ -577,6 +605,104 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 );
                 nextRingingSoundAtMs = now + RingbackRepeatMs;
             }
+        }
+
+        private void SyncInCallAnimationState()
+        {
+            if (Api?.Side == EnumAppSide.Client)
+            {
+                InitializeClientAnimator();
+            }
+
+            var animUtil = AnimUtil;
+            if (animUtil == null) return;
+
+            bool isRunning = animUtil.activeAnimationsByAnimCode.ContainsKey(InCallAnimationCode);
+            if (callState == TelephoneCallState.InCall)
+            {
+                // Re-trigger once on state entry to avoid stale animator state.
+                bool stateJustEntered = lastClientAnimationSyncedState != TelephoneCallState.InCall;
+                if (stateJustEntered || !isRunning)
+                {
+                    animUtil.StopAnimation(InCallAnimationCode);
+                    animUtil.StartAnimation(new AnimationMetaData
+                    {
+                        Animation = InCallAnimationCode,
+                        Code = InCallAnimationCode
+                    });
+                }
+            }
+            else
+            {
+                if (isRunning)
+                {
+                    animUtil.StopAnimation(InCallAnimationCode);
+                }
+            }
+
+            if (Api?.Side == EnumAppSide.Client)
+            {
+                lastClientAnimationSyncedState = callState;
+            }
+        }
+
+        private void InitializeClientAnimator()
+        {
+            var animUtil = AnimUtil;
+            if (animUtil == null || animUtil.animator != null || Api?.Side != EnumAppSide.Client)
+            {
+                return;
+            }
+
+            if (Block?.Code != null)
+            {
+                var assetLoc = new AssetLocation(Block.Code.Domain, "shapes/" + TelephoneShapeCode + ".json");
+                var shape = Shape.TryGet(Api, assetLoc);
+                if (shape?.Animations != null && shape.Animations.Length > 0)
+                {
+                    shape.InitForAnimations(Api.Logger, TelephoneShapeCode, Array.Empty<string>());
+                }
+            }
+
+            float rotYDeg = GetBlockSideRotY();
+            animUtil.InitializeAnimator(TelephoneShapeCode, null, null, new Vec3f(0, rotYDeg, 0));
+        }
+
+        private float GetBlockSideRotY()
+        {
+            return Block?.Variant?.TryGetValue("side", out string side) == true
+                ? side switch
+                {
+                    "north" => 0f,
+                    "east" => 270f,
+                    "west" => 90f,
+                    "south" => 180f,
+                    _ => 0f
+                }
+                : 0f;
+        }
+
+        private static Vec3f RotateAroundCenter(Vec3f point, float rotDeg)
+        {
+            if (Math.Abs(rotDeg) < 0.001f) return point;
+
+            float rad = rotDeg * GameMath.DEG2RAD;
+            float cos = GameMath.Cos(rad);
+            float sin = GameMath.Sin(rad);
+
+            float dx = point.X - 0.5f;
+            float dz = point.Z - 0.5f;
+
+            // Match in-game rotation handedness used by rotateYByType.
+            float x = dx * cos + dz * sin;
+            float z = -dx * sin + dz * cos;
+
+            return new Vec3f(x + 0.5f, point.Y, z + 0.5f);
+        }
+
+        private Vec3f RotateLocalOffsetByBlockSide(Vec3f offsetNorth)
+        {
+            return RotateAroundCenter(offsetNorth, GetBlockSideRotY());
         }
 
         private System.Collections.Generic.IEnumerable<BEWireNode> GetReachableTelephoneVoiceEndpoints()

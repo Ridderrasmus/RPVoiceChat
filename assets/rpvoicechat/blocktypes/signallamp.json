@@ -8,8 +8,7 @@
   ],
   "entityBehaviors": [
     { "name": "BELightable", "properties": { "lightLevel": 0.8, "lightIntensityScale": 1.45 } },
-    { "name": "Animatable" },
-    { "name": "BEAnimatable", "properties": { "animationCodes": "slates" } }
+    { "name": "Animatable" }
   ],
   "creativeinventory": {
     "general": [ "*-north" ],

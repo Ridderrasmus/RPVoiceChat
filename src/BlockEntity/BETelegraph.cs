@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using RPVoiceChat.Config;
-using RPVoiceChat.GameContent.BlockEntityBehavior;
 using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Systems;
@@ -19,6 +18,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
 {
     public class BlockEntityTelegraph : BEWireNode, INetworkRoot, IWireTypedNode, ITelegraphEndpoint
     {
+        private const string TelegraphShapeCode = "telegraphkey";
+        private const string ClickAnimationCode = "click";
         TelegraphMenuDialog dialog;
         protected override int MaxConnections => 1;
         public override bool IsActiveEndpoint => true;
@@ -62,7 +63,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private bool telegramPrinted = false; // Flag to track if telegram has been created
         private bool printPacketSentForCurrentMessage = false;
 
-        private RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorAnimatable Animatable => GetBehavior<RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorAnimatable>();
+        private BEBehaviorAnimatable Animatable => GetBehavior<BEBehaviorAnimatable>();
+        private BlockEntityAnimationUtil AnimUtil => Animatable?.animUtil;
         public WireNodeKind WireNodeKind => WireNodeKind.Telegraph;
         public string CustomEndpointName => customEndpointName;
 
@@ -96,7 +98,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             if (api.Side == EnumAppSide.Client)
             {
-                Animatable?.InitializeAnimatorWithRotation("telegraphkey");
+                InitializeClientAnimator();
                 UpdateDisplayMessages();
                 
                 // Register client-side countdown update timer
@@ -937,7 +939,53 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         private void TriggerKeyClickAnimation()
         {
-            Animatable?.PlaySingleShotAnimation("click");
+            var animUtil = AnimUtil;
+            if (animUtil == null) return;
+            if (animUtil.activeAnimationsByAnimCode.ContainsKey(ClickAnimationCode))
+            {
+                animUtil.StopAnimation(ClickAnimationCode);
+            }
+            animUtil.StartAnimation(new AnimationMetaData
+            {
+                Animation = ClickAnimationCode,
+                Code = ClickAnimationCode
+            });
+        }
+
+        private void InitializeClientAnimator()
+        {
+            var animUtil = AnimUtil;
+            if (animUtil == null || animUtil.animator != null || Api?.Side != EnumAppSide.Client)
+            {
+                return;
+            }
+
+            if (Block?.Code != null)
+            {
+                var assetLoc = new AssetLocation(Block.Code.Domain, "shapes/block/" + TelegraphShapeCode + ".json");
+                var shape = Shape.TryGet(Api, assetLoc);
+                if (shape?.Animations != null && shape.Animations.Length > 0)
+                {
+                    shape.InitForAnimations(Api.Logger, TelegraphShapeCode, Array.Empty<string>());
+                }
+            }
+
+            float rotYDeg = GetBlockSideRotY();
+            animUtil.InitializeAnimator(TelegraphShapeCode, null, null, new Vec3f(0, rotYDeg, 0));
+        }
+
+        private float GetBlockSideRotY()
+        {
+            return Block?.Variant?.TryGetValue("side", out string side) == true
+                ? side switch
+                {
+                    "north" => 0f,
+                    "east" => 270f,
+                    "west" => 90f,
+                    "south" => 180f,
+                    _ => 0f
+                }
+                : 0f;
         }
 
         private bool IsDialogOpen()

@@ -8,7 +8,8 @@
     { "name": "Ringable" }
   ],
   "entityBehaviors": [
-    { "name": "BERingable" }
+    { "name": "BERingable" },
+    { "name": "Animatable" }
   ],
   "creativeinventory": {
     "general": [ "*-north" ],
@@ -45,6 +46,9 @@
   "textures": {
     "wood": { "base": "game:block/wood/debarked/{wood}" },
     "lead": { "base": "game:block/metal/ingot/lead" },
+    "silversolder": { "base": "game:block/metal/ingot/silversolder" },
+    "plain2": { "base": "game:block/stone/quartz/full/plain2" },
+    "blackbronze": { "base": "game:block/metal/lantern/blackbronze" },
     "steel": { "base": "game:block/metal/ingot/steel" },
     "gold": { "base": "game:block/metal/tarnished/gold" },
     "rusty-iron": { "base": "game:block/metal/tarnished/rusty-iron" },
@@ -72,7 +76,8 @@
   },
   "guiTransform": {
     "translation": { "x": 0, "y": -10, "z": 0 },
-    "rotation": { "x": -22.6, "y": -45, "z": 0 },
-    "scale": 1.16
+		"rotation": { "x": -22.6, "y": 152, "z": 0 },
+		"origin": { "x": 0.5, "y": 0.6, "z": 0.5 },
+		"scale": 1.44
   }
 }

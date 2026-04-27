@@ -19,8 +19,7 @@
     }
   },
   "entityBehaviors": [
-    { "name": "Animatable" },
-    { "name": "BEAnimatable" }
+    { "name": "Animatable" }
   ],
   "creativeinventory": { "general": ["*-north"], "rpvoicechat": ["*-north"] },
   "maxstacksize": 1,
