@@ -9,6 +9,10 @@
 	"textureSizes": {
 	},
 	"textures": {
+		"gold": "game:block/metal/plate/gold",
+		"redglass": "game:block/glass/red",
+		"yellowglass": "game:block/glass/yellow",
+		"greenglass": "game:block/glass/green"
 	},
 	"elements": [
 		{

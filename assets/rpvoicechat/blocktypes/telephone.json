@@ -44,15 +44,7 @@
     "walk": "game:walk/wood"
   },
   "textures": {
-    "wood": { "base": "game:block/wood/debarked/{wood}" },
-    "lead": { "base": "game:block/metal/ingot/lead" },
-    "silversolder": { "base": "game:block/metal/ingot/silversolder" },
-    "plain2": { "base": "game:block/stone/quartz/full/plain2" },
-    "blackbronze": { "base": "game:block/metal/lantern/blackbronze" },
-    "steel": { "base": "game:block/metal/ingot/steel" },
-    "gold": { "base": "game:block/metal/tarnished/gold" },
-    "rusty-iron": { "base": "game:block/metal/tarnished/rusty-iron" },
-    "basalt1": { "base": "game:block/stone/cobblestone/basalt1" }
+    "wood": { "base": "game:block/wood/debarked/{wood}" }
   },
   "rainPermeable": false,
   "sidesolid": {

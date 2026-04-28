@@ -19,7 +19,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
     public class BlockEntityTelephone : BEWireNode, INetworkRoot, IWireTypedNode, ITelephoneVoiceEndpoint
     {
         private const string TelephoneShapeCode = "block/telephone";
-        private const string InCallAnimationCode = "PlayingSound";
+        private const string InCallAnimationCode = "playing-sound";
         private static readonly Vec3f CoilWireOffsetNorth = new Vec3f(11.9f / 16f, 5.485f / 16f, 4.175f / 16f);
 
         private enum TelephoneCallState
@@ -47,7 +47,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private BlockPos activePeerTelephonePos;
         private long nextRingingSoundAtMs;
         private long originalCreatedNetworkID = 0;
-        private TelephoneCallState lastClientAnimationSyncedState = TelephoneCallState.Idle;
         private Vintagestory.GameContent.BEBehaviorAnimatable Animatable => GetBehavior<Vintagestory.GameContent.BEBehaviorAnimatable>();
         private BlockEntityAnimationUtil AnimUtil => Animatable?.animUtil;
 
@@ -215,7 +214,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 Pos.Z + 0.5,
                 sourcePlayer,
                 false,
-                2f,
+                12f,
                 0.6f
             );
             // Prevent immediate overlap on next server tick after initial ring.
@@ -584,7 +583,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     Pos.Z + 0.5,
                     null,
                     false,
-                    2f,
+                    12f,
                     0.6f
                 );
                 nextRingingSoundAtMs = now + IncomingRingRepeatMs;
@@ -617,32 +616,13 @@ namespace RPVoiceChat.GameContent.BlockEntity
             var animUtil = AnimUtil;
             if (animUtil == null) return;
 
-            bool isRunning = animUtil.activeAnimationsByAnimCode.ContainsKey(InCallAnimationCode);
             if (callState == TelephoneCallState.InCall)
             {
-                // Re-trigger once on state entry to avoid stale animator state.
-                bool stateJustEntered = lastClientAnimationSyncedState != TelephoneCallState.InCall;
-                if (stateJustEntered || !isRunning)
-                {
-                    animUtil.StopAnimation(InCallAnimationCode);
-                    animUtil.StartAnimation(new AnimationMetaData
-                    {
-                        Animation = InCallAnimationCode,
-                        Code = InCallAnimationCode
-                    });
-                }
+                StartAnimationIfNotRunning(InCallAnimationCode);
             }
             else
             {
-                if (isRunning)
-                {
-                    animUtil.StopAnimation(InCallAnimationCode);
-                }
-            }
-
-            if (Api?.Side == EnumAppSide.Client)
-            {
-                lastClientAnimationSyncedState = callState;
+                StopAnimation(InCallAnimationCode);
             }
         }
 
@@ -654,18 +634,44 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 return;
             }
 
-            if (Block?.Code != null)
+            string shapePath = ResolveShapePath();
+            if (Block?.Code != null && !string.IsNullOrWhiteSpace(shapePath))
             {
-                var assetLoc = new AssetLocation(Block.Code.Domain, "shapes/" + TelephoneShapeCode + ".json");
+                var assetLoc = new AssetLocation(Block.Code.Domain, "shapes/" + shapePath + ".json");
                 var shape = Shape.TryGet(Api, assetLoc);
                 if (shape?.Animations != null && shape.Animations.Length > 0)
                 {
-                    shape.InitForAnimations(Api.Logger, TelephoneShapeCode, Array.Empty<string>());
+                    shape.InitForAnimations(Api.Logger, shapePath, Array.Empty<string>());
                 }
             }
 
             float rotYDeg = GetBlockSideRotY();
-            animUtil.InitializeAnimator(TelephoneShapeCode, null, null, new Vec3f(0, rotYDeg, 0));
+            animUtil.InitializeAnimator(shapePath, null, null, new Vec3f(0, rotYDeg, 0));
+        }
+
+        private string ResolveShapePath()
+        {
+            return Block?.Shape?.Base?.Path ?? TelephoneShapeCode;
+        }
+
+        private void StartAnimationIfNotRunning(string animationCode)
+        {
+            var animUtil = AnimUtil;
+            if (animUtil == null) return;
+            if (animUtil.activeAnimationsByAnimCode.ContainsKey(animationCode)) return;
+
+            animUtil.StartAnimation(new AnimationMetaData
+            {
+                Animation = animationCode,
+                Code = animationCode
+            });
+        }
+
+        private void StopAnimation(string animationCode)
+        {
+            var animUtil = AnimUtil;
+            if (animUtil == null) return;
+            animUtil.StopAnimation(animationCode);
         }
 
         private float GetBlockSideRotY()

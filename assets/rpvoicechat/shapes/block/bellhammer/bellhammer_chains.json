@@ -9,6 +9,12 @@
 	"textureSizes": {
 	},
 	"textures": {
+		"metal": "game:block/metal/plate/copper",
+		"iron": "game:block/metal/plate/iron",
+		"rusty-iron": "game:block/metal/tarnished/rusty-iron",
+		"gold": "game:block/metal/plate/gold",
+		"bituminous": "game:block/coal/bituminous",
+		"wood2": "game:block/wood-generic"
 	},
 	"elements": [
 		{

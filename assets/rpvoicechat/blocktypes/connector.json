@@ -78,12 +78,6 @@
   "textures": {
     "glass": {
       "base": "game:block/glass/{glass}"
-    },
-    "metal": {
-      "base": "game:block/metal/plate/copper"
-    },
-    "stone": {
-      "base": "game:block/stone/flint"
     }
   },
   "attributes": {
