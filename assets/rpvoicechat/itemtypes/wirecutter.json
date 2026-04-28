@@ -54,12 +54,6 @@
     "metal": {
       "base": "game:block/metal/sheet/{metal}1"
     },
-    "leather": {
-      "base": "game:block/cloth/leather/normal"
-    },
-    "bolt": {
-      "base": "game:block/metal/sheet/blackbronze1"
-    },
   },
   "tpHandTransform": {
       "translation": { x: -0.7, y: 0.1, z: -0.4 },

@@ -8,6 +8,16 @@
 	"textureSizes": {
 	},
 	"textures": {
+		"side": "rpvoicechat:block/warningbeacon/bonfire_side",
+		"top": "rpvoicechat:block/warningbeacon/bonfire_top",
+		"firewood_side": "game:block/wood/firewood/side",
+		"firewood_south": "game:block/wood/firewood/south",
+		"firewood_bark": "game:block/wood/firewood/bark",
+		"firewood_north": "game:block/wood/firewood/north",
+		"hay": "game:block/hay/normal-top",
+		"singlehay": "game:block/wood/trough/large/singlehay",
+		"ashes": "rpvoicechat:block/warningbeacon/ashes",
+		"ember": "game:block/coal/ember"
 	},
 	"elements": [
 		{

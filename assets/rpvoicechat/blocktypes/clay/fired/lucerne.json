@@ -33,17 +33,7 @@
     }
   },
   "textures": {
-    "clay": { "base": "game:block/clay/hardened/{color}" },
-    "side": { "base": "rpvoicechat:block/warningbeacon/bonfire_side" },
-    "top": { "base": "rpvoicechat:block/warningbeacon/bonfire_top" },
-    "firewood_side": { "base": "game:block/wood/firewood/side" },
-    "firewood_south": { "base": "game:block/wood/firewood/south" },
-    "firewood_bark": { "base": "game:block/wood/firewood/bark" },
-    "firewood_north": { "base": "game:block/wood/firewood/north" },
-    "hay": { "base": "game:block/hay/normal-top" },
-    "singlehay": { "base": "game:block/wood/trough/large/singlehay" },
-    "ashes": { "base": "rpvoicechat:block/warningbeacon/ashes" },
-    "ember": { "base": "game:block/coal/ember" }
+    "clay": { "base": "game:block/clay/hardened/{color}" }
   },
   "sounds": {
     "place": "game:block/ceramicplace",

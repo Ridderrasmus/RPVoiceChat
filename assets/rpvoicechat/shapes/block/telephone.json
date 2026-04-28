@@ -9,6 +9,14 @@
 	"textureSizes": {
 	},
 	"textures": {
+		"lead": "game:block/metal/ingot/lead",
+		"silversolder": "game:block/metal/ingot/silversolder",
+		"plain2": "game:block/stone/quartz/full/plain2",
+		"blackbronze": "game:block/metal/lantern/blackbronze",
+		"steel": "game:block/metal/ingot/steel",
+		"gold": "game:block/metal/tarnished/gold",
+		"rusty-iron": "game:block/metal/tarnished/rusty-iron",
+		"basalt1": "game:block/stone/cobblestone/basalt1"
 	},
 	"elements": [
 		{
@@ -2361,8 +2369,8 @@
 	],
 	"animations": [
 		{
-			"name": "PlayingSound",
-			"code": "PlayingSound",
+			"name": "playing-sound",
+			"code": "playing-sound",
 			"quantityframes": 60,
 			"onActivityStopped": "EaseOut",
 			"onAnimationEnd": "Repeat",

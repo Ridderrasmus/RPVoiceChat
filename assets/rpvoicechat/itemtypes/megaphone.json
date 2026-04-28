@@ -26,20 +26,6 @@
   "shape": {
     "base": "item/megaphone"
   },
-  "textures": {
-    "blue": {
-      "base": "game:block/glass/blue"
-    },
-    "copper": {
-      "base": "game:block/metal/sheet/copper1"
-    },
-    "gold1": {
-      "base": "game:block/metal/sheet/gold1"
-    },
-    "cupronickel1": {
-      "base": "game:block/metal/sheet/cupronickel1"
-    }
-  },
   "guiTransform": {
     "translation": {
       "x": 0,

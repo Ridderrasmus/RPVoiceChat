@@ -27,24 +27,6 @@
   "shape": {
     "base": "item/enhancedmegaphone"
   },
-  "textures": {
-    "blue": {
-      "base": "game:block/glass/blue"
-    },
-    "electrum1": {
-      "base": "game:block/metal/sheet/electrum1"
-    },
-    "gold1": {
-      "base": "game:block/metal/sheet/gold1"
-    },
-    "cupronickel1": {
-      "base": "game:block/metal/sheet/cupronickel1"
-    },
-    "bakelite": { "base": "game:block/coal/bituminous" },
-    "wire": {
-      "base": "item/coilwire"
-    }
-  },
   "guiTransform": {
     "translation": {
       "x": 0,

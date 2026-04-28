@@ -58,10 +58,7 @@
     "z2": 0.75
   },
   "textures": {
-    "wood": { "base": "game:block/wood/debarked/{wood}" },
-    "gold": { "base": "game:block/metal/plate/gold" },
-    "copper": { "base": "game:block/metal/plate/copper" },
-    "bakelite": { "base": "game:block/coal/bituminous" }
+    "wood": { "base": "game:block/wood/debarked/{wood}" }
   },
   "rainPermeable": false,
   "sidesolid": {

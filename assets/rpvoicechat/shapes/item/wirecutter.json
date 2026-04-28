@@ -9,6 +9,8 @@
 	"textureSizes": {
 	},
 	"textures": {
+		"leather": "game:block/cloth/leather/normal",
+		"bolt": "game:block/metal/sheet/blackbronze1"
 	},
 	"elements": [
 		{
