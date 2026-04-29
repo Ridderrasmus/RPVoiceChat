@@ -3,15 +3,37 @@
   "enabled": true,
   "class": "speakerblock",
   "entityClass": "BlockEntitySpeaker",
+  "behaviors": [
+    { "name": "HorizontalOrientable" }
+  ],
   "creativeinventory": {
-    "general": [ "*" ],
-    "rpvoicechat": [ "*" ]
+    "general": [ "*-north" ],
+    "rpvoicechat": [ "*-north" ]
   },
   "maxstacksize": 1,
   "blockmaterial": "wood",
-  "shape": { "base": "game:block/basic/cube" },
+  "variantgroups": [
+    {
+      "code": "wood",
+      "states": [ "aged", "veryaged" ],
+      "loadFromProperties": "block/wood"
+    },
+    {
+      "code": "side",
+      "loadFromProperties": "abstract/horizontalorientation"
+    }
+  ],
+  "shape": {
+    "base": "block/speaker/speaker",
+    "rotateYByType": {
+      "*-north": 0,
+      "*-east": 270,
+      "*-west": 90,
+      "*-south": 180
+    }
+  },
   "textures": {
-    "all": { "base": "game:block/wood/debarked/oak" }
+    "wood": { "base": "game:block/wood/debarked/{wood}" }
   },
   "sounds": {
     "place": "game:block/planks",
@@ -19,7 +41,8 @@
     "break": "game:block/planks",
     "walk": "game:walk/wood"
   },
-  "sidesolid": { "all": true },
-  "sideopaque": { "all": true },
+  "sidesolid": { "all": false },
+  "sideopaque": { "all": false },
+  "lightAbsorption": 15,
   "resistance": 1
 }

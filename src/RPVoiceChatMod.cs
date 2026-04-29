@@ -194,7 +194,7 @@ namespace RPVoiceChat
                     telephone.SetTargetNumber(packet.Value);
                     break;
                 case TelephoneSettingsOperation.StartCall:
-                    telephone.StartCall(player);
+                    telephone.StartCall(player, packet.Value);
                     break;
                 case TelephoneSettingsOperation.EndCall:
                     telephone.EndCall();

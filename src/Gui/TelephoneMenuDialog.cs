@@ -10,10 +10,11 @@ namespace RPVoiceChat.Gui
     {
         private readonly BlockEntityTelephone telephoneBlock;
         private GuiElementTextInput numberInput;
-        private GuiElementDropDown targetDropDown;
         private GuiElementDynamicText statusTextElem;
+        private GuiElementDynamicText dialNumberTextElem;
         private GuiElement actionButtonElem;
         private string pendingNumber = "";
+        private string pendingDialNumber = "";
         private string actionButtonLangKey = "Telephone.Gui.Call";
         private bool actionButtonInteractive = true;
         private bool managedBySwitchboard;
@@ -29,6 +30,7 @@ namespace RPVoiceChat.Gui
             base.OnGuiOpened();
             BuildComposer();
             pendingNumber = telephoneBlock.GetPhoneNumber();
+            pendingDialNumber = telephoneBlock.GetTargetNumber() ?? "";
             numberInput?.SetValue(pendingNumber);
             RefreshData();
         }
@@ -40,9 +42,20 @@ namespace RPVoiceChat.Gui
             ElementBounds numberLabelBounds = ElementBounds.Fixed(0, 62, 420, 18);
             ElementBounds numberInputBounds = ElementBounds.Fixed(0, 82, 320, 26);
             ElementBounds numberSaveBounds = ElementBounds.Fixed(332, 82, 88, 26);
-            ElementBounds targetLabelBounds = ElementBounds.Fixed(0, 118, 420, 18);
-            ElementBounds targetDropDownBounds = ElementBounds.Fixed(0, 138, 420, 26);
-            ElementBounds callButtonBounds = ElementBounds.Fixed(0, 176, 420, 28);
+            ElementBounds dialDisplayBounds = ElementBounds.Fixed(0, 122, 420, 22);
+            ElementBounds key1Bounds = ElementBounds.Fixed(0, 170, 132, 28);
+            ElementBounds key2Bounds = ElementBounds.Fixed(144, 170, 132, 28);
+            ElementBounds key3Bounds = ElementBounds.Fixed(288, 170, 132, 28);
+            ElementBounds key4Bounds = ElementBounds.Fixed(0, 204, 132, 28);
+            ElementBounds key5Bounds = ElementBounds.Fixed(144, 204, 132, 28);
+            ElementBounds key6Bounds = ElementBounds.Fixed(288, 204, 132, 28);
+            ElementBounds key7Bounds = ElementBounds.Fixed(0, 238, 132, 28);
+            ElementBounds key8Bounds = ElementBounds.Fixed(144, 238, 132, 28);
+            ElementBounds key9Bounds = ElementBounds.Fixed(288, 238, 132, 28);
+            ElementBounds keyClearBounds = ElementBounds.Fixed(0, 272, 132, 28);
+            ElementBounds key0Bounds = ElementBounds.Fixed(144, 272, 132, 28);
+            ElementBounds keyBackBounds = ElementBounds.Fixed(288, 272, 132, 28);
+            ElementBounds callButtonBounds = ElementBounds.Fixed(0, 308, 420, 28);
 
             ElementBounds bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
             bgBounds.BothSizing = ElementSizing.FitToChildren;
@@ -55,8 +68,19 @@ namespace RPVoiceChat.Gui
                     numberLabelBounds,
                     numberInputBounds,
                     numberSaveBounds,
-                    targetLabelBounds,
-                    targetDropDownBounds,
+                    dialDisplayBounds,
+                    key1Bounds,
+                    key2Bounds,
+                    key3Bounds,
+                    key4Bounds,
+                    key5Bounds,
+                    key6Bounds,
+                    key7Bounds,
+                    key8Bounds,
+                    key9Bounds,
+                    keyClearBounds,
+                    key0Bounds,
+                    keyBackBounds,
                     callButtonBounds
                 );
             }
@@ -84,14 +108,28 @@ namespace RPVoiceChat.Gui
                         .AddStaticText(UIUtils.I18n("Telephone.Gui.Number"), CairoFont.WhiteSmallText(), numberLabelBounds)
                         .AddTextInput(numberInputBounds, OnNumberInputChanged, CairoFont.TextInput(), "telephoneNumberInput")
                         .AddSmallButton(UIUtils.I18n("Telephone.Gui.Save"), OnSaveNumberClicked, numberSaveBounds)
-                        .AddStaticText(UIUtils.I18n("Telephone.Gui.Target"), CairoFont.WhiteSmallText(), targetLabelBounds)
-                        .AddDropDown(new[] { "" }, new[] { UIUtils.I18n("Telephone.Gui.AutoOrNone") }, 0, OnTargetSelected, targetDropDownBounds, "telephoneTargetDropdown");
+                        .AddDynamicText("", CairoFont.WhiteSmallText(), dialDisplayBounds, "telephoneDialNumber")
+                        .AddSmallButton("1", () => OnDialKeyPressed('1'), key1Bounds)
+                        .AddSmallButton("2", () => OnDialKeyPressed('2'), key2Bounds)
+                        .AddSmallButton("3", () => OnDialKeyPressed('3'), key3Bounds)
+                        .AddSmallButton("4", () => OnDialKeyPressed('4'), key4Bounds)
+                        .AddSmallButton("5", () => OnDialKeyPressed('5'), key5Bounds)
+                        .AddSmallButton("6", () => OnDialKeyPressed('6'), key6Bounds)
+                        .AddSmallButton("7", () => OnDialKeyPressed('7'), key7Bounds)
+                        .AddSmallButton("8", () => OnDialKeyPressed('8'), key8Bounds)
+                        .AddSmallButton("9", () => OnDialKeyPressed('9'), key9Bounds)
+                        .AddSmallButton(UIUtils.I18n("Telephone.Gui.Clear"), OnDialClearClicked, keyClearBounds)
+                        .AddSmallButton("0", () => OnDialKeyPressed('0'), key0Bounds)
+                        .AddSmallButton(UIUtils.I18n("Telephone.Gui.Backspace"), OnDialBackspaceClicked, keyBackBounds);
                 }
                 else
                 {
-                    composer = composer
-                        .AddStaticText(UIUtils.I18n("Telephone.Gui.NumberReadOnly", telephoneBlock.GetPhoneNumber()), CairoFont.WhiteSmallText(), numberInputBounds)
-                        .AddStaticText(UIUtils.I18n("Telephone.Gui.TargetReadOnly", telephoneBlock.GetTargetNumber()), CairoFont.WhiteSmallText(), targetDropDownBounds);
+                    string ownNumber = telephoneBlock.GetPhoneNumber();
+                    composer = composer.AddStaticText(UIUtils.I18n("Telephone.Gui.NetworkUnavailable"), CairoFont.WhiteSmallText(), numberInputBounds);
+                    if (!string.IsNullOrWhiteSpace(ownNumber))
+                    {
+                        composer = composer.AddStaticText(UIUtils.I18n("Telephone.Gui.LocalNumber", ownNumber), CairoFont.WhiteSmallText(), dialDisplayBounds);
+                    }
                 }
             }
 
@@ -102,8 +140,8 @@ namespace RPVoiceChat.Gui
             SingleComposer = composer.Compose();
 
             numberInput = SingleComposer.GetElement("telephoneNumberInput") as GuiElementTextInput;
-            targetDropDown = SingleComposer.GetElement("telephoneTargetDropdown") as GuiElementDropDown;
             statusTextElem = SingleComposer.GetDynamicText("telephoneStatusText");
+            dialNumberTextElem = SingleComposer.GetDynamicText("telephoneDialNumber");
             actionButtonElem = SingleComposer.GetElement("telephoneActionButton");
         }
 
@@ -111,7 +149,7 @@ namespace RPVoiceChat.Gui
         {
             if (SingleComposer == null) return;
 
-            if (!canEditManagedOptions || numberInput == null || targetDropDown == null)
+            if (!canEditManagedOptions || numberInput == null)
             {
                 RefreshActionUi();
                 return;
@@ -121,26 +159,11 @@ namespace RPVoiceChat.Gui
 
             pendingNumber = telephoneBlock.GetPhoneNumber();
             numberInput.SetValue(pendingNumber);
-
-            string[] numbers = telephoneBlock.GetAvailableTargetNumbers();
-            string[] values = new string[numbers.Length + 1];
-            string[] names = new string[numbers.Length + 1];
-            values[0] = "";
-            names[0] = UIUtils.I18n("Telephone.Gui.AutoOrNone");
-            Array.Copy(numbers, 0, values, 1, numbers.Length);
-            for (int i = 0; i < numbers.Length; i++)
+            if (string.IsNullOrWhiteSpace(pendingDialNumber))
             {
-                bool isBusy = telephoneBlock.IsTargetNumberBusy(numbers[i]);
-                names[i + 1] = isBusy
-                    ? $"{numbers[i]} {UIUtils.I18n("Telephone.Gui.TargetBusySuffix")}"
-                    : numbers[i];
+                pendingDialNumber = telephoneBlock.GetTargetNumber() ?? "";
             }
-            targetDropDown.SetList(values, names);
-
-            string currentTarget = telephoneBlock.GetTargetNumber() ?? "";
-            int selected = Array.IndexOf(values, currentTarget);
-            if (selected < 0) selected = 0;
-            targetDropDown.SetSelectedIndex(selected);
+            UpdateDialDisplay();
         }
 
         private void RefreshActionUi()
@@ -221,19 +244,55 @@ namespace RPVoiceChat.Gui
             return true;
         }
 
-        private void OnTargetSelected(string value, bool selected)
+        private bool OnDialKeyPressed(char digit)
         {
-            if (!selected) return;
-            if (!canEditManagedOptions)
+            if (!canEditManagedOptions || telephoneBlock.IsCallSessionActive())
             {
-                return;
+                return true;
             }
-            if (telephoneBlock.IsCallSessionActive())
+
+            if (!char.IsDigit(digit))
             {
-                RefreshData();
-                return;
+                return true;
             }
-            telephoneBlock.RequestTargetNumberChange(value ?? "");
+
+            if ((pendingDialNumber?.Length ?? 0) >= 6)
+            {
+                return true;
+            }
+
+            pendingDialNumber += digit;
+            UpdateDialDisplay();
+            return true;
+        }
+
+        private bool OnDialBackspaceClicked()
+        {
+            if (!canEditManagedOptions || telephoneBlock.IsCallSessionActive())
+            {
+                return true;
+            }
+
+            if (string.IsNullOrEmpty(pendingDialNumber))
+            {
+                return true;
+            }
+
+            pendingDialNumber = pendingDialNumber.Substring(0, pendingDialNumber.Length - 1);
+            UpdateDialDisplay();
+            return true;
+        }
+
+        private bool OnDialClearClicked()
+        {
+            if (!canEditManagedOptions || telephoneBlock.IsCallSessionActive())
+            {
+                return true;
+            }
+
+            pendingDialNumber = "";
+            UpdateDialDisplay();
+            return true;
         }
 
         private bool OnCallClicked()
@@ -255,6 +314,18 @@ namespace RPVoiceChat.Gui
                 return true;
             }
 
+            if (managedBySwitchboard && canEditManagedOptions)
+            {
+                if (string.IsNullOrWhiteSpace(pendingDialNumber))
+                {
+                    capi?.TriggerIngameError(this, "telephone-call-failed", UIUtils.I18n("Telephone.Call.Failed.NoTarget"));
+                    return true;
+                }
+
+                telephoneBlock.RequestStartCall(pendingDialNumber);
+                return true;
+            }
+
             string failureLangKey = telephoneBlock.GetCallFailureLangKeyForUi();
             if (!string.IsNullOrWhiteSpace(failureLangKey))
             {
@@ -264,6 +335,11 @@ namespace RPVoiceChat.Gui
 
             telephoneBlock.RequestStartCall();
             return true;
+        }
+
+        private void UpdateDialDisplay()
+        {
+            dialNumberTextElem?.SetNewText(UIUtils.I18n("Telephone.Gui.DialDisplay", pendingDialNumber ?? ""));
         }
 
         private void TrySetActionButtonText(string text)
@@ -331,6 +407,7 @@ namespace RPVoiceChat.Gui
         private string ResolveActionButtonLangKey()
         {
             if (telephoneBlock.IsInCall()) return "Telephone.Gui.Hangup";
+            if (telephoneBlock.IsNotInService()) return "Telephone.Gui.Hangup";
             if (telephoneBlock.HasIncomingCall()) return "Telephone.Gui.Answer";
             if (telephoneBlock.IsWaitingForAnswer()) return "Telephone.Gui.Waiting";
             return "Telephone.Gui.Call";
@@ -339,6 +416,7 @@ namespace RPVoiceChat.Gui
         private string ResolveStatusText()
         {
             if (telephoneBlock.IsInCall()) return UIUtils.I18n("Telephone.Gui.InCall");
+            if (telephoneBlock.IsNotInService()) return UIUtils.I18n("Telephone.Gui.NotInServiceStatus");
             if (telephoneBlock.HasIncomingCall()) return UIUtils.I18n("Telephone.Gui.IncomingCall");
             if (telephoneBlock.IsWaitingForAnswer()) return UIUtils.I18n("Telephone.Gui.WaitingStatus");
             if (!managedBySwitchboard)
@@ -346,9 +424,13 @@ namespace RPVoiceChat.Gui
                 return UIUtils.I18n("Telephone.Gui.DirectModeReady");
             }
 
-            return telephoneBlock.CanCompose()
-                ? UIUtils.I18n("Telephone.Gui.ComposeReady")
-                : UIUtils.I18n(telephoneBlock.GetComposeDisabledReasonLangKey());
+            if (telephoneBlock.CanCompose())
+            {
+                // When managed dialing pad is visible, the UI already conveys readiness.
+                return "";
+            }
+
+            return UIUtils.I18n(telephoneBlock.GetComposeDisabledReasonLangKey());
         }
 
     }
