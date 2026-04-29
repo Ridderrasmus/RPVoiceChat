@@ -347,6 +347,8 @@ namespace RPVoiceChat.Systems
             int telegraphCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Telegraph);
             int telephoneCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Telephone);
             int radioCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Radio);
+            int speakerCount = prospectiveComponent.OfType<BlockEntitySpeaker>().Count();
+            int telephoneHandsetCount = prospectiveComponent.OfType<BlockEntityTelephone>().Count();
             int activeKinds = 0;
             if (telegraphCount > 0) activeKinds++;
             if (telephoneCount > 0) activeKinds++;
@@ -364,9 +366,17 @@ namespace RPVoiceChat.Systems
             {
                 // No switchboard:
                 // - Telegraph networks: unlimited
-                // - Telephone networks: max 2 endpoints
+                // - Telephone networks:
+                //   - up to 2 handsets when there are no speakers (legacy telephone pairing)
+                //   - up to 1 handset when speakers are present (PA-style branch)
                 // - Radio networks: max 1 endpoint
-                if (telephoneCount > 2)
+                if (speakerCount > 0 && telephoneHandsetCount > 1)
+                {
+                    denialLangKey = "Wire.ConnectionDenied.SpeakerNetworkSingleTelephone";
+                    return false;
+                }
+
+                if (speakerCount == 0 && telephoneCount > 2)
                 {
                     denialLangKey = "Wire.ConnectionDenied.NetworkCapacity";
                     denialArgs = new object[] { GetKindDisplayName(WireNetworkKind.Telephone), 2 };
@@ -381,6 +391,13 @@ namespace RPVoiceChat.Systems
                 }
 
                 return true;
+            }
+
+            // Managed switchboard components must not contain speakers.
+            if (speakerCount > 0)
+            {
+                denialLangKey = "Wire.ConnectionDenied.SpeakerWithSwitchboard";
+                return false;
             }
 
             WireNetworkKind targetKind = ResolveProspectiveKind(telegraphCount, telephoneCount, radioCount);

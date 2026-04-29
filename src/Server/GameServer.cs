@@ -144,6 +144,12 @@ namespace RPVoiceChat.Server
                 return;
             }
 
+            if (TryResolveVoiceRoutes(packet.PlayerId, out IReadOnlyList<VoiceRoute> routes))
+            {
+                SendRoutedVoiceAudio(packet, routes);
+                return;
+            }
+
             if (TryResolveVoiceRoute(packet.PlayerId, out Vec3d emissionPos, out int rangeBlocks))
             {
                 SendRoutedVoiceAudio(packet, emissionPos, rangeBlocks);
@@ -195,6 +201,62 @@ namespace RPVoiceChat.Server
             }
         }
 
+        private void SendRoutedVoiceAudio(AudioPacket packet, IReadOnlyList<VoiceRoute> routes)
+        {
+            if (routes == null || routes.Count == 0)
+            {
+                return;
+            }
+
+            foreach (IServerPlayer player in api.World.AllOnlinePlayers)
+            {
+                if (player?.Entity == null || player.ConnectionState != EnumClientState.Playing)
+                {
+                    continue;
+                }
+
+                if (packet.PlayerId == player.PlayerUID)
+                {
+                    continue;
+                }
+
+                VoiceRoute? closestAudibleRoute = null;
+                double closestDistanceSq = double.MaxValue;
+                Vec3d playerPos = player.Entity.Pos.XYZ;
+
+                foreach (var route in routes)
+                {
+                    if (route.EmissionPos == null || route.RangeBlocks <= 0)
+                    {
+                        continue;
+                    }
+
+                    double maxDistanceSq = route.RangeBlocks * route.RangeBlocks;
+                    double distanceSq = playerPos.SquareDistanceTo(route.EmissionPos);
+                    if (distanceSq > maxDistanceSq || distanceSq >= closestDistanceSq)
+                    {
+                        continue;
+                    }
+
+                    closestDistanceSq = distanceSq;
+                    closestAudibleRoute = route;
+                }
+
+                if (closestAudibleRoute == null)
+                {
+                    continue;
+                }
+
+                var routedPacket = CloneAudioPacket(packet);
+                routedPacket.TransmissionRangeBlocks = closestAudibleRoute.Value.RangeBlocks;
+                routedPacket.HasSourcePositionOverride = true;
+                routedPacket.SourcePosX = closestAudibleRoute.Value.EmissionPos.X;
+                routedPacket.SourcePosY = closestAudibleRoute.Value.EmissionPos.Y;
+                routedPacket.SourcePosZ = closestAudibleRoute.Value.EmissionPos.Z;
+                SendPacket(routedPacket, player.PlayerUID);
+            }
+        }
+
         private static AudioPacket CloneAudioPacket(AudioPacket src)
         {
             return new AudioPacket
@@ -232,6 +294,28 @@ namespace RPVoiceChat.Server
             foreach (var provider in voiceRouteProviders)
             {
                 if (provider.TryGetRoute(playerUid, out emissionPos, out rangeBlocks))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool TryResolveVoiceRoutes(string playerUid, out IReadOnlyList<VoiceRoute> routes)
+        {
+            routes = null;
+            if (voiceRouteProviders.Count == 0)
+            {
+                return false;
+            }
+
+            foreach (var provider in voiceRouteProviders)
+            {
+                if (provider is IVoiceMultiRouteProvider multiRouteProvider &&
+                    multiRouteProvider.TryGetRoutes(playerUid, out routes) &&
+                    routes != null &&
+                    routes.Count > 0)
                 {
                     return true;
                 }

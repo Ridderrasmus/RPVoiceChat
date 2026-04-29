@@ -6,6 +6,7 @@ using RPVoiceChat.Config;
 using RPVoiceChat.Gui;
 using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Networking.Packets;
+using RPVoiceChat.Server;
 using RPVoiceChat.Systems;
 using RPVoiceChat.Util;
 using Vintagestory.API.Client;
@@ -26,11 +27,14 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
             Idle,
             Ringing,
-            InCall
+            InCall,
+            NotInService
         }
 
         // Auto-hangup timeout while waiting for answer.
         private const int RingDurationMs = 20000;
+        private const int NotInServiceDelayMs = 4000;
+        private const int NotInServiceToneDurationMs = 4200;
         private const int IncomingRingRepeatMs = 2000;
         private const int RingbackRepeatMs = 2000;
         private TelephoneMenuDialog dialog;
@@ -46,6 +50,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private BlockPos incomingCallerTelephonePos;
         private BlockPos activePeerTelephonePos;
         private long nextRingingSoundAtMs;
+        private long notInServiceTransitionAtMs;
         private long originalCreatedNetworkID = 0;
         private Vintagestory.GameContent.BEBehaviorAnimatable Animatable => GetBehavior<Vintagestory.GameContent.BEBehaviorAnimatable>();
         private BlockEntityAnimationUtil AnimUtil => Animatable?.animUtil;
@@ -129,6 +134,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             composeDisabledReasonLangKey = tree.GetString("rpvc:telephoneDisabledReason", "Telegraph.Settings.DisabledNoPower");
             callState = (TelephoneCallState)tree.GetInt("rpvc:telephoneState", (int)TelephoneCallState.Idle);
             stateUntilMs = tree.GetLong("rpvc:telephoneStateUntilMs", 0);
+            notInServiceTransitionAtMs = tree.GetLong("rpvc:telephoneNotInServiceAtMs", 0);
             activeCallerPlayerUid = tree.GetString("rpvc:telephoneCallerUid", "");
             incomingCallerPlayerUid = tree.GetString("rpvc:telephoneIncomingCallerUid", "");
             int incomingX = tree.GetInt("rpvc:telephoneIncomingCallerPosX", int.MinValue);
@@ -165,6 +171,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             tree.SetString("rpvc:telephoneDisabledReason", composeDisabledReasonLangKey ?? "Telegraph.Settings.DisabledNoPower");
             tree.SetInt("rpvc:telephoneState", (int)callState);
             tree.SetLong("rpvc:telephoneStateUntilMs", stateUntilMs);
+            tree.SetLong("rpvc:telephoneNotInServiceAtMs", notInServiceTransitionAtMs);
             tree.SetString("rpvc:telephoneCallerUid", activeCallerPlayerUid ?? "");
             tree.SetString("rpvc:telephoneIncomingCallerUid", incomingCallerPlayerUid ?? "");
             if (incomingCallerTelephonePos != null)
@@ -229,6 +236,16 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             if (callState == TelephoneCallState.Ringing)
             {
+                if (notInServiceTransitionAtMs > 0 && Api.World.ElapsedMilliseconds >= notInServiceTransitionAtMs)
+                {
+                    SetState(TelephoneCallState.NotInService, NotInServiceToneDurationMs);
+                    MarkDirty(true);
+                }
+
+                TryPlayLoopingRingingSounds();
+            }
+            else if (callState == TelephoneCallState.NotInService)
+            {
                 TryPlayLoopingRingingSounds();
             }
 
@@ -238,6 +255,22 @@ namespace RPVoiceChat.GameContent.BlockEntity
             EndCall();
         }
 
+        private void StartNotInServiceSequence()
+        {
+            SetState(TelephoneCallState.Ringing, 0);
+            if (Api?.World != null)
+            {
+                notInServiceTransitionAtMs = Api.World.ElapsedMilliseconds + NotInServiceDelayMs;
+            }
+            nextRingingSoundAtMs = 0;
+        }
+
+        private static string NormalizeDialedNumber(string value)
+        {
+            string digits = new string((value ?? "").Where(char.IsDigit).Take(6).ToArray());
+            return digits;
+        }
+
         private void SetState(TelephoneCallState newState, int durationMs)
         {
             callState = newState;
@@ -245,6 +278,10 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 ? Api.World.ElapsedMilliseconds + durationMs
                 : 0;
             nextRingingSoundAtMs = 0;
+            if (newState != TelephoneCallState.Ringing)
+            {
+                notInServiceTransitionAtMs = 0;
+            }
         }
 
         public void ApplyServerComposeFlags(bool managedBySwitchboard, bool canCompose, string disabledReasonLangKey = null)
@@ -271,6 +308,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public bool IsInCall() => callState == TelephoneCallState.InCall;
         public bool IsWaitingForAnswer() => callState == TelephoneCallState.Ringing && incomingCallerTelephonePos == null;
         public bool HasIncomingCall() => callState == TelephoneCallState.Ringing && incomingCallerTelephonePos != null;
+        public bool IsNotInService() => callState == TelephoneCallState.NotInService;
         public bool IsCallSessionActive() => callState != TelephoneCallState.Idle;
 
         public string[] GetAvailableTargetNumbers()
@@ -387,14 +425,14 @@ namespace RPVoiceChat.GameContent.BlockEntity
             });
         }
 
-        public void RequestStartCall()
+        public void RequestStartCall(string desiredTargetNumber = "")
         {
             if (Api?.Side != EnumAppSide.Client) return;
             RPVoiceChatMod.TelephoneSettingsClientChannel?.SendPacket(new TelephoneSettingsPacket
             {
                 TelephonePos = Pos,
                 Operation = TelephoneSettingsOperation.StartCall,
-                Value = ""
+                Value = desiredTargetNumber ?? ""
             });
         }
 
@@ -409,7 +447,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             });
         }
 
-        public bool StartCall(IPlayer byPlayer)
+        public bool StartCall(IPlayer byPlayer, string desiredTargetNumber = "")
         {
             if (Api?.Side != EnumAppSide.Server) return false;
             if (NetworkUID == 0) return false;
@@ -430,14 +468,27 @@ namespace RPVoiceChat.GameContent.BlockEntity
             BEWireNode targetNode = null;
             if (composeManagedBySwitchboard)
             {
-                if (string.IsNullOrWhiteSpace(targetNumber))
+                string dialedNumber = NormalizeDialedNumber(desiredTargetNumber);
+                if (string.IsNullOrWhiteSpace(dialedNumber))
+                {
+                    dialedNumber = targetNumber;
+                }
+
+                if (string.IsNullOrWhiteSpace(dialedNumber))
                 {
                     return false;
                 }
 
                 targetNode = network.Nodes
                     .OfType<BlockEntityTelephone>()
-                    .FirstOrDefault(t => !t.Pos.Equals(Pos) && string.Equals(t.phoneNumber, targetNumber, StringComparison.OrdinalIgnoreCase));
+                    .FirstOrDefault(t => !t.Pos.Equals(Pos) && string.Equals(t.phoneNumber, dialedNumber, StringComparison.OrdinalIgnoreCase));
+
+                if (targetNode == null)
+                {
+                    StartNotInServiceSequence();
+                    MarkDirty(true);
+                    return true;
+                }
             }
             else
             {
@@ -450,6 +501,16 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (targetNode == null)
             {
                 return false;
+            }
+
+            if (composeManagedBySwitchboard &&
+                targetNode is BlockEntityTelephone managedTargetTelephone &&
+                managedTargetTelephone.composeManagedBySwitchboard &&
+                !managedTargetTelephone.composeEnabled)
+            {
+                StartNotInServiceSequence();
+                MarkDirty(true);
+                return true;
             }
 
             if (targetNode is BlockEntityTelephone targetTelephone && targetTelephone.callState != TelephoneCallState.Idle)
@@ -481,9 +542,25 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (!string.IsNullOrWhiteSpace(byPlayer?.PlayerUID))
             {
                 activeCallerPlayerUid = byPlayer.PlayerUID;
-                int emitRange = targetNode is ITelephoneVoiceEndpoint voiceEndpoint ? voiceEndpoint.VoiceEmissionRangeBlocks : 2;
-                Vec3d emitPos = new Vec3d(targetNode.Pos.X + 0.5, targetNode.Pos.Y + 1.2, targetNode.Pos.Z + 0.5);
-                Api?.ModLoader.GetModSystem<TelephoneVoiceRoutingSystem>()?.SetRoute(byPlayer.PlayerUID, emitPos, emitRange);
+                var routingSystem = Api?.ModLoader.GetModSystem<TelephoneVoiceRoutingSystem>();
+                var speakerRoutes = GetReachableTelephoneVoiceEndpoints()
+                    .OfType<BlockEntitySpeaker>()
+                    .Select(speaker => new VoiceRoute(
+                        new Vec3d(speaker.Pos.X + 0.5, speaker.Pos.Y + 1.2, speaker.Pos.Z + 0.5),
+                        speaker.VoiceEmissionRangeBlocks
+                    ))
+                    .ToList();
+
+                if (speakerRoutes.Count > 0)
+                {
+                    routingSystem?.SetRoutes(byPlayer.PlayerUID, speakerRoutes);
+                }
+                else
+                {
+                    int emitRange = targetNode is ITelephoneVoiceEndpoint voiceEndpoint ? voiceEndpoint.VoiceEmissionRangeBlocks : 2;
+                    Vec3d emitPos = new Vec3d(targetNode.Pos.X + 0.5, targetNode.Pos.Y + 1.2, targetNode.Pos.Z + 0.5);
+                    routingSystem?.SetRoute(byPlayer.PlayerUID, emitPos, emitRange);
+                }
             }
             MarkDirty(true);
             return true;
@@ -547,8 +624,25 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             if (peers.Length > 1)
             {
-                failureLangKey = "Telephone.Call.Failed.NotUniquePeer";
-                return false;
+                bool onlySpeakers = peers.All(p => p is BlockEntitySpeaker);
+                if (!onlySpeakers)
+                {
+                    failureLangKey = "Telephone.Call.Failed.NotUniquePeer";
+                    return false;
+                }
+
+                // Speaker fan-out network: allow call and route toward one representative speaker endpoint.
+                // (voice relay system currently stores one active emit position per caller)
+                targetNode = peers
+                    .OrderBy(p =>
+                    {
+                        double dx = p.Pos.X - Pos.X;
+                        double dy = p.Pos.Y - Pos.Y;
+                        double dz = p.Pos.Z - Pos.Z;
+                        return dx * dx + dy * dy + dz * dz;
+                    })
+                    .FirstOrDefault();
+                return targetNode != null;
             }
 
             if (peers[0] is BlockEntityTelephone peerTelephone && peerTelephone.callState != TelephoneCallState.Idle)
@@ -563,7 +657,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         private void TryPlayLoopingRingingSounds()
         {
-            if (Api?.World == null || callState != TelephoneCallState.Ringing)
+            if (Api?.World == null || (callState != TelephoneCallState.Ringing && callState != TelephoneCallState.NotInService))
             {
                 return;
             }
@@ -587,6 +681,23 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     0.6f
                 );
                 nextRingingSoundAtMs = now + IncomingRingRepeatMs;
+                return;
+            }
+
+            if (callState == TelephoneCallState.NotInService)
+            {
+                Api.World.PlaySoundAt(
+                    new AssetLocation(RPVoiceChatMod.modID, "sounds/block/telephone/reorder-tone.ogg"),
+                    Pos.X + 0.5,
+                    Pos.Y + 0.5,
+                    Pos.Z + 0.5,
+                    null,
+                    false,
+                    2f,
+                    0.6f
+                );
+                // Play once, then auto-hangup when NotInServiceToneDurationMs expires.
+                nextRingingSoundAtMs = long.MaxValue;
                 return;
             }
 
