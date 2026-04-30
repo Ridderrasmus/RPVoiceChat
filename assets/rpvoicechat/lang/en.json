@@ -233,7 +233,6 @@
   "Printer.Interaction.CheckContents": "Check contents",
   "Telegraph.Interaction.SendReceive": "Send or receive a coded message",
   "Telephone.Interaction.Use": "Use telephone",
-  "Speaker.Interaction.Info": "Wired speaker endpoint",
   "Handbook.Usage.block-lucerne.Title": "Usage",
   "Handbook.Usage.block-lucerne.Text": "Place the lucerne on stone or brick ground. Hold Sneak and right-click to show the structure preview; Ctrl + Shift + right-click to hide it. Build: 1 stone/brick block under the lucerne, then a 5×5 platform in front of that block (same level). Use stone or brick; chiseled blocks: at least 50% voxels. The center 3×3×3 above the platform cannot have blocks placed. When complete, right-click: add 2 fat and 32 firewood, then Light. The light burns for 24 in-game hours at the center.",
   "Printer.Contents": "Printer Inventory",

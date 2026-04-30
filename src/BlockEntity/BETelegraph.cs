@@ -298,11 +298,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
             MarkDirty();
         }
 
-        protected override void SetWireAttachmentOffset()
-        {
-            WireAttachmentOffset = new Vec3f(0.5f, 0.1f, 0.5f);
-        }
-
         public bool OnInteract()
         {
             if (Api.Side == EnumAppSide.Server)

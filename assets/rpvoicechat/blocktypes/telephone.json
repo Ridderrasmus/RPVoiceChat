@@ -56,6 +56,12 @@
   "lightAbsorption": 15,
   "resistance": 1,
   "attributes": {
+    "wireAttachmentOffsets": {
+      "north": [ 0.74375, 0.3428125, 0.2609375 ],
+      "east": [ 0.7390625, 0.3428125, 0.74375 ],
+      "south": [ 0.25625, 0.3428125, 0.7390625 ],
+      "west": [ 0.2609375, 0.3428125, 0.25625 ]
+    },
     "handbook": {
       "groupBy": [ "telephone-*" ],
       "extraSections": [

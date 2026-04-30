@@ -77,7 +77,6 @@
   "Printer.Interaction.CheckContents": "Vérifier le contenu",
   "Telegraph.Interaction.SendReceive": "Envoyer ou recevoir un message codé",
   "Telephone.Interaction.Use": "Utiliser le téléphone",
-  "Speaker.Interaction.Info": "Enceinte filaire",
   "Handbook.Usage.block-lucerne.Title": "Utilisation",
   "Handbook.Usage.block-lucerne.Text": "Posez la lucerne sur un sol en pierre ou brique. Maintenez S'accroupir et clic droit pour afficher l'aperçu de la structure ; Ctrl + Maj + clic droit pour le masquer. Construisez : 1 bloc pierre/brique sous la lucerne, puis une plateforme 5×5 devant ce bloc (même niveau). Utilisez pierre ou brique ; blocs ciselés : au moins 50 % de voxels. Le centre 3×3×3 au-dessus de la plateforme reste interdit à la pose. Une fois terminé, clic droit : ajoutez 2 graisses et 32 bois, puis Allumer. La lumière brûle 24 h au centre.",
   "block-bellhammer-aged-*": "Marteau de cloche (Vieillie)",

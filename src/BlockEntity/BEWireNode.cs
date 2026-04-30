@@ -34,8 +34,101 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         protected virtual void SetWireAttachmentOffset()
         {
-            // by default : block center
+            if (TryGetWireAttachmentOffsetFromAttributes(out Vec3f configuredOffset))
+            {
+                WireAttachmentOffset = configuredOffset;
+                return;
+            }
+
+            // Default: near block center
             WireAttachmentOffset = new Vec3f(0.5f, 0.45f, 0.5f);
+        }
+
+        /// <summary>
+        /// Generic attribute-based wire attachment resolver.
+        ///
+        /// Supported formats in block json attributes:
+        /// - wireAttachmentOffset: [x, y, z]
+        /// - wireAttachmentOffsets: {
+        ///     "up": [x,y,z], "down": [x,y,z], "wall": [x,y,z],
+        ///     "north"/"east"/"south"/"west": [x,y,z], ...
+        ///   }
+        /// </summary>
+        protected virtual bool TryGetWireAttachmentOffsetFromAttributes(out Vec3f offset)
+        {
+            offset = null;
+            var attrs = Block?.Attributes;
+            if (attrs == null) return false;
+
+            float[] single = attrs["wireAttachmentOffset"]?.AsArray<float>(null);
+            if (single != null && single.Length == 3)
+            {
+                offset = new Vec3f(single[0], single[1], single[2]);
+                return true;
+            }
+
+            var map = attrs["wireAttachmentOffsets"];
+            if (map == null) return false;
+
+            string orientation = GetWireOrientationCode();
+            string side = GetWireSideCode();
+            string[] candidates = GetWireOffsetCandidates(orientation, side);
+
+            foreach (string key in candidates)
+            {
+                float[] values = map[key]?.AsArray<float>(null);
+                if (values == null || values.Length != 3) continue;
+
+                offset = new Vec3f(values[0], values[1], values[2]);
+                return true;
+            }
+
+            return false;
+        }
+
+        protected virtual string GetWireOrientationCode()
+        {
+            if (Block?.Variant == null) return "up";
+
+            if (Block.Variant.TryGetValue("orientation", out string orientation) && !string.IsNullOrWhiteSpace(orientation))
+            {
+                return orientation;
+            }
+
+            if (Block.Variant.TryGetValue("side", out string side) && !string.IsNullOrWhiteSpace(side))
+            {
+                return side;
+            }
+
+            return "up";
+        }
+
+        protected virtual string GetWireSideCode()
+        {
+            if (Block?.Variant == null) return null;
+
+            if (Block.Variant.TryGetValue("side", out string side) && !string.IsNullOrWhiteSpace(side))
+            {
+                return side;
+            }
+
+            return null;
+        }
+
+        private static string[] GetWireOffsetCandidates(string orientation, string side)
+        {
+            string combined = !string.IsNullOrWhiteSpace(side) ? $"{orientation}-{side}" : null;
+
+            return orientation switch
+            {
+                "north" => combined != null ? new[] { combined, "north", "wall", "side", "default" } : new[] { "north", "wall", "side", "default" },
+                "east" => combined != null ? new[] { combined, "east", "wall", "side", "default" } : new[] { "east", "wall", "side", "default" },
+                "south" => combined != null ? new[] { combined, "south", "wall", "side", "default" } : new[] { "south", "wall", "side", "default" },
+                "west" => combined != null ? new[] { combined, "west", "wall", "side", "default" } : new[] { "west", "wall", "side", "default" },
+                "down" => combined != null ? new[] { combined, "down", "ceiling", "default" } : new[] { "down", "ceiling", "default" },
+                "up" => combined != null ? new[] { combined, "up", "floor", "default" } : new[] { "up", "floor", "default" },
+                _ => combined != null ? new[] { combined, orientation, "default" } : new[] { orientation, "default" }
+            };
         }
 
         /// <summary>

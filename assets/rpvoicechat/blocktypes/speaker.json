@@ -1,48 +1,97 @@
 {
-  "code": "speaker",
-  "enabled": true,
-  "class": "speakerblock",
-  "entityClass": "BlockEntitySpeaker",
-  "behaviors": [
-    { "name": "HorizontalOrientable" }
-  ],
-  "creativeinventory": {
-    "general": [ "*-north" ],
-    "rpvoicechat": [ "*-north" ]
-  },
-  "maxstacksize": 1,
-  "blockmaterial": "wood",
-  "variantgroups": [
-    {
-      "code": "wood",
-      "states": [ "aged", "veryaged" ],
-      "loadFromProperties": "block/wood"
+    "code": "speaker",
+    "enabled": true,
+    "class": "speakerblock",
+    "entityClass": "BlockEntitySpeaker",
+    "behaviors": [
+        {
+            "name": "AttachWithDirection",
+            "properties": {
+                "facingCode": "orientation",
+                "sideCode": "side",
+                "dropOrientation": "up",
+                "dropSide": "north"
+            }
+        }
+    ],
+    "attributes": {
+        "wireAttachmentOffsets": {
+            "up-west": [ 0.49609375, 0.60000000, 0.32859375 ],
+            "up-north": [ 0.67140625, 0.60000000, 0.49609375 ],
+            "up-east": [ 0.50390625, 0.60000000, 0.67140625 ],
+            "up-south": [ 0.32859375, 0.60000000, 0.50390625 ],
+            "down-west": [ 0.49609375, 0.6684375, 0.14359375 ],
+            "down-north": [ 0.81640625, 0.6684375, 0.45609375 ],
+            "down-east": [ 0.50390625, 0.6684375, 0.77640625 ],
+            "down-south": [ 0.18359375, 0.6684375, 0.46390625 ],
+            "south": [ 0.49609375, 0.6996875, 0.26859375 ],
+            "east": [ 0.30859375, 0.6996875, 0.46390625 ],
+            "north": [ 0.50390625, 0.6996875, 0.65140625 ],
+            "west": [ 0.69140625, 0.6996875, 0.45609375 ],
+            "up": [ 0.49609375, 0.60000000, 0.30859375 ],
+            "down": [ 0.49609375, 0.6684375, 0.14359375 ],
+            "wall": [ 0.49609375, 0.6996875, 0.26859375 ]
+        }
     },
-    {
-      "code": "side",
-      "loadFromProperties": "abstract/horizontalorientation"
+    "creativeinventory": {
+        "general": [ "*-up-north" ],
+        "rpvoicechat": [ "*-up-north" ]
+    },
+    "maxstacksize": 1,
+    "blockmaterial": "wood",
+    "variantgroups": [
+        {
+            "code": "wood",
+            "states": [ "aged", "veryaged" ],
+            "loadFromProperties": "block/wood"
+        },
+        {
+            "code": "orientation",
+            "states": [ "up", "down", "north", "south", "east", "west" ]
+        },
+        {
+            "code": "side",
+            "loadFromProperties": "abstract/horizontalorientation"
+        }
+    ],
+    "shapebytype": {
+        "*-up-north": { "base": "block/speaker/speaker", "rotateY": 270 },
+        "*-up-east": { "base": "block/speaker/speaker", "rotateY": 180 },
+        "*-up-south": { "base": "block/speaker/speaker", "rotateY": 90 },
+        "*-up-west": { "base": "block/speaker/speaker", "rotateY": 0 },
+        "*-down-north": { "base": "block/speaker/speaker_ceiling", "rotateY": 270 },
+        "*-down-east": { "base": "block/speaker/speaker_ceiling", "rotateY": 180 },
+        "*-down-south": { "base": "block/speaker/speaker_ceiling", "rotateY": 90 },
+        "*-down-west": { "base": "block/speaker/speaker_ceiling", "rotateY": 0 },
+        "*-north-*": { "base": "block/speaker/speaker_wall", "rotateY": 180 },
+        "*-east-*": { "base": "block/speaker/speaker_wall", "rotateY": 90 },
+        "*-south-*": { "base": "block/speaker/speaker_wall", "rotateY": 0 },
+        "*-west-*": { "base": "block/speaker/speaker_wall", "rotateY": 270 }
+    },
+    "textures": {
+        "wood": { "base": "game:block/wood/debarked/{wood}" }
+    },
+    "sounds": {
+        "place": "game:block/planks",
+        "hit": "game:block/planks",
+        "break": "game:block/planks",
+        "walk": "game:walk/wood"
+    },
+    "sidesolid": { "all": false },
+    "sideopaque": { "all": false },
+    "lightAbsorption": 15,
+    "resistance": 1,
+    "guiTransform": {
+        "translation": {
+            "x": 0,
+            "y": -3,
+            "z": 0
+        },
+        "rotation": {
+            "x": -22.6,
+            "y": -112,
+            "z": 0
+        },
+        "scale": 1.44
     }
-  ],
-  "shape": {
-    "base": "block/speaker/speaker",
-    "rotateYByType": {
-      "*-north": 0,
-      "*-east": 270,
-      "*-west": 90,
-      "*-south": 180
-    }
-  },
-  "textures": {
-    "wood": { "base": "game:block/wood/debarked/{wood}" }
-  },
-  "sounds": {
-    "place": "game:block/planks",
-    "hit": "game:block/planks",
-    "break": "game:block/planks",
-    "walk": "game:walk/wood"
-  },
-  "sidesolid": { "all": false },
-  "sideopaque": { "all": false },
-  "lightAbsorption": 15,
-  "resistance": 1
 }
