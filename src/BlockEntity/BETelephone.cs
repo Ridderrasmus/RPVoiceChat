@@ -21,7 +21,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
     {
         private const string TelephoneShapeCode = "block/telephone";
         private const string InCallAnimationCode = "playing-sound";
-        private static readonly Vec3f CoilWireOffsetNorth = new Vec3f(11.9f / 16f, 5.485f / 16f, 4.175f / 16f);
 
         private enum TelephoneCallState
         {
@@ -96,11 +95,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
             {
                 ringable.BellPartCode = "smallbellparts-silver";
             }
-        }
-
-        protected override void SetWireAttachmentOffset()
-        {
-            WireAttachmentOffset = RotateLocalOffsetByBlockSide(CoilWireOffsetNorth);
         }
 
         public bool OnInteract(IPlayer byPlayer)
@@ -797,29 +791,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     _ => 0f
                 }
                 : 0f;
-        }
-
-        private static Vec3f RotateAroundCenter(Vec3f point, float rotDeg)
-        {
-            if (Math.Abs(rotDeg) < 0.001f) return point;
-
-            float rad = rotDeg * GameMath.DEG2RAD;
-            float cos = GameMath.Cos(rad);
-            float sin = GameMath.Sin(rad);
-
-            float dx = point.X - 0.5f;
-            float dz = point.Z - 0.5f;
-
-            // Match in-game rotation handedness used by rotateYByType.
-            float x = dx * cos + dz * sin;
-            float z = -dx * sin + dz * cos;
-
-            return new Vec3f(x + 0.5f, point.Y, z + 0.5f);
-        }
-
-        private Vec3f RotateLocalOffsetByBlockSide(Vec3f offsetNorth)
-        {
-            return RotateAroundCenter(offsetNorth, GetBlockSideRotY());
         }
 
         private System.Collections.Generic.IEnumerable<BEWireNode> GetReachableTelephoneVoiceEndpoints()

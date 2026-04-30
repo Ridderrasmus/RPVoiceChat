@@ -70,6 +70,7 @@
   "lightAbsorption": 15,
   "resistance": 1,
   "attributes": {
+    "wireAttachmentOffset": [ 0.5, 0.1, 0.5 ],
     "handbook": {
       "groupBy": [ "telegraph-*" ],
       "extraSections": [
