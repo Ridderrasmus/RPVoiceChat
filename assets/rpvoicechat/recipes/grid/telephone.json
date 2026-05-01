@@ -1,0 +1,32 @@
+{
+  "name": "telephone",
+  "ingredientPattern": "_M_,WIW,_P_",
+  "ingredients": {
+    "M": {
+      "type": "block",
+      "code": "game:metal-parts",
+      "quantity": 1
+    },
+    "W": {
+      "type": "item",
+      "code": "rpvoicechat:telegraphwire",
+      "quantity": 1
+    },
+    "I": {
+      "type": "item",
+      "code": "game:ingot-copper",
+      "quantity": 1
+    },
+    "P": {
+      "type": "item",
+      "code": "game:plank-{wood}",
+      "quantity": 1
+    }
+  },
+  "width": 3,
+  "height": 3,
+  "output": {
+    "type": "block",
+    "code": "rpvoicechat:telephone-{wood}-north"
+  }
+}

@@ -25,6 +25,7 @@ namespace RPVoiceChat.Server
         // Stored players and their associated listeners
         private long listenerUpdateTickListener = 0;
         private ConcurrentDictionary<string, HashSet<IPlayer>> playerListeners = new ConcurrentDictionary<string, HashSet<IPlayer>>();
+        private readonly ConcurrentDictionary<string, bool> devicesVoiceFeedbackByPlayer = new ConcurrentDictionary<string, bool>();
         private readonly IReadOnlyList<IVoiceRouteProvider> voiceRouteProviders;
 
         public GameServer(ICoreServerAPI sapi, List<INetworkServer> serverTransports, IEnumerable<IVoiceRouteProvider> voiceRouteProviders)
@@ -129,6 +130,7 @@ namespace RPVoiceChat.Server
 
         public void PlayerLeft(IServerPlayer player)
         {
+            devicesVoiceFeedbackByPlayer.TryRemove(player.PlayerUID, out _);
             foreach (var server in activeServers)
             {
                 if (server is not IExtendedNetworkServer extendedServer) continue;
@@ -179,9 +181,8 @@ namespace RPVoiceChat.Server
                     continue;
                 }
 
-                // TODO: Decide whether we keep this exclusion or keep a different
-                // approach (e.g. attenuation handling) for the emitter.
-                if (packet.PlayerId == player.PlayerUID)
+                bool allowEmitterFeedback = devicesVoiceFeedbackByPlayer.TryGetValue(player.PlayerUID, out bool devicesVoiceFeedback) && devicesVoiceFeedback;
+                if (packet.PlayerId == player.PlayerUID && !allowEmitterFeedback)
                 {
                     continue;
                 }
@@ -215,7 +216,8 @@ namespace RPVoiceChat.Server
                     continue;
                 }
 
-                if (packet.PlayerId == player.PlayerUID)
+                bool allowEmitterFeedback = devicesVoiceFeedbackByPlayer.TryGetValue(player.PlayerUID, out bool devicesVoiceFeedback) && devicesVoiceFeedback;
+                if (packet.PlayerId == player.PlayerUID && !allowEmitterFeedback)
                 {
                     continue;
                 }
@@ -362,6 +364,8 @@ namespace RPVoiceChat.Server
         {
             var playerTransport = playerConnection.Transport;
             if (!serverByTransportID.ContainsKey(playerTransport)) return;
+
+            devicesVoiceFeedbackByPlayer[player.PlayerUID] = playerConnection.DevicesVoiceFeedback;
 
             var extendedServer = serverByTransportID[playerTransport] as IExtendedNetworkServer;
             if (extendedServer == null) return;
