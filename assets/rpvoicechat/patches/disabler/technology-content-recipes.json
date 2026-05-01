@@ -5,7 +5,7 @@
     "value": false,
     "file": "rpvoicechat:recipes/grid/telegraph.json",
     "condition": {
-      "when": "rpvoicechat:telegraph-content",
+      "when": "rpvoicechat:technology-content",
       "isValue": "false"
     }
   },
@@ -15,7 +15,7 @@
     "value": false,
     "file": "rpvoicechat:recipes/grid/connector.json",
     "condition": {
-      "when": "rpvoicechat:telegraph-content",
+      "when": "rpvoicechat:technology-content",
       "isValue": "false"
     }
   },
@@ -25,7 +25,7 @@
     "value": false,
     "file": "rpvoicechat:recipes/grid/printer.json",
     "condition": {
-      "when": "rpvoicechat:telegraph-content",
+      "when": "rpvoicechat:technology-content",
       "isValue": "false"
     }
   },
@@ -35,7 +35,7 @@
     "value": false,
     "file": "rpvoicechat:recipes/grid/paperslip.json",
     "condition": {
-      "when": "rpvoicechat:telegraph-content",
+      "when": "rpvoicechat:technology-content",
       "isValue": "false"
     }
   },
@@ -45,7 +45,7 @@
     "value": false,
     "file": "rpvoicechat:recipes/grid/wirecutter.json",
     "condition": {
-      "when": "rpvoicechat:telegraph-content",
+      "when": "rpvoicechat:technology-content",
       "isValue": "false"
     }
   },
@@ -55,7 +55,7 @@
     "value": false,
     "file": "rpvoicechat:recipes/smithing/telegraphwire.json",
     "condition": {
-      "when": "rpvoicechat:telegraph-content",
+      "when": "rpvoicechat:technology-content",
       "isValue": "false"
     }
   },
@@ -65,7 +65,7 @@
     "value": false,
     "file": "rpvoicechat:recipes/clayforming/wirecutterjaw.json",
     "condition": {
-      "when": "rpvoicechat:telegraph-content",
+      "when": "rpvoicechat:technology-content",
       "isValue": "false"
     }
   },
@@ -140,4 +140,3 @@
     }
   }
 ]
-
