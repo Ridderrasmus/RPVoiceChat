@@ -9,6 +9,7 @@ public class BlockBehaviorRegistry
     public static void RegisterBlockEntityBehaviors(ICoreAPI api)
     {
         api.RegisterBlockBehaviorClass("Ringable", typeof(BehaviorRingable));
+        api.RegisterBlockBehaviorClass("AttachWithDirection", typeof(BehaviorAttachWithDirection));
     }
 
     public static void AddBehaviors(ICoreAPI api)

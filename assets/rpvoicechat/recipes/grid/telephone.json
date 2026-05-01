@@ -1,0 +1,43 @@
+{
+  "name": "telephone",
+  "enabled":  true,
+  "ingredientPattern": "BMC,POP,PWP",
+  "ingredients": {
+    "B": {
+      "type": "block",
+      "code": "rpvoicechat:callbell",
+      "quantity": 1
+    },
+    "M": {
+      "type": "block",
+      "code": "game:metal-parts",
+      "quantity": 4
+    },
+    "C": {
+      "type": "block",
+      "code": "rpvoicechat:connector-*",
+      "quantity": 1
+    },
+    "W": {
+      "type": "item",
+      "code": "rpvoicechat:telegraphwire",
+      "quantity": 3
+    },
+    "O": {
+        "type": "item",
+        "code": "game:jonasparts-cylinder02",
+        "quantity": 1
+    },
+    "P": {
+      "type": "item",
+      "code": "game:plank-{wood}",
+      "quantity": 3
+    }
+  },
+  "width": 3,
+  "height": 3,
+  "output": {
+    "type": "block",
+    "code": "rpvoicechat:telephone-{wood}-north"
+  }
+}

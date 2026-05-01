@@ -13,7 +13,14 @@ namespace RPVoiceChat.Config
 
         // Features
         public bool AdditionalContent { get; set; } = true;
-        public bool TelegraphContent { get; set; } = true;
+        public bool TechnologyContent { get; set; } = true;
+
+        // Backward compatibility with older config files.
+        public bool TelegraphContent
+        {
+            get => TechnologyContent;
+            set => TechnologyContent = value;
+        }
 
         // Audio Performance Settings
         public float MaxAudioGain { get; set; } = 2f;
@@ -46,6 +53,8 @@ namespace RPVoiceChat.Config
         public int CarillonbellAudibleDistance { get; set; } = 256;
         public int ChurchbellAudibleDistance { get; set; } = 832;
         public int MegaphoneAudibleDistance { get; set; } = 125;
+        public int TelephoneAudibleDistance { get; set; } = 2;
+        public int SpeakerAudibleDistance { get; set; } = 30;
 
         public RPVoiceChatServerConfig() { }
 
@@ -62,7 +71,7 @@ namespace RPVoiceChat.Config
 
             // Features
             AdditionalContent = previousConfig.AdditionalContent;
-            TelegraphContent = previousConfig.TelegraphContent;
+            TechnologyContent = previousConfig.TechnologyContent;
 
             // Audio Performance Settings
             MaxAudioGain = previousConfig.MaxAudioGain;
@@ -95,6 +104,8 @@ namespace RPVoiceChat.Config
             CarillonbellAudibleDistance = previousConfig.CarillonbellAudibleDistance;
             ChurchbellAudibleDistance = previousConfig.ChurchbellAudibleDistance;
             MegaphoneAudibleDistance = previousConfig.MegaphoneAudibleDistance;
+            TelephoneAudibleDistance = previousConfig.TelephoneAudibleDistance;
+            SpeakerAudibleDistance = previousConfig.SpeakerAudibleDistance;
         }
     }
 }

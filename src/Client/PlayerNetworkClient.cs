@@ -1,3 +1,4 @@
+using RPVoiceChat.Config;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Util;
 using System;
@@ -100,6 +101,7 @@ namespace RPVoiceChat.Client
                 extendedTransport.OnConnectionLost += ConnectionLost;
             }
             clientConnection.Transport = transportID;
+            clientConnection.DevicesVoiceFeedback = ModConfig.ClientConfig.DevicesVoiceFeedback;
             handshakeChannel.SendPacket(clientConnection);
 
             activeTransports.Add(transport);

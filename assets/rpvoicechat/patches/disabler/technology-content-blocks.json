@@ -5,7 +5,7 @@
     "value": false,
     "file": "rpvoicechat:blocktypes/telegraph.json",
     "condition": {
-      "when": "rpvoicechat:telegraph-content",
+      "when": "rpvoicechat:technology-content",
       "isValue": "false"
     }
   },
@@ -15,7 +15,7 @@
     "value": false,
     "file": "rpvoicechat:blocktypes/connector.json",
     "condition": {
-      "when": "rpvoicechat:telegraph-content",
+      "when": "rpvoicechat:technology-content",
       "isValue": "false"
     }
   },
@@ -25,7 +25,7 @@
     "value": false,
     "file": "rpvoicechat:blocktypes/printer.json",
     "condition": {
-      "when": "rpvoicechat:telegraph-content",
+      "when": "rpvoicechat:technology-content",
       "isValue": "false"
     }
   },
@@ -35,7 +35,7 @@
     "value": false,
     "file": "rpvoicechat:blocktypes/clay/raw/wirecutterjawmold.json",
     "condition": {
-      "when": "rpvoicechat:telegraph-content",
+      "when": "rpvoicechat:technology-content",
       "isValue": "false"
     }
   },
@@ -45,7 +45,7 @@
     "value": false,
     "file": "rpvoicechat:blocktypes/clay/fired/wirecutterjawmold.json",
     "condition": {
-      "when": "rpvoicechat:telegraph-content",
+      "when": "rpvoicechat:technology-content",
       "isValue": "false"
     }
   },
@@ -55,7 +55,27 @@
     "value": false,
     "file": "rpvoicechat:blocktypes/switchboard.json",
     "condition": {
-      "when": "rpvoicechat:telegraph-content",
+      "when": "rpvoicechat:technology-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:blocktypes/telephone.json",
+    "condition": {
+      "when": "rpvoicechat:technology-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:blocktypes/speaker.json",
+    "condition": {
+      "when": "rpvoicechat:technology-content",
       "isValue": "false"
     }
   },
@@ -64,6 +84,26 @@
     "path": "/enabled",
     "value": false,
     "file": "rpvoicechat:blocktypes/telegraph.json",
+    "condition": {
+      "when": "rpvoicechat:additional-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:blocktypes/telephone.json",
+    "condition": {
+      "when": "rpvoicechat:additional-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:blocktypes/speaker.json",
     "condition": {
       "when": "rpvoicechat:additional-content",
       "isValue": "false"

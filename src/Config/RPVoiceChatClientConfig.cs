@@ -29,6 +29,7 @@ namespace RPVoiceChat.Config
         public bool IsMuted { get; set; } = false;
         public bool IsMonoMode { get; set; } = false;
         public bool Loopback { get; set; } = false;
+        public bool DevicesVoiceFeedback { get; set; } = true;
         public bool Muffling { get; set; } = true;
         public bool ChannelGuessing { get; set; } = true;
 
@@ -61,6 +62,7 @@ namespace RPVoiceChat.Config
             IsMuted = previousConfig.IsMuted;
             IsMonoMode = previousConfig.IsMonoMode;
             Loopback = previousConfig.Loopback;
+            DevicesVoiceFeedback = previousConfig.DevicesVoiceFeedback;
             Muffling = previousConfig.Muffling;
             ChannelGuessing = previousConfig.ChannelGuessing;
 

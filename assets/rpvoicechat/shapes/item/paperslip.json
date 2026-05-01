@@ -9,6 +9,7 @@
 	"textureSizes": {
 	},
 	"textures": {
+		"paper": "game:block/cloth/paper/blank-small"
 	},
 	"elements": [
 		{

@@ -101,4 +101,9 @@ namespace RPVoiceChat.GameContent.Systems
     {
         string CustomEndpointName { get; }
     }
+
+    public interface ITelephoneVoiceEndpoint
+    {
+        int VoiceEmissionRangeBlocks { get; }
+    }
 }
