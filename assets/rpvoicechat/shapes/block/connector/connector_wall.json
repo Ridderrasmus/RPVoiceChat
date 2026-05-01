@@ -9,6 +9,8 @@
 	"textureSizes": {
 	},
 	"textures": {
+		"metal": "game:block/metal/plate/copper",
+		"stone": "game:block/stone/flint"
 	},
 	"elements": [
 		{

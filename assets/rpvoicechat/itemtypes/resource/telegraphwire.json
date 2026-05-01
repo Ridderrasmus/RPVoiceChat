@@ -26,14 +26,6 @@
   },
   "maxStackSize": 16,
   "shape": { "base": "item/telegraphwire" },
-  "textures": {
-    "metal": {
-      "base": "item/coilwire"
-    },
-    "wood": {
-      "base": "game:block/wood-generic"
-    }
-  },
   "attributes": {
     "helvehammerworkable": true,
     "createdBy": "smithing",

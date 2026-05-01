@@ -5,7 +5,6 @@
   "entityClass": "BlockEntityCarillonBell",
   "entityBehaviors": [
     { "name": "Animatable" },
-    { "name": "BEAnimatable", "properties": { "animationCodes": "swing,clapper", "requireJointsForElements": "rope,clapper" } },
     { "name": "BESoundable" }
   ],
   "behaviors": [
@@ -59,9 +58,6 @@
   "textures": {
     "metal": {
       "base": "game:block/metal/sheet/{metal}1"
-    },
-    "rope": {
-      "base": "game:item/resource/rope"
     }
   },
   "attributes": {

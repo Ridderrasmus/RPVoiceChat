@@ -1,0 +1,33 @@
+{
+    "name": "speaker",
+    "enabled": true,
+    "ingredientPattern": "PCP,PMP,PWP",
+    "ingredients": {
+        "C": {
+            "type": "block",
+            "code": "rpvoicechat:connector-*",
+            "quantity": 1
+        },
+        "W": {
+            "type": "item",
+            "code": "rpvoicechat:telegraphwire",
+            "quantity": 4
+        },
+        "M": {
+            "type": "block",
+            "code": "game:metal-parts",
+            "quantity": 3
+        },
+        "P": {
+            "type": "item",
+            "code": "game:plank-{wood}",
+            "quantity": 2
+        }
+    },
+    "width": 3,
+    "height": 3,
+    "output": {
+        "type": "block",
+        "code": "rpvoicechat:speaker-{wood}-up-north"
+    }
+}

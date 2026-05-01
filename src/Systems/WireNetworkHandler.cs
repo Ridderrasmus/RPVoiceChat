@@ -204,6 +204,14 @@ namespace RPVoiceChat.Systems
                     string disabledReason = overCapacity ? "Telegraph.Settings.DisabledCapacity" : "Telegraph.Settings.DisabledNoPower";
                     telegraph.ApplyServerRoutingFlags(managed, advanced, disabledReason);
                 }
+                else if (node is BlockEntityTelephone telephone)
+                {
+                    bool managed = activeEndpointOwners.TryGetValue(telephone, out BlockEntitySwitchboard owner) && owner != null;
+                    bool overCapacity = IsOverCapacityForManagedComponent(network, WireNetworkKind.Telephone);
+                    bool composeEnabled = managed && !overCapacity && owner.HasSufficientPowerFor(WireNetworkKind.Telephone);
+                    string disabledReason = overCapacity ? "Telegraph.Settings.DisabledCapacity" : "Telegraph.Settings.DisabledNoPower";
+                    telephone.ApplyServerComposeFlags(managed, composeEnabled, disabledReason);
+                }
             }
         }
 
@@ -339,14 +347,36 @@ namespace RPVoiceChat.Systems
             int telegraphCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Telegraph);
             int telephoneCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Telephone);
             int radioCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Radio);
+            int speakerCount = prospectiveComponent.OfType<BlockEntitySpeaker>().Count();
+            int telephoneHandsetCount = prospectiveComponent.OfType<BlockEntityTelephone>().Count();
+            int activeKinds = 0;
+            if (telegraphCount > 0) activeKinds++;
+            if (telephoneCount > 0) activeKinds++;
+            if (radioCount > 0) activeKinds++;
+
+            // Defensive guard: dedicated network rules should prevent mixed endpoint families
+            // in normal gameplay. Keep this to reject legacy/invalid graph states.
+            if (activeKinds > 1)
+            {
+                denialLangKey = "Wire.ConnectionDenied.MixedTypes";
+                return false;
+            }
 
             if (!hasSwitchboard)
             {
                 // No switchboard:
                 // - Telegraph networks: unlimited
-                // - Telephone networks: max 2 endpoints
+                // - Telephone networks:
+                //   - up to 2 handsets when there are no speakers (legacy telephone pairing)
+                //   - up to 1 handset when speakers are present (PA-style branch)
                 // - Radio networks: max 1 endpoint
-                if (telephoneCount > 2)
+                if (speakerCount > 0 && telephoneHandsetCount > 1)
+                {
+                    denialLangKey = "Wire.ConnectionDenied.SpeakerNetworkSingleTelephone";
+                    return false;
+                }
+
+                if (speakerCount == 0 && telephoneCount > 2)
                 {
                     denialLangKey = "Wire.ConnectionDenied.NetworkCapacity";
                     denialArgs = new object[] { GetKindDisplayName(WireNetworkKind.Telephone), 2 };
@@ -363,14 +393,10 @@ namespace RPVoiceChat.Systems
                 return true;
             }
 
-            int activeKinds = 0;
-            if (telegraphCount > 0) activeKinds++;
-            if (telephoneCount > 0) activeKinds++;
-            if (radioCount > 0) activeKinds++;
-
-            if (activeKinds > 1)
+            // Managed switchboard components must not contain speakers.
+            if (speakerCount > 0)
             {
-                denialLangKey = "Wire.ConnectionDenied.MixedTypes";
+                denialLangKey = "Wire.ConnectionDenied.SpeakerWithSwitchboard";
                 return false;
             }
 
@@ -616,6 +642,17 @@ namespace RPVoiceChat.Systems
             var result = new HashSet<BEWireNode>();
             AddReachable(node1, result);
             AddReachable(node2, result);
+            return result;
+        }
+
+        /// <summary>
+        /// Returns all nodes reachable from a start node through wire connections.
+        /// Useful for endpoint queries that must traverse connectors/infrastructure.
+        /// </summary>
+        public static HashSet<BEWireNode> GetReachableNodes(BEWireNode startNode)
+        {
+            var result = new HashSet<BEWireNode>();
+            AddReachable(startNode, result);
             return result;
         }
 

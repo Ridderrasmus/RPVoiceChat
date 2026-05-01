@@ -5,7 +5,7 @@
     "value": false,
     "file": "rpvoicechat:itemtypes/resource/telegraphwire.json",
     "condition": {
-      "when": "rpvoicechat:telegraph-content",
+      "when": "rpvoicechat:technology-content",
       "isValue": "false"
     }
   },
@@ -15,7 +15,7 @@
     "value": false,
     "file": "rpvoicechat:itemtypes/telegram.json",
     "condition": {
-      "when": "rpvoicechat:telegraph-content",
+      "when": "rpvoicechat:technology-content",
       "isValue": "false"
     }
   },
@@ -25,7 +25,7 @@
     "value": false,
     "file": "rpvoicechat:itemtypes/resource/paperslip.json",
     "condition": {
-      "when": "rpvoicechat:telegraph-content",
+      "when": "rpvoicechat:technology-content",
       "isValue": "false"
     }
   },
@@ -35,7 +35,7 @@
     "value": false,
     "file": "rpvoicechat:itemtypes/resource/wirecutter-jaw.json",
     "condition": {
-      "when": "rpvoicechat:telegraph-content",
+      "when": "rpvoicechat:technology-content",
       "isValue": "false"
     }
   },
@@ -45,7 +45,7 @@
     "value": false,
     "file": "rpvoicechat:itemtypes/wirecutter.json",
     "condition": {
-      "when": "rpvoicechat:telegraph-content",
+      "when": "rpvoicechat:technology-content",
       "isValue": "false"
     }
   },
@@ -100,4 +100,3 @@
     }
   }
 ]
-

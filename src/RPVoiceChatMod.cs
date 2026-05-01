@@ -24,6 +24,8 @@ namespace RPVoiceChat
         internal static IServerNetworkChannel TelegraphPrintServerChannel;
         internal static IClientNetworkChannel TelegraphSettingsClientChannel;
         internal static IServerNetworkChannel TelegraphSettingsServerChannel;
+        internal static IClientNetworkChannel TelephoneSettingsClientChannel;
+        internal static IServerNetworkChannel TelephoneSettingsServerChannel;
         internal static IClientNetworkChannel SwitchboardClientChannel;
         internal static IServerNetworkChannel SwitchboardServerChannel;
         internal static IClientNetworkChannel AnnounceClientChannel;
@@ -54,6 +56,8 @@ namespace RPVoiceChat
                     .RegisterMessageType<CommDeliveryPacket>();
                 TelegraphSettingsClientChannel = capi.Network.RegisterChannel("telegraphsettings")
                     .RegisterMessageType<TelegraphSettingsPacket>();
+                TelephoneSettingsClientChannel = capi.Network.RegisterChannel("telephonesettings")
+                    .RegisterMessageType<TelephoneSettingsPacket>();
                 SwitchboardClientChannel = capi.Network.RegisterChannel("switchboardsettings")
                     .RegisterMessageType<SwitchboardRenameNetworkPacket>()
                     .RegisterMessageType<SwitchboardPowerModePacket>();
@@ -74,6 +78,9 @@ namespace RPVoiceChat
                 TelegraphSettingsServerChannel = sapi.Network.RegisterChannel("telegraphsettings")
                     .RegisterMessageType<TelegraphSettingsPacket>()
                     .SetMessageHandler<TelegraphSettingsPacket>(OnTelegraphSettingsPacket);
+                TelephoneSettingsServerChannel = sapi.Network.RegisterChannel("telephonesettings")
+                    .RegisterMessageType<TelephoneSettingsPacket>()
+                    .SetMessageHandler<TelephoneSettingsPacket>(OnTelephoneSettingsPacket);
                 SwitchboardServerChannel = sapi.Network.RegisterChannel("switchboardsettings")
                     .RegisterMessageType<SwitchboardRenameNetworkPacket>()
                     .RegisterMessageType<SwitchboardPowerModePacket>()
@@ -167,6 +174,32 @@ namespace RPVoiceChat
             }
 
             switchboard.RenameNetwork(packet.NetworkName, out _);
+        }
+
+        private void OnTelephoneSettingsPacket(IServerPlayer player, TelephoneSettingsPacket packet)
+        {
+            var telephone = sapi.World.BlockAccessor.GetBlockEntity(packet.TelephonePos) as BlockEntityTelephone;
+            if (telephone == null)
+            {
+                sapi.Logger.Warning($"Telephone at {packet.TelephonePos} not found for settings packet");
+                return;
+            }
+
+            switch (packet.Operation)
+            {
+                case TelephoneSettingsOperation.SetNumber:
+                    telephone.SetPhoneNumber(packet.Value);
+                    break;
+                case TelephoneSettingsOperation.SetTarget:
+                    telephone.SetTargetNumber(packet.Value);
+                    break;
+                case TelephoneSettingsOperation.StartCall:
+                    telephone.StartCall(player, packet.Value);
+                    break;
+                case TelephoneSettingsOperation.EndCall:
+                    telephone.EndCall();
+                    break;
+            }
         }
 
         private void OnSwitchboardPowerModePacket(IServerPlayer player, SwitchboardPowerModePacket packet)

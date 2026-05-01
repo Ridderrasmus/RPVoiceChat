@@ -9,6 +9,12 @@
 	"textureSizes": {
 	},
 	"textures": {
+		"metal": "game:block/metal/plate/copper",
+		"iron": "game:block/metal/plate/iron",
+		"rusty-iron": "game:block/metal/tarnished/rusty-iron",
+		"gold": "game:block/metal/plate/gold",
+		"bituminous": "game:block/coal/bituminous",
+		"wood2": "game:block/wood-generic"
 	},
 	"elements": [
 		{
@@ -2005,94 +2011,6 @@
 		}
 	],
 	"animations": [
-		{
-			"name": "strike",
-			"code": "strike",
-			"quantityframes": 8,
-			"onActivityStopped": "EaseOut",
-			"onAnimationEnd": "EaseOut",
-			"keyframes": [
-				{
-					"frame": 0,
-					"elements": {
-						"hammer": { "offsetX": 0.0, "offsetY": 0.0, "offsetZ": 0.0, "rotationX": 0.0, "rotationY": 0.0, "rotationZ": 0.0 }
-					}
-				},
-				{
-					"frame": 7,
-					"elements": {
-						"hammer": { "offsetX": 0.0, "offsetY": 0.0, "offsetZ": 0.0, "rotationX": 0.0, "rotationY": 0.0, "rotationZ": -45.0 }
-					}
-				}
-			]
-		},
-
-		{
-			"name": "gear",
-			"code": "gear",
-			"quantityframes": 30,
-			"onActivityStopped": "EaseOut",
-			"onAnimationEnd": "Repeat",
-			"keyframes": [
-				{
-					"frame": 0,
-					"elements": {
-						"gear": { "rotationX": 0.0, "rotationY": 0.0, "rotationZ": 0.0 }
-					}
-				},
-				{
-					"frame": 29,
-					"elements": {
-						"gear": { "rotationX": -348.0, "rotationY": 0.0, "rotationZ": 0.0 }
-					}
-				}
-			]
-		},
-
-		{
-			"name": "strike",
-			"code": "strike",
-			"quantityframes": 8,
-			"onActivityStopped": "EaseOut",
-			"onAnimationEnd": "EaseOut",
-			"keyframes": [
-				{
-					"frame": 0,
-					"elements": {
-						"hammer": { "offsetX": 0.0, "offsetY": 0.0, "offsetZ": 0.0, "rotationX": 0.0, "rotationY": 0.0, "rotationZ": 0.0 }
-					}
-				},
-				{
-					"frame": 7,
-					"elements": {
-						"hammer": { "offsetX": 0.0, "offsetY": 0.0, "offsetZ": 0.0, "rotationX": 0.0, "rotationY": 0.0, "rotationZ": -45.0 }
-					}
-				}
-			]
-		},
-
-		{
-			"name": "gear",
-			"code": "gear",
-			"quantityframes": 30,
-			"onActivityStopped": "EaseOut",
-			"onAnimationEnd": "Repeat",
-			"keyframes": [
-				{
-					"frame": 0,
-					"elements": {
-						"gear": { "rotationX": 0.0, "rotationY": 0.0, "rotationZ": 0.0 }
-					}
-				},
-				{
-					"frame": 29,
-					"elements": {
-						"gear": { "rotationX": -348.0, "rotationY": 0.0, "rotationZ": 0.0 }
-					}
-				}
-			]
-		},
-
 		{
 			"name": "strike",
 			"code": "strike",
