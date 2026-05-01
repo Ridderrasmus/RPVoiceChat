@@ -31,6 +31,15 @@
             "up": [ 0.49609375, 0.60000000, 0.30859375 ],
             "down": [ 0.49609375, 0.6684375, 0.14359375 ],
             "wall": [ 0.49609375, 0.6996875, 0.26859375 ]
+        },
+        "handbook": {
+            "groupBy": [ "speaker-*" ],
+            "extraSections": [
+                {
+                    "title": "rpvoicechat:Handbook.Usage.block-speaker.Title",
+                    "text": "rpvoicechat:Handbook.Usage.block-speaker.Text"
+                }
+            ]
         }
     },
     "creativeinventory": {

@@ -13,7 +13,14 @@ namespace RPVoiceChat.Config
 
         // Features
         public bool AdditionalContent { get; set; } = true;
-        public bool TelegraphContent { get; set; } = true;
+        public bool TechnologyContent { get; set; } = true;
+
+        // Backward compatibility with older config files.
+        public bool TelegraphContent
+        {
+            get => TechnologyContent;
+            set => TechnologyContent = value;
+        }
 
         // Audio Performance Settings
         public float MaxAudioGain { get; set; } = 2f;
@@ -64,7 +71,7 @@ namespace RPVoiceChat.Config
 
             // Features
             AdditionalContent = previousConfig.AdditionalContent;
-            TelegraphContent = previousConfig.TelegraphContent;
+            TechnologyContent = previousConfig.TechnologyContent;
 
             // Audio Performance Settings
             MaxAudioGain = previousConfig.MaxAudioGain;
