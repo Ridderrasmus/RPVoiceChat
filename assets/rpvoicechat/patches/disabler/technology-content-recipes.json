@@ -73,6 +73,46 @@
     "op": "add",
     "path": "/enabled",
     "value": false,
+    "file": "rpvoicechat:recipes/grid/speaker.json",
+    "condition": {
+      "when": "rpvoicechat:technology-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:recipes/grid/speaker.json",
+    "condition": {
+      "when": "rpvoicechat:additional-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:recipes/grid/telephone.json",
+    "condition": {
+      "when": "rpvoicechat:technology-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:recipes/grid/telephone.json",
+    "condition": {
+      "when": "rpvoicechat:additional-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
     "file": "rpvoicechat:recipes/grid/telegraph.json",
     "condition": {
       "when": "rpvoicechat:additional-content",

@@ -383,6 +383,8 @@
   "Gui.ModMenu.loopback.Tooltip": "Joue le son enregistré via la sortie audio",
   "Gui.ModMenu.monoMode.Label": "Mode mono",
   "Gui.ModMenu.monoMode.Tooltip": "Désactive le positionnement audio 3D - toutes les voix seront entendues depuis le centre",
+  "Gui.ModMenu.devicesVoiceFeedback.Label": "Retour voix via appareils",
+  "Gui.ModMenu.devicesVoiceFeedback.Tooltip": "Permet d'entendre votre propre voix lorsqu'elle est rediffusée par des appareils connectés (des enceintes, par exemple).",
   "Gui.ModMenu.outputVoice.Label": "Niveau du volume des joueurs",
   "Gui.ModMenu.outputVoice.Tooltip": "Indicateur permettant d'augmenter le volume des autres joueurs",
   "Gui.ModMenu.outputBlock.Label": "Niveau du volume des blocs du mod",

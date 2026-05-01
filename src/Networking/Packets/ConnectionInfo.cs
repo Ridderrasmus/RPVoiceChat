@@ -8,6 +8,7 @@ namespace RPVoiceChat.Networking
         public string Address { get; set; }
         public int Port { get; set; }
         public string Transport { get; set; }
+        public bool DevicesVoiceFeedback { get; set; } = true;
         protected override PacketType Code { get => PacketType.ConnectionInfo; }
 
         public ConnectionInfo() { }
