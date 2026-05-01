@@ -9,6 +9,8 @@
 	"textureSizes": {
 	},
 	"textures": {
+		"metal": "item/coilwire",
+		"wood": "game:block/wood-generic"
 	},
 	"elements": [
 		{

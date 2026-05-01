@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using RPVoiceChat.Config;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Networking.Packets;
@@ -47,15 +48,57 @@ namespace RPVoiceChat
                 networkTransports.Insert(1, new TCPNetworkServer(ModConfig.ServerConfig.ServerPort, ModConfig.ServerConfig.ServerIP, forwardPorts));
             }
 
-            server = new GameServer(sapi, networkTransports);
+            var voiceRouteProviders = CollectVoiceRouteProviders(api);
+            server = new GameServer(sapi, networkTransports, voiceRouteProviders);
             server.Launch();
+        }
+
+        private static List<IVoiceRouteProvider> CollectVoiceRouteProviders(ICoreServerAPI api)
+        {
+            var providers = new List<IVoiceRouteProvider>();
+            if (api?.ModLoader == null)
+            {
+                return providers;
+            }
+
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+            foreach (string propertyName in new[] { "Systems", "ModSystems", "LoadedSystems" })
+            {
+                try
+                {
+                    var property = api.ModLoader.GetType().GetProperty(propertyName, flags);
+                    if (property?.GetValue(api.ModLoader) is not System.Collections.IEnumerable systems)
+                    {
+                        continue;
+                    }
+
+                    foreach (var system in systems)
+                    {
+                        if (system is IVoiceRouteProvider provider && !providers.Contains(provider))
+                        {
+                            providers.Add(provider);
+                        }
+                    }
+
+                    if (providers.Count > 0)
+                    {
+                        return providers;
+                    }
+                }
+                catch
+                {
+                    // Keep scanning alternative property names for API compatibility.
+                }
+            }
+
+            return providers;
         }
 
         public override void StartPre(ICoreAPI api)
         {
             base.StartPre(api);
             WorldConfig.Set("additional-content", ModConfig.ServerConfig.AdditionalContent);
-            WorldConfig.Set("telegraph-content", ModConfig.ServerConfig.TelegraphContent);
+            WorldConfig.Set("technology-content", ModConfig.ServerConfig.TechnologyContent);
         }
 
         public override double ExecuteOrder() => 1.02;

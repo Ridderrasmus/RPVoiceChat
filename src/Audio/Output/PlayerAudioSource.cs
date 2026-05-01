@@ -114,6 +114,9 @@ namespace RPVoiceChat.Audio
             if (speakerPos == null || listenerPos == null)
                 return;
 
+            Vec3d sourceOverride = currentAudio?.sourcePosOverride;
+            Vec3d effectiveSpeakerPos = sourceOverride ?? new Vec3d(speakerPos.X, speakerPos.Y, speakerPos.Z);
+
             DateTime now = DateTime.Now;
             bool shouldDoFullUpdate = lastFullUpdate == null || 
                 (now - lastFullUpdate.Value).TotalMilliseconds >= FullUpdateIntervalMs;
@@ -127,7 +130,14 @@ namespace RPVoiceChat.Audio
                 bool mufflingEnabled = ModConfig.ClientConfig.Muffling;
                 if (mufflingEnabled)
                 {
-                    wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
+                    if (sourceOverride != null)
+                    {
+                        wallThickness = LocationUtils.GetWallThickness(capi, sourceOverride, LocationUtils.GetLocationOfPlayer(capi.World.Player));
+                    }
+                    else
+                    {
+                        wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
+                    }
                     if (capi.World.Player.Entity.Swimming)
                         wallThickness += 1.0f;
                     cachedWallThickness = wallThickness;
@@ -207,13 +217,13 @@ namespace RPVoiceChat.Audio
 
             if (useLocationalAudio)
             {
-                sourcePosition = GetRelativeSourcePosition(speakerPos, listenerPos);
-                velocity = GetRelativeVelocity(speakerPos, listenerPos, sourcePosition);
+                sourcePosition = GetRelativeSourcePosition(effectiveSpeakerPos, listenerPos);
+                velocity = GetRelativeVelocity(effectiveSpeakerPos, listenerPos, sourcePosition);
             }
             else if (ModConfig.ClientConfig.IsMonoMode)
             {
                 // In mono mode, preserve distance but center the audio (no stereo positioning)
-                float distance = (float)speakerPos.DistanceTo(listenerPos);
+                float distance = (float)effectiveSpeakerPos.DistanceTo(listenerPos.XYZ);
                 sourcePosition = new Vec3f(0, 0, distance); // Position in front of listener at correct distance
                 velocity = new Vec3f(); // No velocity in mono mode
             }
@@ -256,36 +266,38 @@ namespace RPVoiceChat.Audio
 
             const float quietDistance = 10;
 
-            float maxHearingDistance = WorldConfig.GetInt(voiceLevel);
+            float maxHearingDistance = currentAudio?.effectiveRange > 0
+                ? currentAudio.effectiveRange
+                : WorldConfig.GetInt(voiceLevel);
             var exponent = quietDistance < maxHearingDistance ? 2 : -0.33;
             var distanceFactor = Math.Pow(quietDistance / maxHearingDistance, exponent);
             return (float)distanceFactor;
         }
 
-        private Vec3f GetRelativeSourcePosition(EntityPos speakerPos, EntityPos listenerPos)
+        private Vec3f GetRelativeSourcePosition(Vec3d speakerPos, EntityPos listenerPos)
         {
-            var relativeSourcePosition = LocationUtils.GetRelativeSpeakerLocation(speakerPos, listenerPos);
+            var relativeSourcePosition = LocationUtils.GetRelativeSpeakerLocation(speakerPos.ToVec3f(), listenerPos);
             return relativeSourcePosition;
         }
 
-        private Vec3f GetRelativeVelocity(EntityPos speakerPos, EntityPos listenerPos, Vec3f relativeSpeakerPosition)
+        private Vec3f GetRelativeVelocity(Vec3d speakerPos, EntityPos listenerPos, Vec3f relativeSpeakerPosition)
         {
             var speakerVelocity = GetVelocity(speakerPos);
-            var futureSpeakerPosition = speakerPos.XYZFloat + speakerVelocity;
+            var futureSpeakerPosition = speakerPos.ToVec3f() + speakerVelocity;
             var relativeFuturePosition = LocationUtils.GetRelativeSpeakerLocation(futureSpeakerPosition, listenerPos);
             var relativeVelocity = relativeSpeakerPosition - relativeFuturePosition;
 
             return relativeVelocity;
         }
 
-        private Vec3f GetVelocity(EntityPos speakerPos)
+        private Vec3f GetVelocity(Vec3d speakerPos)
         {
             var currentTime = DateTime.Now;
             if (lastSpeakerUpdate == null) lastSpeakerUpdate = currentTime;
             var dt = (currentTime - (DateTime)lastSpeakerUpdate).TotalSeconds;
             dt = GameMath.Clamp(dt, 0.1, 1);
 
-            var speakerCoords = speakerPos.XYZFloat;
+            var speakerCoords = speakerPos.ToVec3f();
             if (lastSpeakerCoords == null || dt == 1) lastSpeakerCoords = speakerCoords;
 
             var velocity = (lastSpeakerCoords - speakerCoords) / (float)dt;

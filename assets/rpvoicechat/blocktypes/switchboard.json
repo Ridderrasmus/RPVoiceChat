@@ -43,12 +43,7 @@
     "walk": "game:walk/wood"
   },
   "textures": {
-    "wood": { "base": "game:block/wood/debarked/{wood}" },
-    "gold": { "base": "game:block/metal/plate/gold" },
-    "copper": { "base": "game:block/metal/plate/copper" },
-    "glass": { "base": "game:block/glass/plain" },
-    "bakelite": { "base": "game:block/coal/bituminous" },
-    "silver": { "base": "game:block/metal/ingot/silver" }
+    "wood": { "base": "game:block/wood/debarked/{wood}" }
   },
   "rainPermeable": false,
   "sidesolid": {

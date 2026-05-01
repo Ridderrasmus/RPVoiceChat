@@ -11,9 +11,6 @@
   "shape": {
     "base": "item/paperslip"
   },
-  "textures": {
-    "paper": { "base": "game:block/cloth/paper/blank-small" }
-  },
   "attributes": {
     "handbook": {
       "extraSections": [

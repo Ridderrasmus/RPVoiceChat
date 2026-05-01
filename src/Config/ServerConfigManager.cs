@@ -45,6 +45,8 @@ namespace RPVoiceChat.Config
         public static int CarillonbellAudibleDistance => Config?.CarillonbellAudibleDistance ?? 256;
         public static int ChurchbellAudibleDistance => Config?.ChurchbellAudibleDistance ?? 832;
         public static int MegaphoneAudibleDistance => Config?.MegaphoneAudibleDistance ?? 125;
+        public static int TelephoneAudibleDistance => Config?.TelephoneAudibleDistance ?? 2;
+        public static int SpeakerAudibleDistance => Config?.SpeakerAudibleDistance ?? 30;
 
         /// <summary>
         /// Validates configuration values to avoid invalid values
@@ -186,6 +188,18 @@ namespace RPVoiceChat.Config
             {
                 Logger.server.Warning($"MegaphoneAudibleDistance ({MegaphoneAudibleDistance}) should be between 1 and 1000. Using default (125).");
                 Config.MegaphoneAudibleDistance = 125;
+            }
+
+            if (TelephoneAudibleDistance < 1 || TelephoneAudibleDistance > 1000)
+            {
+                Logger.server.Warning($"TelephoneAudibleDistance ({TelephoneAudibleDistance}) should be between 1 and 1000. Using default (2).");
+                Config.TelephoneAudibleDistance = 2;
+            }
+
+            if (SpeakerAudibleDistance < 1 || SpeakerAudibleDistance > 1000)
+            {
+                Logger.server.Warning($"SpeakerAudibleDistance ({SpeakerAudibleDistance}) should be between 1 and 1000. Using default (30).");
+                Config.SpeakerAudibleDistance = 30;
             }
         }
     }

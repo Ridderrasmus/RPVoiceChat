@@ -42,7 +42,7 @@ namespace RPVoiceChat
             base.StartPre(api);
             // Set world config values for patches to work (needed for singleplayer)
             WorldConfig.Set("additional-content", ModConfig.ServerConfig.AdditionalContent);
-            WorldConfig.Set("telegraph-content", ModConfig.ServerConfig.TelegraphContent);
+            WorldConfig.Set("technology-content", ModConfig.ServerConfig.TechnologyContent);
         }
 
         public override void StartClientSide(ICoreClientAPI api)

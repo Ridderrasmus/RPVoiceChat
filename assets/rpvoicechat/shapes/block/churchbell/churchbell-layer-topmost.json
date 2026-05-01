@@ -8,6 +8,10 @@
 	"textureSizes": {
 	},
 	"textures": {
+		"steel": "game:block/metal/ingot/steel",
+		"brass": "game:block/metal/ingot/brass",
+		"chalk2": "game:block/stone/rock/chalk2",
+		"tin": "game:block/metal/ingot/tin"
 	},
 	"elements": [
 		{

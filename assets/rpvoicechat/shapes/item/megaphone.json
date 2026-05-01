@@ -9,6 +9,10 @@
 	"textureSizes": {
 	},
 	"textures": {
+		"blue": "game:block/glass/blue",
+		"copper": "game:block/metal/sheet/copper1",
+		"gold1": "game:block/metal/sheet/gold1",
+		"cupronickel1": "game:block/metal/sheet/cupronickel1"
 	},
 	"elements": [
 		{
