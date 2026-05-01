@@ -9,6 +9,12 @@
 	"textureSizes": {
 	},
 	"textures": {
+		"blue": "game:block/glass/blue",
+		"electrum1": "game:block/metal/sheet/electrum1",
+		"gold1": "game:block/metal/sheet/gold1",
+		"cupronickel1": "game:block/metal/sheet/cupronickel1",
+		"bakelite": "game:block/coal/bituminous",
+		"wire": "item/coilwire"
 	},
 	"elements": [
 		{

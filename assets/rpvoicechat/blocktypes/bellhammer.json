@@ -6,7 +6,6 @@
   "behaviors": [{"name": "HorizontalUpDownOrientable", "properties": {"attachableFaces": ["up", "down"]}}],
   "entityBehaviors": [
     { "name": "Animatable" },
-    { "name": "BEAnimatable", "properties": { "animationCodes": "strike,gear" } },
     { "name": "MPConsumer" }
   ],
     "creativeinventory": {
@@ -40,13 +39,7 @@
   "collisionBox": { "x1": 0, "y1": 0, "z1": 0, "x2": 1, "y2": 1, "z2": 1 },
   "selectionBox": { "x1": 0, "y1": 0, "z1": 0, "x2": 1, "y2": 1, "z2": 1 },
     "textures": {
-        "metal": { "base": "game:block/metal/plate/copper" },
-        "iron": { "base": "game:block/metal/plate/iron" },
-        "rusty-iron": { "base": "game:block/metal/tarnished/rusty-iron" },
-        "gold": { "base": "game:block/metal/plate/gold" },
-        "bituminous": { "base": "game:block/coal/bituminous" },
-        "wood": { "base": "game:block/wood/debarked/{wood}" },
-        "wood2": { "base": "game:block/wood-generic" }
+        "wood": { "base": "game:block/wood/debarked/{wood}" }
     },
   "rainPermeable": false,
   "sidesolid": { "all": false },

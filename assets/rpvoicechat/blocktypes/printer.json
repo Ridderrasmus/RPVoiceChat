@@ -19,8 +19,7 @@
     }
   },
   "entityBehaviors": [
-    { "name": "Animatable" },
-    { "name": "BEAnimatable" }
+    { "name": "Animatable" }
   ],
   "creativeinventory": { "general": ["*-north"], "rpvoicechat": ["*-north"] },
   "maxstacksize": 1,
@@ -46,11 +45,7 @@
   "collisionBox": { "x1": 0, "y1": 0, "z1": 0, "x2": 1, "y2": 1, "z2": 1 },
   "selectionBox": { "x1": 0, "y1": 0, "z1": 0, "x2": 1, "y2": 1, "z2": 1 },
   "textures": {
-    "wood": { "base": "game:block/wood/debarked/{wood}" },
-    "gold": { "base": "game:block/metal/plate/gold" },
-    "redglass": { "base": "game:block/glass/red" },
-    "yellowglass": { "base": "game:block/glass/yellow" },
-    "greenglass": { "base": "game:block/glass/green" }
+    "wood": { "base": "game:block/wood/debarked/{wood}" }
   },
   "rainPermeable": false,
   "sidesolid": { "all": false },

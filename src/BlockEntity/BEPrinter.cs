@@ -10,7 +10,6 @@ using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.GameContent;
 using Vintagestory.Client;
-using RPVoiceChat.GameContent.BlockEntityBehavior;
 using RPVoiceChat.GameContent.Inventory;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Util;
@@ -55,7 +54,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private long lastClientInventoryOpenRequestMs = -1L;
         
         
-        private RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorAnimatable Animatable => GetBehavior<RPVoiceChat.GameContent.BlockEntityBehavior.BEBehaviorAnimatable>();
+        private BEBehaviorAnimatable Animatable => GetBehavior<BEBehaviorAnimatable>();
+        private BlockEntityAnimationUtil AnimUtil => Animatable?.animUtil;
 
         public BlockEntityPrinter()
         {
@@ -78,7 +78,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             LateInitInventory();
             
             if (api.Side == EnumAppSide.Client)
-                Animatable?.InitializeAnimatorWithRotation("printer");
+                InitializeClientAnimator();
             
             // Check for telegraph block above
             CheckForTelegraphAbove();
@@ -481,7 +481,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         /// <param name="animationName">Name of the animation to trigger</param>
         public void TriggerAnimation(string animationName)
         {
-            Animatable?.StartAnimationIfNotRunning(animationName);
+            StartAnimationIfNotRunning(animationName);
             playDrawerSound();
         }
 
@@ -492,9 +492,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private void TriggerDrawerAnimation(bool open)
         {
             if (!open)
-                Animatable?.StopAnimation("open-drawer");
+                StopAnimation("open-drawer");
             else
-                Animatable?.StartAnimationIfNotRunning("open-drawer");
+                StartAnimationIfNotRunning("open-drawer");
         }
 
 
@@ -532,6 +532,63 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 TriggerDrawerAnimation(false);
                 MarkDirty(true);
             }
+        }
+
+        private void InitializeClientAnimator()
+        {
+            var animUtil = AnimUtil;
+            if (animUtil == null || animUtil.animator != null || Api?.Side != EnumAppSide.Client)
+            {
+                return;
+            }
+
+            const string shapeCode = "block/printer";
+            if (Block?.Code != null)
+            {
+                var assetLoc = new AssetLocation(Block.Code.Domain, "shapes/" + shapeCode + ".json");
+                var shape = Shape.TryGet(Api, assetLoc);
+                if (shape?.Animations != null && shape.Animations.Length > 0)
+                {
+                    shape.InitForAnimations(Api.Logger, shapeCode, Array.Empty<string>());
+                }
+            }
+
+            float rotYDeg = GetBlockSideRotY();
+            animUtil.InitializeAnimator(shapeCode, null, null, new Vec3f(0, rotYDeg, 0));
+        }
+
+        private float GetBlockSideRotY()
+        {
+            return Block?.Variant?.TryGetValue("side", out string side) == true
+                ? side switch
+                {
+                    "north" => 0f,
+                    "east" => 270f,
+                    "west" => 90f,
+                    "south" => 180f,
+                    _ => 0f
+                }
+                : 0f;
+        }
+
+        private void StartAnimationIfNotRunning(string animationCode)
+        {
+            var animUtil = AnimUtil;
+            if (animUtil == null || animUtil.activeAnimationsByAnimCode.ContainsKey(animationCode))
+            {
+                return;
+            }
+
+            animUtil.StartAnimation(new AnimationMetaData
+            {
+                Animation = animationCode,
+                Code = animationCode
+            });
+        }
+
+        private void StopAnimation(string animationCode)
+        {
+            AnimUtil?.StopAnimation(animationCode);
         }
 
 
