@@ -41,10 +41,11 @@ namespace RPVoiceChat.GameContent.Block
 
         public override void OnBlockInteractStop(float secondsUsed, IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
-            if (!world.Side.IsServer()) return;
-
-            var be = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityCarillonBell;
-            be?.OnRung();
+            if (world.Side.IsServer())
+            {
+                var be = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityCarillonBell;
+                be?.OnRung();
+            }
 
             base.OnBlockInteractStop(secondsUsed, world, byPlayer, blockSel);
         }
