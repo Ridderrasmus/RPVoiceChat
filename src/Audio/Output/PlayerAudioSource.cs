@@ -54,6 +54,8 @@ namespace RPVoiceChat.Audio
         private DateTime? lastSpeakerUpdate;
         private AudioData currentAudio; // Store current audio data for distance factor calculation
         
+        private int? _lastQueuedNametagRenderRange;
+
         // Performance optimization: throttle expensive calculations
         private DateTime? lastFullUpdate;
         private DateTime? lastWallThicknessUpdate;
@@ -95,6 +97,17 @@ namespace RPVoiceChat.Audio
             OALW.Source(source, ALSourcef.RolloffFactor, rolloffFactor);
         }
 
+        private void TryApplyNametagRenderRange()
+        {
+            bool dynamicRange = WorldConfig.GetBool("use-nametag-dynamic-range", true);
+            int targetRange = dynamicRange
+                ? WorldConfig.GetInt(voiceLevel)
+                : PlayerNameTagRenderer.DefaultNametagRenderRange;
+            if (_lastQueuedNametagRenderRange == targetRange) return;
+            _lastQueuedNametagRenderRange = targetRange;
+            PlayerNameTagRenderer.SetNametagRenderRange(player, targetRange);
+        }
+
         public void UpdateAudioFormat(string codecName, int frequency, int channels)
         {
             if (codec?.Name == codecName && codec?.SampleRate == frequency && codec?.Channels == channels) return;
@@ -113,6 +126,8 @@ namespace RPVoiceChat.Audio
             EntityPos listenerPos = capi.World.Player.Entity?.Pos;
             if (speakerPos == null || listenerPos == null)
                 return;
+
+            TryApplyNametagRenderRange();
 
             Vec3d sourceOverride = currentAudio?.sourcePosOverride;
             Vec3d effectiveSpeakerPos = sourceOverride ?? new Vec3d(speakerPos.X, speakerPos.Y, speakerPos.Z);
