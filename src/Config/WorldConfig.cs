@@ -77,6 +77,12 @@ namespace RPVoiceChat.Config
             return defaultValue;
         }
 
+        /// <summary>Reads <c>force-speaker-nametag</c>, falling back to legacy <c>force-render-name-tags</c>.</summary>
+        public static bool GetForceSpeakerNametag()
+        {
+            return GetBool("force-speaker-nametag", GetBool("force-render-name-tags", true));
+        }
+
         public static float GetFloat(string key, float defaultValue = 0f)
         {
             if (api?.World.Config.HasAttribute(Key(key)) == true)
