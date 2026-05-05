@@ -16,7 +16,6 @@ namespace RPVoiceChat.Gui
 
         private static ICoreClientAPI capi;
         private static AudioOutputManager _audioOutputManager;
-        private static bool? defaultShowTagOnlyWhenTargeted;
         
         // Cache for name tag textures to avoid recreating them every frame
         private static Dictionary<string, LoadedTexture> nameTagCache = new Dictionary<string, LoadedTexture>();
@@ -101,10 +100,10 @@ namespace RPVoiceChat.Gui
                 if (player?.Entity == null) return;
                 var playerAttributes = player.Entity.WatchedAttributes;
                 var nametagAttribute = playerAttributes.GetTreeAttribute("nametag");
-                if (defaultShowTagOnlyWhenTargeted == null) defaultShowTagOnlyWhenTargeted = nametagAttribute.GetBool("showtagonlywhentargeted");
+                if (nametagAttribute == null) return;
 
                 bool forceRender = WorldConfig.GetForceSpeakerNametag();
-                bool nameTagsEnabled = !(bool)defaultShowTagOnlyWhenTargeted;
+                bool nameTagsEnabled = !WorldConfig.GetPlayerNametagTargetedOnly();
                 bool shouldRender = nameTagsEnabled || (isTalking && forceRender);
                 nametagAttribute.SetBool("showtagonlywhentargeted", !shouldRender);
 

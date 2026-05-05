@@ -26,6 +26,7 @@ namespace RPVoiceChat
             WorldConfig.Set(VoiceLevel.Whispering, WorldConfig.GetInt(VoiceLevel.Whispering));
             WorldConfig.Set(VoiceLevel.Talking, WorldConfig.GetInt(VoiceLevel.Talking));
             WorldConfig.Set(VoiceLevel.Shouting, WorldConfig.GetInt(VoiceLevel.Shouting));
+            WorldConfig.Set("player-nametag-targeted-only", WorldConfig.GetPlayerNametagTargetedOnly());
             WorldConfig.Set("force-speaker-nametag", WorldConfig.GetForceSpeakerNametag());
             WorldConfig.Set("use-nametag-dynamic-range", WorldConfig.GetBool("use-nametag-dynamic-range", true));
             WorldConfig.Set("encode-audio", WorldConfig.GetBool("encode-audio", true));
@@ -140,6 +141,12 @@ namespace RPVoiceChat
                     .WithDesc(UIUtils.I18n("Command.Reset.Desc"))
                     .HandleWith(ResetDistanceHandler)
                 .EndSub()
+                .BeginSub("playerNametagTargetedOnly")
+                    .WithDesc(UIUtils.I18n("Command.PlayerNametagTargetedOnly.Desc"))
+                    .WithAdditionalInformation(UIUtils.I18n("Command.PlayerNametagTargetedOnly.Help"))
+                    .WithArgs(parsers.Bool("state"))
+                    .HandleWith(TogglePlayerNametagTargetedOnly)
+                .EndSub()
                 .BeginSub("forceSpeakerNametag")
                     .WithDesc(UIUtils.I18n("Command.ForceSpeakerNametag.Desc"))
                     .WithAdditionalInformation(UIUtils.I18n("Command.ForceSpeakerNametag.Help"))
@@ -152,29 +159,29 @@ namespace RPVoiceChat
                     .WithArgs(parsers.Bool("state"))
                     .HandleWith(ToggleUseNametagDynamicRange)
                 .EndSub()
-                .BeginSub("encodeaudio")
+                .BeginSub("encodeAudio")
                     .WithDesc(UIUtils.I18n("Command.EncodeAudio.Desc"))
                     .WithAdditionalInformation(UIUtils.I18n("Command.EncodeAudio.Help"))
                     .WithArgs(parsers.Bool("state"))
                     .HandleWith(ToggleAudioEncoding)
                 .EndSub()
-                .BeginSub("hearspectators")
+                .BeginSub("hearSpectators")
                     .WithDesc(UIUtils.I18n("Command.OthersHearSpectators.Desc"))
                     .WithAdditionalInformation(UIUtils.I18n("Command.OthersHearSpectators.Help"))
                     .WithArgs(parsers.Bool("state"))
                     .HandleWith(ToggleOthersHearSpectators)
                 .EndSub()
-                .BeginSub("voiceban")
+                .BeginSub("voiceBan")
                     .WithDesc(UIUtils.I18n("Command.VoiceBan.Desc"))
                     .WithArgs(parsers.Word("player"))
                     .HandleWith(VoiceBanHandler)
                 .EndSub()
-                .BeginSub("voiceunban")
+                .BeginSub("voiceUnban")
                     .WithDesc(UIUtils.I18n("Command.VoiceUnban.Desc"))
                     .WithArgs(parsers.Word("player"))
                     .HandleWith(VoiceUnbanHandler)
                 .EndSub()
-                .BeginSub("voicebanlist")
+                .BeginSub("voiceBanList")
                     .WithDesc(UIUtils.I18n("Command.VoiceBanList.Desc"))
                     .HandleWith(VoiceBanListHandler)
                 .EndSub()
@@ -214,6 +221,17 @@ namespace RPVoiceChat
             bool state = (bool)args[0];
 
             WorldConfig.Set("force-speaker-nametag", state);
+
+            string stateAsText = state ? "Enabled" : "Disabled";
+            return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
+        }
+
+        private TextCommandResult TogglePlayerNametagTargetedOnly(TextCommandCallingArgs args)
+        {
+            const string i18nPrefix = "Command.PlayerNametagTargetedOnly.Success";
+            bool state = (bool)args[0];
+
+            WorldConfig.Set("player-nametag-targeted-only", state);
 
             string stateAsText = state ? "Enabled" : "Disabled";
             return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
