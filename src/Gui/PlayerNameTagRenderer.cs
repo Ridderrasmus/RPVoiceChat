@@ -3,6 +3,7 @@ using RPVoiceChat.Config;
 using System.Collections.Generic;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
 
@@ -10,9 +11,11 @@ namespace RPVoiceChat.Gui
 {
     public class PlayerNameTagRenderer
     {
+        /// <summary>RPVC fallback value for <c>renderRange</c> in the nametag tree.</summary>
+        public const int DefaultNametagRenderRange = 99;
+
         private static ICoreClientAPI capi;
         private static AudioOutputManager _audioOutputManager;
-        private static bool? defaultShowTagOnlyWhenTargeted;
         
         // Cache for name tag textures to avoid recreating them every frame
         private static Dictionary<string, LoadedTexture> nameTagCache = new Dictionary<string, LoadedTexture>();
@@ -76,6 +79,20 @@ namespace RPVoiceChat.Gui
             return texture;
         }
 
+        public static void SetNametagRenderRange(IPlayer player, int renderRange)
+        {
+            if (capi == null) return;
+            capi.Event.EnqueueMainThreadTask(() =>
+            {
+                if (player?.Entity == null) return;
+                ITreeAttribute nametagAttribute = player.Entity.WatchedAttributes.GetTreeAttribute("nametag");
+                if (nametagAttribute == null) return;
+                if (nametagAttribute.GetInt("renderRange") == renderRange) return;
+                nametagAttribute.SetInt("renderRange", renderRange);
+                player.Entity.WatchedAttributes.MarkPathDirty("nametag");
+            }, "rpvoicechat:SetNametagRenderRange");
+        }
+
         public static void UpdatePlayerNameTag(IPlayer player, bool isTalking)
         {
             capi.Event.EnqueueMainThreadTask(() =>
@@ -83,10 +100,10 @@ namespace RPVoiceChat.Gui
                 if (player?.Entity == null) return;
                 var playerAttributes = player.Entity.WatchedAttributes;
                 var nametagAttribute = playerAttributes.GetTreeAttribute("nametag");
-                if (defaultShowTagOnlyWhenTargeted == null) defaultShowTagOnlyWhenTargeted = nametagAttribute.GetBool("showtagonlywhentargeted");
+                if (nametagAttribute == null) return;
 
-                bool forceRender = WorldConfig.GetBool("force-render-name-tags");
-                bool nameTagsEnabled = !(bool)defaultShowTagOnlyWhenTargeted;
+                bool forceRender = WorldConfig.GetForceSpeakerNametag();
+                bool nameTagsEnabled = !WorldConfig.GetPlayerNametagTargetedOnly();
                 bool shouldRender = nameTagsEnabled || (isTalking && forceRender);
                 nametagAttribute.SetBool("showtagonlywhentargeted", !shouldRender);
 

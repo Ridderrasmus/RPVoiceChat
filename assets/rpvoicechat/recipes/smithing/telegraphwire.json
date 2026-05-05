@@ -1,5 +1,5 @@
 ﻿{
-  "code": "rpvoicechat:telegraphwire-smithing",
+  "code": "rpvoicechat:telegraphwire",
   "enabled": true,
   "ingredient": {
     "type": "item",

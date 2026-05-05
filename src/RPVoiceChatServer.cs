@@ -26,7 +26,9 @@ namespace RPVoiceChat
             WorldConfig.Set(VoiceLevel.Whispering, WorldConfig.GetInt(VoiceLevel.Whispering));
             WorldConfig.Set(VoiceLevel.Talking, WorldConfig.GetInt(VoiceLevel.Talking));
             WorldConfig.Set(VoiceLevel.Shouting, WorldConfig.GetInt(VoiceLevel.Shouting));
-            WorldConfig.Set("force-render-name-tags", WorldConfig.GetBool("force-render-name-tags", true));
+            WorldConfig.Set("player-nametag-targeted-only", WorldConfig.GetPlayerNametagTargetedOnly());
+            WorldConfig.Set("force-speaker-nametag", WorldConfig.GetForceSpeakerNametag());
+            WorldConfig.Set("use-nametag-dynamic-range", WorldConfig.GetBool("use-nametag-dynamic-range", true));
             WorldConfig.Set("encode-audio", WorldConfig.GetBool("encode-audio", true));
             WorldConfig.Set("others-hear-spectators", WorldConfig.GetBool("others-hear-spectators", true));
             WorldConfig.Set("wall-thickness-weighting", WorldConfig.GetFloat("wall-thickness-weighting", 2));
@@ -139,35 +141,47 @@ namespace RPVoiceChat
                     .WithDesc(UIUtils.I18n("Command.Reset.Desc"))
                     .HandleWith(ResetDistanceHandler)
                 .EndSub()
-                .BeginSub("forcenametags")
-                    .WithDesc(UIUtils.I18n("Command.ForceNameTags.Desc"))
-                    .WithAdditionalInformation(UIUtils.I18n("Command.ForceNameTags.Help"))
+                .BeginSub("playerNametagTargetedOnly")
+                    .WithDesc(UIUtils.I18n("Command.PlayerNametagTargetedOnly.Desc"))
+                    .WithAdditionalInformation(UIUtils.I18n("Command.PlayerNametagTargetedOnly.Help"))
                     .WithArgs(parsers.Bool("state"))
-                    .HandleWith(ToggleForceNameTags)
+                    .HandleWith(TogglePlayerNametagTargetedOnly)
                 .EndSub()
-                .BeginSub("encodeaudio")
+                .BeginSub("forceSpeakerNametag")
+                    .WithDesc(UIUtils.I18n("Command.ForceSpeakerNametag.Desc"))
+                    .WithAdditionalInformation(UIUtils.I18n("Command.ForceSpeakerNametag.Help"))
+                    .WithArgs(parsers.Bool("state"))
+                    .HandleWith(ToggleForceSpeakerNametag)
+                .EndSub()
+                .BeginSub("useNametagDynamicRange")
+                    .WithDesc(UIUtils.I18n("Command.UseNametagDynamicRange.Desc"))
+                    .WithAdditionalInformation(UIUtils.I18n("Command.UseNametagDynamicRange.Help"))
+                    .WithArgs(parsers.Bool("state"))
+                    .HandleWith(ToggleUseNametagDynamicRange)
+                .EndSub()
+                .BeginSub("encodeAudio")
                     .WithDesc(UIUtils.I18n("Command.EncodeAudio.Desc"))
                     .WithAdditionalInformation(UIUtils.I18n("Command.EncodeAudio.Help"))
                     .WithArgs(parsers.Bool("state"))
                     .HandleWith(ToggleAudioEncoding)
                 .EndSub()
-                .BeginSub("hearspectators")
+                .BeginSub("hearSpectators")
                     .WithDesc(UIUtils.I18n("Command.OthersHearSpectators.Desc"))
                     .WithAdditionalInformation(UIUtils.I18n("Command.OthersHearSpectators.Help"))
                     .WithArgs(parsers.Bool("state"))
                     .HandleWith(ToggleOthersHearSpectators)
                 .EndSub()
-                .BeginSub("voiceban")
+                .BeginSub("voiceBan")
                     .WithDesc(UIUtils.I18n("Command.VoiceBan.Desc"))
                     .WithArgs(parsers.Word("player"))
                     .HandleWith(VoiceBanHandler)
                 .EndSub()
-                .BeginSub("voiceunban")
+                .BeginSub("voiceUnban")
                     .WithDesc(UIUtils.I18n("Command.VoiceUnban.Desc"))
                     .WithArgs(parsers.Word("player"))
                     .HandleWith(VoiceUnbanHandler)
                 .EndSub()
-                .BeginSub("voicebanlist")
+                .BeginSub("voiceBanList")
                     .WithDesc(UIUtils.I18n("Command.VoiceBanList.Desc"))
                     .HandleWith(VoiceBanListHandler)
                 .EndSub()
@@ -201,12 +215,34 @@ namespace RPVoiceChat
             return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
         }
 
-        private TextCommandResult ToggleForceNameTags(TextCommandCallingArgs args)
+        private TextCommandResult ToggleForceSpeakerNametag(TextCommandCallingArgs args)
         {
-            const string i18nPrefix = "Command.ForceNameTags.Success";
+            const string i18nPrefix = "Command.ForceSpeakerNametag.Success";
             bool state = (bool)args[0];
 
-            WorldConfig.Set("force-render-name-tags", state);
+            WorldConfig.Set("force-speaker-nametag", state);
+
+            string stateAsText = state ? "Enabled" : "Disabled";
+            return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
+        }
+
+        private TextCommandResult TogglePlayerNametagTargetedOnly(TextCommandCallingArgs args)
+        {
+            const string i18nPrefix = "Command.PlayerNametagTargetedOnly.Success";
+            bool state = (bool)args[0];
+
+            WorldConfig.Set("player-nametag-targeted-only", state);
+
+            string stateAsText = state ? "Enabled" : "Disabled";
+            return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
+        }
+
+        private TextCommandResult ToggleUseNametagDynamicRange(TextCommandCallingArgs args)
+        {
+            const string i18nPrefix = "Command.UseNametagDynamicRange.Success";
+            bool state = (bool)args[0];
+
+            WorldConfig.Set("use-nametag-dynamic-range", state);
 
             string stateAsText = state ? "Enabled" : "Disabled";
             return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
@@ -226,10 +262,11 @@ namespace RPVoiceChat
             int whisper = WorldConfig.GetInt(VoiceLevel.Whispering);
             int talk = WorldConfig.GetInt(VoiceLevel.Talking);
             int shout = WorldConfig.GetInt(VoiceLevel.Shouting);
-            bool forceNameTags = WorldConfig.GetBool("force-render-name-tags");
+            bool forceSpeakerNametag = WorldConfig.GetForceSpeakerNametag();
             bool encoding = WorldConfig.GetBool("encode-audio");
+            bool useNametagDynamicRange = WorldConfig.GetBool("use-nametag-dynamic-range", true);
 
-            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceNameTags, encoding));
+            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceSpeakerNametag, encoding, useNametagDynamicRange));
         }
 
         private TextCommandResult SetWhisperHandler(TextCommandCallingArgs args)
