@@ -34,6 +34,7 @@ namespace RPVoiceChat.Gui
 
             string playerUID = entity.PlayerUID;
             bool isTalking = _audioOutputManager.IsPlayerTalking(playerUID);
+            ApplyNametagVisibilitySettings(entity, isTalking);
             
             // Check if we need to recreate the texture (player state changed)
             if (nameTagCache.ContainsKey(playerUID) && lastTalkingState.ContainsKey(playerUID))
@@ -79,6 +80,22 @@ namespace RPVoiceChat.Gui
             return texture;
         }
 
+        private static void ApplyNametagVisibilitySettings(EntityPlayer entity, bool isTalking)
+        {
+            if (entity == null) return;
+            var nametagAttribute = entity.WatchedAttributes?.GetTreeAttribute("nametag");
+            if (nametagAttribute == null) return;
+
+            bool forceRender = WorldConfig.GetForceSpeakerNametag();
+            bool nameTagsEnabled = !WorldConfig.GetPlayerNametagTargetedOnly();
+            bool shouldRender = nameTagsEnabled || (isTalking && forceRender);
+            bool targetOnly = !shouldRender;
+            if (nametagAttribute.GetBool("showtagonlywhentargeted") == targetOnly) return;
+
+            nametagAttribute.SetBool("showtagonlywhentargeted", targetOnly);
+            entity.WatchedAttributes.MarkPathDirty("nametag");
+        }
+
         public static void SetNametagRenderRange(IPlayer player, int renderRange)
         {
             if (capi == null) return;
@@ -98,16 +115,7 @@ namespace RPVoiceChat.Gui
             capi.Event.EnqueueMainThreadTask(() =>
             {
                 if (player?.Entity == null) return;
-                var playerAttributes = player.Entity.WatchedAttributes;
-                var nametagAttribute = playerAttributes.GetTreeAttribute("nametag");
-                if (nametagAttribute == null) return;
-
-                bool forceRender = WorldConfig.GetForceSpeakerNametag();
-                bool nameTagsEnabled = !WorldConfig.GetPlayerNametagTargetedOnly();
-                bool shouldRender = nameTagsEnabled || (isTalking && forceRender);
-                nametagAttribute.SetBool("showtagonlywhentargeted", !shouldRender);
-
-                playerAttributes.MarkPathDirty("nametag");
+                ApplyNametagVisibilitySettings(player.Entity as EntityPlayer, isTalking);
             }, "rpvoicechat:UpdateNameTag");
         }
 
