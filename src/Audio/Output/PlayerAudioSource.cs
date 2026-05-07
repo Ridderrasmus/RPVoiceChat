@@ -103,7 +103,7 @@ namespace RPVoiceChat.Audio
             bool dynamicRange = WorldConfig.GetBool("use-nametag-dynamic-range", true);
             int targetRange = dynamicRange
                 ? WorldConfig.GetInt(voiceLevel)
-                : PlayerNameTagRenderer.DefaultNametagRenderRange;
+                : WorldConfig.GetInt("nametag-fallback-range", ServerConfigManager.NametagFallbackRenderRange);
             if (_lastQueuedNametagRenderRange == targetRange) return;
             _lastQueuedNametagRenderRange = targetRange;
             PlayerNameTagRenderer.SetNametagRenderRange(player, targetRange);

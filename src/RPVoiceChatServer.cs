@@ -29,6 +29,7 @@ namespace RPVoiceChat
             WorldConfig.Set("player-nametag-targeted-only", WorldConfig.GetPlayerNametagTargetedOnly());
             WorldConfig.Set("force-speaker-nametag", WorldConfig.GetForceSpeakerNametag());
             WorldConfig.Set("use-nametag-dynamic-range", WorldConfig.GetBool("use-nametag-dynamic-range", true));
+            WorldConfig.Set("nametag-fallback-range", ServerConfigManager.NametagFallbackRenderRange);
             WorldConfig.Set("encode-audio", WorldConfig.GetBool("encode-audio", true));
             WorldConfig.Set("others-hear-spectators", WorldConfig.GetBool("others-hear-spectators", true));
             WorldConfig.Set("wall-thickness-weighting", WorldConfig.GetFloat("wall-thickness-weighting", 2));
