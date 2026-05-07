@@ -15,7 +15,7 @@ namespace RPVoiceChat.GameContent.Renderers
         private AssetLocation wireTextureAsset = new AssetLocation("game:block/metal/plate/copper");
 
         private MeshRef meshRef;
-        private Vec3f meshOrigin;
+        private Vec3d meshOrigin;
         private bool needsRebuild = true;
 
         public WireNodeRenderer(BEWireNode node, ICoreClientAPI capi)
@@ -47,6 +47,8 @@ namespace RPVoiceChat.GameContent.Renderers
             if (meshRef == null) return;
 
             Vec3d camPos = capi.World.Player.Entity.CameraPos;
+            capi.Render.GLEnableDepthTest();
+            capi.Render.GlEnableCullFace();
 
             IStandardShaderProgram prog = capi.Render.PreparedStandardShader(
                 (int)node.Position.X, (int)node.Position.Y, (int)node.Position.Z
@@ -58,9 +60,9 @@ namespace RPVoiceChat.GameContent.Renderers
             prog.ModelMatrix = new Matrixf()
                 .Identity()
                 .Translate(
-                    meshOrigin.X - (float)camPos.X,
-                    meshOrigin.Y - (float)camPos.Y,
-                    meshOrigin.Z - (float)camPos.Z
+                    (float)(meshOrigin.X - camPos.X),
+                    (float)(meshOrigin.Y - camPos.Y),
+                    (float)(meshOrigin.Z - camPos.Z)
                 )
                 .Values;
 
@@ -80,7 +82,7 @@ namespace RPVoiceChat.GameContent.Renderers
             var connections = node.GetConnections();
             if (connections == null || connections.Count == 0) return;
 
-            Vec3f origin = node.Position.ToVec3f();
+            Vec3d origin = new Vec3d(node.Position.X, node.Position.Y, node.Position.Z);
             meshOrigin = origin;
 
             // Combined MeshData to render all wires at once
@@ -98,7 +100,11 @@ namespace RPVoiceChat.GameContent.Renderers
                 Vec3f otherOffset = otherBe?.GetWireAttachmentOffsetFor(node.Pos) ?? new Vec3f(0.5f, 0.5f, 0.5f);
 
                 Vec3f startLocal = startOffset;
-                Vec3f endLocal = otherBlockPos.ToVec3f().Add(otherOffset) - origin;
+                Vec3f endLocal = new Vec3f(
+                    (float)(otherBlockPos.X + otherOffset.X - origin.X),
+                    (float)(otherBlockPos.Y + otherOffset.Y - origin.Y),
+                    (float)(otherBlockPos.Z + otherOffset.Z - origin.Z)
+                );
 
                 MeshData wireMesh = WireMesh.MakeWireMesh(startLocal, endLocal, 0.025f);
 
