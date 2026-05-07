@@ -77,6 +77,18 @@ namespace RPVoiceChat.Config
             return defaultValue;
         }
 
+        /// <summary>Determines whether player nametags should be visible only when targeted.</summary>
+        public static bool GetPlayerNametagTargetedOnly()
+        {
+            return GetBool("player-nametag-targeted-only", true);
+        }
+
+        /// <summary>Reads <c>force-speaker-nametag</c>, falling back to legacy <c>force-render-name-tags</c>.</summary>
+        public static bool GetForceSpeakerNametag()
+        {
+            return GetBool("force-speaker-nametag", GetBool("force-render-name-tags", true));
+        }
+
         public static float GetFloat(string key, float defaultValue = 0f)
         {
             if (api?.World.Config.HasAttribute(Key(key)) == true)

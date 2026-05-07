@@ -55,6 +55,7 @@ namespace RPVoiceChat.Config
         public int MegaphoneAudibleDistance { get; set; } = 125;
         public int TelephoneAudibleDistance { get; set; } = 2;
         public int SpeakerAudibleDistance { get; set; } = 30;
+        public int NametagFallbackRenderRange { get; set; } = 99;
 
         public RPVoiceChatServerConfig() { }
 
@@ -106,6 +107,7 @@ namespace RPVoiceChat.Config
             MegaphoneAudibleDistance = previousConfig.MegaphoneAudibleDistance;
             TelephoneAudibleDistance = previousConfig.TelephoneAudibleDistance;
             SpeakerAudibleDistance = previousConfig.SpeakerAudibleDistance;
+            NametagFallbackRenderRange = previousConfig.NametagFallbackRenderRange;
         }
     }
 }
