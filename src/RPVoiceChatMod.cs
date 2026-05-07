@@ -30,6 +30,8 @@ namespace RPVoiceChat
         internal static IServerNetworkChannel SwitchboardServerChannel;
         internal static IClientNetworkChannel AnnounceClientChannel;
         internal static IServerNetworkChannel AnnounceServerChannel;
+        internal static IClientNetworkChannel NametagConfigClientChannel;
+        internal static IServerNetworkChannel NametagConfigServerChannel;
 
         private PatchManager patchManager;
 
@@ -64,6 +66,8 @@ namespace RPVoiceChat
 
                 AnnounceClientChannel = capi.Network.RegisterChannel("announce")
                     .RegisterMessageType<AnnouncePacket>();
+                NametagConfigClientChannel = capi.Network.RegisterChannel("rpvc-nametag-config")
+                    .RegisterMessageType<NametagConfigChangedPacket>();
             }
             else if (api.Side == EnumAppSide.Server)
             {
@@ -89,6 +93,8 @@ namespace RPVoiceChat
 
                 AnnounceServerChannel = sapi.Network.RegisterChannel("announce")
                     .RegisterMessageType<AnnouncePacket>();
+                NametagConfigServerChannel = sapi.Network.RegisterChannel("rpvc-nametag-config")
+                    .RegisterMessageType<NametagConfigChangedPacket>();
             }
 
             patchManager = new PatchManager(modID);

@@ -53,6 +53,7 @@ namespace RPVoiceChat
 
             // Set up handler for announcements (channel already registered in Start())
             AnnounceClientChannel.SetMessageHandler<AnnouncePacket>(OnAnnounceReceived);
+            NametagConfigClientChannel.SetMessageHandler<NametagConfigChangedPacket>(OnNametagConfigChanged);
 
             // Sneak in native dlls
             EmbeddedDllClass.ExtractEmbeddedDlls();
@@ -196,6 +197,21 @@ namespace RPVoiceChat
             else
             {
                 Logger.client.Warning("GuiManager or announce is null, cannot display announcement");
+            }
+        }
+
+        private void OnNametagConfigChanged(NametagConfigChangedPacket packet)
+        {
+            if (packet == null) return;
+
+            WorldConfig.Set("force-speaker-nametag", packet.ForceSpeakerNametag);
+            WorldConfig.Set("player-nametag-targeted-only", packet.PlayerNametagTargetedOnly);
+            WorldConfig.Set("use-nametag-dynamic-range", packet.UseNametagDynamicRange);
+
+            foreach (IPlayer player in capi.World.AllOnlinePlayers)
+            {
+                bool isTalking = audioOutputManager?.IsPlayerTalking(player.PlayerUID) == true;
+                PlayerNameTagRenderer.UpdatePlayerNameTag(player, isTalking);
             }
         }
 
