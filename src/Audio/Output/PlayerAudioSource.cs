@@ -30,6 +30,7 @@ namespace RPVoiceChat.Audio
         private int orderingDelay = 50; // Reduced from 100ms to 50ms for lower latency and fewer async tasks
         private long lastAudioSequenceNumber = -1;
         private bool dequeueTaskRunning = false; // Prevent multiple concurrent dequeue tasks
+        private bool playbackEndCheckRunning = false;
         private string currentEffectName;
 
         private IAudioCodec codec;
@@ -54,6 +55,8 @@ namespace RPVoiceChat.Audio
         private DateTime? lastSpeakerUpdate;
         private AudioData currentAudio; // Store current audio data for distance factor calculation
         
+        private int? _lastQueuedNametagRenderRange;
+
         // Performance optimization: throttle expensive calculations
         private DateTime? lastFullUpdate;
         private DateTime? lastWallThicknessUpdate;
@@ -95,6 +98,17 @@ namespace RPVoiceChat.Audio
             OALW.Source(source, ALSourcef.RolloffFactor, rolloffFactor);
         }
 
+        private void TryApplyNametagRenderRange()
+        {
+            bool dynamicRange = WorldConfig.GetBool("use-nametag-dynamic-range", true);
+            int targetRange = dynamicRange
+                ? WorldConfig.GetInt(voiceLevel)
+                : WorldConfig.GetInt("nametag-fallback-range", ServerConfigManager.NametagFallbackRenderRange);
+            if (_lastQueuedNametagRenderRange == targetRange) return;
+            _lastQueuedNametagRenderRange = targetRange;
+            PlayerNameTagRenderer.SetNametagRenderRange(player, targetRange);
+        }
+
         public void UpdateAudioFormat(string codecName, int frequency, int channels)
         {
             if (codec?.Name == codecName && codec?.SampleRate == frequency && codec?.Channels == channels) return;
@@ -113,6 +127,8 @@ namespace RPVoiceChat.Audio
             EntityPos listenerPos = capi.World.Player.Entity?.Pos;
             if (speakerPos == null || listenerPos == null)
                 return;
+
+            TryApplyNametagRenderRange();
 
             Vec3d sourceOverride = currentAudio?.sourcePosOverride;
             Vec3d effectiveSpeakerPos = sourceOverride ?? new Vec3d(speakerPos.X, speakerPos.Y, speakerPos.Z);
@@ -410,6 +426,10 @@ namespace RPVoiceChat.Audio
                             return;
                         }
                     }
+
+                    // No more incoming queued packets right now. Ensure we still detect
+                    // the transition to "not talking" when the last buffered audio ends.
+                    SchedulePlaybackEndCheck();
                 }
                 catch (Exception e)
                 {
@@ -418,6 +438,51 @@ namespace RPVoiceChat.Audio
                 finally
                 {
                     dequeueTaskRunning = false;
+                }
+            }
+        }
+
+        private async void SchedulePlaybackEndCheck()
+        {
+            lock (dequeue_audio_lock)
+            {
+                if (playbackEndCheckRunning) return;
+                playbackEndCheckRunning = true;
+            }
+
+            try
+            {
+                // Wait until OpenAL naturally drains the last queued buffers.
+                for (int i = 0; i < 20; i++)
+                {
+                    await Task.Delay(75);
+
+                    bool hasPendingPackets;
+                    lock (ordering_queue_lock)
+                    {
+                        hasPendingPackets = orderingQueue.Count > 0;
+                    }
+                    if (hasPendingPackets) return;
+
+                    if (source <= 0) return;
+
+                    var state = OALW.GetSourceState(source);
+                    if (state != ALSourceState.Playing)
+                    {
+                        OnSourceStop();
+                        return;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.client.Warning($"Error while checking playback end: {e.Message}");
+            }
+            finally
+            {
+                lock (dequeue_audio_lock)
+                {
+                    playbackEndCheckRunning = false;
                 }
             }
         }
