@@ -47,6 +47,7 @@ namespace RPVoiceChat.Config
         public static int MegaphoneAudibleDistance => Config?.MegaphoneAudibleDistance ?? 125;
         public static int TelephoneAudibleDistance => Config?.TelephoneAudibleDistance ?? 2;
         public static int SpeakerAudibleDistance => Config?.SpeakerAudibleDistance ?? 30;
+        public static int NametagFallbackRenderRange => Config?.NametagFallbackRenderRange ?? 99;
 
         /// <summary>
         /// Validates configuration values to avoid invalid values
@@ -200,6 +201,12 @@ namespace RPVoiceChat.Config
             {
                 Logger.server.Warning($"SpeakerAudibleDistance ({SpeakerAudibleDistance}) should be between 1 and 1000. Using default (30).");
                 Config.SpeakerAudibleDistance = 30;
+            }
+
+            if (NametagFallbackRenderRange < 1 || NametagFallbackRenderRange > 1000)
+            {
+                Logger.server.Warning($"NametagFallbackRenderRange ({NametagFallbackRenderRange}) should be between 1 and 1000. Using default (99).");
+                Config.NametagFallbackRenderRange = 99;
             }
         }
     }

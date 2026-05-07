@@ -1,9 +1,10 @@
 {
   "code": "lucerne",
   "enabled": true,
-  "class": "lucerneblock",
   "behaviors": [
-    { "name": "HorizontalOrientable" }
+    { "name": "GroundStorable", "properties": { "layout": "SingleCenter" } },
+    { "name": "Unplaceable" },
+    { "name": "RightClickPickup" }
   ],
   "variantgroups": [
     { "code": "color", "states": [ "blue", "red", "fire" ] },
