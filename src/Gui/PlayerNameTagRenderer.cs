@@ -101,20 +101,5 @@ namespace RPVoiceChat.Gui
             }, "rpvoicechat:UpdateNameTag");
         }
 
-        /// <summary>
-        /// Cleans up cached textures for a specific player (call when player disconnects)
-        /// </summary>
-        public static void CleanupPlayerCache(string playerUID)
-        {
-            // No-op: nametag texture lifecycle is owned by the game renderer.
-        }
-
-        /// <summary>
-        /// Cleans up all cached textures (call when mod is disposed)
-        /// </summary>
-        public static void CleanupAllCache()
-        {
-            // No-op: nametag texture lifecycle is owned by the game renderer.
-        }
     }
 }
