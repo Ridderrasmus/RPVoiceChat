@@ -30,6 +30,7 @@ namespace RPVoiceChat.Audio
         private int orderingDelay = 50; // Reduced from 100ms to 50ms for lower latency and fewer async tasks
         private long lastAudioSequenceNumber = -1;
         private bool dequeueTaskRunning = false; // Prevent multiple concurrent dequeue tasks
+        private bool playbackEndCheckRunning = false;
         private string currentEffectName;
 
         private IAudioCodec codec;
@@ -425,6 +426,10 @@ namespace RPVoiceChat.Audio
                             return;
                         }
                     }
+
+                    // No more incoming queued packets right now. Ensure we still detect
+                    // the transition to "not talking" when the last buffered audio ends.
+                    SchedulePlaybackEndCheck();
                 }
                 catch (Exception e)
                 {
@@ -433,6 +438,51 @@ namespace RPVoiceChat.Audio
                 finally
                 {
                     dequeueTaskRunning = false;
+                }
+            }
+        }
+
+        private async void SchedulePlaybackEndCheck()
+        {
+            lock (dequeue_audio_lock)
+            {
+                if (playbackEndCheckRunning) return;
+                playbackEndCheckRunning = true;
+            }
+
+            try
+            {
+                // Wait until OpenAL naturally drains the last queued buffers.
+                for (int i = 0; i < 20; i++)
+                {
+                    await Task.Delay(75);
+
+                    bool hasPendingPackets;
+                    lock (ordering_queue_lock)
+                    {
+                        hasPendingPackets = orderingQueue.Count > 0;
+                    }
+                    if (hasPendingPackets) return;
+
+                    if (source <= 0) return;
+
+                    var state = OALW.GetSourceState(source);
+                    if (state != ALSourceState.Playing)
+                    {
+                        OnSourceStop();
+                        return;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.client.Warning($"Error while checking playback end: {e.Message}");
+            }
+            finally
+            {
+                lock (dequeue_audio_lock)
+                {
+                    playbackEndCheckRunning = false;
                 }
             }
         }

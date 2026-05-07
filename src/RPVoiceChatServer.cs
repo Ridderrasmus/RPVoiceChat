@@ -221,6 +221,7 @@ namespace RPVoiceChat
             bool state = (bool)args[0];
 
             WorldConfig.Set("force-speaker-nametag", state);
+            BroadcastNametagConfigChanged();
 
             string stateAsText = state ? "Enabled" : "Disabled";
             return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
@@ -232,6 +233,7 @@ namespace RPVoiceChat
             bool state = (bool)args[0];
 
             WorldConfig.Set("player-nametag-targeted-only", state);
+            BroadcastNametagConfigChanged();
 
             string stateAsText = state ? "Enabled" : "Disabled";
             return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
@@ -243,9 +245,27 @@ namespace RPVoiceChat
             bool state = (bool)args[0];
 
             WorldConfig.Set("use-nametag-dynamic-range", state);
+            BroadcastNametagConfigChanged();
 
             string stateAsText = state ? "Enabled" : "Disabled";
             return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
+        }
+
+        private void BroadcastNametagConfigChanged()
+        {
+            var packet = new NametagConfigChangedPacket(
+                WorldConfig.GetForceSpeakerNametag(),
+                WorldConfig.GetPlayerNametagTargetedOnly(),
+                WorldConfig.GetBool("use-nametag-dynamic-range", true)
+            );
+
+            foreach (IServerPlayer player in sapi.World.AllOnlinePlayers)
+            {
+                if (player.ConnectionState == EnumClientState.Playing)
+                {
+                    RPVoiceChatMod.NametagConfigServerChannel.SendPacket(packet, player);
+                }
+            }
         }
 
         private TextCommandResult ResetDistanceHandler(TextCommandCallingArgs args)
