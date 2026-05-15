@@ -413,7 +413,10 @@ namespace RPVoiceChat.Audio
                     {
                         var state = OALW.GetSourceState(source);
                         if (state != ALSourceState.Playing)
+                        {
                             StartPlaying();
+                            NotifyStartedSpeaking();
+                        }
                     }
 
                     // Check if there are more items to process
@@ -491,8 +494,12 @@ namespace RPVoiceChat.Audio
         public void StartPlaying()
         {
             if (source <= 0) return; // Source is invalid
-            
+
             OALW.SourcePlay(source);
+        }
+
+        private void NotifyStartedSpeaking()
+        {
             PlayerNameTagRenderer.UpdatePlayerNameTag(player, true);
         }
 
