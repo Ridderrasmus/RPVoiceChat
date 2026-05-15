@@ -1,5 +1,6 @@
 using RPVoiceChat.Audio;
 using RPVoiceChat.Config;
+using System.Collections.Generic;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
@@ -15,6 +16,7 @@ namespace RPVoiceChat.Gui
 
         private static ICoreClientAPI capi;
         private static AudioOutputManager _audioOutputManager;
+        private static readonly Dictionary<string, bool> lastTalkingStateByPlayer = new Dictionary<string, bool>();
 
         public PlayerNameTagRenderer(ICoreClientAPI api, AudioOutputManager audioOutputManager)
         {
@@ -27,15 +29,9 @@ namespace RPVoiceChat.Gui
             string playerName = entity?.GetBehavior<EntityBehaviorNameTag>()?.DisplayName;
             if (playerName == null || playerName.Length == 0) return null;
 
-            var nametagAttribute = entity.WatchedAttributes?.GetTreeAttribute("nametag");
-            if (nametagAttribute == null) return null;
+            if (entity.WatchedAttributes?.GetTreeAttribute("nametag") == null) return null;
 
-            string playerUID = entity.PlayerUID;
-            bool isTalking = _audioOutputManager?.IsPlayerTalking(playerUID) == true;
-            if (ApplyNametagVisibilitySettings(entity, nametagAttribute, isTalking))
-            {
-                entity.WatchedAttributes.MarkPathDirty("nametag");
-            }
+            bool isTalking = _audioOutputManager?.IsPlayerTalking(entity.PlayerUID) == true;
 
             color ??= ColorUtil.WhiteArgbDouble;
             var textColor = CairoFont.WhiteMediumText().WithColor(color);
@@ -56,17 +52,19 @@ namespace RPVoiceChat.Gui
                 textBg.BorderWidth = 5;
             }
 
+            // Vanilla disposes the previous texture in OnNameChanged before assigning the new one.
             return capi.Gui.TextTexture.GenUnscaledTextTexture(playerName, textColor, textBg);
         }
 
-        private static bool ApplyNametagVisibilitySettings(EntityPlayer entity, ITreeAttribute nametagAttribute, bool isTalking)
+        private static bool ApplyNametagVisibilitySettings(ITreeAttribute nametagAttribute, bool isTalking)
         {
-            if (entity == null || nametagAttribute == null) return false;
+            if (nametagAttribute == null) return false;
 
             bool forceRender = WorldConfig.GetForceSpeakerNametag();
             bool nameTagsEnabled = !WorldConfig.GetPlayerNametagTargetedOnly();
             bool shouldRender = nameTagsEnabled || (isTalking && forceRender);
             bool targetOnly = !shouldRender;
+
             if (nametagAttribute.GetBool("showtagonlywhentargeted") == targetOnly) return false;
 
             nametagAttribute.SetBool("showtagonlywhentargeted", targetOnly);
@@ -89,17 +87,59 @@ namespace RPVoiceChat.Gui
 
         public static void UpdatePlayerNameTag(IPlayer player, bool isTalking)
         {
+            if (capi == null || player?.Entity == null) return;
+
             capi.Event.EnqueueMainThreadTask(() =>
             {
                 if (player?.Entity is not EntityPlayer entityPlayer) return;
+
+                string playerUID = entityPlayer.PlayerUID;
+                bool talkStateChanged = !lastTalkingStateByPlayer.TryGetValue(playerUID, out bool wasTalking) || wasTalking != isTalking;
+
                 var nametagAttribute = entityPlayer.WatchedAttributes?.GetTreeAttribute("nametag");
                 if (nametagAttribute == null) return;
 
-                ApplyNametagVisibilitySettings(entityPlayer, nametagAttribute, isTalking);
-                // Force a redraw on every speaking-state event so the color toggles reliably.
+                bool visibilityChanged = ApplyNametagVisibilitySettings(nametagAttribute, isTalking);
+
+                if (!talkStateChanged && !visibilityChanged) return;
+
+                lastTalkingStateByPlayer[playerUID] = isTalking;
                 entityPlayer.WatchedAttributes.MarkPathDirty("nametag");
-            }, "rpvoicechat:UpdateNameTag");
+            }, "rpvoicechat:UpdatePlayerNameTag");
         }
 
+        public static void RefreshAllPlayerNameTags()
+        {
+            if (capi?.World == null) return;
+
+            lastTalkingStateByPlayer.Clear();
+
+            capi.Event.EnqueueMainThreadTask(() =>
+            {
+                foreach (IPlayer player in capi.World.AllOnlinePlayers)
+                {
+                    if (player?.Entity is not EntityPlayer entityPlayer) continue;
+
+                    bool isTalking = _audioOutputManager?.IsPlayerTalking(player.PlayerUID) == true;
+                    var nametagAttribute = entityPlayer.WatchedAttributes?.GetTreeAttribute("nametag");
+                    if (nametagAttribute == null) continue;
+
+                    ApplyNametagVisibilitySettings(nametagAttribute, isTalking);
+                    lastTalkingStateByPlayer[player.PlayerUID] = isTalking;
+                    entityPlayer.WatchedAttributes.MarkPathDirty("nametag");
+                }
+            }, "rpvoicechat:RefreshAllPlayerNameTags");
+        }
+
+        public static void CleanupPlayerNametagCache(string playerUID)
+        {
+            if (string.IsNullOrEmpty(playerUID)) return;
+            lastTalkingStateByPlayer.Remove(playerUID);
+        }
+
+        public static void CleanupAllNametagCache()
+        {
+            lastTalkingStateByPlayer.Clear();
+        }
     }
 }
