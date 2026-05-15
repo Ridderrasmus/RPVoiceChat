@@ -132,6 +132,7 @@ namespace RPVoiceChat
             microphoneManager.OnBufferRecorded += OnBufferRecorded;
             microphoneManager.Launch();
             audioOutputManager.Launch();
+            PlayerNameTagRenderer.RefreshAllPlayerNameTags();
             guiManager.firstLaunchDialog.ShowIfNecessary();
             
             ShowMacOSMicrophoneWarningOnce();
@@ -208,11 +209,7 @@ namespace RPVoiceChat
             WorldConfig.Set("player-nametag-targeted-only", packet.PlayerNametagTargetedOnly);
             WorldConfig.Set("use-nametag-dynamic-range", packet.UseNametagDynamicRange);
 
-            foreach (IPlayer player in capi.World.AllOnlinePlayers)
-            {
-                bool isTalking = audioOutputManager?.IsPlayerTalking(player.PlayerUID) == true;
-                PlayerNameTagRenderer.UpdatePlayerNameTag(player, isTalking);
-            }
+            PlayerNameTagRenderer.RefreshAllPlayerNameTags();
         }
 
         public override void Dispose()
@@ -220,6 +217,7 @@ namespace RPVoiceChat
             try
             {
                 ModConfig.SaveClient(capi);
+                PlayerNameTagRenderer.CleanupAllNametagCache();
                 microphoneManager?.Dispose();
                 audioOutputManager?.Dispose();
                 client?.Dispose();
