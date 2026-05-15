@@ -30,6 +30,8 @@ namespace RPVoiceChat
             WorldConfig.Set("force-speaker-nametag", WorldConfig.GetForceSpeakerNametag());
             WorldConfig.Set("use-nametag-dynamic-range", WorldConfig.GetBool("use-nametag-dynamic-range", true));
             WorldConfig.Set("nametag-fallback-range", ServerConfigManager.NametagFallbackRenderRange);
+            sapi.Event.PlayerJoin += OnPlayerJoin;
+            BroadcastNametagConfigChanged();
             WorldConfig.Set("encode-audio", WorldConfig.GetBool("encode-audio", true));
             WorldConfig.Set("others-hear-spectators", WorldConfig.GetBool("others-hear-spectators", true));
             WorldConfig.Set("wall-thickness-weighting", WorldConfig.GetFloat("wall-thickness-weighting", 2));
@@ -252,19 +254,28 @@ namespace RPVoiceChat
             return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
         }
 
-        private void BroadcastNametagConfigChanged()
+        private void OnPlayerJoin(IServerPlayer player)
+        {
+            SendNametagConfigToPlayer(player);
+        }
+
+        private void SendNametagConfigToPlayer(IServerPlayer player)
         {
             var packet = new NametagConfigChangedPacket(
                 WorldConfig.GetForceSpeakerNametag(),
                 WorldConfig.GetPlayerNametagTargetedOnly(),
                 WorldConfig.GetBool("use-nametag-dynamic-range", true)
             );
+            RPVoiceChatMod.NametagConfigServerChannel.SendPacket(packet, player);
+        }
 
+        private void BroadcastNametagConfigChanged()
+        {
             foreach (IServerPlayer player in sapi.World.AllOnlinePlayers)
             {
                 if (player.ConnectionState == EnumClientState.Playing)
                 {
-                    RPVoiceChatMod.NametagConfigServerChannel.SendPacket(packet, player);
+                    SendNametagConfigToPlayer(player);
                 }
             }
         }
@@ -476,6 +487,11 @@ namespace RPVoiceChat
 
         public override void Dispose()
         {
+            if (sapi != null)
+            {
+                sapi.Event.PlayerJoin -= OnPlayerJoin;
+            }
+
             server?.Dispose();
         }
 
