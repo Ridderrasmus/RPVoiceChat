@@ -3,10 +3,11 @@ using System.Reflection;
 using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.Util;
 using Vintagestory.API.Client;
+using Vintagestory.API.MathTools;
 
 namespace RPVoiceChat.Gui
 {
-    public class TelephoneMenuDialog : GuiDialog
+    public class TelephoneMenuDialog : GuiDialogBlockEntity
     {
         private readonly BlockEntityTelephone telephoneBlock;
         private GuiElementTextInput numberInput;
@@ -20,7 +21,8 @@ namespace RPVoiceChat.Gui
         private bool managedBySwitchboard;
         private bool canEditManagedOptions;
 
-        public TelephoneMenuDialog(ICoreClientAPI capi, BlockEntityTelephone telephoneBlock) : base(capi)
+        public TelephoneMenuDialog(ICoreClientAPI capi, BlockEntityTelephone telephoneBlock)
+            : base(UIUtils.I18n("Telephone.Gui.Title"), telephoneBlock.Pos, capi)
         {
             this.telephoneBlock = telephoneBlock;
         }

@@ -149,5 +149,25 @@
       "isValue": "false"
     }
   },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:recipes/grid/signallamp.json",
+    "condition": {
+      "when": "rpvoicechat:additional-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:recipes/clayforming/lucerne.json",
+    "condition": {
+      "when": "rpvoicechat:additional-content",
+      "isValue": "false"
+    }
+  }
 ]
 
