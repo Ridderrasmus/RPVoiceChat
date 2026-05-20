@@ -5,10 +5,11 @@ using System.Collections.Generic;
 using System.Reflection;
 using RPVoiceChat.Util;
 using Vintagestory.API.Client;
+using Vintagestory.API.MathTools;
 
 namespace RPVoiceChat.Gui
 {
-    public class TelegraphMenuDialog : GuiDialog
+    public class TelegraphMenuDialog : GuiDialogBlockEntity
     {
         private BlockEntityTelegraph telegraphBlock;
 
@@ -26,7 +27,8 @@ namespace RPVoiceChat.Gui
         private string pendingEndpointName = "";
         private bool? lastCanEditRouting;
 
-        public TelegraphMenuDialog(ICoreClientAPI capi, BlockEntityTelegraph telegraphBlock) : base(capi)
+        public TelegraphMenuDialog(ICoreClientAPI capi, BlockEntityTelegraph telegraphBlock)
+            : base(UIUtils.I18n("Telegraph.Gui.Title"), telegraphBlock.Pos, capi)
         {
             this.telegraphBlock = telegraphBlock;
         }
