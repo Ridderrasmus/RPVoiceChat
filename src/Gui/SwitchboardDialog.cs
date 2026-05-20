@@ -12,13 +12,15 @@ using Vintagestory.API.Client;
 
 using Vintagestory.API.Config;
 
+using Vintagestory.API.MathTools;
+
 
 
 namespace RPVoiceChat.Gui
 
 {
 
-    public class GuiDialogSwitchboard : GuiDialog
+    public class GuiDialogSwitchboard : GuiDialogBlockEntity
 
     {
 
@@ -37,7 +39,8 @@ namespace RPVoiceChat.Gui
 
 
 
-        public GuiDialogSwitchboard(ICoreClientAPI capi, BlockEntitySwitchboard switchboard) : base(capi)
+        public GuiDialogSwitchboard(ICoreClientAPI capi, BlockEntitySwitchboard switchboard)
+            : base(UIUtils.I18n("Switchboard.Gui.Title"), switchboard.Pos, capi)
 
         {
 
