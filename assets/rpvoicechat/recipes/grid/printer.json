@@ -4,7 +4,7 @@
   "ingredients": {
     "W": {
       "type": "item",
-      "code": "telegraphwire",
+      "code": "rpvoicechat:telegraphwire",
       "quantity": 2
     },
     "M": {

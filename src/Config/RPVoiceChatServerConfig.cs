@@ -13,7 +13,15 @@ namespace RPVoiceChat.Config
 
         // Features
         public bool AdditionalContent { get; set; } = true;
-        public bool TelegraphContent { get; set; } = true;
+        public bool TechnologyContent { get; set; } = true;
+
+        // Backward compatibility with older config files.
+        public bool TelegraphContent
+        {
+            get => TechnologyContent;
+            set => TechnologyContent = value;
+        }
+
         public bool VoiceGroupsEnabled { get; set; } = false;
 
         // Audio Performance Settings
@@ -32,6 +40,12 @@ namespace RPVoiceChat.Config
         public double BellRingCooldownSeconds { get; set; } = 1.5;
         public bool TelegraphGenuineMorseCharacters { get; set; } = false;
         public int TelegraphMessageDeletionDelaySeconds { get; set; } = 10;
+        public int TelegraphNetworkMinPowerPercent { get; set; } = 10;
+        public int TelegraphNetworkMaxEndpoints { get; set; } = 8;
+        public int TelephoneNetworkMinPowerPercent { get; set; } = 25;
+        public int TelephoneNetworkMaxEndpoints { get; set; } = 16;
+        public int RadioNetworkMinPowerPercent { get; set; } = 50;
+        public int RadioNetworkMaxEndpoints { get; set; } = 16;
 
         // Sound Emitting Objects Range Settings
         public int HandbellAudibleDistance { get; set; } = 16;
@@ -41,6 +55,9 @@ namespace RPVoiceChat.Config
         public int CarillonbellAudibleDistance { get; set; } = 256;
         public int ChurchbellAudibleDistance { get; set; } = 832;
         public int MegaphoneAudibleDistance { get; set; } = 125;
+        public int TelephoneAudibleDistance { get; set; } = 2;
+        public int SpeakerAudibleDistance { get; set; } = 30;
+        public int NametagFallbackRenderRange { get; set; } = 99;
 
         public RPVoiceChatServerConfig() { }
 
@@ -57,7 +74,7 @@ namespace RPVoiceChat.Config
 
             // Features
             AdditionalContent = previousConfig.AdditionalContent;
-            TelegraphContent = previousConfig.TelegraphContent;
+            TechnologyContent = previousConfig.TechnologyContent;
             VoiceGroupsEnabled = previousConfig.VoiceGroupsEnabled;
 
             // Audio Performance Settings
@@ -75,6 +92,13 @@ namespace RPVoiceChat.Config
             TelegraphMinDelayBetweenKeysMs = previousConfig.TelegraphMinDelayBetweenKeysMs;
             BellRingCooldownSeconds = previousConfig.BellRingCooldownSeconds;
             TelegraphGenuineMorseCharacters = previousConfig.TelegraphGenuineMorseCharacters;
+            TelegraphMessageDeletionDelaySeconds = previousConfig.TelegraphMessageDeletionDelaySeconds;
+            TelegraphNetworkMinPowerPercent = previousConfig.TelegraphNetworkMinPowerPercent;
+            TelegraphNetworkMaxEndpoints = previousConfig.TelegraphNetworkMaxEndpoints;
+            TelephoneNetworkMinPowerPercent = previousConfig.TelephoneNetworkMinPowerPercent;
+            TelephoneNetworkMaxEndpoints = previousConfig.TelephoneNetworkMaxEndpoints;
+            RadioNetworkMinPowerPercent = previousConfig.RadioNetworkMinPowerPercent;
+            RadioNetworkMaxEndpoints = previousConfig.RadioNetworkMaxEndpoints;
 
             // Sound Emitting Objects Range Settings
             HandbellAudibleDistance = previousConfig.HandbellAudibleDistance;
@@ -84,6 +108,9 @@ namespace RPVoiceChat.Config
             CarillonbellAudibleDistance = previousConfig.CarillonbellAudibleDistance;
             ChurchbellAudibleDistance = previousConfig.ChurchbellAudibleDistance;
             MegaphoneAudibleDistance = previousConfig.MegaphoneAudibleDistance;
+            TelephoneAudibleDistance = previousConfig.TelephoneAudibleDistance;
+            SpeakerAudibleDistance = previousConfig.SpeakerAudibleDistance;
+            NametagFallbackRenderRange = previousConfig.NametagFallbackRenderRange;
         }
     }
 }

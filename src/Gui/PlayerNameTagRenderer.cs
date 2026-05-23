@@ -3,6 +3,7 @@ using RPVoiceChat.Config;
 using System.Collections.Generic;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
 
@@ -10,13 +11,12 @@ namespace RPVoiceChat.Gui
 {
     public class PlayerNameTagRenderer
     {
+        /// <summary>RPVC fallback value for <c>renderRange</c> in the nametag tree.</summary>
+        public const int DefaultNametagRenderRange = 99;
+
         private static ICoreClientAPI capi;
         private static AudioOutputManager _audioOutputManager;
-        private static bool? defaultShowTagOnlyWhenTargeted;
-        
-        // Cache for name tag textures to avoid recreating them every frame
-        private static Dictionary<string, LoadedTexture> nameTagCache = new Dictionary<string, LoadedTexture>();
-        private static Dictionary<string, bool> lastTalkingState = new Dictionary<string, bool>();
+        private static readonly Dictionary<string, bool> lastTalkingStateByPlayer = new Dictionary<string, bool>();
 
         public PlayerNameTagRenderer(ICoreClientAPI api, AudioOutputManager audioOutputManager)
         {
@@ -29,25 +29,10 @@ namespace RPVoiceChat.Gui
             string playerName = entity?.GetBehavior<EntityBehaviorNameTag>()?.DisplayName;
             if (playerName == null || playerName.Length == 0) return null;
 
-            string playerUID = entity.PlayerUID;
-            bool isTalking = _audioOutputManager.IsPlayerTalking(playerUID);
-            
-            // Check if we need to recreate the texture (player state changed)
-            if (nameTagCache.ContainsKey(playerUID) && lastTalkingState.ContainsKey(playerUID))
-            {
-                if (lastTalkingState[playerUID] == isTalking)
-                {
-                    return nameTagCache[playerUID]; // Return cached texture
-                }
-                else
-                {
-                    // Player state changed, dispose old texture and recreate
-                    nameTagCache[playerUID]?.Dispose();
-                    nameTagCache.Remove(playerUID);
-                }
-            }
+            if (entity.WatchedAttributes?.GetTreeAttribute("nametag") == null) return null;
 
-            // Create new texture
+            bool isTalking = _audioOutputManager?.IsPlayerTalking(entity.PlayerUID) == true;
+
             color ??= ColorUtil.WhiteArgbDouble;
             var textColor = CairoFont.WhiteMediumText().WithColor(color);
             var textBg = bg?.Clone() ?? new TextBackground()
@@ -67,57 +52,94 @@ namespace RPVoiceChat.Gui
                 textBg.BorderWidth = 5;
             }
 
-            var texture = capi.Gui.TextTexture.GenUnscaledTextTexture(playerName, textColor, textBg);
-            
-            // Cache the texture
-            nameTagCache[playerUID] = texture;
-            lastTalkingState[playerUID] = isTalking;
-            
-            return texture;
+            // Vanilla disposes the previous texture in OnNameChanged before assigning the new one.
+            return capi.Gui.TextTexture.GenUnscaledTextTexture(playerName, textColor, textBg);
+        }
+
+        private static bool ApplyNametagVisibilitySettings(ITreeAttribute nametagAttribute, bool isTalking)
+        {
+            if (nametagAttribute == null) return false;
+
+            bool forceRender = WorldConfig.GetForceSpeakerNametag();
+            bool nameTagsEnabled = !WorldConfig.GetPlayerNametagTargetedOnly();
+            bool shouldRender = nameTagsEnabled || (isTalking && forceRender);
+            bool targetOnly = !shouldRender;
+
+            if (nametagAttribute.GetBool("showtagonlywhentargeted") == targetOnly) return false;
+
+            nametagAttribute.SetBool("showtagonlywhentargeted", targetOnly);
+            return true;
+        }
+
+        public static void SetNametagRenderRange(IPlayer player, int renderRange)
+        {
+            if (capi == null) return;
+            capi.Event.EnqueueMainThreadTask(() =>
+            {
+                if (player?.Entity == null) return;
+                ITreeAttribute nametagAttribute = player.Entity.WatchedAttributes.GetTreeAttribute("nametag");
+                if (nametagAttribute == null) return;
+                if (nametagAttribute.GetInt("renderRange") == renderRange) return;
+                nametagAttribute.SetInt("renderRange", renderRange);
+                player.Entity.WatchedAttributes.MarkPathDirty("nametag");
+            }, "rpvoicechat:SetNametagRenderRange");
         }
 
         public static void UpdatePlayerNameTag(IPlayer player, bool isTalking)
         {
+            if (capi == null || player?.Entity == null) return;
+
             capi.Event.EnqueueMainThreadTask(() =>
             {
-                if (player?.Entity == null) return;
-                var playerAttributes = player.Entity.WatchedAttributes;
-                var nametagAttribute = playerAttributes.GetTreeAttribute("nametag");
-                if (defaultShowTagOnlyWhenTargeted == null) defaultShowTagOnlyWhenTargeted = nametagAttribute.GetBool("showtagonlywhentargeted");
+                if (player?.Entity is not EntityPlayer entityPlayer) return;
 
-                bool forceRender = WorldConfig.GetBool("force-render-name-tags");
-                bool nameTagsEnabled = !(bool)defaultShowTagOnlyWhenTargeted;
-                bool shouldRender = nameTagsEnabled || (isTalking && forceRender);
-                nametagAttribute.SetBool("showtagonlywhentargeted", !shouldRender);
+                string playerUID = entityPlayer.PlayerUID;
+                bool talkStateChanged = !lastTalkingStateByPlayer.TryGetValue(playerUID, out bool wasTalking) || wasTalking != isTalking;
 
-                playerAttributes.MarkPathDirty("nametag");
-            }, "rpvoicechat:UpdateNameTag");
+                var nametagAttribute = entityPlayer.WatchedAttributes?.GetTreeAttribute("nametag");
+                if (nametagAttribute == null) return;
+
+                bool visibilityChanged = ApplyNametagVisibilitySettings(nametagAttribute, isTalking);
+
+                if (!talkStateChanged && !visibilityChanged) return;
+
+                lastTalkingStateByPlayer[playerUID] = isTalking;
+                entityPlayer.WatchedAttributes.MarkPathDirty("nametag");
+            }, "rpvoicechat:UpdatePlayerNameTag");
         }
 
-        /// <summary>
-        /// Cleans up cached textures for a specific player (call when player disconnects)
-        /// </summary>
-        public static void CleanupPlayerCache(string playerUID)
+        public static void RefreshAllPlayerNameTags()
         {
-            if (nameTagCache.ContainsKey(playerUID))
+            if (capi?.World == null) return;
+
+            lastTalkingStateByPlayer.Clear();
+
+            capi.Event.EnqueueMainThreadTask(() =>
             {
-                nameTagCache[playerUID]?.Dispose();
-                nameTagCache.Remove(playerUID);
-                lastTalkingState.Remove(playerUID);
-            }
+                foreach (IPlayer player in capi.World.AllOnlinePlayers)
+                {
+                    if (player?.Entity is not EntityPlayer entityPlayer) continue;
+
+                    bool isTalking = _audioOutputManager?.IsPlayerTalking(player.PlayerUID) == true;
+                    var nametagAttribute = entityPlayer.WatchedAttributes?.GetTreeAttribute("nametag");
+                    if (nametagAttribute == null) continue;
+
+                    ApplyNametagVisibilitySettings(nametagAttribute, isTalking);
+                    lastTalkingStateByPlayer[player.PlayerUID] = isTalking;
+                    entityPlayer.WatchedAttributes.MarkPathDirty("nametag");
+                }
+            }, "rpvoicechat:RefreshAllPlayerNameTags");
         }
 
-        /// <summary>
-        /// Cleans up all cached textures (call when mod is disposed)
-        /// </summary>
-        public static void CleanupAllCache()
+        public static void CleanupPlayerNametagCache(string playerUID)
         {
-            foreach (var texture in nameTagCache.Values)
-            {
-                texture?.Dispose();
-            }
-            nameTagCache.Clear();
-            lastTalkingState.Clear();
+            if (string.IsNullOrEmpty(playerUID)) return;
+            lastTalkingStateByPlayer.Remove(playerUID);
+        }
+
+        public static void CleanupAllNametagCache()
+        {
+            lastTalkingStateByPlayer.Clear();
         }
     }
 }

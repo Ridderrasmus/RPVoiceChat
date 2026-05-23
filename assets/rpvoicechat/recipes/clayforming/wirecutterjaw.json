@@ -43,7 +43,7 @@
   "name": "Wirecutter jaw mold",
   "output": {
     "type": "block",
-    "code": "wirecutterjawmold-{color}-raw-wirecutterjaw"
+    "code": "rpvoicechat:wirecutterjawmold-{color}-raw-wirecutterjaw"
   }
 }
 

@@ -7,8 +7,7 @@
     { "name": "HorizontalOrientable" }
   ],
   "entityBehaviors": [
-    { "name": "Animatable" },
-    { "name": "BEAnimatable", "properties": { "animationCodes": "click" } }
+    { "name": "Animatable" }
   ],
   "creativeinventory": {
     "general": [ "*-north" ],
@@ -19,7 +18,7 @@
   "variantgroups": [
     {
       "code": "wood",
-      "states": [ "aged" ],
+      "states": [ "aged", "veryaged" ],
       "loadFromProperties": "block/wood"
     },
     {
@@ -43,26 +42,23 @@
     "walk": "game:walk/wood"
   },
   "collisionBox": {
-    "x1": 0,
+    "x1": 0.1875,
     "y1": 0,
-    "z1": 0,
-    "x2": 1,
-    "y2": 0.5,
-    "z2": 1
+    "z1": 0.25,
+    "x2": 0.8125,
+    "y2": 0.33,
+    "z2": 0.75
   },
   "selectionBox": {
-    "x1": 0,
+    "x1": 0.1875,
     "y1": 0,
-    "z1": 0,
-    "x2": 1,
-    "y2": 0.5,
-    "z2": 1
+    "z1": 0.25,
+    "x2": 0.8125,
+    "y2": 0.33,
+    "z2": 0.75
   },
   "textures": {
-    "wood": { "base": "game:block/wood/debarked/{wood}" },
-    "gold": { "base": "game:block/metal/plate/gold" },
-    "copper": { "base": "game:block/metal/plate/copper" },
-    "bakelite": { "base": "game:block/coal/bituminous" }
+    "wood": { "base": "game:block/wood/debarked/{wood}" }
   },
   "rainPermeable": false,
   "sidesolid": {
@@ -74,6 +70,7 @@
   "lightAbsorption": 15,
   "resistance": 1,
   "attributes": {
+    "wireAttachmentOffset": [ 0.5, 0.1, 0.5 ],
     "handbook": {
       "groupBy": [ "telegraph-*" ],
       "extraSections": [

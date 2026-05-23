@@ -1,6 +1,7 @@
 using OpenTK.Audio.OpenAL;
 using RPVoiceChat.Config;
 using RPVoiceChat.Networking;
+using Vintagestory.API.MathTools;
 
 namespace RPVoiceChat.Audio
 {
@@ -18,6 +19,7 @@ namespace RPVoiceChat.Audio
         public float wallThicknessOverride { get; set; } = -1f; // -1 = pas d'override
         public bool isGlobalBroadcast { get; set; } = false;
         public bool forceFlatPlayback { get; set; } = false;
+        public Vec3d sourcePosOverride { get; set; }
 
         public AudioData() { }
 
@@ -36,7 +38,10 @@ namespace RPVoiceChat.Audio
                     : WorldConfig.GetInt(audioPacket.VoiceLevel),
                 ignoreDistanceReduction = audioPacket.IgnoreDistanceReduction,
                 wallThicknessOverride = audioPacket.WallThicknessOverride,
-                isGlobalBroadcast = audioPacket.IsGlobalBroadcast
+                isGlobalBroadcast = audioPacket.IsGlobalBroadcast,
+                sourcePosOverride = audioPacket.HasSourcePositionOverride
+                    ? new Vec3d(audioPacket.SourcePosX, audioPacket.SourcePosY, audioPacket.SourcePosZ)
+                    : null
             };
         }
     }

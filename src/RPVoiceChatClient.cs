@@ -44,7 +44,7 @@ namespace RPVoiceChat
             base.StartPre(api);
             // Set world config values for patches to work (needed for singleplayer)
             WorldConfig.Set("additional-content", ModConfig.ServerConfig.AdditionalContent);
-            WorldConfig.Set("telegraph-content", ModConfig.ServerConfig.TelegraphContent);
+            WorldConfig.Set("technology-content", ModConfig.ServerConfig.TechnologyContent);
         }
 
         public override void StartClientSide(ICoreClientAPI api)
@@ -55,6 +55,7 @@ namespace RPVoiceChat
 
             // Set up handler for announcements (channel already registered in Start())
             AnnounceClientChannel.SetMessageHandler<AnnouncePacket>(OnAnnounceReceived);
+            NametagConfigClientChannel.SetMessageHandler<NametagConfigChangedPacket>(OnNametagConfigChanged);
 
             // Sneak in native dlls
             EmbeddedDllClass.ExtractEmbeddedDlls();
@@ -137,6 +138,7 @@ namespace RPVoiceChat
             microphoneManager.OnBufferRecorded += OnBufferRecorded;
             microphoneManager.Launch();
             audioOutputManager.Launch();
+            PlayerNameTagRenderer.RefreshAllPlayerNameTags();
             guiManager.firstLaunchDialog.ShowIfNecessary();
             
             ShowMacOSMicrophoneWarningOnce();
@@ -205,11 +207,23 @@ namespace RPVoiceChat
             }
         }
 
+        private void OnNametagConfigChanged(NametagConfigChangedPacket packet)
+        {
+            if (packet == null) return;
+
+            WorldConfig.Set("force-speaker-nametag", packet.ForceSpeakerNametag);
+            WorldConfig.Set("player-nametag-targeted-only", packet.PlayerNametagTargetedOnly);
+            WorldConfig.Set("use-nametag-dynamic-range", packet.UseNametagDynamicRange);
+
+            PlayerNameTagRenderer.RefreshAllPlayerNameTags();
+        }
+
         public override void Dispose()
         {
             try
             {
                 ModConfig.SaveClient(capi);
+                PlayerNameTagRenderer.CleanupAllNametagCache();
                 microphoneManager?.Dispose();
                 audioOutputManager?.Dispose();
                 client?.Dispose();

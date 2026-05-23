@@ -6,6 +6,12 @@
 	},
 	"textureWidth": 16,
 	"textureHeight": 16,
+	"textures": {
+		"glass": "game:block/glass/plain",
+		"wood": "game:block/wood-generic",
+		"candle": "game:block/candle",
+		"gold": "game:block/metal/plate/gold"
+	},
 	"elements": [
 		{
 			"name": "frame-bottom",

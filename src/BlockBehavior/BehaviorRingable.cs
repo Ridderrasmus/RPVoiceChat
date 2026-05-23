@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using RPVoiceChat;
 using RPVoiceChat.Config;
 using System;
@@ -15,6 +15,7 @@ class BehaviorRingable : BlockBehavior
 
     public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel, ref EnumHandling handling)
     {
+        if (byPlayer == null) return base.OnBlockInteractStart(world, byPlayer!, blockSel, ref handling);
         var blockEntity = world.BlockAccessor.GetBlockEntity(blockSel.Position);
         if (blockEntity == null) return base.OnBlockInteractStart(world, byPlayer, blockSel, ref handling);
 
@@ -35,7 +36,7 @@ class BehaviorRingable : BlockBehavior
                     byPlayer.InventoryManager.ActiveHotbarSlot.MarkDirty();
                 }
 
-                ringable.Blockentity.MarkDirty(true);
+                ringable.Blockentity?.MarkDirty(true);
                 return true;
             }
         }
@@ -63,24 +64,30 @@ class BehaviorRingable : BlockBehavior
         return base.OnBlockInteractStart(world, byPlayer, blockSel, ref handling);
     }
 
-    public override void OnBlockBroken(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, ref EnumHandling handling)
+    public override void OnBlockBroken(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, float dropQuantityMultiplier, ref EnumHandling handling)
     {
+        // byPlayer can be null when the block is broken by the game (e.g. multiblock/teleport)
+        if (byPlayer == null)
+        {
+            base.OnBlockBroken(world, pos, byPlayer!, dropQuantityMultiplier, ref handling);
+            return;
+        }
         if (byPlayer.WorldData.CurrentGameMode != EnumGameMode.Creative)
         {
             var blockEntity = world.BlockAccessor.GetBlockEntity(pos);
-            if (blockEntity == null) { base.OnBlockBroken(world, pos, byPlayer, ref handling); return; }
+            if (blockEntity == null) { base.OnBlockBroken(world, pos, byPlayer, dropQuantityMultiplier, ref handling); return; }
 
             BEBehaviorRingable? ringable = blockEntity.GetBehavior<BEBehaviorRingable>();
             if (ringable == null || string.IsNullOrWhiteSpace(ringable.BellPartCode))
             {
-                base.OnBlockBroken(world, pos, byPlayer, ref handling);
+                base.OnBlockBroken(world, pos, byPlayer, dropQuantityMultiplier, ref handling);
                 return;
             }
 
-            Item item = world.GetItem(new AssetLocation(RPVoiceChatMod.modID, ringable.BellPartCode));
+            Item? item = world.GetItem(new AssetLocation(RPVoiceChatMod.modID, ringable.BellPartCode));
             if (item == null)
             {
-                base.OnBlockBroken(world, pos, byPlayer, ref handling);
+                base.OnBlockBroken(world, pos, byPlayer, dropQuantityMultiplier, ref handling);
                 return;
             }
 
@@ -91,6 +98,6 @@ class BehaviorRingable : BlockBehavior
             world.SpawnItemEntity(stack, pos.ToVec3d());
         }
 
-        base.OnBlockBroken(world, pos, byPlayer, ref handling);
+        base.OnBlockBroken(world, pos, byPlayer, dropQuantityMultiplier, ref handling);
     }
 }

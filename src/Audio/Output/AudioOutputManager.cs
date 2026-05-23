@@ -173,8 +173,6 @@ namespace RPVoiceChat.Audio
         {
             var source = new PlayerAudioSource(player, capi, clientSettingsRepo);
             playerSources.AddOrUpdate(player.PlayerUID, source, (_, __) => source);
-            source.StartPlaying();
-
             return source;
         }
 
@@ -183,6 +181,7 @@ namespace RPVoiceChat.Audio
             if (player.ClientId == capi.World.Player.ClientId) return;
 
             CreatePlayerSource(player);
+            PlayerNameTagRenderer.UpdatePlayerNameTag(player, false);
         }
 
         private void PlayerDespawned(IPlayer player)
@@ -191,15 +190,15 @@ namespace RPVoiceChat.Audio
             {
                 localPlayerAudioSource.Dispose();
                 localPlayerAudioSource = null;
+                PlayerNameTagRenderer.CleanupPlayerNametagCache(player.PlayerUID);
                 return;
             }
 
             playerSources.TryGetValue(player.PlayerUID, out var source);
             source?.Dispose();
             playerSources.Remove(player.PlayerUID);
-            
-            // Clean up cached name tag textures for this player
-            PlayerNameTagRenderer.CleanupPlayerCache(player.PlayerUID);
+
+            PlayerNameTagRenderer.CleanupPlayerNametagCache(player.PlayerUID);
         }
 
         public bool IsPlayerTalking(string playerId)
@@ -231,9 +230,6 @@ namespace RPVoiceChat.Audio
                 localPlayerAudioSource?.Dispose();
                 foreach (var source in playerSources.Values)
                     source?.Dispose();
-                
-                // Clean up all cached name tag textures
-                PlayerNameTagRenderer.CleanupAllCache();
             }
             catch (Exception e)
             {

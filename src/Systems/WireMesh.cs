@@ -29,6 +29,17 @@ namespace RPVoiceChat.GameContent.Systems
             return a * ((float)Math.Cosh((x - (d / 2)) / a) - (float)Math.Cosh((d / 2) / a));
         }
 
+        private static Vec3f CrossProduct(Vec3f v1, Vec3f v2)
+        {
+            float x = v1.Y * v2.Z - v2.Y * v1.Z;
+            float y = (v1.X * v2.Z - v2.X * v1.Z) * -1;
+            float z = v1.X * v2.Y - v2.X * v1.Y;
+
+            var result = new Vec3f(x, y, z);
+            result.Normalize();
+            return result;
+        }
+
         /// <summary>
         /// Builds a wire mesh from pos1 to pos2
         /// </summary>
@@ -38,7 +49,6 @@ namespace RPVoiceChat.GameContent.Systems
         /// <returns>Generated Mesh</returns>
         static public MeshData MakeWireMesh(Vec3f pos1, Vec3f pos2, float thickness = 0.015f)
         {
-            // Thickness of wire, defaults to 0.015?
             float t = thickness;
             Vec3f dPos = pos2 - pos1;
             float dist = pos2.DistanceTo(pos1);
@@ -69,39 +79,91 @@ namespace RPVoiceChat.GameContent.Systems
                 b = new Vec3f(1, 0, 0);
             }
 
-            Vec3f pos;
-
             mesh_top.Flags.Fill(0);
             mesh_bot.Flags.Fill(0);
             mesh_side.Flags.Fill(0);
             mesh_side2.Flags.Fill(0);
 
-            //Add vertices
+            Vec3f[] positions = new Vec3f[nSec + 1];
             for (int j = 0; j <= nSec; j++)
             {
                 float x = dPos.X / nSec * j;
                 float y = dPos.Y / nSec * j;
                 float z = dPos.Z / nSec * j;
                 float l = (float)Math.Sqrt(x * x + y * y + z * z);
-                float dy = Catenary(l / dist, 1, 0.75f);
-                pos = new Vec3f(x, y + dy, z);
+                float dy = Catenary(l / dist, 1, 2f);
+                positions[j] = new Vec3f(x, y + dy, z);
+            }
 
+            Vec3f pos;
+            Vec3f posNext;
+            Vec3f posBefore;
+            Vec3f direction;
+            Vec3f a;
 
-                float du = dist / 2 / t / nSec;
+            // Add vertices
+            for (int j = 0; j <= nSec; j++)
+            {
+                pos = pos1 + positions[j];
+                posNext = j < nSec ? positions[j + 1] : positions[j];
+                posBefore = j > 0 ? positions[j - 1] : positions[j];
+                direction = (posNext + posBefore).Normalize();
+                a = CrossProduct(direction, b * -1);
+
+                float du = dist / nSec;
                 int color = 1;
-                mesh_top.AddVertex(pos1.X + pos.X - b.X * t, pos1.Y + pos.Y + t, pos1.Z + pos.Z - b.Z * t, j * du, 0, color);
-                mesh_top.AddVertex(pos1.X + pos.X + b.X * t, pos1.Y + pos.Y + t, pos1.Z + pos.Z + b.Z * t, j * du, 1, color);
+                float uvV = 2f / 16f;
+                mesh_top.AddVertex(
+                    (pos - b * t + a * t).X,
+                    (pos - b * t + a * t).Y,
+                    (pos - b * t + a * t).Z,
+                    j * du, 0, color
+                );
+                mesh_top.AddVertex(
+                    (pos + b * t + a * t).X,
+                    (pos + b * t + a * t).Y,
+                    (pos + b * t + a * t).Z,
+                    j * du, uvV, color
+                );
 
+                mesh_bot.AddVertex(
+                    (pos - b * t - a * t).X,
+                    (pos - b * t - a * t).Y,
+                    (pos - b * t - a * t).Z,
+                    j * du, 0, color
+                );
+                mesh_bot.AddVertex(
+                    (pos + b * t - a * t).X,
+                    (pos + b * t - a * t).Y,
+                    (pos + b * t - a * t).Z,
+                    j * du, uvV, color
+                );
 
-                mesh_bot.AddVertex(pos1.X + pos.X - b.X * t, pos1.Y + pos.Y - t, pos1.Z + pos.Z - b.Z * t, j * du, 0, color);
-                mesh_bot.AddVertex(pos1.X + pos.X + b.X * t, pos1.Y + pos.Y - t, pos1.Z + pos.Z + b.Z * t, j * du, 1, color);
+                mesh_side.AddVertex(
+                    (pos - b * t + a * t).X,
+                    (pos - b * t + a * t).Y,
+                    (pos - b * t + a * t).Z,
+                    j * du, uvV, color
+                );
+                mesh_side.AddVertex(
+                    (pos - b * t - a * t).X,
+                    (pos - b * t - a * t).Y,
+                    (pos - b * t - a * t).Z,
+                    j * du, 0, color
+                );
 
-                mesh_side.AddVertex(pos1.X + pos.X - b.X * t, pos1.Y + pos.Y + t, pos1.Z + pos.Z - b.Z * t, j * du, 1, color);
-                mesh_side.AddVertex(pos1.X + pos.X - b.X * t, pos1.Y + pos.Y - t, pos1.Z + pos.Z - b.Z * t, j * du, 0, color);
-
-
-                mesh_side2.AddVertex(pos1.X + pos.X + b.X * t, pos1.Y + pos.Y + t, pos1.Z + pos.Z + b.Z * t, j * du, 1, color);
-                mesh_side2.AddVertex(pos1.X + pos.X + b.X * t, pos1.Y + pos.Y - t, pos1.Z + pos.Z + b.Z * t, j * du, 0, color);
+                mesh_side2.AddVertex(
+                    (pos + b * t + a * t).X,
+                    (pos + b * t + a * t).Y,
+                    (pos + b * t + a * t).Z,
+                    j * du, uvV, color
+                );
+                mesh_side2.AddVertex(
+                    (pos + b * t - a * t).X,
+                    (pos + b * t - a * t).Y,
+                    (pos + b * t - a * t).Z,
+                    j * du, 0, color
+                );
 
 
                 mesh_top.Flags[2 * j] = VertexFlags.PackNormal(new Vec3f(0, 1, 0));

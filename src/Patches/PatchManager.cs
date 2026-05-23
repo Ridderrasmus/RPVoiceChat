@@ -28,6 +28,7 @@ namespace RPVoiceChat
             SystemNetworkProcessPatch.Patch(harmony);
             HammerWeldingPatch.Patch(harmony);
             HelveHammerPatch.Patch(harmony);
+            BlockCanPlacePatch.Patch(harmony);
         }
 
         private void PatchServer()
@@ -35,7 +36,7 @@ namespace RPVoiceChat
             NetworkAPIPatch.Patch(harmony);
             TcpNetServerPatch.Patch(harmony);
             HelveHammerPatch.Patch(harmony);
-        }
+            }
 
         public void Unpatch()
         {

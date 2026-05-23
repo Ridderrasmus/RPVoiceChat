@@ -1,8 +1,22 @@
 using RPVoiceChat.GameContent.BlockEntityBehavior;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.GameContent;
 
 public class SoundEmittingBlock : Block
 {
+    public override WorldInteraction[] GetPlacedBlockInteractionHelp(IWorldAccessor world, BlockSelection selection, IPlayer forPlayer)
+    {
+        return new WorldInteraction[]
+        {
+            new WorldInteraction
+            {
+                ActionLangCode = "rpvoicechat:Bell.Interaction.Ring",
+                MouseButton = EnumMouseButton.Right
+            }
+        };
+    }
+
     public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
     {
         return true;

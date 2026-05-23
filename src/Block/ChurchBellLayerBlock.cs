@@ -1,9 +1,22 @@
-﻿using RPVoiceChat.GameContent.BlockEntity;
+using RPVoiceChat.GameContent.BlockEntity;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
+using Vintagestory.GameContent;
 
 public class ChurchBellLayerBlock : Block
 {
+    public override WorldInteraction[] GetPlacedBlockInteractionHelp(IWorldAccessor world, BlockSelection selection, IPlayer forPlayer)
+    {
+        return new WorldInteraction[]
+        {
+            new WorldInteraction
+            {
+                ActionLangCode = "rpvoicechat:Bell.Interaction.Ring",
+                MouseButton = EnumMouseButton.Right
+            }
+        };
+    }
 
     public override Cuboidf[] GetCollisionBoxes(IBlockAccessor blockAccessor, BlockPos pos)
     {
