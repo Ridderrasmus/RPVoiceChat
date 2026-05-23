@@ -2,12 +2,9 @@ using Vintagestory.API.Common;
 
 namespace RPVoiceChat.GameContent.Inventory
 {
-    public class SlotPrinterPaper : ItemSlot
+    public class SlotPrinterPaper : SlotRestrictedItemPath
     {
-        public SlotPrinterPaper(InventoryBase inventory) : base(inventory)
-        {
-            MaxSlotStackSize = 64;
-        }
+        public SlotPrinterPaper(InventoryBase inventory) : base(inventory, "paperslip", 64) { }
 
         public bool TryConsumePaperSlip()
         {
@@ -18,11 +15,6 @@ namespace RPVoiceChat.GameContent.Inventory
                 return true;
             }
             return false;
-        }
-
-        public override bool CanHold(ItemSlot sourceSlot)
-        {
-            return sourceSlot.Itemstack?.Collectible.Code?.Path == "paperslip";
         }
     }
 }

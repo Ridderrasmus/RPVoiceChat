@@ -31,6 +31,7 @@ namespace RPVoiceChat.Gui
         private AudioOutputManager audioOutputManager;
         private CancellationTokenSource configurationCTS;
         private GuiDialog doneDialog;
+        private GuiElementDynamicText wizardStatusText;
         private float adjustedGain;
         private bool configurationInProcess = false;
 
@@ -84,7 +85,8 @@ namespace RPVoiceChat.Gui
             var dropdownBounds = firstTextBlockBounds.BelowCopy(0, textBottomPadding).WithFixedHeight(defaultElementHeight);
             var secondTextBlockBounds = dropdownBounds.BelowCopy(0, textBottomPadding).WithFixedHeight(secondTextBlockHeight);
             var progressBarBounds = secondTextBlockBounds.BelowCopy(-textLeftPadding, textBottomPadding).WithFixedHeight(defaultElementHeight);
-            var buttonBounds = progressBarBounds.BelowCopy(0, textBottomPadding).WithFixedSize(0, defaultElementHeight).WithFixedPadding(buttonXPadding, buttonYPadding).WithAlignment(EnumDialogArea.CenterFixed);
+            var statusTextBounds = progressBarBounds.BelowCopy(0, 8).WithFixedHeight(defaultElementHeight);
+            var buttonBounds = statusTextBounds.BelowCopy(0, textBottomPadding).WithFixedSize(0, defaultElementHeight).WithFixedPadding(buttonXPadding, buttonYPadding).WithAlignment(EnumDialogArea.CenterFixed);
 
             var progressBar = new GuiElementStatbar(capi, progressBarBounds, new double[3] { 0.1, 0.4, 0.1 }, false, false);
             progressBar.ShowValueOnHover = false;
@@ -97,12 +99,14 @@ namespace RPVoiceChat.Gui
                     .AddDropDown(dropdownValues, dropdownValues, 0, OnDropdownSelect, dropdownBounds, "inputDevice")
                     .AddStaticText(secondTextBlock, font, secondTextBlockBounds)
                     .AddInteractiveElement(progressBar, "progressBar")
+                    .AddDynamicText("", CairoFont.WhiteSmallText(), statusTextBounds, "wizardStatusText")
                     .AddButton(startButtonText, OnStartButtonClick, buttonBounds)
                 .EndChildElements()
                 .Compose();
 
             progressBar.SetValues(0, 0, calibrationSteps);
             progressBar.SetLineInterval(calibrationSteps / 10);
+            wizardStatusText = SingleComposer.GetDynamicText("wizardStatusText");
             var inputDeviceDropdown = SingleComposer.GetDropDown("inputDevice");
             inputDeviceDropdown.SetSelectedValue(ModConfig.ClientConfig.InputDevice ?? "Default");
         }
@@ -111,6 +115,7 @@ namespace RPVoiceChat.Gui
         {
             if (configurationInProcess) return true;
             configurationInProcess = true;
+            wizardStatusText?.SetNewText("");
 
             float maxGain = AudioUtils.DBsToFactor(20);
             audioInputManager.SetGain(maxGain);
@@ -123,28 +128,40 @@ namespace RPVoiceChat.Gui
         {
             var progressBar = SingleComposer.GetStatbar("progressBar");
             var effectiveGains = new List<float>();
-
-            audioInputManager.GetRecentGainLimits();
-            for (var i = 0; i < calibrationSteps; i++)
+            try
             {
-                if (configurationCTS.IsCancellationRequested) return;
+                audioInputManager.GetRecentGainLimits();
+                for (var i = 0; i < calibrationSteps; i++)
+                {
+                    if (configurationCTS.IsCancellationRequested) return;
 
-                var recentEffectiveGains = audioInputManager.GetRecentGainLimits();
-                effectiveGains.AddRange(recentEffectiveGains);
+                    var recentEffectiveGains = audioInputManager.GetRecentGainLimits();
+                    effectiveGains.AddRange(recentEffectiveGains);
 
-                progressBar.SetValue(i + 1);
-                await Task.Delay(calibrationUpdateInterval);
+                    progressBar.SetValue(i + 1);
+                    await Task.Delay(calibrationUpdateInterval);
+                }
+
+                if (effectiveGains.Count == 0)
+                {
+                    wizardStatusText?.SetNewText(UIUtils.I18n("Gui.AudioWizardDialog.NoInputData"));
+                    return;
+                }
+
+                effectiveGains.Sort();
+                float lowerQuartileGain = effectiveGains[effectiveGains.Count / 4];
+                float newGain = AudioUtils.FactorToDBs(lowerQuartileGain);
+                newGain = GameMath.Clamp(newGain, -20, 20);
+                newGain = AudioUtils.DBsToFactor(newGain);
+                adjustedGain = newGain;
+
+                doneDialog.TryOpen();
+                TryClose();
             }
-
-            effectiveGains.Sort();
-            float lowerQuartileGain = effectiveGains[effectiveGains.Count / 4];
-            float newGain = AudioUtils.FactorToDBs(lowerQuartileGain);
-            newGain = GameMath.Clamp(newGain, -20, 20);
-            newGain = AudioUtils.DBsToFactor(newGain);
-            adjustedGain = newGain;
-
-            doneDialog.TryOpen();
-            TryClose();
+            finally
+            {
+                configurationInProcess = false;
+            }
         }
 
         private void SaveAndExit()

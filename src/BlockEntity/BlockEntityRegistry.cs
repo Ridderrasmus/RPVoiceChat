@@ -16,7 +16,12 @@ namespace RPVoiceChat.GameContent.BlockEntity
             api.RegisterBlockEntityClass("BlockEntityPrinter", typeof(BlockEntityPrinter));
             api.RegisterBlockEntityClass("BlockEntitySignalLamp", typeof(BlockEntitySignalLamp));
             api.RegisterBlockEntityClass("BlockEntityCarillonBell", typeof(BlockEntityCarillonBell));
+            api.RegisterBlockEntityClass("BlockEntityBellHammer", typeof(BlockEntityBellHammer));
             api.RegisterBlockEntityClass("BESoundEmitting", typeof(BESoundEmitting));
+            api.RegisterBlockEntityClass("BlockEntityLucerne", typeof(BlockEntityLucerne));
+            api.RegisterBlockEntityClass("BlockEntitySwitchboard", typeof(BlockEntitySwitchboard));
+            api.RegisterBlockEntityClass("BlockEntityTelephone", typeof(BlockEntityTelephone));
+            api.RegisterBlockEntityClass("BlockEntitySpeaker", typeof(BlockEntitySpeaker));
         }
     }
 }

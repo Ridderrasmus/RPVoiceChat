@@ -30,6 +30,7 @@ namespace RPVoiceChat.Audio
         private int orderingDelay = 50; // Reduced from 100ms to 50ms for lower latency and fewer async tasks
         private long lastAudioSequenceNumber = -1;
         private bool dequeueTaskRunning = false; // Prevent multiple concurrent dequeue tasks
+        private bool playbackEndCheckRunning = false;
         private string currentEffectName;
 
         private IAudioCodec codec;
@@ -55,6 +56,8 @@ namespace RPVoiceChat.Audio
         private AudioData currentAudio; // Store current audio data for distance factor calculation
         private bool forceFlatPlayback;
         
+        private int? _lastQueuedNametagRenderRange;
+
         // Performance optimization: throttle expensive calculations
         private DateTime? lastFullUpdate;
         private DateTime? lastWallThicknessUpdate;
@@ -68,7 +71,7 @@ namespace RPVoiceChat.Audio
             this.capi = capi;
             this.clientSettingsRepo = clientSettingsRepo;
 
-            lastSpeakerCoords = player.Entity?.SidedPos?.XYZFloat;
+            lastSpeakerCoords = player.Entity?.Pos?.XYZFloat;
             lastSpeakerUpdate = DateTime.Now;
 
             source = OALW.GenSource();
@@ -96,6 +99,17 @@ namespace RPVoiceChat.Audio
             OALW.Source(source, ALSourcef.RolloffFactor, rolloffFactor);
         }
 
+        private void TryApplyNametagRenderRange()
+        {
+            bool dynamicRange = WorldConfig.GetBool("use-nametag-dynamic-range", true);
+            int targetRange = dynamicRange
+                ? WorldConfig.GetInt(voiceLevel)
+                : WorldConfig.GetInt("nametag-fallback-range", ServerConfigManager.NametagFallbackRenderRange);
+            if (_lastQueuedNametagRenderRange == targetRange) return;
+            _lastQueuedNametagRenderRange = targetRange;
+            PlayerNameTagRenderer.SetNametagRenderRange(player, targetRange);
+        }
+
         public void UpdateAudioFormat(string codecName, int frequency, int channels)
         {
             if (codec?.Name == codecName && codec?.SampleRate == frequency && codec?.Channels == channels) return;
@@ -110,8 +124,8 @@ namespace RPVoiceChat.Audio
 
         public void UpdatePlayer()
         {
-            EntityPos speakerPos = player.Entity?.SidedPos;
-            EntityPos listenerPos = capi.World.Player.Entity?.SidedPos;
+            EntityPos speakerPos = player.Entity?.Pos;
+            EntityPos listenerPos = capi.World.Player.Entity?.Pos;
             if (listenerPos == null)
                 return;
 
@@ -120,6 +134,11 @@ namespace RPVoiceChat.Audio
                 ApplyFlatPlayback(GetFinalGain());
                 return;
             }
+
+            TryApplyNametagRenderRange();
+
+            Vec3d sourceOverride = currentAudio?.sourcePosOverride;
+            Vec3d effectiveSpeakerPos = sourceOverride ?? new Vec3d(speakerPos.X, speakerPos.Y, speakerPos.Z);
 
             DateTime now = DateTime.Now;
             bool shouldDoFullUpdate = lastFullUpdate == null || 
@@ -134,7 +153,14 @@ namespace RPVoiceChat.Audio
                 bool mufflingEnabled = ModConfig.ClientConfig.Muffling;
                 if (mufflingEnabled)
                 {
-                    wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
+                    if (sourceOverride != null)
+                    {
+                        wallThickness = LocationUtils.GetWallThickness(capi, sourceOverride, LocationUtils.GetLocationOfPlayer(capi.World.Player));
+                    }
+                    else
+                    {
+                        wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
+                    }
                     if (capi.World.Player.Entity.Swimming)
                         wallThickness += 1.0f;
                     cachedWallThickness = wallThickness;
@@ -214,13 +240,13 @@ namespace RPVoiceChat.Audio
 
             if (useLocationalAudio)
             {
-                sourcePosition = GetRelativeSourcePosition(speakerPos, listenerPos);
-                velocity = GetRelativeVelocity(speakerPos, listenerPos, sourcePosition);
+                sourcePosition = GetRelativeSourcePosition(effectiveSpeakerPos, listenerPos);
+                velocity = GetRelativeVelocity(effectiveSpeakerPos, listenerPos, sourcePosition);
             }
             else if (ModConfig.ClientConfig.IsMonoMode)
             {
                 // In mono mode, preserve distance but center the audio (no stereo positioning)
-                float distance = (float)speakerPos.DistanceTo(listenerPos);
+                float distance = (float)effectiveSpeakerPos.DistanceTo(listenerPos.XYZ);
                 sourcePosition = new Vec3f(0, 0, distance); // Position in front of listener at correct distance
                 velocity = new Vec3f(); // No velocity in mono mode
             }
@@ -272,36 +298,38 @@ namespace RPVoiceChat.Audio
 
             const float quietDistance = 10;
 
-            float maxHearingDistance = WorldConfig.GetInt(voiceLevel);
+            float maxHearingDistance = currentAudio?.effectiveRange > 0
+                ? currentAudio.effectiveRange
+                : WorldConfig.GetInt(voiceLevel);
             var exponent = quietDistance < maxHearingDistance ? 2 : -0.33;
             var distanceFactor = Math.Pow(quietDistance / maxHearingDistance, exponent);
             return (float)distanceFactor;
         }
 
-        private Vec3f GetRelativeSourcePosition(EntityPos speakerPos, EntityPos listenerPos)
+        private Vec3f GetRelativeSourcePosition(Vec3d speakerPos, EntityPos listenerPos)
         {
-            var relativeSourcePosition = LocationUtils.GetRelativeSpeakerLocation(speakerPos, listenerPos);
+            var relativeSourcePosition = LocationUtils.GetRelativeSpeakerLocation(speakerPos.ToVec3f(), listenerPos);
             return relativeSourcePosition;
         }
 
-        private Vec3f GetRelativeVelocity(EntityPos speakerPos, EntityPos listenerPos, Vec3f relativeSpeakerPosition)
+        private Vec3f GetRelativeVelocity(Vec3d speakerPos, EntityPos listenerPos, Vec3f relativeSpeakerPosition)
         {
             var speakerVelocity = GetVelocity(speakerPos);
-            var futureSpeakerPosition = speakerPos.XYZFloat + speakerVelocity;
+            var futureSpeakerPosition = speakerPos.ToVec3f() + speakerVelocity;
             var relativeFuturePosition = LocationUtils.GetRelativeSpeakerLocation(futureSpeakerPosition, listenerPos);
             var relativeVelocity = relativeSpeakerPosition - relativeFuturePosition;
 
             return relativeVelocity;
         }
 
-        private Vec3f GetVelocity(EntityPos speakerPos)
+        private Vec3f GetVelocity(Vec3d speakerPos)
         {
             var currentTime = DateTime.Now;
             if (lastSpeakerUpdate == null) lastSpeakerUpdate = currentTime;
             var dt = (currentTime - (DateTime)lastSpeakerUpdate).TotalSeconds;
             dt = GameMath.Clamp(dt, 0.1, 1);
 
-            var speakerCoords = speakerPos.XYZFloat;
+            var speakerCoords = speakerPos.ToVec3f();
             if (lastSpeakerCoords == null || dt == 1) lastSpeakerCoords = speakerCoords;
 
             var velocity = (lastSpeakerCoords - speakerCoords) / (float)dt;
@@ -406,7 +434,10 @@ namespace RPVoiceChat.Audio
                     {
                         var state = OALW.GetSourceState(source);
                         if (state != ALSourceState.Playing)
+                        {
                             StartPlaying();
+                            NotifyStartedSpeaking();
+                        }
                     }
 
                     // Check if there are more items to process
@@ -419,6 +450,10 @@ namespace RPVoiceChat.Audio
                             return;
                         }
                     }
+
+                    // No more incoming queued packets right now. Ensure we still detect
+                    // the transition to "not talking" when the last buffered audio ends.
+                    SchedulePlaybackEndCheck();
                 }
                 catch (Exception e)
                 {
@@ -431,12 +466,61 @@ namespace RPVoiceChat.Audio
             }
         }
 
+        private async void SchedulePlaybackEndCheck()
+        {
+            lock (dequeue_audio_lock)
+            {
+                if (playbackEndCheckRunning) return;
+                playbackEndCheckRunning = true;
+            }
+
+            try
+            {
+                // Wait until OpenAL naturally drains the last queued buffers.
+                for (int i = 0; i < 20; i++)
+                {
+                    await Task.Delay(75);
+
+                    bool hasPendingPackets;
+                    lock (ordering_queue_lock)
+                    {
+                        hasPendingPackets = orderingQueue.Count > 0;
+                    }
+                    if (hasPendingPackets) return;
+
+                    if (source <= 0) return;
+
+                    var state = OALW.GetSourceState(source);
+                    if (state != ALSourceState.Playing)
+                    {
+                        OnSourceStop();
+                        return;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.client.Warning($"Error while checking playback end: {e.Message}");
+            }
+            finally
+            {
+                lock (dequeue_audio_lock)
+                {
+                    playbackEndCheckRunning = false;
+                }
+            }
+        }
+
 
         public void StartPlaying()
         {
             if (source <= 0) return; // Source is invalid
-            
+
             OALW.SourcePlay(source);
+        }
+
+        private void NotifyStartedSpeaking()
+        {
             PlayerNameTagRenderer.UpdatePlayerNameTag(player, true);
         }
 

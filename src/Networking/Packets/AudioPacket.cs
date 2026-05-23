@@ -19,6 +19,10 @@ namespace RPVoiceChat.Networking
         public int EffectiveRange { get; set; } = 0;
         public bool IgnoreDistanceReduction { get; set; } = false;
         public float WallThicknessOverride { get; set; } = -1f;
+        public bool HasSourcePositionOverride { get; set; } = false;
+        public double SourcePosX { get; set; } = 0;
+        public double SourcePosY { get; set; } = 0;
+        public double SourcePosZ { get; set; } = 0;
         protected override PacketType Code { get => PacketType.Audio; }
         public bool IsGlobalBroadcast { get; set; } = false;
 

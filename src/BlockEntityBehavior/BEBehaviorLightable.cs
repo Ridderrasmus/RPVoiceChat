@@ -3,17 +3,25 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
+using RPVoiceChat.GameContent;
+using RPVoiceChat.Util;
 
 /// <summary>
 /// BlockEntityBehavior for blocks that can emit light (lightable).
-/// Implements IPointLight directly to serve as the light source.
+/// Implements IPointLight. Light origin: from IBlockEntityWithCustomLightPosition.GetLightOrigin() if implemented, else block center.
+/// Never does Remove then re-Add of the same instance (avoids render-side invalidation).
 /// </summary>
 public class BEBehaviorLightable : BlockEntityBehavior, IPointLight
 {
     private bool isLightActive = false;
+    private bool lightInRenderList; // avoids Remove then re-Add same instance
     private Vec3f lightColor = new Vec3f(1.0f, 0.9f, 0.7f); // Warm color by default
     private float lightLevel = 1.0f;
-    private float lightRadius = 10.0f;
+    /// <summary>
+    /// IPointLight has no radius: engine often uses Color magnitude as intensity/ falloff proxy.
+    /// Scale &gt; 1 makes the dynamic light much brighter / larger-looking (optional JSON lightIntensityScale).
+    /// </summary>
+    private float lightIntensityScale = 1.0f;
     private ICoreClientAPI capi;
 
     // IPointLight implementation
@@ -29,10 +37,16 @@ public class BEBehaviorLightable : BlockEntityBehavior, IPointLight
     /// </summary>
     public void SetLightActive(bool active)
     {
-        if (isLightActive == active) return;
+        if (isLightActive == active)
+        {
+            // Recover from load-order edge cases where state is restored before render registration.
+            if (active && Blockentity.Api?.Side == EnumAppSide.Client)
+                UpdateLight();
+            return;
+        }
 
         isLightActive = active;
-        Blockentity.MarkDirty();
+        Blockentity.MarkDirty(Blockentity.Api?.Side == EnumAppSide.Server);
 
         if (Blockentity.Api?.Side == EnumAppSide.Client)
         {
@@ -66,50 +80,64 @@ public class BEBehaviorLightable : BlockEntityBehavior, IPointLight
         Blockentity.MarkDirty();
     }
 
-    /// <summary>
-    /// Sets the light radius
-    /// </summary>
-    public void SetLightRadius(float radius)
-    {
-        lightRadius = Math.Max(0.1f, radius);
-        if (isLightActive && Blockentity.Api?.Side == EnumAppSide.Client)
-        {
-            UpdateLight();
-        }
-        Blockentity.MarkDirty();
-    }
-
     public bool IsLightActive => isLightActive;
 
     public override void Initialize(ICoreAPI api, JsonObject properties)
     {
         base.Initialize(api, properties);
 
+        if (properties != null)
+        {
+            if (properties["lightLevel"].Exists)
+                lightLevel = properties["lightLevel"].AsFloat(1.0f);
+            if (properties["lightColorX"].Exists || properties["lightColorY"].Exists || properties["lightColorZ"].Exists)
+                lightColor = new Vec3f(
+                    properties["lightColorX"].AsFloat(1.0f),
+                    properties["lightColorY"].AsFloat(0.9f),
+                    properties["lightColorZ"].AsFloat(0.7f));
+            if (properties["lightIntensityScale"].Exists)
+                lightIntensityScale = GameMath.Clamp(properties["lightIntensityScale"].AsFloat(1.0f), 0.1f, 25f);
+        }
+
         if (api.Side == EnumAppSide.Client)
         {
             capi = api as ICoreClientAPI;
+            // Ensure the light is registered if attributes were loaded before Initialize().
+            UpdateLight();
         }
     }
+
+    /// <summary>Origin of the point light: supplied by the block entity (GetLightOrigin) or block center by default.</summary>
+    private Vec3d GetLightOrigin() =>
+        Blockentity is IBlockEntityWithCustomLightPosition custom
+            ? custom.GetLightOrigin()
+            : Blockentity.Pos.ToWorldCenter();
 
     private void UpdateLight()
     {
         if (capi == null) return;
 
-        // Always remove the light first (in case it was already added)
-        capi.Render.RemovePointLight(this);
-
-        // Add the light only if it should be active
-        if (isLightActive)
+        if (!isLightActive)
         {
-            // Position the light at the center of the block
-            Vec3d lightPos = new Vec3d(Blockentity.Pos.X + 0.5, Blockentity.Pos.Y + 0.5, Blockentity.Pos.Z + 0.5);
-
-            // Update IPointLight properties
-            Pos = lightPos;
-            Color = new Vec3f(lightColor.X * lightLevel, lightColor.Y * lightLevel, lightColor.Z * lightLevel);
-
-            capi.Render.AddPointLight(this);
+            if (lightInRenderList)
+            {
+                capi.Render.RemovePointLight(this);
+                lightInRenderList = false;
+            }
+            return;
         }
+        float s = lightLevel * lightIntensityScale;
+        var c = new Vec3f(lightColor.X * s, lightColor.Y * s, lightColor.Z * s);
+        if (lightInRenderList)
+        {
+            Pos = GetLightOrigin();
+            Color = c;
+            return;
+        }
+        Pos = GetLightOrigin();
+        Color = c;
+        capi.Render.AddPointLight(this);
+        lightInRenderList = true;
     }
 
     public override void OnBlockRemoved()
@@ -126,11 +154,10 @@ public class BEBehaviorLightable : BlockEntityBehavior, IPointLight
 
     private void RemoveLight()
     {
-        // Always remove the light if the API is available, regardless of isLightActive state
-        // This ensures cleanup when the block is removed or unloaded
-        if (capi != null)
+        if (capi != null && lightInRenderList)
         {
             capi.Render.RemovePointLight(this);
+            lightInRenderList = false;
         }
     }
 
@@ -145,10 +172,10 @@ public class BEBehaviorLightable : BlockEntityBehavior, IPointLight
             tree.GetFloat("lightColorZ", 0.7f)
         );
         lightLevel = tree.GetFloat("lightLevel", 1.0f);
-        lightRadius = tree.GetFloat("lightRadius", 10.0f);
 
         if (Blockentity.Api?.Side == EnumAppSide.Client)
         {
+            capi ??= worldAccessForResolve?.Api as ICoreClientAPI;
             UpdateLight();
         }
     }
@@ -162,6 +189,6 @@ public class BEBehaviorLightable : BlockEntityBehavior, IPointLight
         tree.SetFloat("lightColorY", lightColor.Y);
         tree.SetFloat("lightColorZ", lightColor.Z);
         tree.SetFloat("lightLevel", lightLevel);
-        tree.SetFloat("lightRadius", lightRadius);
+        tree.SetFloat("lightIntensityScale", lightIntensityScale);
     }
 }

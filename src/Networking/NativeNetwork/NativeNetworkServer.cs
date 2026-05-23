@@ -64,6 +64,8 @@ namespace RPVoiceChat.Networking
 
         private void ReceivedAudioPacketFromClient(IServerPlayer player, AudioPacket packet)
         {
+            // Security: ignore client-supplied PlayerId and use the authenticated sender
+            packet.PlayerId = player.PlayerUID;
             AudioPacketReceived?.Invoke(packet);
         }
 

@@ -9,6 +9,9 @@
 	"textureSizes": {
 	},
 	"textures": {
+		"gold": "game:block/metal/plate/gold",
+		"copper": "game:block/metal/plate/copper",
+		"bakelite": "game:block/coal/bituminous"
 	},
 	"elements": [
 		{

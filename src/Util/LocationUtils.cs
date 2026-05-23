@@ -88,7 +88,11 @@ namespace RPVoiceChat.Util
         {
             var origin = GetLocationOfPlayer(source);
             var destination = GetLocationOfPlayer(target);
+            return GetWallThickness(capi, origin, destination);
+        }
 
+        public static float GetWallThickness(ICoreClientAPI capi, Vec3d origin, Vec3d destination)
+        {
             var obstructingBlocks = RayTraceThrough(capi, origin, destination).Item1;
             float thickness = 0;
             foreach (BlockEntry blockEntry in obstructingBlocks)

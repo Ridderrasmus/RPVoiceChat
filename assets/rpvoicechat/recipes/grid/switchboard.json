@@ -1,0 +1,54 @@
+{
+  "name": "switchboard",
+  "enabled": true,
+  "ingredientPattern": "BIB,WAE,PCL",
+  "ingredients": {
+    "B": {
+      "type": "item",
+      "code": "game:plank-*",
+      "name": "wood",
+      "quantity": 2
+    },
+    "I": {
+      "type": "block",
+      "code": "rpvoicechat:connector-*",
+      "quantity": 4
+    },
+    "W": {
+      "type": "item",
+      "code": "rpvoicechat:telegraphwire",
+      "quantity": 8
+    },
+    "A": {
+      "type": "item",
+      "code": "game:returndeath-returndeath1",
+      "quantity": 1
+    },
+    "E": {
+      "type": "item",
+      "code": "game:jonasframes-gearbox02",
+      "quantity": 1
+    },
+    "P": {
+      "type": "item",
+      "code": "game:metalplate-copper",
+      "quantity": 2
+    },
+    "C": {
+      "type": "item",
+      "code": "game:ingot-cupronickel",
+      "quantity": 4
+    },
+    "L": {
+      "type": "item",
+      "code": "game:metalplate-lead",
+      "quantity": 2
+    }
+  },
+  "width": 3,
+  "height": 3,
+  "output": {
+    "type": "block",
+    "code": "rpvoicechat:switchboard-{wood}-north"
+  }
+}

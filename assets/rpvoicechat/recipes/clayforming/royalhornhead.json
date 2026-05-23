@@ -66,6 +66,6 @@
   "name": "Royal horn head mold",
   "output": {
     "type": "block",
-    "code": "royalhornheadmold-{color}-raw-royalhornhead"
+    "code": "rpvoicechat:royalhornheadmold-{color}-raw-royalhornhead"
   }
 }

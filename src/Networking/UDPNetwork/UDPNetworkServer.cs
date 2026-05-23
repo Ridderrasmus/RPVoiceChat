@@ -11,9 +11,11 @@ namespace RPVoiceChat.Networking
         public event Action<AudioPacket> AudioPacketReceived;
 
         private Dictionary<string, ConnectionInfo> connectionsByPlayer = new Dictionary<string, ConnectionInfo>();
+        private Dictionary<string, string> playerByAddress = new Dictionary<string, string>();
         private IPAddress ip;
         private IPEndPoint ownEndPoint;
         private ConnectionInfo connectionInfo;
+        private long readinessProbeToken;
 
         public UDPNetworkServer(int port, string ip, bool forwardPorts) : base(Logger.server, forwardPorts)
         {
@@ -60,14 +62,21 @@ namespace RPVoiceChat.Networking
 
         public void PlayerConnected(string playerId, ConnectionInfo connectionInfo)
         {
-            connectionsByPlayer.Add(playerId, connectionInfo);
+            if (connectionsByPlayer.TryGetValue(playerId, out var oldConn))
+                playerByAddress.Remove(NetworkUtils.GetEndPoint(oldConn).ToString());
+            var addressKey = NetworkUtils.GetEndPoint(connectionInfo).ToString();
+            if (playerByAddress.ContainsKey(addressKey)) playerByAddress.Remove(addressKey);
+            connectionsByPlayer[playerId] = connectionInfo;
+            playerByAddress[addressKey] = playerId;
             logger.VerboseDebug($"{playerId} connected over {_transportID}");
         }
 
         public void PlayerDisconnected(string playerId)
         {
-            if (!connectionsByPlayer.ContainsKey(playerId)) return;
+            if (!connectionsByPlayer.TryGetValue(playerId, out var conn)) return;
+            var addressKey = NetworkUtils.GetEndPoint(conn).ToString();
             connectionsByPlayer.Remove(playerId);
+            playerByAddress.Remove(addressKey);
             logger.VerboseDebug($"{playerId} disconnected from {_transportID} server");
         }
 
@@ -77,7 +86,7 @@ namespace RPVoiceChat.Networking
             switch (code)
             {
                 case PacketType.SelfPing:
-                    if (!IsSelf(sender)) return;
+                    if (!IsValidReadinessSelfPing(msg)) return;
                     isReady = true;
                     _readinessProbeCTS.Cancel();
                     break;
@@ -86,6 +95,9 @@ namespace RPVoiceChat.Networking
                     break;
                 case PacketType.Audio:
                     var packet = NetworkPacket.FromBytes<AudioPacket>(msg);
+                    if (!playerByAddress.TryGetValue(sender.ToString(), out string senderPlayerId))
+                        break; // drop audio from unauthenticated connection
+                    packet.PlayerId = senderPlayerId;
                     AudioPacketReceived?.Invoke(packet);
                     break;
                 default:
@@ -101,22 +113,42 @@ namespace RPVoiceChat.Networking
 
         private void VerifyServerReadiness()
         {
-            var selfPingPacket = BitConverter.GetBytes((int)PacketType.SelfPing);
+            readinessProbeToken = Random.Shared.NextInt64();
+            byte[] selfPingPacket = CreateSelfPingPacket(readinessProbeToken);
 
             try
             {
-                UdpClient.Send(selfPingPacket, selfPingPacket.Length, ownEndPoint);
+                // Loopback avoids NAT hairpin issues where the reply appears from the router, not ownEndPoint.
+                UdpClient.Send(selfPingPacket, selfPingPacket.Length, new IPEndPoint(IPAddress.Loopback, port));
+
+                if (!IPAddress.IsLoopback(ownEndPoint.Address))
+                {
+                    UdpClient.Send(selfPingPacket, selfPingPacket.Length, ownEndPoint);
+                }
+
                 Task.Delay(5000, _readinessProbeCTS.Token).GetAwaiter().GetResult();
             }
             catch (TaskCanceledException) { }
+
+            readinessProbeToken = 0;
 
             if (isReady) return;
             throw new HealthCheckException(NetworkSide.Server);
         }
 
-        private bool IsSelf(IPEndPoint endPoint)
+        private static byte[] CreateSelfPingPacket(long token)
         {
-            return NetworkUtils.AssertEqual(endPoint, ownEndPoint);
+            byte[] packet = new byte[12];
+            BitConverter.GetBytes((int)PacketType.SelfPing).CopyTo(packet, 0);
+            BitConverter.GetBytes(token).CopyTo(packet, 4);
+            return packet;
+        }
+
+        private bool IsValidReadinessSelfPing(byte[] msg)
+        {
+            if (readinessProbeToken == 0 || msg.Length < 12) return false;
+            if ((PacketType)BitConverter.ToInt32(msg, 0) != PacketType.SelfPing) return false;
+            return BitConverter.ToInt64(msg, 4) == readinessProbeToken;
         }
     }
 }

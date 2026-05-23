@@ -1,0 +1,81 @@
+{
+  "code": "telephone",
+  "enabled": true,
+  "class": "telephoneblock",
+  "entityClass": "BlockEntityTelephone",
+  "behaviors": [
+    { "name": "HorizontalOrientable" },
+    { "name": "Ringable" }
+  ],
+  "entityBehaviors": [
+    { "name": "BERingable" },
+    { "name": "Animatable" }
+  ],
+  "creativeinventory": {
+    "general": [ "*-north" ],
+    "rpvoicechat": [ "*-north" ]
+  },
+  "maxstacksize": 1,
+  "blockmaterial": "wood",
+  "variantgroups": [
+    {
+      "code": "wood",
+      "states": [ "aged", "veryaged" ],
+      "loadFromProperties": "block/wood"
+    },
+    {
+      "code": "side",
+      "loadFromProperties": "abstract/horizontalorientation"
+    }
+  ],
+  "shape": {
+    "base": "block/telephone",
+    "rotateYByType": {
+      "*-north": 0,
+      "*-east": 270,
+      "*-west": 90,
+      "*-south": 180
+    }
+  },
+  "sounds": {
+    "place": "game:block/planks",
+    "hit": "game:block/planks",
+    "break": "game:block/planks",
+    "walk": "game:walk/wood"
+  },
+  "textures": {
+    "wood": { "base": "game:block/wood/debarked/{wood}" }
+  },
+  "rainPermeable": false,
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "lightAbsorption": 15,
+  "resistance": 1,
+  "attributes": {
+    "wireAttachmentOffsets": {
+      "north": [ 0.74375, 0.3428125, 0.2609375 ],
+      "east": [ 0.7390625, 0.3428125, 0.74375 ],
+      "south": [ 0.25625, 0.3428125, 0.7390625 ],
+      "west": [ 0.2609375, 0.3428125, 0.25625 ]
+    },
+    "handbook": {
+      "groupBy": [ "telephone-*" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-telephone.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-telephone.Text"
+        }
+      ]
+    }
+  },
+  "guiTransform": {
+    "translation": { "x": 0, "y": -10, "z": 0 },
+		"rotation": { "x": -22.6, "y": 152, "z": 0 },
+		"origin": { "x": 0.5, "y": 0.6, "z": 0.5 },
+		"scale": 1.44
+  }
+}

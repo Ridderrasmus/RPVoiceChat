@@ -306,6 +306,16 @@ namespace RPVoiceChat.Gui
 
             RegisterOption(new ConfigOption
             {
+                Key = "devicesVoiceFeedback",
+                Type = ElementType.Switch,
+                Label = true,
+                Tooltip = true,
+                Tab = audioOutputTab,
+                ToggleAction = OnToggleDevicesVoiceFeedback
+            });
+
+            RegisterOption(new ConfigOption
+            {
                 Key = "outputVoice",
                 Type = ElementType.Slider,
                 Label = true,
@@ -490,6 +500,7 @@ namespace RPVoiceChat.Gui
             SetValue("muteMicrophone", ModConfig.ClientConfig.IsMuted);
             SetValue("loopback", ModConfig.ClientConfig.Loopback);
             SetValue("monoMode", ModConfig.ClientConfig.IsMonoMode);
+            SetValue("devicesVoiceFeedback", ModConfig.ClientConfig.DevicesVoiceFeedback);
             SetValue("outputVoice", new dynamic[] { outputVoice, 0, 200, 1, "%" });
             SetValue("inputGain", new dynamic[] { inputGainDBS, -200, 200, 1, "" });
             SetValue("outputBlock", new dynamic[] { outputBlock, 0, 200, 1, "%" });
@@ -558,6 +569,11 @@ namespace RPVoiceChat.Gui
         {
             ModConfig.ClientConfig.IsMonoMode = enabled;
             capi.Event.PushEvent("rpvoicechat:hudUpdate");
+        }
+
+        protected void OnToggleDevicesVoiceFeedback(bool enabled)
+        {
+            ModConfig.ClientConfig.DevicesVoiceFeedback = enabled;
         }
 
         protected void OnToggleMinimalHUD(bool enabled)

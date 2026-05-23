@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using Vintagestory.API.Common;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
@@ -9,6 +9,7 @@ public class BlockBehaviorRegistry
     public static void RegisterBlockEntityBehaviors(ICoreAPI api)
     {
         api.RegisterBlockBehaviorClass("Ringable", typeof(BehaviorRingable));
+        api.RegisterBlockBehaviorClass("AttachWithDirection", typeof(BehaviorAttachWithDirection));
     }
 
     public static void AddBehaviors(ICoreAPI api)

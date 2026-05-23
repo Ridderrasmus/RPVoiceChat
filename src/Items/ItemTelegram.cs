@@ -20,11 +20,13 @@ namespace RPVoiceChat.GameContent.Items
             if (inSlot.Itemstack?.Attributes != null)
             {
                 string networkUID = inSlot.Itemstack.Attributes.GetString("networkUID", "");
+                string networkName = inSlot.Itemstack.Attributes.GetString("networkName", "");
+                string networkLabel = !string.IsNullOrWhiteSpace(networkName) ? networkName : networkUID;
                 
-                if (!string.IsNullOrEmpty(networkUID))
+                if (!string.IsNullOrEmpty(networkLabel))
                 {
                     dsc.AppendLine();
-                    dsc.AppendLine($"Network: {networkUID}");
+                    dsc.AppendLine($"Network: {networkLabel}");
                 }
             }
         }
@@ -36,6 +38,10 @@ namespace RPVoiceChat.GameContent.Items
             {
                 string message = slot.Itemstack.Attributes.GetString("message", "");
                 string networkUID = slot.Itemstack.Attributes.GetString("networkUID", "");
+                string networkName = slot.Itemstack.Attributes.GetString("networkName", "");
+                string networkLabel = !string.IsNullOrWhiteSpace(networkName) ? networkName : networkUID;
+                string sourceEndpointName = slot.Itemstack.Attributes.GetString("sourceEndpointName", "");
+                string targetEndpointName = slot.Itemstack.Attributes.GetString("targetEndpointName", "");
                 
                 // Always ensure we have text and title attributes
                 if (!slot.Itemstack.Attributes.HasAttribute("text"))
@@ -43,9 +49,21 @@ namespace RPVoiceChat.GameContent.Items
                     string text = !string.IsNullOrEmpty(message) ? message : "Empty telegram";
                     string title = "Telegram";
                     
-                    if (!string.IsNullOrEmpty(networkUID))
+                    if (!string.IsNullOrWhiteSpace(sourceEndpointName))
                     {
-                        title += $" - Network {networkUID}";
+                        title += !string.IsNullOrEmpty(networkLabel)
+                            ? $" - {sourceEndpointName} (Network {networkLabel})"
+                            : $" - {sourceEndpointName}";
+                    }
+                    else if (!string.IsNullOrWhiteSpace(targetEndpointName))
+                    {
+                        title += !string.IsNullOrEmpty(networkLabel)
+                            ? $" - {targetEndpointName} (Network {networkLabel})"
+                            : $" - {targetEndpointName}";
+                    }
+                    else if (!string.IsNullOrEmpty(networkLabel))
+                    {
+                        title += $" - Network {networkLabel}";
                     }
                     
                     slot.Itemstack.Attributes.SetString("text", text);

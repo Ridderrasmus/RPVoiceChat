@@ -20,11 +20,13 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public long NetworkUID { get; set; } = 0;
         public BlockPos Position => Pos;
         public string NodeUID => Pos.ToString();
-        private int MaxConnections => ServerConfigManager.TelegraphMaxConnectionsPerNode;
+        protected virtual int MaxConnections => ServerConfigManager.TelegraphMaxConnectionsPerNode;
+        public virtual bool IsActiveEndpoint => false;
 
         private readonly List<WireConnection> connections = new();
         private List<BlockPos> pendingConnectionPositions = new();
         private IRenderer renderer;
+        private long pendingConnectionRetryListener;
 
         protected EventHandler<WireNetworkMessage> OnReceivedSignalEvent { get; set; }
         public event Action OnConnectionsChanged;
@@ -32,8 +34,110 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         protected virtual void SetWireAttachmentOffset()
         {
-            // by default : block center
-            WireAttachmentOffset = new Vec3f(0.5f, 0.5f, 0.5f);
+            if (TryGetWireAttachmentOffsetFromAttributes(out Vec3f configuredOffset))
+            {
+                WireAttachmentOffset = configuredOffset;
+                return;
+            }
+
+            // Default: near block center
+            WireAttachmentOffset = new Vec3f(0.5f, 0.45f, 0.5f);
+        }
+
+        /// <summary>
+        /// Generic attribute-based wire attachment resolver.
+        ///
+        /// Supported formats in block json attributes:
+        /// - wireAttachmentOffset: [x, y, z]
+        /// - wireAttachmentOffsets: {
+        ///     "up": [x,y,z], "down": [x,y,z], "wall": [x,y,z],
+        ///     "north"/"east"/"south"/"west": [x,y,z], ...
+        ///   }
+        /// </summary>
+        protected virtual bool TryGetWireAttachmentOffsetFromAttributes(out Vec3f offset)
+        {
+            offset = null;
+            var attrs = Block?.Attributes;
+            if (attrs == null) return false;
+
+            float[] single = attrs["wireAttachmentOffset"]?.AsArray<float>(null);
+            if (single != null && single.Length == 3)
+            {
+                offset = new Vec3f(single[0], single[1], single[2]);
+                return true;
+            }
+
+            var map = attrs["wireAttachmentOffsets"];
+            if (map == null) return false;
+
+            string orientation = GetWireOrientationCode();
+            string side = GetWireSideCode();
+            string[] candidates = GetWireOffsetCandidates(orientation, side);
+
+            foreach (string key in candidates)
+            {
+                float[] values = map[key]?.AsArray<float>(null);
+                if (values == null || values.Length != 3) continue;
+
+                offset = new Vec3f(values[0], values[1], values[2]);
+                return true;
+            }
+
+            return false;
+        }
+
+        protected virtual string GetWireOrientationCode()
+        {
+            if (Block?.Variant == null) return "up";
+
+            if (Block.Variant.TryGetValue("orientation", out string orientation) && !string.IsNullOrWhiteSpace(orientation))
+            {
+                return orientation;
+            }
+
+            if (Block.Variant.TryGetValue("side", out string side) && !string.IsNullOrWhiteSpace(side))
+            {
+                return side;
+            }
+
+            return "up";
+        }
+
+        protected virtual string GetWireSideCode()
+        {
+            if (Block?.Variant == null) return null;
+
+            if (Block.Variant.TryGetValue("side", out string side) && !string.IsNullOrWhiteSpace(side))
+            {
+                return side;
+            }
+
+            return null;
+        }
+
+        private static string[] GetWireOffsetCandidates(string orientation, string side)
+        {
+            string combined = !string.IsNullOrWhiteSpace(side) ? $"{orientation}-{side}" : null;
+
+            return orientation switch
+            {
+                "north" => combined != null ? new[] { combined, "north", "wall", "side", "default" } : new[] { "north", "wall", "side", "default" },
+                "east" => combined != null ? new[] { combined, "east", "wall", "side", "default" } : new[] { "east", "wall", "side", "default" },
+                "south" => combined != null ? new[] { combined, "south", "wall", "side", "default" } : new[] { "south", "wall", "side", "default" },
+                "west" => combined != null ? new[] { combined, "west", "wall", "side", "default" } : new[] { "west", "wall", "side", "default" },
+                "down" => combined != null ? new[] { combined, "down", "ceiling", "default" } : new[] { "down", "ceiling", "default" },
+                "up" => combined != null ? new[] { combined, "up", "floor", "default" } : new[] { "up", "floor", "default" },
+                _ => combined != null ? new[] { combined, orientation, "default" } : new[] { orientation, "default" }
+            };
+        }
+
+        /// <summary>
+        /// Per-connection wire attachment offset (block-local, 0..1-ish).
+        /// By default every connection uses the same center offset.
+        /// </summary>
+        public virtual Vec3f GetWireAttachmentOffsetFor(BlockPos otherNodePos)
+        {
+            return WireAttachmentOffset;
         }
 
         public override void Initialize(ICoreAPI api)
@@ -65,18 +169,59 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     var existing = WireNetworkHandler.GetNetwork(NetworkUID);
                     if (existing != null)
                     {
-                        existing.AddNode(this);
+                        if (!existing.Nodes.Contains(this))
+                        {
+                            existing.AddNode(this);
+                        }
+
                         WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(this, existing);
                     }
-                    else if (IsNetworkRoot(this))
+                    else
                     {
-                        // Network was lost, recreate it
-                        WireNetworkHandler.AddNewNetwork(this);
+                        // Never mint a fresh id here: other chunks may still reference this serialized NetworkUID.
+                        // (FromTreeAttributes usually registers the shell first; this path recovers if load order skipped it.)
+                        EnsureRegisteredInNetworkFromSerializedId();
+                        var recovered = WireNetworkHandler.GetNetwork(NetworkUID);
+                        if (recovered != null)
+                        {
+                            WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(this, recovered);
+                        }
                     }
                 }
             }
 
             ResolvePendingConnectionsAndNotify();
+            EnsurePendingConnectionRetryListener();
+        }
+
+        /// <summary>
+        /// Ensures <see cref="WireNetworkHandler"/> has a <see cref="WireNetwork"/> keyed by <see cref="NetworkUID"/>
+        /// and that this node is registered on that instance. Always uses the serialized id as the network id
+        /// (does not allocate a new id like <see cref="WireNetworkHandler.AddNewNetwork"/>).
+        /// <para />
+        /// If <see cref="WireNetworkHandler.AddNetwork"/> is a no-op because another node already registered the same id,
+        /// attaches to the dictionary-backed network instead of the temporary shell object.
+        /// </summary>
+        private void EnsureRegisteredInNetworkFromSerializedId()
+        {
+            if (NetworkUID == 0)
+            {
+                return;
+            }
+
+            var shell = new WireNetwork { networkID = NetworkUID };
+            WireNetworkHandler.AddNetwork(shell);
+
+            var net = WireNetworkHandler.GetNetwork(NetworkUID);
+            if (net == null)
+            {
+                return;
+            }
+
+            if (!net.Nodes.Contains(this))
+            {
+                net.AddNode(this);
+            }
         }
 
         public void MarkForUpdate()
@@ -101,23 +246,54 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         private void ResolvePendingConnectionsAndNotify()
         {
+            if (Api?.World?.BlockAccessor == null) return;
             if (pendingConnectionPositions == null || pendingConnectionPositions.Count == 0) return;
-            foreach (var otherPos in pendingConnectionPositions)
+
+            for (int i = pendingConnectionPositions.Count - 1; i >= 0; i--)
             {
-                var otherBe = Api.World.BlockAccessor.GetBlockEntity(otherPos) as BEWireNode;
-                if (otherBe != null)
+                var otherPos = pendingConnectionPositions[i];
+                if (otherPos == null || otherPos.Equals(Pos))
                 {
-                    var connection = new WireConnection(this, otherBe);
-                    // AddConnection already checks if the connection exists
-                    AddConnection(connection);
-                    otherBe.AddConnection(connection);
+                    pendingConnectionPositions.RemoveAt(i);
+                    continue;
                 }
+
+                var otherBe = Api.World.BlockAccessor.GetBlockEntity(otherPos) as BEWireNode;
+                if (otherBe == null) continue;
+
+                var connection = new WireConnection(this, otherBe);
+                AddConnection(connection);
+                otherBe.AddConnection(connection);
+                pendingConnectionPositions.RemoveAt(i);
             }
-            if (connections.Count > 0)
+
+            EnsurePendingConnectionRetryListener();
+        }
+
+        /// <summary>
+        /// Retries resolving serialized neighbour links when their chunks load later (load order / view distance).
+        /// </summary>
+        private void EnsurePendingConnectionRetryListener()
+        {
+            // FromTreeAttributes runs before Initialize(), so Api can be null here.
+            if (Api == null) return;
+
+            if (pendingConnectionPositions == null || pendingConnectionPositions.Count == 0)
             {
-                OnConnectionsChanged?.Invoke();
+                if (pendingConnectionRetryListener != 0)
+                {
+                    UnregisterGameTickListener(pendingConnectionRetryListener);
+                    pendingConnectionRetryListener = 0;
+                }
+                return;
             }
-            pendingConnectionPositions.Clear();
+
+            if (pendingConnectionRetryListener != 0) return;
+
+            pendingConnectionRetryListener = RegisterGameTickListener(_ =>
+            {
+                ResolvePendingConnectionsAndNotify();
+            }, 2000);
         }
 
         public void AddConnection(WireConnection connection)
@@ -139,13 +315,41 @@ namespace RPVoiceChat.GameContent.BlockEntity
             return connections.Contains(connection);
         }
 
-        public void Connect(WireConnection connection)
+        public bool CanAcceptMoreConnections()
         {
-            if (connection == null || connection.Node1 == null || connection.Node2 == null)
-                return;
+            return connections.Count < MaxConnections;
+        }
 
-            if (connections.Count >= MaxConnections || HasConnection(connection))
-                return;
+        public int GetMaxConnections()
+        {
+            return MaxConnections;
+        }
+
+        public bool Connect(WireConnection connection, out string failureLangKey, out object[] failureArgs)
+        {
+            failureLangKey = null;
+            failureArgs = Array.Empty<object>();
+
+            if (connection == null || connection.Node1 == null || connection.Node2 == null)
+                return false;
+
+            if (connection.Node1 is not BEWireNode node1 || connection.Node2 is not BEWireNode node2)
+                return false;
+
+            if (!node1.CanAcceptMoreConnections() || !node2.CanAcceptMoreConnections())
+            {
+                failureLangKey = "Wire.ConnectionDenied.MaxConnections";
+                failureArgs = new object[] { Math.Min(node1.GetMaxConnections(), node2.GetMaxConnections()) };
+                return false;
+            }
+
+            if (node1.HasConnection(connection) || node2.HasConnection(connection))
+                return false;
+
+            if (!WireNetworkHandler.CanConnectNodes(node1, node2, out failureLangKey, out failureArgs))
+            {
+                return false;
+            }
 
             // Adds the connection on both nodes (AddConnection already checks if connection exists and calls MarkForUpdate)
             connection.Node1.AddConnection(connection);
@@ -154,31 +358,30 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             if (Api.Side == EnumAppSide.Server)
             {
-                var node1 = connection.Node1 as BEWireNode;
-                var node2 = connection.Node2 as BEWireNode;
-                if (node1 == null || node2 == null) return;
+                var wireNode1 = node1;
+                var wireNode2 = node2;
 
-                var net1 = WireNetworkHandler.GetNetwork(node1.NetworkUID);
-                var net2 = WireNetworkHandler.GetNetwork(node2.NetworkUID);
+                var net1 = WireNetworkHandler.GetNetwork(wireNode1.NetworkUID);
+                var net2 = WireNetworkHandler.GetNetwork(wireNode2.NetworkUID);
 
                 // Cases where neither has a network AND neither is INetworkRoot -> no network creation
-                if (net1 == null && net2 == null && !IsNetworkRoot(node1) && !IsNetworkRoot(node2))
-                    return;
+                if (net1 == null && net2 == null && !IsNetworkRoot(wireNode1) && !IsNetworkRoot(wireNode2))
+                    return false;
 
                 // Manage network creation/merging/propagation
                 if (net1 == null && net2 == null)
                 {
-                    CreateNetworkForComponent(new HashSet<BEWireNode> { node1, node2 });
+                    CreateNetworkForComponent(new HashSet<BEWireNode> { wireNode1, wireNode2 });
                 }
                 else if (net1 != null && net2 == null)
                 {
-                    net1.AddNode(node2);
-                    WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(node2, net1);
+                    net1.AddNode(wireNode2);
+                    WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(wireNode2, net1);
                 }
                 else if (net1 == null && net2 != null)
                 {
-                    net2.AddNode(node1);
-                    WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(node1, net2);
+                    net2.AddNode(wireNode1);
+                    WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(wireNode1, net2);
                 }
                 else if (net1 != null && net2 != null && net1 != net2)
                 {
@@ -186,21 +389,30 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     if (net1.Nodes.Count >= net2.Nodes.Count)
                     {
                         net1.MergeFrom(net2);
-                        WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(node1, net1);
+                        WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(wireNode1, net1);
                     }
                     else
                     {
                         net2.MergeFrom(net1);
-                        WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(node2, net2);
+                        WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(wireNode2, net2);
                     }
                 }
             }
+
+            if (NetworkUID != 0)
+            {
+                WireNetworkHandler.RebuildNetworkState(NetworkUID);
+            }
+
+            return true;
         }
 
 
         private void OnReceivedMessage(object sender, WireNetworkMessage e)
         {
             if (e.NetworkUID != NetworkUID)
+                return;
+            if (e.RouteMode == WireRouteMode.NamedEndpoint && e.TargetPos != null && !Pos.Equals(e.TargetPos))
                 return;
             // Only skip if we are the sender (avoids duplicate for the player who pressed)
             if (e.SenderPos == Pos && Api.Side == EnumAppSide.Client &&
@@ -219,7 +431,10 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     {
                         NetworkUID = this.NetworkUID,
                         SenderPos = this.Pos,
-                        Message = e.Message
+                        Message = e.Message,
+                        RouteMode = e.RouteMode,
+                        TargetEndpointName = e.TargetEndpointName,
+                        TargetPos = e.TargetPos
                     });
                 }
             }
@@ -237,6 +452,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public override void OnBlockRemoved()
         {
             base.OnBlockRemoved();
+            pendingConnectionRetryListener = 0;
 
             if (Api.Side == EnumAppSide.Client)
             {
@@ -295,6 +511,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 if (Api.Side == EnumAppSide.Server)
                 {
                     RecalculateNetworksAfterDisconnection();
+                    WireNetworkHandler.RebuildNetworkState(NetworkUID);
                 }
             }
         }
@@ -313,31 +530,13 @@ namespace RPVoiceChat.GameContent.BlockEntity
         /// </summary>
         private static HashSet<BEWireNode> FindConnectedComponent(BEWireNode startNode, HashSet<BEWireNode> filterNodes = null)
         {
-            var component = new HashSet<BEWireNode>();
-            var queue = new Queue<BEWireNode>();
-            
-            queue.Enqueue(startNode);
-            component.Add(startNode);
-            
-            while (queue.Count > 0)
+            var component = WireNetworkHandler.GetReachableNodes(startNode);
+            if (filterNodes == null)
             {
-                var current = queue.Dequeue();
-                
-                foreach (var conn in current.GetConnections())
-                {
-                    var other = conn.GetOtherNode(current);
-                    if (other != null && !component.Contains(other))
-                    {
-                        // If filterNodes is provided, only include nodes that are in the filter
-                        if (filterNodes == null || filterNodes.Contains(other))
-                        {
-                            component.Add(other);
-                            queue.Enqueue(other);
-                        }
-                    }
-                }
+                return component;
             }
-            
+
+            component.RemoveWhere(node => node != startNode && !filterNodes.Contains(node));
             return component;
         }
 
@@ -449,11 +648,12 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
             if (IsNetworkRoot(this))
             {
-                // If already in a network with the original ID, keep it
+                // If this root already owns a standalone network with its original ID, keep it.
+                // Do not early-return when that network has other nodes: this node is isolated now.
                 if (this is INetworkRoot networkRoot && networkRoot.CreatedNetworkID != 0)
                 {
                     var existingNetwork = WireNetworkHandler.GetNetwork(networkRoot.CreatedNetworkID);
-                    if (existingNetwork != null && existingNetwork.Nodes.Contains(this))
+                    if (existingNetwork != null && existingNetwork.Nodes.Contains(this) && existingNetwork.Nodes.Count == 1)
                     {
                         // Already in the correct network, nothing to do
                         return;
@@ -497,30 +697,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
         }
 
         /// <summary>
-        /// Finds the original network root that should keep its network.
-        /// Returns the root with the oldest CreatedNetworkID (the one that created the network first).
-        /// </summary>
-        private static BEWireNode FindOriginalNetworkRoot(HashSet<BEWireNode> component1, HashSet<BEWireNode> component2)
-        {
-            BEWireNode oldestRoot = null;
-            long oldestID = long.MaxValue;
-            
-            foreach (var node in component1.Concat(component2))
-            {
-                if (node is INetworkRoot networkRoot && networkRoot.CreatedNetworkID != 0)
-                {
-                    if (networkRoot.CreatedNetworkID < oldestID)
-                    {
-                        oldestID = networkRoot.CreatedNetworkID;
-                        oldestRoot = node;
-                    }
-                }
-            }
-            
-            return oldestRoot;
-        }
-
-        /// <summary>
         /// Removes a component from a network and sets all nodes' NetworkUID to 0.
         /// </summary>
         private static void RemoveComponentFromNetwork(HashSet<BEWireNode> component, WireNetwork network)
@@ -550,26 +726,25 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         /// <summary>
         /// Handles network splitting when both components have INetworkRoot nodes.
-        /// The component with the oldest CreatedNetworkID keeps its network, the other gets a new one or reuses its original.
+        /// Keeps the current network ID on the largest remaining component, and recreates the detached one.
         /// </summary>
         private static void SplitNetworkWithBothRoots(HashSet<BEWireNode> component, HashSet<BEWireNode> otherComponent, WireNetwork network)
         {
-            var originalRoot = FindOriginalNetworkRoot(component, otherComponent);
-            if (originalRoot == null) return;
-            
-            bool originalRootInComponent = component.Contains(originalRoot);
-            long originalNetworkID = ((INetworkRoot)originalRoot).CreatedNetworkID;
-            
-            if (originalRootInComponent)
+            // Generic connector-like behavior:
+            // Keep current network ID on the largest remaining component.
+            // The detached side is removed and recreated with a different network ID.
+            bool keepComponent = component.Count >= otherComponent.Count;
+
+            if (keepComponent)
             {
                 RemoveComponentFromNetwork(otherComponent, network);
-                EnsureComponentHasNetworkUID(component, network, originalNetworkID);
+                EnsureComponentHasNetworkUID(component, network, network.networkID);
                 CreateNetworkForComponent(otherComponent);
             }
             else
             {
                 RemoveComponentFromNetwork(component, network);
-                EnsureComponentHasNetworkUID(otherComponent, network, originalNetworkID);
+                EnsureComponentHasNetworkUID(otherComponent, network, network.networkID);
                 CreateNetworkForComponent(component);
             }
         }
@@ -638,6 +813,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public override void OnBlockUnloaded()
         {
             base.OnBlockUnloaded();
+            pendingConnectionRetryListener = 0;
             if (Api.Side == EnumAppSide.Client)
                 WireNetworkHandler.ClientSideMessageReceived -= OnReceivedMessage;
         }
@@ -654,10 +830,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 var existingNetwork = WireNetworkHandler.GetNetwork(NetworkUID);
                 if (existingNetwork == null)
                 {
-                    // Create the network (client-side or server-side)
-                    var restoredNetwork = new WireNetwork { networkID = NetworkUID };
-                    WireNetworkHandler.AddNetwork(restoredNetwork);
-                    restoredNetwork.AddNode(this);
+                    EnsureRegisteredInNetworkFromSerializedId();
                 }
                 else
                 {
@@ -682,7 +855,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             foreach (TreeAttribute connAttr in connArray.value)
             {
                 var otherPos = connAttr.GetBlockPos("otherNodePos");
-                if (otherPos != null)
+                if (otherPos != null && !otherPos.Equals(Pos))
                 {
                     pendingConnectionPositions.Add(otherPos);
                 }
@@ -705,11 +878,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             foreach (var conn in connections)
             {
-                var other = conn.GetOtherNode(this);
-                if (other == null) continue;
+                var otherPos = conn.GetOtherBlockPos(Pos);
+                if (otherPos == null) continue;
 
                 var connAttr = new TreeAttribute();
-                connAttr.SetBlockPos("otherNodePos", other.Pos);
+                connAttr.SetBlockPos("otherNodePos", otherPos);
                 connectionList.Add(connAttr);
             }
 
@@ -751,7 +924,24 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 }
             }
             
+            var resolvedNetwork = WireNetworkHandler.GetNetwork(NetworkUID);
+            if (resolvedNetwork != null && resolvedNetwork.IsManagedBySwitchboard && resolvedNetwork.HasPoweredSwitchboard)
+            {
+                dsc.AppendLine(UIUtils.I18n("Network.NetworkId", WireNetworkHandler.GetDisplayName(NetworkUID)));
+                string subNetworkName = WireNetworkHandler.GetSubNetworkDisplayName(this);
+                if (!string.IsNullOrWhiteSpace(subNetworkName))
+                {
+                    dsc.AppendLine(UIUtils.I18n("Network.SubNetworkName", subNetworkName));
+                }
+                return;
+            }
+
             dsc.AppendLine(UIUtils.I18n("Network.NetworkId", NetworkUID));
+            string subNetworkNameFallback = WireNetworkHandler.GetSubNetworkDisplayName(this);
+            if (!string.IsNullOrWhiteSpace(subNetworkNameFallback))
+            {
+                dsc.AppendLine(UIUtils.I18n("Network.SubNetworkName", subNetworkNameFallback));
+            }
         }
 
         protected void DisplayConnections(IPlayer forPlayer, StringBuilder dsc)

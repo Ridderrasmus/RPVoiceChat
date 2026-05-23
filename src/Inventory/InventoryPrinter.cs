@@ -21,7 +21,7 @@ namespace RPVoiceChat.GameContent.Inventory
         }
 
 
-        public InventoryPrinter(ICoreAPI api, BlockPos? pos = null) 
+        public InventoryPrinter(ICoreAPI api, BlockPos? pos = null)
             : base(10, "printer-" + (pos?.ToString() ?? "fake"), pos?.ToString() ?? "-fake", api, OnNewSlot)
         {
             Pos = pos;

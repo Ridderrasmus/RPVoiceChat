@@ -93,6 +93,7 @@ Currently maintained by:
 - [RomainOdeval](https://github.com/RomainOdeval) - Maintainer
 - [Faithfulshot](https://github.com/Faithfulshot) - 3D models
 - Nixie - Audio design
+- [Alconchloe](https://github.com/Alconchloe) - Goblin bug hunter
 
 Previously maintained by:
 - [Dmitry221060](https://github.com/Dmitry221060) - Maintainer
@@ -114,4 +115,5 @@ Sound effects from [Freesound.org](https://freesound.org/):
 - [Furniture - Drawers open & close](https://freesound.org/people/Vrymaa/sounds/802695/) by Vrymaa - CC0
 - [Dot matrix printer](https://freesound.org/people/DisasterServices/sounds/320008/) by DisasterServices - CC0
 - [Wooden plank snap](https://freesound.org/people/Tomlija/sounds/98056/) by Tomlija - CC BY 3.0
+- [Ringback tone (originally named "sonnerie attente telephone")](https://www.sound-fishing.net/bruitage-1102_sonnerie-attente-telephone) 
 
