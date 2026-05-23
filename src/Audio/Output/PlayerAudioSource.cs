@@ -54,6 +54,7 @@ namespace RPVoiceChat.Audio
         private Vec3f lastSpeakerCoords;
         private DateTime? lastSpeakerUpdate;
         private AudioData currentAudio; // Store current audio data for distance factor calculation
+        private bool forceFlatPlayback;
         
         private int? _lastQueuedNametagRenderRange;
 
@@ -125,8 +126,14 @@ namespace RPVoiceChat.Audio
         {
             EntityPos speakerPos = player.Entity?.Pos;
             EntityPos listenerPos = capi.World.Player.Entity?.Pos;
-            if (speakerPos == null || listenerPos == null)
+            if (listenerPos == null)
                 return;
+
+            if (forceFlatPlayback || currentAudio?.forceFlatPlayback == true || speakerPos == null)
+            {
+                ApplyFlatPlayback(GetFinalGain());
+                return;
+            }
 
             TryApplyNametagRenderRange();
 
@@ -251,6 +258,15 @@ namespace RPVoiceChat.Audio
             OALW.Source(source, ALSourceb.SourceRelative, true);
         }
 
+        private void ApplyFlatPlayback(float gain)
+        {
+            OALW.ClearError();
+            OALW.Source(source, ALSourcef.Gain, gain);
+            OALW.Source(source, ALSource3f.Position, 0f, 0f, 0f);
+            OALW.Source(source, ALSource3f.Velocity, 0f, 0f, 0f);
+            OALW.Source(source, ALSourceb.SourceRelative, true);
+        }
+
         private bool _IsPlaying()
         {
             if (source <= 0) return false; // Source is invalid
@@ -343,6 +359,11 @@ namespace RPVoiceChat.Audio
             {
                 DequeueAudio();
             }
+        }
+
+        public void SetForceFlatPlayback(bool forceFlat)
+        {
+            forceFlatPlayback = forceFlat;
         }
 
         public async void DequeueAudio()

@@ -22,6 +22,8 @@ namespace RPVoiceChat.Config
             set => TechnologyContent = value;
         }
 
+        public bool VoiceGroupsEnabled { get; set; } = false;
+
         // Audio Performance Settings
         public float MaxAudioGain { get; set; } = 2f;
         public float MaxVolumeLimit { get; set; } = 0.8f;
@@ -73,6 +75,7 @@ namespace RPVoiceChat.Config
             // Features
             AdditionalContent = previousConfig.AdditionalContent;
             TechnologyContent = previousConfig.TechnologyContent;
+            VoiceGroupsEnabled = previousConfig.VoiceGroupsEnabled;
 
             // Audio Performance Settings
             MaxAudioGain = previousConfig.MaxAudioGain;
