@@ -19,7 +19,7 @@
       "fillQuadsByLevel": [ { "x1": 2, "z1": 2, "x2": 14, "z2": 8 } ],
       "moldrackable": true,
       "onmoldrackTransform": { "rotation": { "z": 90 } },
-      "drop": { "type": "Block", "code": "churchbell-{layer}", "quantity": 1 }
+      "drop": { "type": "Block", "code": "churchbell-part-{metal}-bottom", "quantity": 1 }
     },
     "churchbellmold-*-fired-part-brass-middle": {
       "requiredUnits": 300,
@@ -27,7 +27,7 @@
       "fillQuadsByLevel": [ { "x1": 2, "z1": 2, "x2": 14, "z2": 10 } ],
       "moldrackable": true,
       "onmoldrackTransform": { "rotation": { "z": 90 } },
-      "drop": { "type": "Block", "code": "churchbell-{layer}", "quantity": 1 }
+      "drop": { "type": "Block", "code": "churchbell-part-{metal}-middle", "quantity": 1 }
     },
     "churchbellmold-*-fired-part-brass-top": {
       "requiredUnits": 300,
@@ -35,7 +35,7 @@
       "fillQuadsByLevel": [ { "x1": 3, "z1": 2, "x2": 12, "z2": 14 } ],
       "moldrackable": true,
       "onmoldrackTransform": { "rotation": { "z": 90 } },
-      "drop": { "type": "Block", "code": "churchbell-{layer}", "quantity": 1 }
+      "drop": { "type": "Block", "code": "churchbell-part-{metal}-top", "quantity": 1 }
     },
     "churchbellmold-*-fired-layer-brass-topmost": {
       "requiredUnits": 300,
@@ -43,7 +43,7 @@
       "fillQuadsByLevel": [ { "x1": 4, "z1": 4, "x2": 13, "z2": 12 } ],
       "moldrackable": true,
       "onmoldrackTransform": { "rotation": { "z": 90 } },
-      "drop": { "type": "Block", "code": "churchbell-{layer}", "quantity": 1 }
+      "drop": { "type": "Block", "code": "churchbell-layer-{metal}-topmost", "quantity": 1 }
     }
   },
   "blockmaterial": "Ceramic",

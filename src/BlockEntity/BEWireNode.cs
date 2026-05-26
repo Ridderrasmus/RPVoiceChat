@@ -169,19 +169,59 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     var existing = WireNetworkHandler.GetNetwork(NetworkUID);
                     if (existing != null)
                     {
-                        existing.AddNode(this);
+                        if (!existing.Nodes.Contains(this))
+                        {
+                            existing.AddNode(this);
+                        }
+
                         WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(this, existing);
                     }
-                    else if (IsNetworkRoot(this))
+                    else
                     {
-                        // Network was lost, recreate it
-                        WireNetworkHandler.AddNewNetwork(this);
+                        // Never mint a fresh id here: other chunks may still reference this serialized NetworkUID.
+                        // (FromTreeAttributes usually registers the shell first; this path recovers if load order skipped it.)
+                        EnsureRegisteredInNetworkFromSerializedId();
+                        var recovered = WireNetworkHandler.GetNetwork(NetworkUID);
+                        if (recovered != null)
+                        {
+                            WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(this, recovered);
+                        }
                     }
                 }
             }
 
             ResolvePendingConnectionsAndNotify();
             EnsurePendingConnectionRetryListener();
+        }
+
+        /// <summary>
+        /// Ensures <see cref="WireNetworkHandler"/> has a <see cref="WireNetwork"/> keyed by <see cref="NetworkUID"/>
+        /// and that this node is registered on that instance. Always uses the serialized id as the network id
+        /// (does not allocate a new id like <see cref="WireNetworkHandler.AddNewNetwork"/>).
+        /// <para />
+        /// If <see cref="WireNetworkHandler.AddNetwork"/> is a no-op because another node already registered the same id,
+        /// attaches to the dictionary-backed network instead of the temporary shell object.
+        /// </summary>
+        private void EnsureRegisteredInNetworkFromSerializedId()
+        {
+            if (NetworkUID == 0)
+            {
+                return;
+            }
+
+            var shell = new WireNetwork { networkID = NetworkUID };
+            WireNetworkHandler.AddNetwork(shell);
+
+            var net = WireNetworkHandler.GetNetwork(NetworkUID);
+            if (net == null)
+            {
+                return;
+            }
+
+            if (!net.Nodes.Contains(this))
+            {
+                net.AddNode(this);
+            }
         }
 
         public void MarkForUpdate()
@@ -790,10 +830,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 var existingNetwork = WireNetworkHandler.GetNetwork(NetworkUID);
                 if (existingNetwork == null)
                 {
-                    // Create the network (client-side or server-side)
-                    var restoredNetwork = new WireNetwork { networkID = NetworkUID };
-                    WireNetworkHandler.AddNetwork(restoredNetwork);
-                    restoredNetwork.AddNode(this);
+                    EnsureRegisteredInNetworkFromSerializedId();
                 }
                 else
                 {
