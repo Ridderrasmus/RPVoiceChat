@@ -328,7 +328,7 @@
   "Command.Whisper.Desc": "Sets the whisper distance in blocks",
   "Command.Whisper.Success": "Whisper distance set to {0}",
   "Command.Info.Desc": "Displays the current audio distances and toggles",
-  "Command.Info.Success": "Whisper distance: {0} blocks\nTalk distance: {1} blocks\nShout distance: {2} blocks\nForce speaker nametag rendering: {3}\nEncode audio: {4}\nNametag dynamic range (voice distances): {5}",
+  "Command.Info.Success": "Whisper distance: {0} blocks\nTalk distance: {1} blocks\nShout distance: {2} blocks\nForce speaker nametag rendering: {3}\nEncode audio: {4}\nNametag dynamic range (voice distances): {5}\nSound Physics Adapted occlusion: {6}",
   "Command.Reset.Desc": "Resets the audio distances to their default settings",
   "Command.Reset.Success": "Audio distances reset to default",
   "Command.ForceSpeakerNametag.Desc": "Toggles whether speaking players are revealed by nametags",

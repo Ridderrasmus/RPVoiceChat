@@ -1,10 +1,9 @@
 using System;
 using System.Reflection;
-using RPVoiceChat.Util;
 using Vintagestory.API.Client;
 using Vintagestory.API.MathTools;
 
-namespace RPVoiceChat.Audio.Effects
+namespace RPVoiceChat.Util
 {
     /// <summary>
     /// Optional integration with the "Sound Physics Adapted" mod (modid: soundphysicsadapted).
