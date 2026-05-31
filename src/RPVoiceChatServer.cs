@@ -359,8 +359,9 @@ namespace RPVoiceChat
             bool forceSpeakerNametag = WorldConfig.GetForceSpeakerNametag();
             bool encoding = WorldConfig.GetBool("encode-audio");
             bool useNametagDynamicRange = WorldConfig.GetBool("use-nametag-dynamic-range", true);
+            bool useSoundPhysics = WorldConfig.GetBool("use-sound-physics-adapted", true);
 
-            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceSpeakerNametag, encoding, useNametagDynamicRange));
+            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceSpeakerNametag, encoding, useNametagDynamicRange, useSoundPhysics));
         }
 
         private TextCommandResult SetWhisperHandler(TextCommandCallingArgs args)
