@@ -36,6 +36,7 @@ namespace RPVoiceChat
             WorldConfig.Set("encode-audio", WorldConfig.GetBool("encode-audio", true));
             WorldConfig.Set("others-hear-spectators", WorldConfig.GetBool("others-hear-spectators", true));
             WorldConfig.Set("wall-thickness-weighting", WorldConfig.GetFloat("wall-thickness-weighting", 2));
+            WorldConfig.Set("use-sound-physics-adapted", WorldConfig.GetBool("use-sound-physics-adapted", true));
 
             // Register commands
             registerCommands();
@@ -218,6 +219,12 @@ namespace RPVoiceChat
                     .WithArgs(parsers.Bool("state"))
                     .HandleWith(ToggleOthersHearSpectators)
                 .EndSub()
+                .BeginSub("soundPhysics")
+                    .WithDesc(UIUtils.I18n("Command.SoundPhysics.Desc"))
+                    .WithAdditionalInformation(UIUtils.I18n("Command.SoundPhysics.Help"))
+                    .WithArgs(parsers.Bool("state"))
+                    .HandleWith(ToggleSoundPhysics)
+                .EndSub()
                 .BeginSub("voiceBan")
                     .WithDesc(UIUtils.I18n("Command.VoiceBan.Desc"))
                     .WithArgs(parsers.Word("player"))
@@ -248,6 +255,17 @@ namespace RPVoiceChat
             WorldConfig.Set("others-hear-spectators", state);
             string stateAsText = state ? "Enabled" : "Disabled";
 
+            return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
+        }
+
+        private TextCommandResult ToggleSoundPhysics(TextCommandCallingArgs args)
+        {
+            const string i18nPrefix = "Command.SoundPhysics.Success";
+            bool state = (bool)args[0];
+
+            WorldConfig.Set("use-sound-physics-adapted", state);
+
+            string stateAsText = state ? "Enabled" : "Disabled";
             return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
         }
 

@@ -195,14 +195,37 @@ namespace RPVoiceChat.Audio
             if (shouldUpdateWallThickness)
             {
                 bool mufflingEnabled = ModConfig.ClientConfig.Muffling;
-                float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");
-                
+
                 lowpassFilter?.Stop();
-                if (mufflingEnabled && wallThickness != 0)
+                if (mufflingEnabled)
                 {
-                    lowpassFilter = lowpassFilter ?? new LowpassFilter(source);
-                    lowpassFilter.Start();
-                    lowpassFilter.SetHFGain(Math.Max(1.0f - (wallThickness / wallThicknessWeighting), 0.1f));
+                    float gainHF = 1f;
+
+                    // Prefer Sound Physics Adapted's material-aware occlusion when the mod is
+                    // installed, allowed by the server, and currently available. It returns a
+                    // drop-in gainHF in the same 0.001..1.0 range as our built-in muffling.
+                    bool usedSoundPhysics = false;
+                    if (WorldConfig.GetBool("use-sound-physics-adapted", true) && SoundPhysicsCompat.IsAvailable)
+                    {
+                        Vec3d speakerLocation = sourceOverride ?? LocationUtils.GetLocationOfPlayer(player);
+                        Vec3d listenerLocation = LocationUtils.GetLocationOfPlayer(capi.World.Player);
+                        gainHF = SoundPhysicsCompat.GetOcclusionGainHF(speakerLocation, listenerLocation);
+                        usedSoundPhysics = true;
+                    }
+
+                    // Fall back to RPVoiceChat's built-in wall-thickness muffling.
+                    if (!usedSoundPhysics && wallThickness != 0)
+                    {
+                        float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");
+                        gainHF = Math.Max(1.0f - (wallThickness / wallThicknessWeighting), 0.1f);
+                    }
+
+                    if (gainHF < 1f)
+                    {
+                        lowpassFilter = lowpassFilter ?? new LowpassFilter(source);
+                        lowpassFilter.Start();
+                        lowpassFilter.SetHFGain(gainHF);
+                    }
                 }
             }
 
