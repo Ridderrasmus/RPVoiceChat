@@ -16,6 +16,11 @@ namespace RPVoiceChat.Systems
             SetRoutes(playerUid, new[] { new VoiceRoute(emissionPos, rangeBlocks) });
         }
 
+        public void SetRoute(string playerUid, Vec3d emissionPos, int rangeBlocks, int dimension)
+        {
+            SetRoutes(playerUid, new[] { new VoiceRoute(emissionPos, rangeBlocks, dimension) });
+        }
+
         public void SetRoutes(string playerUid, IEnumerable<VoiceRoute> voiceRoutes)
         {
             if (string.IsNullOrWhiteSpace(playerUid) || voiceRoutes == null)

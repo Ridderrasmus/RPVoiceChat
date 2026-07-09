@@ -541,7 +541,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     .OfType<BlockEntitySpeaker>()
                     .Select(speaker => new VoiceRoute(
                         new Vec3d(speaker.Pos.X + 0.5, speaker.Pos.Y + 1.2, speaker.Pos.Z + 0.5),
-                        speaker.VoiceEmissionRangeBlocks
+                        speaker.VoiceEmissionRangeBlocks,
+                        speaker.Pos.dimension
                     ))
                     .ToList();
 
@@ -553,7 +554,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 {
                     int emitRange = targetNode is ITelephoneVoiceEndpoint voiceEndpoint ? voiceEndpoint.VoiceEmissionRangeBlocks : 2;
                     Vec3d emitPos = new Vec3d(targetNode.Pos.X + 0.5, targetNode.Pos.Y + 1.2, targetNode.Pos.Z + 0.5);
-                    routingSystem?.SetRoute(byPlayer.PlayerUID, emitPos, emitRange);
+                    routingSystem?.SetRoute(byPlayer.PlayerUID, emitPos, emitRange, targetNode.Pos.dimension);
                 }
             }
             MarkDirty(true);
@@ -909,7 +910,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 Api?.ModLoader.GetModSystem<TelephoneVoiceRoutingSystem>()?.SetRoute(
                     incomingCallerPlayerUid,
                     emitPosForCaller,
-                    VoiceEmissionRangeBlocks
+                    VoiceEmissionRangeBlocks,
+                    Pos.dimension
                 );
             }
 
@@ -920,7 +922,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 Api?.ModLoader.GetModSystem<TelephoneVoiceRoutingSystem>()?.SetRoute(
                     byPlayer.PlayerUID,
                     emitPosForCallee,
-                    callerTelephone.VoiceEmissionRangeBlocks
+                    callerTelephone.VoiceEmissionRangeBlocks,
+                    callerTelephone.Pos.dimension
                 );
             }
 
