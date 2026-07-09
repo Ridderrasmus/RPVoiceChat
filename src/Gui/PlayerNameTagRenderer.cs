@@ -11,9 +11,6 @@ namespace RPVoiceChat.Gui
 {
     public class PlayerNameTagRenderer
     {
-        /// <summary>RPVC fallback value for <c>renderRange</c> in the nametag tree.</summary>
-        public const int DefaultNametagRenderRange = 99;
-
         private static ICoreClientAPI capi;
         private static AudioOutputManager _audioOutputManager;
         private static readonly Dictionary<string, bool> lastTalkingStateByPlayer = new Dictionary<string, bool>();

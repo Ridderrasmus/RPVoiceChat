@@ -25,6 +25,7 @@ namespace RPVoiceChat.Config
         // Audio Performance Settings
         public float MaxAudioGain { get; set; } = 2f;
         public float MaxVolumeLimit { get; set; } = 0.8f;
+        public int GridCellSizeBlocks { get; set; } = 64;
 
         // Codec Settings
         public int NormalBitrate { get; set; } = 40 * 1024; // 40 kbps
@@ -77,6 +78,7 @@ namespace RPVoiceChat.Config
             // Audio Performance Settings
             MaxAudioGain = previousConfig.MaxAudioGain;
             MaxVolumeLimit = previousConfig.MaxVolumeLimit;
+            GridCellSizeBlocks = previousConfig.GridCellSizeBlocks;
 
             // Codec Settings
             NormalBitrate = previousConfig.NormalBitrate;

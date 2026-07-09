@@ -5,14 +5,18 @@ namespace RPVoiceChat.Server
 {
     public readonly struct VoiceRoute
     {
-        public VoiceRoute(Vec3d emissionPos, int rangeBlocks)
+        public VoiceRoute(Vec3d emissionPos, int rangeBlocks) : this(emissionPos, rangeBlocks, 0) { }
+
+        public VoiceRoute(Vec3d emissionPos, int rangeBlocks, int dimension)
         {
             EmissionPos = emissionPos;
             RangeBlocks = rangeBlocks;
+            Dimension = dimension;
         }
 
         public Vec3d EmissionPos { get; }
         public int RangeBlocks { get; }
+        public int Dimension { get; }
     }
 
     public interface IVoiceRouteProvider

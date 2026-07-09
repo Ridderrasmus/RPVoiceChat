@@ -95,6 +95,7 @@ Currently maintained by:
 - [Faithfulshot](https://github.com/Faithfulshot) - 3D models
 - Nixie - Audio design
 - [Alconchloe](https://github.com/Alconchloe) - Goblin bug hunter
+- [HugoCortell](https://github.com/HugoCortell) - Voice client/server optimizations
 
 Previously maintained by:
 - [blakdragan7](https://github.com/blakdragan7) - Maintainer
