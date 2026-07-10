@@ -3,6 +3,7 @@ using RPVoiceChat.Config;
 using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.GameContent.Block;
 using RPVoiceChat.GameContent.Items;
+using RPVoiceChat.Gui;
 using RPVoiceChat.src.Networking.Packets;
 using RPVoiceChat.Networking.Packets;
 using RPVoiceChat.Util;
@@ -68,6 +69,7 @@ namespace RPVoiceChat
                     .RegisterMessageType<AnnouncePacket>();
                 NametagConfigClientChannel = capi.Network.RegisterChannel("rpvc-nametag-config")
                     .RegisterMessageType<NametagConfigChangedPacket>();
+                PlayerNameTagRenderer.Init(capi);
             }
             else if (api.Side == EnumAppSide.Server)
             {
