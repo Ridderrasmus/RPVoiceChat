@@ -17,12 +17,19 @@ namespace RPVoiceChat.Gui
 
         public PlayerNameTagRenderer(ICoreClientAPI api, AudioOutputManager audioOutputManager)
         {
+            Init(api, audioOutputManager);
+        }
+
+        public static void Init(ICoreClientAPI api, AudioOutputManager audioOutputManager = null)
+        {
             capi = api;
-            _audioOutputManager = audioOutputManager;
+            if (audioOutputManager != null) _audioOutputManager = audioOutputManager;
         }
 
         public static LoadedTexture GetRenderer(EntityPlayer entity, double[] color = null, TextBackground bg = null)
         {
+            if (capi?.Gui?.TextTexture == null) return null;
+
             string playerName = entity?.GetBehavior<EntityBehaviorNameTag>()?.DisplayName;
             if (playerName == null || playerName.Length == 0) return null;
 
