@@ -28,7 +28,7 @@ namespace RPVoiceChat
             if (entity is null || entity is not EntityPlayer playerEntity) return true;
 
             __result = PlayerNameTagRenderer.GetRenderer(playerEntity, ___color, ___background);
-            return false;
+            return __result == null;
         }
 
         public static bool DefaultNameTagRenderer(ref LoadedTexture __result, Entity entity)
@@ -36,7 +36,7 @@ namespace RPVoiceChat
             if (entity is null || entity is not EntityPlayer playerEntity) return true;
 
             __result = PlayerNameTagRenderer.GetRenderer(playerEntity);
-            return false;
+            return __result == null;
         }
     }
 }

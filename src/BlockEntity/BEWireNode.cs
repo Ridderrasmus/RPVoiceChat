@@ -156,6 +156,12 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             if (Api.Side == EnumAppSide.Server)
             {
+                long authoritativeNetworkId = WireNetworkHandler.ResolveNetworkIdForPosition(Pos);
+                if (authoritativeNetworkId != 0 && authoritativeNetworkId != NetworkUID)
+                {
+                    NetworkUID = authoritativeNetworkId;
+                }
+
                 if (NetworkUID == 0)
                 {
                     // Only create a new network if it is an INetworkRoot
@@ -305,8 +311,32 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (!connections.Contains(connection))
             {
                 connections.Add(connection);
+                RegisterTopologyEdge(connection.GetOtherBlockPos(Pos));
                 MarkForUpdate();
                 OnConnectionsChanged?.Invoke();
+            }
+        }
+
+        private void RegisterTopologyEdge(BlockPos otherPos)
+        {
+            if (otherPos == null)
+            {
+                return;
+            }
+
+            WireTopologyRegistry.AddEdge(Pos, otherPos);
+        }
+
+        private void RegisterSerializedTopologyEdges()
+        {
+            foreach (var otherPos in pendingConnectionPositions)
+            {
+                RegisterTopologyEdge(otherPos);
+            }
+
+            foreach (var connection in connections)
+            {
+                RegisterTopologyEdge(connection.GetOtherBlockPos(Pos));
             }
         }
 
@@ -424,7 +454,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             foreach (var conn in connections)
             {
                 BEWireNode other = conn.GetOtherNode(this);
-                // Check that the other node is not the sender to avoid sending the signal back to the sender
+                // Traverse via world topology so relays work across unloaded neighbour chunks.
                 if (other != null && other.Pos != e.SenderPos)
                 {
                     other.SendSignal(new WireNetworkMessage
@@ -437,6 +467,35 @@ namespace RPVoiceChat.GameContent.BlockEntity
                         TargetPos = e.TargetPos
                     });
                 }
+            }
+
+            foreach (var neighborPos in WireTopologyRegistry.GetNeighborPositions(Pos))
+            {
+                if (e.SenderPos != null && neighborPos.Equals(e.SenderPos))
+                {
+                    continue;
+                }
+
+                var neighbor = Api.World.BlockAccessor.GetBlockEntity(neighborPos) as BEWireNode;
+                if (neighbor == null || neighbor.NetworkUID != NetworkUID)
+                {
+                    continue;
+                }
+
+                if (connections.Any(conn => neighborPos.Equals(conn.GetOtherBlockPos(Pos))))
+                {
+                    continue;
+                }
+
+                neighbor.SendSignal(new WireNetworkMessage
+                {
+                    NetworkUID = NetworkUID,
+                    SenderPos = Pos,
+                    Message = e.Message,
+                    RouteMode = e.RouteMode,
+                    TargetEndpointName = e.TargetEndpointName,
+                    TargetPos = e.TargetPos
+                });
             }
         }
 
@@ -491,6 +550,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             connections.Clear();
 
+            if (Api.Side == EnumAppSide.Server)
+            {
+                WireTopologyRegistry.RemoveAllEdgesAt(Pos);
+            }
+
             if (NetworkUID != 0)
             {
                 var network = WireNetworkHandler.GetNetwork(NetworkUID);
@@ -504,6 +568,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
             if (connections.Remove(connection))
             {
+                WireTopologyRegistry.RemoveEdge(Pos, connection.GetOtherBlockPos(Pos));
                 MarkForUpdate();
                 OnConnectionsChanged?.Invoke();
                 
@@ -770,15 +835,28 @@ namespace RPVoiceChat.GameContent.BlockEntity
             var network = WireNetworkHandler.GetNetwork(NetworkUID);
             if (network == null) return;
 
-            var component = FindConnectedComponent(this);
-            if (component.Count >= network.Nodes.Count) return; // Network not split
+            var componentPositions = WireTopologyRegistry.GetConnectedComponent(Pos);
+            var allNetworkPositions = network.PersistedNodes
+                .Where(nodeRef => nodeRef.Pos != null)
+                .Select(nodeRef => nodeRef.Pos)
+                .ToList();
+            var detachedPositions = allNetworkPositions
+                .Where(pos => !componentPositions.Any(componentPos => componentPos.Equals(pos)))
+                .ToList();
 
-            var allNetworkNodes = new List<BEWireNode>(network.Nodes);
-            var otherComponent = FindOtherComponent(component, allNetworkNodes);
-            if (otherComponent.Count == 0) return;
+            if (detachedPositions.Count == 0)
+            {
+                return;
+            }
 
-            int networkRootsInComponent = component.Count(node => IsNetworkRoot(node));
-            int networkRootsInOther = otherComponent.Count(node => IsNetworkRoot(node));
+            var accessor = Api.World.BlockAccessor;
+            var component = WireNetworkHandler.GetLoadedNodesAtPositions(componentPositions, accessor);
+            var otherComponent = WireNetworkHandler.GetLoadedNodesAtPositions(detachedPositions, accessor);
+
+            int networkRootsInComponent = WireNetworkHandler.CountNetworkRootsInPositions(componentPositions, accessor, network.PersistedNodes);
+            int networkRootsInOther = WireNetworkHandler.CountNetworkRootsInPositions(detachedPositions, accessor, network.PersistedNodes);
+
+            WireNetworkHandler.DetachPersistedPositions(network, detachedPositions);
 
             // Case 1: Both components have INetworkRoot nodes
             if (networkRootsInComponent > 0 && networkRootsInOther > 0)
@@ -792,6 +870,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 RemoveNodesFromNetwork(component);
                 // The other component keeps the network - ensure it has the correct NetworkUID
                 EnsureComponentHasNetworkUID(otherComponent, network, network.networkID);
+                WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(otherComponent.FirstOrDefault(), network);
             }
             else if (networkRootsInOther == 0)
             {
@@ -799,6 +878,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 RemoveNodesFromNetwork(otherComponent);
                 // This component keeps the network - ensure it has the correct NetworkUID
                 EnsureComponentHasNetworkUID(component, network, network.networkID);
+                WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(this, network);
             }
             // Case 3: Neither component has INetworkRoot nodes - no recalculation needed
         }
@@ -814,6 +894,13 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
             base.OnBlockUnloaded();
             pendingConnectionRetryListener = 0;
+
+            if (NetworkUID != 0)
+            {
+                var network = WireNetworkHandler.GetNetwork(NetworkUID);
+                network?.DetachNode(this);
+            }
+
             if (Api.Side == EnumAppSide.Client)
                 WireNetworkHandler.ClientSideMessageReceived -= OnReceivedMessage;
         }
@@ -860,6 +947,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     pendingConnectionPositions.Add(otherPos);
                 }
             }
+
+            RegisterSerializedTopologyEdges();
 
             // Resolve immediately on client to ensure wires render without needing hover
             if (Api?.Side == EnumAppSide.Client)
