@@ -14,6 +14,7 @@ namespace RPVoiceChat.Config
         // Audio Performance Settings
         public static float MaxAudioGain => Config?.MaxAudioGain ?? 2f;
         public static float MaxVolumeLimit => Config?.MaxVolumeLimit ?? 0.8f;
+        public static int GridCellSizeBlocks => Config?.GridCellSizeBlocks ?? 64;
 
         // Codec Settings
         public static int NormalBitrate => Config?.NormalBitrate ?? (40 * 1024);
@@ -66,6 +67,21 @@ namespace RPVoiceChat.Config
             {
                 Logger.server.Warning($"MaxVolumeLimit ({MaxVolumeLimit}) should be between 0.1 and 1.0. Using default (0.8).");
                 Config.MaxVolumeLimit = 0.8f;
+            }
+
+            if (GridCellSizeBlocks < 8 || GridCellSizeBlocks > 512)
+            {
+                Logger.server.Warning($"GridCellSizeBlocks ({GridCellSizeBlocks}) should be between 8 and 512. Using default (64).");
+                Config.GridCellSizeBlocks = 64;
+            }
+            else if ((GridCellSizeBlocks & (GridCellSizeBlocks - 1)) != 0)
+            {
+                int powerOfTwo = 1;
+                while (powerOfTwo < GridCellSizeBlocks) powerOfTwo <<= 1;
+                int adjusted = powerOfTwo > 512 ? 512 : powerOfTwo;
+
+                Logger.server.Warning($"GridCellSizeBlocks ({GridCellSizeBlocks}) should be a power of two. Using {adjusted}.");
+                Config.GridCellSizeBlocks = adjusted;
             }
 
             // Codec validation

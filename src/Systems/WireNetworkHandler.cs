@@ -6,7 +6,9 @@ using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Util;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
+using Vintagestory.API.Util;
 
 namespace RPVoiceChat.Systems
 {
@@ -16,7 +18,7 @@ namespace RPVoiceChat.Systems
         private static IServerNetworkChannel ServerChannel;
 
         public static Dictionary<long, WireNetwork> Networks = new Dictionary<long, WireNetwork>();
-        private static readonly Dictionary<long, string> PersistedCustomNames = new Dictionary<long, string>();
+        private static long nextNetworkId;
 
         public static EventHandler<WireNetworkMessage> ClientSideMessageReceived;
         public static string NetworkChannel = "rpvc:wire-network";
@@ -73,18 +75,11 @@ namespace RPVoiceChat.Systems
 
         public static WireNetwork AddNewNetwork(BEWireNode wireNode)
         {
-            long networkId = 1;
-            if (Networks.Count > 0)
-            {
-                networkId = Networks.Keys.Max() + 1;
-            }
+            long networkId = AllocateNetworkId();
 
             var network = new WireNetwork { networkID = networkId };
             AddNetwork(network);
-            network.AddNode(wireNode);
-
-            wireNode.NetworkUID = networkId;
-            wireNode.MarkForUpdate();
+            network.JoinNode(wireNode);
 
             // Notify the node that it created a new network (for INetworkRoot)
             wireNode.OnNetworkCreated(networkId);
@@ -95,16 +90,127 @@ namespace RPVoiceChat.Systems
             return network;
         }
 
+        private static long AllocateNetworkId()
+        {
+            long candidate = Math.Max(nextNetworkId, Networks.Count > 0 ? Networks.Keys.Max() : 0) + 1;
+            while (Networks.ContainsKey(candidate))
+            {
+                candidate++;
+            }
+
+            nextNetworkId = candidate;
+            return candidate;
+        }
+
+        public static void InitializeFromSave(byte[] networkBytes, byte[] nextIdBytes)
+        {
+            Networks.Clear();
+
+            if (networkBytes == null || networkBytes.Length == 0)
+            {
+                return;
+            }
+
+            var savedNetworks = SerializerUtil.Deserialize<List<WireNetworkSaveData>>(networkBytes);
+            if (savedNetworks == null)
+            {
+                return;
+            }
+
+            foreach (var savedNetwork in savedNetworks)
+            {
+                if (savedNetwork == null || savedNetwork.NetworkId == 0)
+                {
+                    continue;
+                }
+
+                var network = WireNetwork.FromSaveData(savedNetwork);
+                Networks[network.networkID] = network;
+            }
+
+            if (nextIdBytes != null && nextIdBytes.Length > 0)
+            {
+                nextNetworkId = SerializerUtil.Deserialize<long>(nextIdBytes);
+            }
+            else if (Networks.Count > 0)
+            {
+                nextNetworkId = Networks.Keys.Max();
+            }
+        }
+
+        /// <summary>
+        /// Re-attaches block entities that initialized before <see cref="InitializeFromSave"/> ran.
+        /// </summary>
+        public static void RejoinLoadedNodes(ICoreServerAPI api)
+        {
+            var accessor = api?.World?.BlockAccessor;
+            if (accessor == null)
+            {
+                return;
+            }
+
+            foreach (var network in Networks.Values)
+            {
+                if (network == null)
+                {
+                    continue;
+                }
+
+                foreach (var nodeRef in network.PersistedNodes)
+                {
+                    if (nodeRef?.Pos == null)
+                    {
+                        continue;
+                    }
+
+                    var node = accessor.GetBlockEntity(nodeRef.Pos) as BEWireNode;
+                    if (node == null)
+                    {
+                        continue;
+                    }
+
+                    long authoritativeId = ResolveNetworkIdForPosition(nodeRef.Pos);
+                    if (authoritativeId != 0 && node.NetworkUID != authoritativeId)
+                    {
+                        node.NetworkUID = authoritativeId;
+                        node.MarkForUpdate();
+                    }
+
+                    if (node.NetworkUID != network.networkID)
+                    {
+                        continue;
+                    }
+
+                    network.JoinNode(node);
+                }
+            }
+        }
+
+        public static void PersistToSaveGame(ISaveGame saveGame)
+        {
+            if (saveGame == null)
+            {
+                return;
+            }
+
+            var payload = Networks.Values
+                .Where(network => network != null && network.networkID != 0 && network.HasPersistedNodes)
+                .Select(network => network.ToSaveData())
+                .ToList();
+
+            saveGame.StoreData(WireNetworkPersistence.NetworksDataKey, SerializerUtil.Serialize(payload));
+            saveGame.StoreData(WireNetworkPersistence.NextNetworkIdDataKey, SerializerUtil.Serialize(nextNetworkId));
+        }
+
         public static void AddNetwork(WireNetwork network)
         {
             if (network == null) return;
             if (Networks.ContainsKey(network.networkID)) return;
-            if (PersistedCustomNames.TryGetValue(network.networkID, out string customName))
-            {
-                network.SetCustomName(customName);
-            }
             Networks.Add(network.networkID, network);
-            network.RebuildTypedState();
+            if (network.Nodes.Count > 0)
+            {
+                network.RebuildTypedState();
+            }
         }
 
         public static void RemoveNetwork(WireNetwork network)
@@ -126,43 +232,138 @@ namespace RPVoiceChat.Systems
         }
 
         /// <summary>
-        /// Recursively updates the NetworkUID of all nodes connected from a starting node
+        /// Recursively updates the NetworkUID of all nodes connected from a starting node.
+        /// Uses world topology so unloaded chunks do not break propagation.
         /// </summary>
         public static void PropagateNetworkUIDToConnectedNodes(BEWireNode startNode, WireNetwork network)
         {
-            if (startNode == null || network == null) return;
-
-            var visited = new HashSet<BEWireNode>();
-            var queue = new Queue<BEWireNode>();
-
-            queue.Enqueue(startNode);
-            visited.Add(startNode);
-
-            while (queue.Count > 0)
+            if (startNode?.Pos == null || network == null)
             {
-                var current = queue.Dequeue();
+                return;
+            }
 
-                if (current.NetworkUID != network.networkID)
+            var accessor = startNode.Api?.World?.BlockAccessor;
+            var componentPositions = WireTopologyRegistry.GetConnectedComponent(startNode.Pos);
+
+            foreach (var pos in componentPositions)
+            {
+                network.UpsertPersistedNodeFromPosition(pos, accessor);
+
+                var node = accessor?.GetBlockEntity(pos) as BEWireNode;
+                if (node == null)
                 {
-                    current.NetworkUID = network.networkID;
-                    network.AddNode(current);
-                    current.MarkForUpdate();
+                    continue;
                 }
 
-                foreach (var conn in current.GetConnections())
+                if (node.NetworkUID != network.networkID)
                 {
-                    var other = conn.GetOtherNode(current);
-
-                    if (other != null && !visited.Contains(other))
-                    {
-                        visited.Add(other);
-                        queue.Enqueue(other);
-                        other.MarkForUpdate();
-                    }
+                    node.NetworkUID = network.networkID;
+                    network.JoinNode(node);
+                    node.MarkForUpdate();
                 }
             }
 
             network.RebuildTypedState();
+        }
+
+        public static long ResolveNetworkIdForPosition(BlockPos pos)
+        {
+            if (pos == null)
+            {
+                return 0;
+            }
+
+            foreach (var network in Networks.Values)
+            {
+                if (network?.PersistedNodes == null)
+                {
+                    continue;
+                }
+
+                if (network.PersistedNodes.Any(nodeRef => nodeRef.Pos != null && nodeRef.Pos.Equals(pos)))
+                {
+                    return network.networkID;
+                }
+            }
+
+            return 0;
+        }
+
+        public static HashSet<BEWireNode> GetLoadedNodesAtPositions(IEnumerable<BlockPos> positions, IBlockAccessor accessor)
+        {
+            var result = new HashSet<BEWireNode>();
+            if (positions == null || accessor == null)
+            {
+                return result;
+            }
+
+            foreach (var pos in positions)
+            {
+                if (pos == null)
+                {
+                    continue;
+                }
+
+                var node = accessor.GetBlockEntity(pos) as BEWireNode;
+                if (node != null)
+                {
+                    result.Add(node);
+                }
+            }
+
+            return result;
+        }
+
+        public static bool HasNetworkRootInPositions(IEnumerable<BlockPos> positions, IBlockAccessor accessor, IEnumerable<WireNodeRef> persistedNodes)
+        {
+            return CountNetworkRootsInPositions(positions, accessor, persistedNodes) > 0;
+        }
+
+        public static int CountNetworkRootsInPositions(IEnumerable<BlockPos> positions, IBlockAccessor accessor, IEnumerable<WireNodeRef> persistedNodes)
+        {
+            if (positions == null)
+            {
+                return 0;
+            }
+
+            int count = 0;
+            foreach (var pos in positions)
+            {
+                if (pos == null)
+                {
+                    continue;
+                }
+
+                if (accessor?.GetBlockEntity(pos) is INetworkRoot)
+                {
+                    count++;
+                    continue;
+                }
+
+                WireNodeKind? kind = persistedNodes?
+                    .FirstOrDefault(nodeRef => nodeRef.Pos != null && nodeRef.Pos.Equals(pos))
+                    ?.Kind;
+
+                if (kind == WireNodeKind.Telegraph || kind == WireNodeKind.Telephone)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        public static void DetachPersistedPositions(WireNetwork network, IEnumerable<BlockPos> positions)
+        {
+            if (network == null || positions == null)
+            {
+                return;
+            }
+
+            foreach (var pos in positions)
+            {
+                network.RemovePersistedNode(pos);
+            }
         }
 
         public static void RebuildNetworkState(long networkId)
@@ -238,11 +439,16 @@ namespace RPVoiceChat.Systems
 
         private static BlockEntitySwitchboard FindNearestSwitchboardOwner(BEWireNode startNode, List<BlockEntitySwitchboard> allSwitchboards)
         {
-            var visited = new HashSet<BEWireNode>();
-            var queue = new Queue<BEWireNode>();
+            if (startNode?.Pos == null)
+            {
+                return null;
+            }
 
-            queue.Enqueue(startNode);
-            visited.Add(startNode);
+            var accessor = startNode.Api?.World?.BlockAccessor;
+            var visited = new HashSet<BlockPos>();
+            var queue = new Queue<BlockPos>();
+            queue.Enqueue(startNode.Pos.Copy());
+            visited.Add(startNode.Pos.Copy());
 
             while (queue.Count > 0)
             {
@@ -251,18 +457,23 @@ namespace RPVoiceChat.Systems
 
                 for (int i = 0; i < levelCount; i++)
                 {
-                    var current = queue.Dequeue();
-                    if (current is BlockEntitySwitchboard switchboard)
+                    var currentPos = queue.Dequeue();
+                    if (accessor?.GetBlockEntity(currentPos) is BlockEntitySwitchboard switchboard)
                     {
                         levelCandidates.Add(switchboard);
                     }
 
-                    foreach (var connection in current.GetConnections())
+                    foreach (var neighborPos in WireTopologyRegistry.GetNeighborPositions(currentPos))
                     {
-                        var other = connection.GetOtherNode(current);
-                        if (other != null && visited.Add(other))
+                        if (neighborPos == null)
                         {
-                            queue.Enqueue(other);
+                            continue;
+                        }
+
+                        var neighborCopy = neighborPos.Copy();
+                        if (visited.Add(neighborCopy))
+                        {
+                            queue.Enqueue(neighborCopy);
                         }
                     }
                 }
@@ -525,20 +736,11 @@ namespace RPVoiceChat.Systems
             }
 
             string normalized = candidate.Trim();
-            bool usedByLoadedNetwork = Networks.Values.Any(network =>
+            return Networks.Values.Any(network =>
                 network != null &&
                 network.networkID != exceptNetworkId &&
                 !string.IsNullOrWhiteSpace(network.CustomName) &&
                 string.Equals(network.CustomName, normalized, StringComparison.OrdinalIgnoreCase));
-            if (usedByLoadedNetwork)
-            {
-                return true;
-            }
-
-            return PersistedCustomNames.Any(entry =>
-                entry.Key != exceptNetworkId &&
-                !string.IsNullOrWhiteSpace(entry.Value) &&
-                string.Equals(entry.Value, normalized, StringComparison.OrdinalIgnoreCase));
         }
 
         public static bool TryRenameNetwork(long networkId, string candidate, out string failureLangKey)
@@ -555,7 +757,6 @@ namespace RPVoiceChat.Systems
             if (normalized.Length == 0)
             {
                 network.SetCustomName("");
-                PersistedCustomNames[networkId] = "";
                 return true;
             }
 
@@ -566,7 +767,6 @@ namespace RPVoiceChat.Systems
             }
 
             network.SetCustomName(normalized);
-            PersistedCustomNames[networkId] = normalized;
             return true;
         }
 
@@ -575,10 +775,6 @@ namespace RPVoiceChat.Systems
             var network = GetNetwork(networkId);
             if (network == null)
             {
-                if (PersistedCustomNames.TryGetValue(networkId, out string persistedName) && !string.IsNullOrWhiteSpace(persistedName))
-                {
-                    return persistedName;
-                }
                 return networkId.ToString();
             }
 
@@ -597,14 +793,8 @@ namespace RPVoiceChat.Systems
                 return;
             }
 
-            string normalized = (customName ?? "").Trim();
-            PersistedCustomNames[networkId] = normalized;
-
             var network = GetNetwork(networkId);
-            if (network != null)
-            {
-                network.SetCustomName(normalized);
-            }
+            network?.SetCustomName((customName ?? "").Trim());
         }
 
         public static string GetPersistedNetworkName(long networkId)
@@ -614,12 +804,7 @@ namespace RPVoiceChat.Systems
                 return "";
             }
 
-            if (PersistedCustomNames.TryGetValue(networkId, out string persistedName))
-            {
-                return persistedName ?? "";
-            }
-
-            return "";
+            return GetNetwork(networkId)?.CustomName ?? "";
         }
 
         public static bool IsEndpointNameTaken(long networkUID, string candidate, BlockEntityTelegraph except = null)
@@ -658,22 +843,42 @@ namespace RPVoiceChat.Systems
 
         private static void AddReachable(BEWireNode startNode, HashSet<BEWireNode> output)
         {
-            if (startNode == null || output.Contains(startNode))
+            if (startNode?.Pos == null || output.Contains(startNode))
+            {
                 return;
+            }
 
-            var queue = new Queue<BEWireNode>();
-            queue.Enqueue(startNode);
+            var accessor = startNode.Api?.World?.BlockAccessor;
+            var visited = new HashSet<BlockPos>();
+            var queue = new Queue<BlockPos>();
+            var startPos = startNode.Pos.Copy();
+
+            queue.Enqueue(startPos);
+            visited.Add(startPos);
             output.Add(startNode);
 
             while (queue.Count > 0)
             {
-                var node = queue.Dequeue();
-                foreach (var connection in node.GetConnections())
+                var currentPos = queue.Dequeue();
+                foreach (var neighborPos in WireTopologyRegistry.GetNeighborPositions(currentPos))
                 {
-                    var other = connection.GetOtherNode(node);
-                    if (other != null && output.Add(other))
+                    if (neighborPos == null)
                     {
-                        queue.Enqueue(other);
+                        continue;
+                    }
+
+                    var neighborCopy = neighborPos.Copy();
+                    if (!visited.Add(neighborCopy))
+                    {
+                        continue;
+                    }
+
+                    queue.Enqueue(neighborCopy);
+
+                    var neighborNode = accessor?.GetBlockEntity(neighborCopy) as BEWireNode;
+                    if (neighborNode != null)
+                    {
+                        output.Add(neighborNode);
                     }
                 }
             }

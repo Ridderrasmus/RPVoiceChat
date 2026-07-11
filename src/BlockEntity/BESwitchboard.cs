@@ -434,21 +434,19 @@ namespace RPVoiceChat.GameContent.BlockEntity
         /// </summary>
 
         private void TryApplyPersistedNetworkName()
-
         {
-
             if (!networkNameApplyPending)
-
             {
-
                 return;
-
             }
 
+            if (NetworkUID == 0)
+            {
+                return;
+            }
 
-
+            WireNetworkHandler.SetPersistedNetworkName(NetworkUID, persistedNetworkCustomName);
             networkNameApplyPending = false;
-
         }
 
 
@@ -573,15 +571,17 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
 
         public bool RenameNetwork(string name, out string failureLangKey)
-
         {
-
             persistedNetworkCustomName = (name ?? "").Trim();
+            if (NetworkUID != 0)
+            {
+                WireNetworkHandler.SetPersistedNetworkName(NetworkUID, persistedNetworkCustomName);
+            }
+
             networkNameApplyPending = false;
             failureLangKey = null;
             MarkDirty(true);
             return true;
-
         }
 
 
