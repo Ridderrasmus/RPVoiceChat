@@ -6,6 +6,7 @@
 - [Usage](#usage)
 - [Configuration (For users)](#configuration-for-users)
 - [Configuration (For server owners)](#configuration-for-server-owners)
+- [Developer documentation](#developer-documentation)
 - [Maintainers](#maintainers)
 - [Licenses](#licenses)
 
@@ -84,6 +85,14 @@ Server configuration file location:
 ### In-game configuration commands
 World-specific `/rpvc` commands are documented here:
 https://github.com/Ridderrasmus/RPVoiceChat/wiki/Server-Administration#in-game-configuration-commands
+
+---
+
+## Developer documentation
+
+Mod developers and contributors:
+
+- **[Communication network architecture](docs/network-architecture.md)** — wired/wireless topology, telegraph, telephone, and radio networks; world persistence and chunk lifecycle.
 
 ---
 
