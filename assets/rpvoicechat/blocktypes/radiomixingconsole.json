@@ -1,0 +1,58 @@
+{
+  "code": "radiomixingconsole",
+  "enabled": true,
+  "class": "radiomixingconsoleblock",
+  "entityClass": "BlockEntityRadioMixingConsole",
+  "behaviors": [
+    { "name": "HorizontalOrientable" }
+  ],
+  "creativeinventory": {
+    "general": [ "*-north" ],
+    "rpvoicechat": [ "*-north" ]
+  },
+  "maxstacksize": 1,
+  "blockmaterial": "wood",
+  "variantgroups": [
+    {
+      "code": "wood",
+      "states": [ "aged", "veryaged" ],
+      "loadFromProperties": "block/wood"
+    },
+    {
+      "code": "side",
+      "loadFromProperties": "abstract/horizontalorientation"
+    }
+  ],
+  "drawtype": "json",
+  "shape": {
+    "base": "block/radiomixingconsole",
+    "rotateYByType": {
+      "*-north": 0,
+      "*-east": 270,
+      "*-west": 90,
+      "*-south": 180
+    }
+  },
+  "attributes": {
+    "wireAttachmentOffsets": {
+      "north": [ 0.5, 0.45, 0.2 ],
+      "east": [ 0.8, 0.45, 0.5 ],
+      "south": [ 0.5, 0.45, 0.8 ],
+      "west": [ 0.2, 0.45, 0.5 ]
+    }
+  },
+  "sounds": {
+    "place": "game:block/planks",
+    "hit": "game:block/planks",
+    "break": "game:block/planks",
+    "walk": "game:walk/wood"
+  },
+  "textures": {
+    "wood": { "base": "game:block/wood/debarked/{wood}" }
+  },
+  "rainPermeable": false,
+  "sidesolid": { "all": false },
+  "sideopaque": { "all": false },
+  "lightAbsorption": 15,
+  "resistance": 1
+}

@@ -16,6 +16,7 @@ namespace RPVoiceChat
 {
     public class RPVoiceChatServer : RPVoiceChatMod
     {
+        internal static GameServer VoiceServer;
         private GameServer server;
 
         public override void StartServerSide(ICoreServerAPI api)
@@ -54,7 +55,10 @@ namespace RPVoiceChat
             }
 
             var voiceRouteProviders = CollectVoiceRouteProviders(api);
-            server = new GameServer(sapi, networkTransports, voiceRouteProviders);
+            var voiceRecipientExpanders = CollectVoiceRecipientExpanders(api);
+            server = new GameServer(sapi, networkTransports, voiceRouteProviders, voiceRecipientExpanders);
+            VoiceServer = server;
+            sapi.ModLoader.GetModSystem<RadioProgramBroadcastSystem>()?.BindGameServer(server);
             server.Launch();
         }
 
@@ -97,6 +101,46 @@ namespace RPVoiceChat
             }
 
             return providers;
+        }
+
+        private static List<IVoiceRecipientExpander> CollectVoiceRecipientExpanders(ICoreServerAPI api)
+        {
+            var expanders = new List<IVoiceRecipientExpander>();
+            if (api?.ModLoader == null)
+            {
+                return expanders;
+            }
+
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+            foreach (string propertyName in new[] { "Systems", "ModSystems", "LoadedSystems" })
+            {
+                try
+                {
+                    var property = api.ModLoader.GetType().GetProperty(propertyName, flags);
+                    if (property?.GetValue(api.ModLoader) is not System.Collections.IEnumerable systems)
+                    {
+                        continue;
+                    }
+
+                    foreach (var system in systems)
+                    {
+                        if (system is IVoiceRecipientExpander expander && !expanders.Contains(expander))
+                        {
+                            expanders.Add(expander);
+                        }
+                    }
+
+                    if (expanders.Count > 0)
+                    {
+                        return expanders;
+                    }
+                }
+                catch
+                {
+                }
+            }
+
+            return expanders;
         }
 
         public override void StartPre(ICoreAPI api)

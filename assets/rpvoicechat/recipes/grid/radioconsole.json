@@ -1,0 +1,28 @@
+{
+  "name": "radioconsole",
+  "enabled": true,
+  "ingredientPattern": "PWP,WCW,PWP",
+  "ingredients": {
+    "C": {
+      "type": "block",
+      "code": "rpvoicechat:connector-*",
+      "quantity": 1
+    },
+    "W": {
+      "type": "item",
+      "code": "rpvoicechat:telegraphwire",
+      "quantity": 4
+    },
+    "P": {
+      "type": "item",
+      "code": "game:plank-{wood}",
+      "quantity": 2
+    }
+  },
+  "width": 3,
+  "height": 3,
+  "output": {
+    "type": "block",
+    "code": "rpvoicechat:radioconsole-{wood}-north"
+  }
+}

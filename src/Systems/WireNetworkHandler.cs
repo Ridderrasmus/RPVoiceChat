@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using RPVoiceChat.Config;
 using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Util;
@@ -557,7 +558,8 @@ namespace RPVoiceChat.Systems
             bool hasSwitchboard = prospectiveComponent.Any(n => GetNodeKind(n) == WireNodeKind.Switchboard);
             int telegraphCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Telegraph);
             int telephoneCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Telephone);
-            int radioCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Radio);
+            int radioCount = prospectiveComponent.Count(n => WireNodeKindRules.IsRadioFamilyEndpoint(GetNodeKind(n)));
+            int radioConsoleCount = prospectiveComponent.OfType<BlockEntityRadioSupervisionConsole>().Count();
             int speakerCount = prospectiveComponent.OfType<BlockEntitySpeaker>().Count();
             int telephoneHandsetCount = prospectiveComponent.OfType<BlockEntityTelephone>().Count();
             int activeKinds = 0;
@@ -570,6 +572,19 @@ namespace RPVoiceChat.Systems
             if (activeKinds > 1)
             {
                 denialLangKey = "Wire.ConnectionDenied.MixedTypes";
+                return false;
+            }
+
+            if (node1 is BlockEntityRadioEmitter repeater1 && repeater1.IsRepeaterMode
+                || node2 is BlockEntityRadioEmitter repeater2 && repeater2.IsRepeaterMode)
+            {
+                denialLangKey = "Wire.ConnectionDenied.RadioRepeaterNoWire";
+                return false;
+            }
+
+            if (radioConsoleCount > 1)
+            {
+                denialLangKey = "Wire.ConnectionDenied.RadioSingleConsole";
                 return false;
             }
 
@@ -594,10 +609,10 @@ namespace RPVoiceChat.Systems
                     return false;
                 }
 
-                if (radioCount > 1)
+                if (radioCount > 0 && radioCount > ServerConfigManager.RadioNetworkMaxEndpoints)
                 {
                     denialLangKey = "Wire.ConnectionDenied.NetworkCapacity";
-                    denialArgs = new object[] { GetKindDisplayName(WireNetworkKind.Radio), 1 };
+                    denialArgs = new object[] { GetKindDisplayName(WireNetworkKind.Radio), ServerConfigManager.RadioNetworkMaxEndpoints };
                     return false;
                 }
 
@@ -670,7 +685,7 @@ namespace RPVoiceChat.Systems
                 case WireNetworkKind.Telephone:
                     return GetNodeKind(endpoint) == WireNodeKind.Telephone;
                 case WireNetworkKind.Radio:
-                    return GetNodeKind(endpoint) == WireNodeKind.Radio;
+                    return WireNodeKindRules.IsRadioFamilyEndpoint(GetNodeKind(endpoint));
                 default:
                     return false;
             }

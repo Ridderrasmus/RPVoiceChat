@@ -1,0 +1,33 @@
+{
+  "code": "radioantennapart",
+  "enabled": true,
+  "class": "radioantennapartblock",
+  "entityClass": "BlockEntityRadioAntennaPart",
+  "creativeinventory": {
+    "general": [ "*" ],
+    "rpvoicechat": [ "*" ]
+  },
+  "maxstacksize": 16,
+  "blockmaterial": "Metal",
+  "drawtype": "json",
+  "shape": {
+    "base": "block/radioantenna/radioantennapart"
+  },
+  "sounds": {
+    "place": "game:block/anvil",
+    "hit": "game:block/anvil",
+    "break": "game:block/anvil",
+    "walk": "game:walk/stone"
+  },
+  "rainPermeable": true,
+  "sidesolid": { "all": false },
+  "sideopaque": { "all": false },
+  "lightAbsorption": 0,
+  "collisionbox": {
+    "x1": 0.4, "y1": 0, "z1": 0.4, "x2": 0.6, "y2": 1, "z2": 0.6
+  },
+  "selectionbox": {
+    "x1": 0.4, "y1": 0, "z1": 0.4, "x2": 0.6, "y2": 1, "z2": 0.6
+  },
+  "resistance": 1
+}

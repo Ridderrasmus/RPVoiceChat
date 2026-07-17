@@ -27,18 +27,27 @@ namespace RPVoiceChat.Server
         private ConcurrentDictionary<string, HashSet<IPlayer>> playerListeners = new ConcurrentDictionary<string, HashSet<IPlayer>>();
         private readonly ConcurrentDictionary<string, bool> devicesVoiceFeedbackByPlayer = new ConcurrentDictionary<string, bool>();
         private readonly IReadOnlyList<IVoiceRouteProvider> voiceRouteProviders;
+        private readonly IReadOnlyList<IVoiceRecipientExpander> voiceRecipientExpanders;
+        private System.Func<AudioPacket, bool> tryConsumeProgramMicAudio;
 
         private volatile Grid voiceGrid = Grid.Empty;
         [ThreadStatic] private static List<GridPlayer> tlsGridCandidates;
         [ThreadStatic] private static Dictionary<string, RoutedVoiceRecipient> tlsRoutedRecipients;
 
-        public GameServer(ICoreServerAPI sapi, List<INetworkServer> serverTransports, IEnumerable<IVoiceRouteProvider> voiceRouteProviders)
+        public GameServer(
+            ICoreServerAPI sapi,
+            List<INetworkServer> serverTransports,
+            IEnumerable<IVoiceRouteProvider> voiceRouteProviders,
+            IEnumerable<IVoiceRecipientExpander> voiceRecipientExpanders = null)
         {
             api = sapi;
             _initialTransports = serverTransports;
             this.voiceRouteProviders = voiceRouteProviders
                 .Where(provider => provider != null)
                 .ToList();
+            this.voiceRecipientExpanders = voiceRecipientExpanders?
+                .Where(expander => expander != null)
+                .ToList() ?? new List<IVoiceRecipientExpander>();
             voiceBanManager = new VoiceBanManager(sapi);
             handshakeChannel = sapi.Network
                 .RegisterChannel("RPVCHandshake")
@@ -151,10 +160,20 @@ namespace RPVoiceChat.Server
             }
         }
 
+        public void SetProgramMicAudioSink(System.Func<AudioPacket, bool> sink)
+        {
+            tryConsumeProgramMicAudio = sink;
+        }
+
         public void SendAudioToAllClientsInRange(AudioPacket packet)
         {
             // Check if the player is banned - don't send their audio to other players
             if (voiceBanManager.IsPlayerBanned(packet.PlayerId))
+            {
+                return;
+            }
+
+            if (tryConsumeProgramMicAudio?.Invoke(packet) == true)
             {
                 return;
             }
@@ -205,6 +224,11 @@ namespace RPVoiceChat.Server
                 }
 
                 candidates.Clear();
+            }
+
+            for (int expanderIndex = 0; expanderIndex < voiceRecipientExpanders.Count; expanderIndex++)
+            {
+                voiceRecipientExpanders[expanderIndex].ExpandRoutedRecipients(packet, routes, recipients);
             }
 
             foreach (RoutedVoiceRecipient recipient in recipients.Values)
@@ -403,20 +427,6 @@ namespace RPVoiceChat.Server
         {
             public bool HasMegaphone;
             public bool HasEnhancedMegaphone;
-        }
-
-        private readonly struct RoutedVoiceRecipient
-        {
-            public readonly string PlayerUID;
-            public readonly VoiceRoute Route;
-            public readonly double DistanceSq;
-
-            public RoutedVoiceRecipient(string playerUid, VoiceRoute route, double distanceSq)
-            {
-                PlayerUID = playerUid;
-                Route = route;
-                DistanceSq = distanceSq;
-            }
         }
 
         private static int ResolveEffectiveListenerDistance(MegaphoneInfo megaphoneInfo)
