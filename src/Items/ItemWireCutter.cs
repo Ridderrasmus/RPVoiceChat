@@ -31,6 +31,11 @@ namespace RPVoiceChat.GameContent.Items
 
             handling = EnumHandHandling.PreventDefault;
 
+            if (byEntity.World.Side != EnumAppSide.Server)
+            {
+                return;
+            }
+
             // Count connections before removing them
             int connectionCount = wireNode.GetConnections().Count;
 

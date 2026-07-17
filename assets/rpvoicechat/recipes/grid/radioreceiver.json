@@ -1,0 +1,28 @@
+{
+  "name": "radioreceiver",
+  "enabled": true,
+  "ingredientPattern": "PWP,PMP,PWP",
+  "ingredients": {
+    "M": {
+      "type": "block",
+      "code": "game:metal-parts",
+      "quantity": 2
+    },
+    "P": {
+      "type": "item",
+      "code": "game:plank-{wood}",
+      "quantity": 2
+    },
+    "W": {
+      "type": "item",
+      "code": "rpvoicechat:telegraphwire",
+      "quantity": 2
+    }
+  },
+  "width": 3,
+  "height": 3,
+  "output": {
+    "type": "block",
+    "code": "rpvoicechat:radioreceiver-{wood}-north"
+  }
+}

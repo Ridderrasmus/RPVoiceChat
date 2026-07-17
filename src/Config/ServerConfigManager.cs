@@ -37,6 +37,11 @@ namespace RPVoiceChat.Config
         public static int TelephoneNetworkMaxEndpoints => Config?.TelephoneNetworkMaxEndpoints ?? 16;
         public static int RadioNetworkMinPowerPercent => Config?.RadioNetworkMinPowerPercent ?? 50;
         public static int RadioNetworkMaxEndpoints => Config?.RadioNetworkMaxEndpoints ?? 16;
+        public static int RadioEmitterBaseRangeBlocks => Config?.RadioEmitterBaseRangeBlocks ?? 100;
+        public static int RadioAntennaPartRangeBonusBlocks => Config?.RadioAntennaPartRangeBonusBlocks ?? 50;
+        public static int RadioMicrophoneCaptureDistance => Config?.RadioMicrophoneCaptureDistance ?? 2;
+        public static int RadioTalkieRangeBlocks => Config?.RadioTalkieRangeBlocks ?? 16;
+        public static int RadioReceiverRangeBlocks => Config?.RadioReceiverRangeBlocks ?? 64;
 
         // Sound Emitting Objects Range Settings
         public static int HandbellAudibleDistance => Config?.HandbellAudibleDistance ?? 16;
@@ -217,6 +222,36 @@ namespace RPVoiceChat.Config
             {
                 Logger.server.Warning($"SpeakerAudibleDistance ({SpeakerAudibleDistance}) should be between 1 and 1000. Using default (30).");
                 Config.SpeakerAudibleDistance = 30;
+            }
+
+            if (RadioEmitterBaseRangeBlocks < 1 || RadioEmitterBaseRangeBlocks > 10000)
+            {
+                Logger.server.Warning($"RadioEmitterBaseRangeBlocks ({RadioEmitterBaseRangeBlocks}) should be between 1 and 10000. Using default (100).");
+                Config.RadioEmitterBaseRangeBlocks = 100;
+            }
+
+            if (RadioAntennaPartRangeBonusBlocks < 0 || RadioAntennaPartRangeBonusBlocks > 10000)
+            {
+                Logger.server.Warning($"RadioAntennaPartRangeBonusBlocks ({RadioAntennaPartRangeBonusBlocks}) should be between 0 and 10000. Using default (50).");
+                Config.RadioAntennaPartRangeBonusBlocks = 50;
+            }
+
+            if (RadioMicrophoneCaptureDistance < 1 || RadioMicrophoneCaptureDistance > 1000)
+            {
+                Logger.server.Warning($"RadioMicrophoneCaptureDistance ({RadioMicrophoneCaptureDistance}) should be between 1 and 1000. Using default (2).");
+                Config.RadioMicrophoneCaptureDistance = 2;
+            }
+
+            if (RadioTalkieRangeBlocks < 1 || RadioTalkieRangeBlocks > 1000)
+            {
+                Logger.server.Warning($"RadioTalkieRangeBlocks ({RadioTalkieRangeBlocks}) should be between 1 and 1000. Using default (16).");
+                Config.RadioTalkieRangeBlocks = 16;
+            }
+
+            if (RadioReceiverRangeBlocks < 1 || RadioReceiverRangeBlocks > 10000)
+            {
+                Logger.server.Warning($"RadioReceiverRangeBlocks ({RadioReceiverRangeBlocks}) should be between 1 and 10000. Using default (64).");
+                Config.RadioReceiverRangeBlocks = 64;
             }
 
             if (NametagFallbackRenderRange < 1 || NametagFallbackRenderRange > 1000)

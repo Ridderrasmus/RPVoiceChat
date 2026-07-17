@@ -198,5 +198,55 @@
       "when": "rpvoicechat:additional-content",
       "isValue": "false"
     }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:recipes/grid/radioconsole.json",
+    "condition": {
+      "when": "rpvoicechat:technology-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:recipes/grid/radiomicrophone.json",
+    "condition": {
+      "when": "rpvoicechat:technology-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:recipes/grid/radioemitter.json",
+    "condition": {
+      "when": "rpvoicechat:technology-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:recipes/grid/radioantennapart.json",
+    "condition": {
+      "when": "rpvoicechat:technology-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:recipes/grid/radioreceiver.json",
+    "condition": {
+      "when": "rpvoicechat:technology-content",
+      "isValue": "false"
+    }
   }
 ]

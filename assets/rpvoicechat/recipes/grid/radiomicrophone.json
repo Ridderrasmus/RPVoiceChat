@@ -1,0 +1,23 @@
+{
+  "name": "radiomicrophone",
+  "enabled": true,
+  "ingredientPattern": "P,P,C",
+  "ingredients": {
+    "C": {
+      "type": "block",
+      "code": "rpvoicechat:connector-*",
+      "quantity": 1
+    },
+    "P": {
+      "type": "item",
+      "code": "game:plank-{wood}",
+      "quantity": 2
+    }
+  },
+  "width": 1,
+  "height": 3,
+  "output": {
+    "type": "block",
+    "code": "rpvoicechat:radiomicrophone-{wood}-north"
+  }
+}

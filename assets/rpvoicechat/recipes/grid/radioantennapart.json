@@ -1,0 +1,24 @@
+{
+  "name": "radioantennapart",
+  "enabled": true,
+  "ingredientPattern": "W,W,M",
+  "ingredients": {
+    "W": {
+      "type": "item",
+      "code": "rpvoicechat:telegraphwire",
+      "quantity": 2
+    },
+    "M": {
+      "type": "block",
+      "code": "game:metal-parts",
+      "quantity": 1
+    }
+  },
+  "width": 1,
+  "height": 3,
+  "output": {
+    "type": "block",
+    "code": "rpvoicechat:radioantennapart",
+    "quantity": 2
+  }
+}

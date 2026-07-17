@@ -1,0 +1,28 @@
+{
+  "name": "radioemitter",
+  "enabled": true,
+  "ingredientPattern": "CWC,WMW,CWC",
+  "ingredients": {
+    "C": {
+      "type": "block",
+      "code": "rpvoicechat:connector-*",
+      "quantity": 1
+    },
+    "W": {
+      "type": "item",
+      "code": "rpvoicechat:telegraphwire",
+      "quantity": 4
+    },
+    "M": {
+      "type": "block",
+      "code": "game:metal-parts",
+      "quantity": 2
+    }
+  },
+  "width": 3,
+  "height": 3,
+  "output": {
+    "type": "block",
+    "code": "rpvoicechat:radioemitter-{wood}-north"
+  }
+}
