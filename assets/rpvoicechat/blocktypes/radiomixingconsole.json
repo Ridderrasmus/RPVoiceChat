@@ -6,6 +6,18 @@
   "behaviors": [
     { "name": "HorizontalOrientable" }
   ],
+  "entityBehaviors": [
+    {
+      "name": "BELightable",
+      "properties": {
+        "lightLevel": 0.45,
+        "lightIntensityScale": 1.35,
+        "lightColorX": 1.0,
+        "lightColorY": 0.18,
+        "lightColorZ": 0.1
+      }
+    }
+  ],
   "creativeinventory": {
     "general": [ "*-north" ],
     "rpvoicechat": [ "*-north" ]
@@ -33,14 +45,6 @@
       "*-south": 180
     }
   },
-  "attributes": {
-    "wireAttachmentOffsets": {
-      "north": [ 0.5, 0.45, 0.2 ],
-      "east": [ 0.8, 0.45, 0.5 ],
-      "south": [ 0.5, 0.45, 0.8 ],
-      "west": [ 0.2, 0.45, 0.5 ]
-    }
-  },
   "sounds": {
     "place": "game:block/planks",
     "hit": "game:block/planks",
@@ -48,11 +52,22 @@
     "walk": "game:walk/wood"
   },
   "textures": {
-    "wood": { "base": "game:block/wood/debarked/{wood}" }
+    "wood": { "base": "game:block/wood/debarked/{wood}" },
+    "glass": { "base": "game:block/glass/plain" },
+    "onairglass": { "base": "block/radio/onairglass" },
+    "gold": { "base": "game:block/metal/plate/gold" },
+    "copper": { "base": "game:block/metal/plate/copper" },
+    "silver": { "base": "game:block/metal/ingot/silver" },
+    "bakelite": { "base": "game:block/coal/bituminous" },
+    "red": { "base": "game:block/cloth/basic/red" },
+    "white": { "base": "game:block/cloth/basic/white" },
+    "green": { "base": "game:block/cloth/basic/green" },
+    "blue": { "base": "game:block/cloth/basic/blue" },
+    "purple": { "base": "game:block/cloth/basic/purple" }
   },
   "rainPermeable": false,
   "sidesolid": { "all": false },
   "sideopaque": { "all": false },
-  "lightAbsorption": 15,
+  "lightAbsorption": 1,
   "resistance": 1
 }

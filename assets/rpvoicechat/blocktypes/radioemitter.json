@@ -51,6 +51,7 @@
     "walk": "game:walk/stone"
   },
   "textures": {
+    "wood": { "base": "game:block/wood/debarked/{wood}" },
     "glass": { "base": "game:block/glass/plain" }
   },
   "rainPermeable": false,

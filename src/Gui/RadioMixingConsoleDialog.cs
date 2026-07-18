@@ -36,16 +36,14 @@ namespace RPVoiceChat.Gui
             BuildComposer();
         }
 
+        /// <summary>
+        /// Only situational notices — On/Off is already covered by the button + block On Air light.
+        /// </summary>
         private string GetStatusText()
         {
-            if (mixingConsole.IsOnAir)
+            if (mixingConsole.IsOnAir && !mixingConsole.HasActiveBroadcastOutput())
             {
-                if (!mixingConsole.HasActiveBroadcastOutput())
-                {
-                    return UIUtils.I18n("Radio.MixingConsole.Gui.Status.WaitingPower");
-                }
-
-                return UIUtils.I18n("Radio.MixingConsole.Gui.Status.On");
+                return UIUtils.I18n("Radio.MixingConsole.Gui.Status.WaitingPower");
             }
 
             if (mixingConsole.IsBusyForOtherPlayer(capi.World.Player.PlayerUID))
@@ -53,7 +51,7 @@ namespace RPVoiceChat.Gui
                 return UIUtils.I18n("Radio.MixingConsole.Gui.Status.Busy");
             }
 
-            return UIUtils.I18n("Radio.MixingConsole.Gui.Status.Off");
+            return "";
         }
 
         private void BuildComposer()
@@ -62,24 +60,40 @@ namespace RPVoiceChat.Gui
                 ? "Radio.MixingConsole.Gui.TurnOff"
                 : "Radio.MixingConsole.Gui.TurnOn";
 
+            string statusText = GetStatusText();
+            bool showStatus = statusText.Length > 0;
+
             ElementBounds dialogBounds = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.CenterMiddle);
             ElementBounds urlLabelBounds = ElementBounds.Fixed(0, 35, 520, 18);
             ElementBounds urlInputBounds = ElementBounds.Fixed(0, 55, 400, 26);
             ElementBounds urlSaveBounds = ElementBounds.Fixed(412, 55, 88, 26);
             ElementBounds statusBounds = ElementBounds.Fixed(0, 90, 520, 36);
-            ElementBounds toggleBounds = ElementBounds.Fixed(0, 132, 180, 28);
+            ElementBounds toggleBounds = ElementBounds.Fixed(0, showStatus ? 132 : 95, 180, 28);
 
             ElementBounds bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
             bgBounds.BothSizing = ElementSizing.FitToChildren;
-            bgBounds.WithChildren(urlLabelBounds, urlInputBounds, urlSaveBounds, statusBounds, toggleBounds);
+            if (showStatus)
+            {
+                bgBounds.WithChildren(urlLabelBounds, urlInputBounds, urlSaveBounds, statusBounds, toggleBounds);
+            }
+            else
+            {
+                bgBounds.WithChildren(urlLabelBounds, urlInputBounds, urlSaveBounds, toggleBounds);
+            }
 
-            SingleComposer = capi.Gui.CreateCompo("radiomixingconsole", dialogBounds)
+            var composer = capi.Gui.CreateCompo("radiomixingconsole", dialogBounds)
                 .AddShadedDialogBG(bgBounds)
                 .AddDialogTitleBar(UIUtils.I18n("Radio.MixingConsole.Gui.Title"), OnTitleBarCloseClicked)
                 .AddStaticText(UIUtils.I18n("Radio.MixingConsole.Gui.HlsUrl"), CairoFont.WhiteSmallText(), urlLabelBounds)
                 .AddTextInput(urlInputBounds, OnHlsUrlChanged, CairoFont.TextInput(), "radioMixingHlsUrlInput")
-                .AddSmallButton(UIUtils.I18n("Radio.Gui.Save"), OnSaveHlsUrlClicked, urlSaveBounds)
-                .AddDynamicText(GetStatusText(), CairoFont.WhiteSmallText(), statusBounds, "radioMixingStatusText")
+                .AddSmallButton(UIUtils.I18n("Radio.Gui.Save"), OnSaveHlsUrlClicked, urlSaveBounds);
+
+            if (showStatus)
+            {
+                composer.AddDynamicText(statusText, CairoFont.WhiteSmallText(), statusBounds, "radioMixingStatusText");
+            }
+
+            SingleComposer = composer
                 .AddSmallButton(UIUtils.I18n(actionButtonLangKey), OnToggleOnAirClicked, toggleBounds)
                 .Compose();
 

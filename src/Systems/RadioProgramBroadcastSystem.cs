@@ -30,6 +30,7 @@ namespace RPVoiceChat.Systems
             sapi = api;
             routing = api.ModLoader.GetModSystem<RadioVoiceRoutingSystem>();
             api.Event.RegisterGameTickListener(OnServerTick, 100);
+            FfmpegLocator.BeginEnsureAvailable();
         }
 
         public void BindGameServer(GameServer server)
@@ -166,7 +167,9 @@ namespace RPVoiceChat.Systems
             {
                 RouteKey = routeKey,
                 EncoderCodec = new OpusCodec(RadioHlsStreamCapture.SampleRate, RadioHlsStreamCapture.Channels),
-                MicDecoder = new OpusCodec(RadioHlsStreamCapture.SampleRate, RadioHlsStreamCapture.Channels)
+                MicDecoder = new OpusCodec(RadioHlsStreamCapture.SampleRate, RadioHlsStreamCapture.Channels),
+                // Monotonic across restarts so clients don't treat new frames as "late".
+                SequenceNumber = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 100
             };
 
             if (!string.IsNullOrWhiteSpace(mixingConsole.HlsStreamUrl))
@@ -244,6 +247,10 @@ namespace RPVoiceChat.Systems
 
             session.Capture?.Dispose();
             session.MicBuffer.Clear();
+            while (pendingPackets.TryDequeue(out _))
+            {
+            }
+
             Logger.server.Notification($"[RadioProgram] Program bus stopped for {routeKey}");
         }
 
@@ -281,13 +288,13 @@ namespace RPVoiceChat.Systems
 
         private void EnqueueMixedFrame(ProgramSession session, short[] mixed)
         {
-            byte[] encoded = session.EncoderCodec.EncodeForBroadcast(mixed);
+            byte[] encoded = session.EncoderCodec.EncodeForProgramStream(mixed);
             if (encoded == null || encoded.Length == 0)
             {
                 return;
             }
 
-            session.SequenceNumber = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            session.SequenceNumber++;
             pendingPackets.Enqueue(new AudioPacket
             {
                 PlayerId = session.RouteKey,
@@ -297,8 +304,8 @@ namespace RPVoiceChat.Systems
                 Frequency = RadioHlsStreamCapture.SampleRate,
                 Format = ALFormat.Mono16,
                 SequenceNumber = session.SequenceNumber,
-                Codec = OpusCodec._Name,
-                IsGlobalBroadcast = true
+                Codec = OpusCodec._Name
+                // Locational like speakers: distance/walls apply via SourcePos + TransmissionRangeBlocks.
             });
         }
 
@@ -328,7 +335,14 @@ namespace RPVoiceChat.Systems
                 return;
             }
 
-            const int maxPacketsPerTick = 32;
+            // Realtime capture emits ~10 frames / 100ms tick. Flush with slack, then drop
+            // only if we are still building a large backlog (server lag / slow clients).
+            const int maxPacketsPerTick = 20;
+            const int maxBacklog = 60;
+            while (pendingPackets.Count > maxBacklog && pendingPackets.TryDequeue(out _))
+            {
+            }
+
             for (int i = 0; i < maxPacketsPerTick && pendingPackets.TryDequeue(out AudioPacket packet); i++)
             {
                 gameServer.SendAudioToAllClientsInRange(packet);

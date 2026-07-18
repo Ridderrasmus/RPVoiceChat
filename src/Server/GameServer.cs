@@ -208,7 +208,7 @@ namespace RPVoiceChat.Server
             for (int routeIndex = 0; routeIndex < routes.Count; routeIndex++)
             {
                 VoiceRoute route = routes[routeIndex];
-                if (route.EmissionPos == null || route.RangeBlocks <= 0) continue;
+                if (!route.IsAcousticEmission || route.EmissionPos == null || route.RangeBlocks <= 0) continue;
 
                 grid.CollectNear(
                     route.Dimension,
@@ -239,6 +239,9 @@ namespace RPVoiceChat.Server
                 routedPacket.SourcePosX = recipient.Route.EmissionPos.X;
                 routedPacket.SourcePosY = recipient.Route.EmissionPos.Y;
                 routedPacket.SourcePosZ = recipient.Route.EmissionPos.Z;
+                // Acoustic block emission (speakers/receivers) must use normal distance attenuation.
+                routedPacket.IsGlobalBroadcast = false;
+                routedPacket.IgnoreDistanceReduction = false;
                 SendPacket(routedPacket, recipient.PlayerUID);
             }
 

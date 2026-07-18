@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -15,6 +14,9 @@ namespace RPVoiceChat.Audio.Input
         public const int BytesPerSample = sizeof(short);
         public const int FrameSamples = SampleRate / 100;
         public const int FrameBytes = FrameSamples * BytesPerSample;
+        private const double FrameDurationMs = 1000.0 / (SampleRate / (double)FrameSamples);
+        /// <summary>Drop initial buffered catch-up so playback starts at live pace.</summary>
+        private const int PrerollDiscardFrames = 50; // ~0.5s
 
         private Process ffmpegProcess;
         private Thread readerThread;
@@ -41,6 +43,11 @@ namespace RPVoiceChat.Audio.Input
             {
                 LastError = "HLS URL must start with http:// or https://.";
                 return false;
+            }
+
+            if (!FfmpegLocator.IsAvailable())
+            {
+                FfmpegLocator.TryEnsureAvailable(TimeSpan.FromMinutes(2));
             }
 
             string ffmpegExecutable = FfmpegLocator.ResolveExecutable();
@@ -70,10 +77,15 @@ namespace RPVoiceChat.Audio.Input
                     return false;
                 }
 
+                ffmpegProcess.EnableRaisingEvents = true;
+                ffmpegProcess.ErrorDataReceived += (_, _) => { };
+                ffmpegProcess.BeginErrorReadLine();
+
                 readerThread = new Thread(ReadLoop)
                 {
                     IsBackground = true,
-                    Name = "RPVC-HLS"
+                    Name = "RPVC-HLS",
+                    Priority = ThreadPriority.AboveNormal
                 };
                 readerThread.Start(cancellation.Token);
                 IsRunning = true;
@@ -115,8 +127,26 @@ namespace RPVoiceChat.Audio.Input
                         // Ignore process cleanup failures.
                     }
 
-                    ffmpegProcess.Dispose();
+                    try
+                    {
+                        ffmpegProcess.Dispose();
+                    }
+                    catch
+                    {
+                        // Ignore dispose races with reader thread.
+                    }
+
                     ffmpegProcess = null;
+                }
+
+                // Give the reader a moment to exit before next Start reuses the URL.
+                try
+                {
+                    readerThread?.Join(500);
+                }
+                catch
+                {
+                    // Ignore join failures during shutdown.
                 }
 
                 readerThread = null;
@@ -140,7 +170,10 @@ namespace RPVoiceChat.Audio.Input
 
             var frameBuffer = new byte[FrameBytes];
             int frameOffset = 0;
-            var readBuffer = new byte[4096];
+            var readBuffer = new byte[8192];
+            int discardedFrames = 0;
+            Stopwatch paceClock = null;
+            double nextFrameAtMs = 0;
 
             try
             {
@@ -156,6 +189,11 @@ namespace RPVoiceChat.Audio.Input
                     int sourceOffset = 0;
                     while (sourceOffset < read)
                     {
+                        if (token.IsCancellationRequested)
+                        {
+                            return;
+                        }
+
                         int copy = Math.Min(FrameBytes - frameOffset, read - sourceOffset);
                         Buffer.BlockCopy(readBuffer, sourceOffset, frameBuffer, frameOffset, copy);
                         frameOffset += copy;
@@ -166,8 +204,28 @@ namespace RPVoiceChat.Audio.Input
                             continue;
                         }
 
-                        EmitFrame(frameBuffer);
                         frameOffset = 0;
+
+                        // FFmpeg often dumps a preroll buffer first — discard it to avoid hyper-speed catch-up.
+                        if (discardedFrames < PrerollDiscardFrames)
+                        {
+                            discardedFrames++;
+                            continue;
+                        }
+
+                        if (paceClock == null)
+                        {
+                            paceClock = Stopwatch.StartNew();
+                            nextFrameAtMs = 0;
+                        }
+
+                        PaceToRealtime(paceClock, ref nextFrameAtMs, token);
+                        if (token.IsCancellationRequested)
+                        {
+                            return;
+                        }
+
+                        EmitFrame(frameBuffer);
                     }
                 }
             }
@@ -176,12 +234,37 @@ namespace RPVoiceChat.Audio.Input
                 if (!token.IsCancellationRequested)
                 {
                     LastError = ex.Message;
-                    Logger.client.Warning($"[RadioHlsStreamCapture] Stream read failed: {ex.Message}");
+                    Logger.server?.Warning($"[RadioHlsStreamCapture] Stream read failed: {ex.Message}");
                 }
             }
             finally
             {
                 IsRunning = false;
+            }
+        }
+
+        private static void PaceToRealtime(Stopwatch paceClock, ref double nextFrameAtMs, CancellationToken token)
+        {
+            nextFrameAtMs += FrameDurationMs;
+            double aheadMs = nextFrameAtMs - paceClock.Elapsed.TotalMilliseconds;
+            while (aheadMs > 1 && !token.IsCancellationRequested)
+            {
+                int sleepMs = (int)Math.Min(aheadMs, 25);
+                try
+                {
+                    Thread.Sleep(sleepMs);
+                }
+                catch
+                {
+                    return;
+                }
+
+                aheadMs = nextFrameAtMs - paceClock.Elapsed.TotalMilliseconds;
+            }
+
+            if (aheadMs < -250)
+            {
+                nextFrameAtMs = paceClock.Elapsed.TotalMilliseconds;
             }
         }
 
@@ -195,7 +278,11 @@ namespace RPVoiceChat.Audio.Input
 
         private static string BuildFfmpegArguments(string streamUrl)
         {
-            return $"-hide_banner -loglevel error -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -i \"{streamUrl}\" -vn -ac 1 -ar {SampleRate} -f s16le pipe:1";
+            // Low-latency demux + realtime pacing in ReadLoop keeps output at 1x (no catch-up bursts).
+            return "-hide_banner -loglevel error " +
+                   "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 " +
+                   "-fflags nobuffer -flags low_delay -probesize 32k -analyzeduration 0 " +
+                   $"-i \"{streamUrl}\" -vn -ac {Channels} -ar {SampleRate} -f s16le pipe:1";
         }
     }
 }

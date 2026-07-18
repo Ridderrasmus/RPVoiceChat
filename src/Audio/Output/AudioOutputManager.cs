@@ -3,6 +3,7 @@ using RPVoiceChat.Config;
 using RPVoiceChat.DB;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Networking;
+using RPVoiceChat.Systems;
 using RPVoiceChat.Util;
 using System;
 using System.Collections.Concurrent;
@@ -76,8 +77,9 @@ namespace RPVoiceChat.Audio
             }
 
             // Check if the player is banned - don't process their audio (additional client-side security)
-            if (RPVoiceChatClient.VoiceBanManagerInstance != null && 
-                RPVoiceChatClient.VoiceBanManagerInstance.IsPlayerBanned(packet.PlayerId))
+            if (!RadioProgramRouteKey.IsProgramSource(packet.PlayerId)
+                && RPVoiceChatClient.VoiceBanManagerInstance != null
+                && RPVoiceChatClient.VoiceBanManagerInstance.IsPlayerBanned(packet.PlayerId))
             {
                 return;
             }
@@ -105,6 +107,7 @@ namespace RPVoiceChat.Audio
             if (source.voiceLevel != packet.VoiceLevel)
                 source.UpdateVoiceLevel(packet.VoiceLevel);
 
+            source.PrepareForPacket(audioData);
             source.UpdatePlayer();
             source.UpdateAudioFormat(codec, frequency, channels);
             source.EnqueueAudio(audioData, packet.SequenceNumber);
@@ -134,6 +137,9 @@ namespace RPVoiceChat.Audio
             if (playerSources.TryGetValue(playerId, out source) && !source.IsDisposed)
                 return source;
 
+            if (RadioProgramRouteKey.IsProgramSource(playerId))
+                return CreateSyntheticSource(playerId);
+
             var player = capi.World.PlayerByUid(playerId);
             if (player == null) return null;
 
@@ -144,6 +150,14 @@ namespace RPVoiceChat.Audio
         {
             var source = new PlayerAudioSource(player, capi, clientSettingsRepo);
             playerSources.AddOrUpdate(player.PlayerUID, source, (_, __) => source);
+            return source;
+        }
+
+        private PlayerAudioSource CreateSyntheticSource(string sourceId)
+        {
+            // Program bus / RF block emission: no real player UID — position comes from packet override.
+            var source = new PlayerAudioSource(capi.World.Player, capi, clientSettingsRepo, sourceId);
+            playerSources.AddOrUpdate(sourceId, source, (_, __) => source);
             return source;
         }
 

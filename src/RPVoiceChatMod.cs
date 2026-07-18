@@ -289,6 +289,18 @@ namespace RPVoiceChat
                         receiver.SetTunedFrequency(packet.Value);
                     }
                     break;
+                case RadioSettingsOperation.SetReceiverEnabled:
+                    if (sapi.World.BlockAccessor.GetBlockEntity(packet.BlockPos) is BlockEntityRadioReceiver receiverPower)
+                    {
+                        receiverPower.SetEnabled(packet.IntValue != 0);
+                    }
+                    break;
+                case RadioSettingsOperation.SetReceiverPlaybackRange:
+                    if (sapi.World.BlockAccessor.GetBlockEntity(packet.BlockPos) is BlockEntityRadioReceiver receiverRange)
+                    {
+                        receiverRange.SetPlaybackRange(packet.IntValue);
+                    }
+                    break;
                 case RadioSettingsOperation.SetMicrophoneTransmit:
                     if (sapi.World.BlockAccessor.GetBlockEntity(packet.BlockPos) is BlockEntityRadioMicrophone microphone)
                     {

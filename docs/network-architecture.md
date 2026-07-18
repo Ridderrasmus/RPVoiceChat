@@ -368,7 +368,7 @@ If **no mixing console is on air**, the radio microphone keeps its **direct** RF
 | Requirement | Notes |
 |-------------|-------|
 | Stream URL | Persisted on the mixing console BE; validated server-side (`http://` / `https://`, max 2048 chars) |
-| FFmpeg | Bundled optional: `Lib/ffmpeg/{win|linux|osx}/ffmpeg(.exe)` inside the mod folder. Falls back to server `PATH` if absent. LGPL/GPL — see `Lib/ffmpeg/README.txt`. |
+| FFmpeg | Auto-download via `Xabe.FFmpeg.Downloader` into `Lib/ffmpeg/auto/` (Win/Linux/macOS). Optional manual bundle: `Lib/ffmpeg/{win|linux|osx}/`. Falls back to server `PATH`. LGPL/GPL — see `Lib/ffmpeg/README.txt`. |
 | Network | Server must reach the HLS URL (internet access on the host running Vintage Story server) |
 
 Example URL shape: `https://example.com/live/stream.m3u8`
