@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using RPVoiceChat.Config;
 using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Server;
@@ -28,23 +27,26 @@ namespace RPVoiceChat.Systems
                 return;
             }
 
-            int receiverRange = ServerConfigManager.RadioReceiverRangeBlocks;
-            double receiverRangeSq = (double)receiverRange * receiverRange;
-
             foreach (BlockEntityRadioReceiver receiver in RadioBlockIndex.GetLoadedReceivers(sapi.World))
             {
                 string tunedFrequency = RadioFrequencyUtil.Normalize(receiver.TunedFrequency);
-                if (tunedFrequency.Length == 0 || !RoutesContainFrequency(routes, tunedFrequency))
+                int receiverRange = receiver.PlaybackRangeBlocks;
+                if (!receiver.IsEnabled
+                    || receiverRange <= 0
+                    || tunedFrequency.Length == 0
+                    || !RoutesContainFrequency(routes, tunedFrequency))
                 {
                     continue;
                 }
 
+                double receiverRangeSq = (double)receiverRange * receiverRange;
                 Vec3d receiverPos = receiver.Pos.ToVec3d().Add(0.5, 0.5, 0.5);
                 var listenRoute = new VoiceRoute(
                     receiverPos,
                     receiverRange,
                     receiver.Pos.dimension,
-                    tunedFrequency);
+                    tunedFrequency,
+                    acousticEmission: true);
 
                 foreach (IServerPlayer player in sapi.World.AllOnlinePlayers)
                 {

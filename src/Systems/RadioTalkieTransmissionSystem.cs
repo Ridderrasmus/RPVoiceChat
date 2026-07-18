@@ -76,7 +76,8 @@ namespace RPVoiceChat.Systems
                         emissionPos,
                         ServerConfigManager.RadioTalkieRangeBlocks,
                         player.Entity.Pos.Dimension,
-                        entry.Value)
+                        entry.Value,
+                        acousticEmission: true)
                 });
             }
         }

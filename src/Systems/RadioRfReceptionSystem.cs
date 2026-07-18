@@ -29,7 +29,6 @@ namespace RPVoiceChat.Systems
             }
 
             int talkieRange = ServerConfigManager.RadioTalkieRangeBlocks;
-            double talkieRangeSq = (double)talkieRange * talkieRange;
 
             foreach (IServerPlayer player in sapi.World.AllOnlinePlayers)
             {
@@ -70,13 +69,21 @@ namespace RPVoiceChat.Systems
                         continue;
                     }
 
+                    // RF coverage uses the transmitter range; audio plays at the handheld, not the antenna.
                     double distanceSq = SquareDistance(listenerPos, route.EmissionPos);
-                    if (distanceSq > talkieRangeSq)
+                    double rfRangeSq = (double)route.RangeBlocks * route.RangeBlocks;
+                    if (distanceSq > rfRangeSq)
                     {
                         continue;
                     }
 
-                    TrySetRecipient(player.PlayerUID, route, distanceSq, recipients);
+                    var acousticAtPlayer = new VoiceRoute(
+                        listenerPos,
+                        talkieRange,
+                        dimension,
+                        route.RadioFrequency,
+                        acousticEmission: true);
+                    TrySetRecipient(player.PlayerUID, acousticAtPlayer, 0, recipients);
                 }
             }
         }

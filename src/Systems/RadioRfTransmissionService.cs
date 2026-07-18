@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using RPVoiceChat.Config;
 using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.Server;
 using Vintagestory.API.Common;
@@ -97,7 +96,7 @@ namespace RPVoiceChat.Systems
                     continue;
                 }
 
-                routes.Add(new VoiceRoute(point.Position, point.RangeBlocks, point.Dimension, point.Frequency));
+                routes.Add(new VoiceRoute(point.Position, point.RangeBlocks, point.Dimension, point.Frequency, acousticEmission: false));
             }
 
             return routes;
@@ -133,16 +132,18 @@ namespace RPVoiceChat.Systems
                 }
 
                 string tuned = RadioFrequencyUtil.Normalize(receiver.TunedFrequency);
-                if (tuned.Length == 0 || !frequencySet.Contains(tuned))
+                int playbackRange = receiver.PlaybackRangeBlocks;
+                if (!receiver.IsEnabled || playbackRange <= 0 || tuned.Length == 0 || !frequencySet.Contains(tuned))
                 {
                     continue;
                 }
 
                 routes.Add(new VoiceRoute(
                     receiver.Pos.ToVec3d().Add(0.5, 0.5, 0.5),
-                    ServerConfigManager.RadioReceiverRangeBlocks,
+                    playbackRange,
                     receiver.Pos.dimension,
-                    tuned));
+                    tuned,
+                    acousticEmission: true));
             }
         }
     }

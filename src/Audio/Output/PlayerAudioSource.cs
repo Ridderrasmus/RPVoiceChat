@@ -18,9 +18,17 @@ namespace RPVoiceChat.Audio
     {
         public bool IsDisposed = false;
         public bool IsPlaying { get => _IsPlaying(); }
+        public bool IsSyntheticSource { get; }
         public float MaxGain => ServerConfigManager.MaxAudioGain;
 
         private const int BufferCount = 20;
+        /// <summary>~400ms of 10ms frames in OpenAL — enough to ride network jitter.</summary>
+        private const int SyntheticBufferCount = 40;
+        /// <summary>Max packets waiting to enter OpenAL (~800ms). Drop oldest only beyond this.</summary>
+        private const int SyntheticMaxQueuedFrames = 80;
+        /// <summary>Start playback once we have this many frames (or after the jitter timeout).</summary>
+        private const int SyntheticPrimeFrames = 20;
+        private const int SyntheticPrimeTimeoutMs = 250;
         private int source;
         public int SourceId => source;
         private CircularAudioBuffer buffer;
@@ -28,6 +36,7 @@ namespace RPVoiceChat.Audio
         private object ordering_queue_lock = new object();
         private object dequeue_audio_lock = new object();
         private int orderingDelay = 50; // Reduced from 100ms to 50ms for lower latency and fewer async tasks
+        private bool syntheticPlaybackPrimed;
         private long lastAudioSequenceNumber = -1;
         private bool dequeueTaskRunning = false; // Prevent multiple concurrent dequeue tasks
         private bool playbackEndCheckRunning = false;
@@ -45,12 +54,6 @@ namespace RPVoiceChat.Audio
 
         public bool IsLocational { get; set; } = true;
         public VoiceLevel voiceLevel { get; private set; } = VoiceLevel.Talking;
-        private Dictionary<VoiceLevel, float> referenceDistanceByVoiceLevel = new Dictionary<VoiceLevel, float>()
-        {
-            { VoiceLevel.Whispering, 1.25f },
-            { VoiceLevel.Talking, 2.25f },
-            { VoiceLevel.Shouting, 6.25f },
-        };
         private Vec3f lastSpeakerCoords;
         private DateTime? lastSpeakerUpdate;
         private AudioData currentAudio; // Store current audio data for distance factor calculation
@@ -65,16 +68,28 @@ namespace RPVoiceChat.Audio
         private const int WallThicknessUpdateIntervalMs = 200; // Update wall thickness every 200ms (5 Hz)
 
         public PlayerAudioSource(IPlayer player, ICoreClientAPI capi, ClientSettingsRepository clientSettingsRepo)
+            : this(player, capi, clientSettingsRepo, syntheticSourceId: null)
+        {
+        }
+
+        public PlayerAudioSource(
+            IPlayer player,
+            ICoreClientAPI capi,
+            ClientSettingsRepository clientSettingsRepo,
+            string syntheticSourceId)
         {
             this.player = player;
             this.capi = capi;
             this.clientSettingsRepo = clientSettingsRepo;
+            IsSyntheticSource = !string.IsNullOrWhiteSpace(syntheticSourceId);
+            // Voice: low latency. Program streams use an explicit prime buffer in DequeueAudio.
+            orderingDelay = IsSyntheticSource ? SyntheticPrimeTimeoutMs : 50;
 
             lastSpeakerCoords = player.Entity?.Pos?.XYZFloat;
             lastSpeakerUpdate = DateTime.Now;
 
             source = OALW.GenSource();
-            buffer = new CircularAudioBuffer(source, BufferCount);
+            buffer = new CircularAudioBuffer(source, IsSyntheticSource ? SyntheticBufferCount : BufferCount);
             buffer.OnEmptyingQueue += OnSourceStop;
 
             float gain = GetFinalGain();
@@ -82,24 +97,29 @@ namespace RPVoiceChat.Audio
             OALW.Source(source, ALSourceb.SourceRelative, true);
             OALW.Source(source, ALSourcef.Gain, gain);
             OALW.Source(source, ALSourcef.Pitch, 1.0f);
+            // Distance fade is applied manually in UpdatePlayer (OpenAL inverse-distance
+            // keeps full volume until ReferenceDistance, which feels stepped).
+            OALW.Source(source, ALSourcef.ReferenceDistance, 1f);
+            OALW.Source(source, ALSourcef.RolloffFactor, 0f);
 
             UpdateVoiceLevel(voiceLevel);
+        }
+
+        public void PrepareForPacket(AudioData audio)
+        {
+            currentAudio = audio;
         }
 
         public void UpdateVoiceLevel(VoiceLevel voiceLevel)
         {
             this.voiceLevel = voiceLevel;
-
-            float baseReferenceDistance = referenceDistanceByVoiceLevel[voiceLevel];
-            float distanceFactor = GetDistanceFactor();
-            float rolloffFactor = baseReferenceDistance * distanceFactor;
-
-            OALW.Source(source, ALSourcef.ReferenceDistance, baseReferenceDistance);
-            OALW.Source(source, ALSourcef.RolloffFactor, rolloffFactor);
+            TryApplyNametagRenderRange();
         }
 
         private void TryApplyNametagRenderRange()
         {
+            if (IsSyntheticSource) return;
+
             bool dynamicRange = WorldConfig.GetBool("use-nametag-dynamic-range", true);
             int targetRange = dynamicRange
                 ? WorldConfig.GetInt(voiceLevel)
@@ -224,7 +244,7 @@ namespace RPVoiceChat.Audio
                 intoxicatedEffect.Apply();
             }
 
-            float gain = GetFinalGain();
+            float gain = GetFinalGain() * GetDistanceAttenuationGain(effectiveSpeakerPos, listenerPos);
             var sourcePosition = new Vec3f();
             var velocity = new Vec3f();
 
@@ -260,34 +280,38 @@ namespace RPVoiceChat.Audio
         private float GetFinalGain()
         {
             var globalGain = Math.Clamp(PlayerListener.VoiceGain, 0, MaxGain);
-            var sourceGain = clientSettingsRepo.GetPlayerGain(player.PlayerUID);
+            var sourceGain = IsSyntheticSource ? 1f : clientSettingsRepo.GetPlayerGain(player.PlayerUID);
             var finalGain = GameMath.Clamp(globalGain * sourceGain, 0, MaxGain);
 
             return finalGain;
         }
 
-        private float GetDistanceFactor()
+        /// <summary>
+        /// Smooth distance fade from contact to max range (no near-field plateau).
+        /// </summary>
+        private float GetDistanceAttenuationGain(Vec3d speakerPos, EntityPos listenerPos)
         {
-            //  If it is a global broadcast, completely disable distance reduction
-            if (currentAudio?.isGlobalBroadcast == true)
+            if (currentAudio?.isGlobalBroadcast == true || currentAudio?.ignoreDistanceReduction == true)
             {
-                return 0f;
+                return 1f;
             }
-
-            // If the current audio ignores distance reduction, return 0 (no reduction)
-            if (currentAudio?.ignoreDistanceReduction == true)
-            {
-                return 0f;
-            }
-
-            const float quietDistance = 10;
 
             float maxHearingDistance = currentAudio?.effectiveRange > 0
                 ? currentAudio.effectiveRange
                 : WorldConfig.GetInt(voiceLevel);
-            var exponent = quietDistance < maxHearingDistance ? 2 : -0.33;
-            var distanceFactor = Math.Pow(quietDistance / maxHearingDistance, exponent);
-            return (float)distanceFactor;
+
+            if (maxHearingDistance <= 0.01f)
+            {
+                return 0f;
+            }
+
+            float distance = (float)speakerPos.DistanceTo(listenerPos.XYZ);
+            float t = GameMath.Clamp(distance / maxHearingDistance, 0f, 1f);
+
+            // Gradual from the first step away; ~6% remaining at max hearing distance.
+            const float edgeGain = 0.06f;
+            float shaped = (float)Math.Pow(1.0 - t, 1.35);
+            return edgeGain + (1f - edgeGain) * shaped;
         }
 
         private Vec3f GetRelativeSourcePosition(Vec3d speakerPos, EntityPos listenerPos)
@@ -329,6 +353,14 @@ namespace RPVoiceChat.Audio
             {
                 if (orderingQueue.ContainsKey(sequenceNumber)) return;
 
+                // New program session after stop/start: sequence jumps backward relative to previous run.
+                if (lastAudioSequenceNumber >= 0 && sequenceNumber + 50 < lastAudioSequenceNumber)
+                {
+                    orderingQueue.Clear();
+                    lastAudioSequenceNumber = -1;
+                    syntheticPlaybackPrimed = false;
+                }
+
                 if (lastAudioSequenceNumber >= sequenceNumber)
                 {
                     Logger.client.VerboseDebug($"Audio sequence {sequenceNumber} arrived too late, skipping enqueueing");
@@ -336,9 +368,17 @@ namespace RPVoiceChat.Audio
                 }
 
                 orderingQueue.Add(sequenceNumber, audio);
+
+                // Catch up to live only if flooded — do not trim the jitter buffer aggressively.
+                if (IsSyntheticSource)
+                {
+                    while (orderingQueue.Count > SyntheticMaxQueuedFrames)
+                    {
+                        orderingQueue.RemoveAt(0);
+                    }
+                }
             }
 
-            // Only start a new dequeue task if one isn't already running
             if (!dequeueTaskRunning)
             {
                 DequeueAudio();
@@ -347,101 +387,171 @@ namespace RPVoiceChat.Audio
 
         public async void DequeueAudio()
         {
-            // Prevent multiple concurrent dequeue tasks
             lock (dequeue_audio_lock)
             {
                 if (dequeueTaskRunning) return;
                 dequeueTaskRunning = true;
             }
 
-            await Task.Delay(orderingDelay);
-
-            lock (dequeue_audio_lock)
+            try
             {
-                try
+                if (IsSyntheticSource)
                 {
-                    AudioData audio;
-                    lock (ordering_queue_lock)
-                    {
-                        if (orderingQueue.Count == 0)
-                        {
-                            dequeueTaskRunning = false;
-                            return;
-                        }
-
-                        lastAudioSequenceNumber = orderingQueue.Keys[0];
-                        audio = orderingQueue[lastAudioSequenceNumber];
-                        orderingQueue.RemoveAt(0);
-                    }
-
-                    currentAudio = audio;
-                    UpdateVoiceLevel(audio.voiceLevel);
-
-                    if (codec != null)
-                        audio.data = codec.Decode(audio.data);
-
-                    if (audio.data == null || audio.data.Length == 0)
-                    {
-                        Logger.client.Warning("Received empty audio data, skipping");
-                        dequeueTaskRunning = false;
-                        return;
-                    }
-
-                    float finalGain = GetFinalGain();
-
-                    PcmUtils.ApplyGainWithSoftClipping(ref audio.data, audio.format, finalGain);
-                    PcmUtils.ApplyCompressor(ref audio.data, audio.format);
-
-                    // SKIP FADE for global broadcasts
-                    // Opus codec already handles transitions cleanly.
-                    if (!audio.isGlobalBroadcast)
-                    {
-                        int maxFadeDuration = Math.Min(
-                            2 * audio.frequency / 1000,
-                            audio.data.Length / 4
-                        );
-                        if (audio.data.Length > maxFadeDuration * 2)
-                        {
-                            AudioUtils.FadeEdges(audio.data, maxFadeDuration);
-                        }
-                    }
-
-                    buffer.QueueAudio(audio.data, audio.format, audio.frequency);
-
-                    // The source can stop playing if it finishes everything in queue
-                    if (source > 0) // Check if source is still valid
-                    {
-                        var state = OALW.GetSourceState(source);
-                        if (state != ALSourceState.Playing)
-                        {
-                            StartPlaying();
-                            NotifyStartedSpeaking();
-                        }
-                    }
-
-                    // Check if there are more items to process
-                    lock (ordering_queue_lock)
-                    {
-                        if (orderingQueue.Count > 0)
-                        {
-                            dequeueTaskRunning = false;
-                            DequeueAudio(); // Process next item immediately
-                            return;
-                        }
-                    }
-
-                    // No more incoming queued packets right now. Ensure we still detect
-                    // the transition to "not talking" when the last buffered audio ends.
-                    SchedulePlaybackEndCheck();
+                    await DrainSyntheticAudioAsync();
                 }
-                catch (Exception e)
+                else
                 {
-                    Logger.client.Warning($"Error in DequeueAudio: {e.Message}");
+                    await DrainVoiceAudioAsync();
                 }
-                finally
+            }
+            catch (Exception e)
+            {
+                Logger.client.Warning($"Error in DequeueAudio: {e.Message}");
+            }
+            finally
+            {
+                lock (dequeue_audio_lock)
                 {
                     dequeueTaskRunning = false;
                 }
+            }
+        }
+
+        /// <summary>
+        /// Continuous program/HLS path: prime a jitter buffer, then feed OpenAL as fast as it
+        /// accepts frames. OpenAL clocks playback — never sleep between successful queues.
+        /// </summary>
+        private async Task DrainSyntheticAudioAsync()
+        {
+            if (!syntheticPlaybackPrimed)
+            {
+                var deadline = DateTime.UtcNow.AddMilliseconds(SyntheticPrimeTimeoutMs);
+                while (DateTime.UtcNow < deadline)
+                {
+                    lock (ordering_queue_lock)
+                    {
+                        if (orderingQueue.Count >= SyntheticPrimeFrames)
+                        {
+                            break;
+                        }
+                    }
+
+                    await Task.Delay(10);
+                }
+
+                syntheticPlaybackPrimed = true;
+            }
+
+            while (true)
+            {
+                AudioData audio;
+                lock (ordering_queue_lock)
+                {
+                    if (orderingQueue.Count == 0)
+                    {
+                        // Keep primed while OpenAL still has audio — brief packet gaps must not re-prime.
+                        SchedulePlaybackEndCheck();
+                        return;
+                    }
+
+                    lastAudioSequenceNumber = orderingQueue.Keys[0];
+                    audio = orderingQueue[lastAudioSequenceNumber];
+                    orderingQueue.RemoveAt(0);
+                }
+
+                if (!TryPreparePcm(ref audio))
+                {
+                    continue;
+                }
+
+                while (!buffer.TryQueueAudio(audio.data, audio.format, audio.frequency))
+                {
+                    await Task.Delay(5);
+                }
+
+                EnsurePlaying();
+            }
+        }
+
+        private async Task DrainVoiceAudioAsync()
+        {
+            while (true)
+            {
+                await Task.Delay(orderingDelay);
+
+                AudioData audio;
+                lock (ordering_queue_lock)
+                {
+                    if (orderingQueue.Count == 0)
+                    {
+                        SchedulePlaybackEndCheck();
+                        return;
+                    }
+
+                    lastAudioSequenceNumber = orderingQueue.Keys[0];
+                    audio = orderingQueue[lastAudioSequenceNumber];
+                    orderingQueue.RemoveAt(0);
+                }
+
+                if (!TryPreparePcm(ref audio))
+                {
+                    continue;
+                }
+
+                buffer.QueueAudio(audio.data, audio.format, audio.frequency);
+                EnsurePlaying();
+            }
+        }
+
+        private bool TryPreparePcm(ref AudioData audio)
+        {
+            currentAudio = audio;
+            UpdateVoiceLevel(audio.voiceLevel);
+
+            if (codec != null)
+            {
+                audio.data = codec.Decode(audio.data);
+            }
+
+            if (audio.data == null || audio.data.Length == 0)
+            {
+                Logger.client.Warning("Received empty audio data, skipping");
+                return false;
+            }
+
+            float finalGain = GetFinalGain();
+            PcmUtils.ApplyGainWithSoftClipping(ref audio.data, audio.format, finalGain);
+
+            // Per-frame compressor/fade is for short voice bursts — skip on continuous program streams.
+            if (!audio.isGlobalBroadcast && !IsSyntheticSource)
+            {
+                PcmUtils.ApplyCompressor(ref audio.data, audio.format);
+
+                int maxFadeDuration = Math.Min(
+                    2 * audio.frequency / 1000,
+                    audio.data.Length / 4
+                );
+                if (audio.data.Length > maxFadeDuration * 2)
+                {
+                    AudioUtils.FadeEdges(audio.data, maxFadeDuration);
+                }
+            }
+
+            return true;
+        }
+
+        private void EnsurePlaying()
+        {
+            if (source <= 0)
+            {
+                return;
+            }
+
+            var state = OALW.GetSourceState(source);
+            if (state != ALSourceState.Playing)
+            {
+                StartPlaying();
+                NotifyStartedSpeaking();
             }
         }
 
@@ -465,16 +575,30 @@ namespace RPVoiceChat.Audio
                     {
                         hasPendingPackets = orderingQueue.Count > 0;
                     }
-                    if (hasPendingPackets) return;
+                    if (hasPendingPackets)
+                    {
+                        DequeueAudio();
+                        return;
+                    }
 
                     if (source <= 0) return;
 
                     var state = OALW.GetSourceState(source);
                     if (state != ALSourceState.Playing)
                     {
+                        if (IsSyntheticSource)
+                        {
+                            syntheticPlaybackPrimed = false;
+                        }
+
                         OnSourceStop();
                         return;
                     }
+                }
+
+                if (IsSyntheticSource)
+                {
+                    syntheticPlaybackPrimed = false;
                 }
             }
             catch (Exception e)
@@ -500,6 +624,7 @@ namespace RPVoiceChat.Audio
 
         private void NotifyStartedSpeaking()
         {
+            if (IsSyntheticSource) return;
             PlayerNameTagRenderer.UpdatePlayerNameTag(player, true);
         }
 
@@ -512,6 +637,7 @@ namespace RPVoiceChat.Audio
 
         private void OnSourceStop()
         {
+            if (IsSyntheticSource) return;
             PlayerNameTagRenderer.UpdatePlayerNameTag(player, false);
         }
 

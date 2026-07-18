@@ -47,6 +47,7 @@ namespace RPVoiceChat.Systems
             Kind = kind;
         }
 
+        [ProtoIgnore]
         public bool IsValid => !string.IsNullOrEmpty(NodeKeyA) && !string.IsNullOrEmpty(NodeKeyB) && NodeKeyA != NodeKeyB;
 
         public override bool Equals(object obj)
