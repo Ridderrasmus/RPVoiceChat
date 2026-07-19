@@ -40,15 +40,21 @@ public class BEBehaviorLightable : BlockEntityBehavior, IPointLight
         if (isLightActive == active)
         {
             // Recover from load-order edge cases where state is restored before render registration.
-            if (active && Blockentity.Api?.Side == EnumAppSide.Client)
+            if (active && (Blockentity.Api?.Side == EnumAppSide.Client || capi != null))
+            {
                 UpdateLight();
+            }
             return;
         }
 
         isLightActive = active;
-        Blockentity.MarkDirty(Blockentity.Api?.Side == EnumAppSide.Server);
+        if (Blockentity.Api?.Side == EnumAppSide.Server)
+        {
+            Blockentity.MarkDirty(true);
+        }
 
-        if (Blockentity.Api?.Side == EnumAppSide.Client)
+        // Prefer client API even when Blockentity.Api is not set yet (FromTreeAttributes order).
+        if (Blockentity.Api?.Side == EnumAppSide.Client || capi != null)
         {
             UpdateLight();
         }
@@ -127,7 +133,8 @@ public class BEBehaviorLightable : BlockEntityBehavior, IPointLight
             return;
         }
         float s = lightLevel * lightIntensityScale;
-        var c = new Vec3f(lightColor.X * s, lightColor.Y * s, lightColor.Z * s);
+        // lightColor is RGB in JSON/API; VS point-light shader expects BGR (same quirk as particles).
+        var c = new Vec3f(lightColor.Z * s, lightColor.Y * s, lightColor.X * s);
         if (lightInRenderList)
         {
             Pos = GetLightOrigin();
@@ -166,12 +173,26 @@ public class BEBehaviorLightable : BlockEntityBehavior, IPointLight
         base.FromTreeAttributes(tree, worldAccessForResolve);
         
         isLightActive = tree.GetBool("isLightActive", false);
-        lightColor = new Vec3f(
-            tree.GetFloat("lightColorX", 1.0f),
-            tree.GetFloat("lightColorY", 0.9f),
-            tree.GetFloat("lightColorZ", 0.7f)
-        );
-        lightLevel = tree.GetFloat("lightLevel", 1.0f);
+
+        // Only overwrite color when the tree actually carries it — otherwise keep JSON/Initialize values.
+        if (tree.HasAttribute("lightColorX") || tree.HasAttribute("lightColorY") || tree.HasAttribute("lightColorZ"))
+        {
+            lightColor = new Vec3f(
+                tree.GetFloat("lightColorX", lightColor.X),
+                tree.GetFloat("lightColorY", lightColor.Y),
+                tree.GetFloat("lightColorZ", lightColor.Z)
+            );
+        }
+
+        if (tree.HasAttribute("lightLevel"))
+        {
+            lightLevel = tree.GetFloat("lightLevel", lightLevel);
+        }
+
+        if (tree.HasAttribute("lightIntensityScale"))
+        {
+            lightIntensityScale = GameMath.Clamp(tree.GetFloat("lightIntensityScale", lightIntensityScale), 0.1f, 25f);
+        }
 
         if (Blockentity.Api?.Side == EnumAppSide.Client)
         {

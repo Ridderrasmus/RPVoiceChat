@@ -28,20 +28,20 @@
   ],
   "drawtype": "json",
   "shape": {
-    "base": "block/radioemitter",
+    "base": "block/radioemitter/radioemitter",
     "rotateYByType": {
-      "*-north": 90,
-      "*-east": 0,
-      "*-west": 180,
-      "*-south": 270
+      "*-north": 0,
+      "*-east": 270,
+      "*-west": 90,
+      "*-south": 180
     }
   },
   "attributes": {
     "wireAttachmentOffsets": {
-      "north": [ 0.5, 0.45, 0.2 ],
-      "east": [ 0.8, 0.45, 0.5 ],
-      "south": [ 0.5, 0.45, 0.8 ],
-      "west": [ 0.2, 0.45, 0.5 ]
+      "north": [ 0.5, 0.91, 0.13 ],
+      "east": [ 0.87, 0.91, 0.5 ],
+      "south": [ 0.5, 0.91, 0.87 ],
+      "west": [ 0.13, 0.91, 0.5 ]
     }
   },
   "sounds": {
@@ -52,7 +52,12 @@
   },
   "textures": {
     "wood": { "base": "game:block/wood/debarked/{wood}" },
-    "glass": { "base": "game:block/glass/plain" }
+    "glass": { "base": "game:block/glass/plain" },
+    "gold": { "base": "game:block/metal/plate/gold" },
+    "copper": { "base": "game:block/metal/plate/copper" },
+    "silver": { "base": "game:block/metal/ingot/silver" },
+    "stainlesssteel": { "base": "game:block/metal/ingot/stainlesssteel" },
+    "bakelite": { "base": "game:block/coal/bituminous" }
   },
   "rainPermeable": false,
   "sidesolid": { "all": false },

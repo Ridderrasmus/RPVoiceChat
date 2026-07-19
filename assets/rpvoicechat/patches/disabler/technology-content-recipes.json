@@ -233,7 +233,7 @@
     "op": "add",
     "path": "/enabled",
     "value": false,
-    "file": "rpvoicechat:recipes/grid/radioantennapart.json",
+    "file": "rpvoicechat:recipes/grid/radioantenna_part.json",
     "condition": {
       "when": "rpvoicechat:technology-content",
       "isValue": "false"

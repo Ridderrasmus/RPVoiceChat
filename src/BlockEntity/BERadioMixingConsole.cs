@@ -347,12 +347,14 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private void SyncOnAirVisuals()
         {
             var light = GetBehavior<BEBehaviorLightable>();
-            light?.SetLightActive(isOnAir);
-            if (isOnAir)
+            if (light == null)
             {
-                light?.SetLightColor(new Vec3f(1f, 0.18f, 0.1f));
-                light?.SetLightLevel(0.45f);
+                return;
             }
+
+            // Force red every toggle — tree sync was restoring warm/wrong defaults and looking blue in-game.
+            light.SetLightColor(new Vec3f(1f, 0.05f, 0.02f));
+            light.SetLightActive(isOnAir);
         }
 
         private void OnRadioWireConnectionsChanged()
@@ -466,8 +468,10 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 ClearOnAirInternal();
             }
 
-            MarkDirty(true);
+            // Sync light + glass before MarkDirty so clients get isOnAir and light state together.
             SyncOnAirVisuals();
+            MarkDirty(true);
+            dialog?.RefreshData();
             return MixingConsoleOnAirResult.Success;
         }
 
@@ -491,8 +495,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
 
             ClearOnAirInternal();
-            MarkDirty(true);
             SyncOnAirVisuals();
+            MarkDirty(true);
 
             if (Api?.Side == EnumAppSide.Server)
             {
@@ -535,6 +539,12 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
         {
+            // FromTreeAttributes runs before Initialize — Api is often still null.
+            if (Api == null && worldForResolving?.Api != null)
+            {
+                Api = worldForResolving.Api;
+            }
+
             base.FromTreeAttributes(tree, worldForResolving);
             hlsStreamUrl = tree.GetString("rpvc:mixingConsoleHlsUrl", hlsStreamUrl);
             isOnAir = tree.GetBool("rpvc:mixingConsoleOnAir", false);

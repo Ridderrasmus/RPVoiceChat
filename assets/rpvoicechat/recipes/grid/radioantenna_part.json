@@ -1,5 +1,5 @@
 {
-  "name": "radioantennapart",
+  "name": "radioantenna_part",
   "enabled": true,
   "ingredientPattern": "W,W,M",
   "ingredients": {
@@ -18,7 +18,7 @@
   "height": 3,
   "output": {
     "type": "block",
-    "code": "rpvoicechat:radioantennapart",
+    "code": "rpvoicechat:radioantenna_part",
     "quantity": 2
   }
 }

@@ -1,7 +1,7 @@
 {
-  "code": "radioantennapart",
+  "code": "radioantenna_part",
   "enabled": true,
-  "class": "radioantennapartblock",
+  "class": "radioantenna_partblock",
   "entityClass": "BlockEntityRadioAntennaPart",
   "creativeinventory": {
     "general": [ "*" ],
@@ -11,7 +11,13 @@
   "blockmaterial": "Metal",
   "drawtype": "json",
   "shape": {
-    "base": "block/radioantenna/radioantennapart"
+    "base": "block/radioantenna/radioantenna_top"
+  },
+  "shapeInventory": {
+    "base": "block/radioantenna/radioantenna_part"
+  },
+  "textures": {
+    "stainlesssteel": { "base": "game:block/metal/ingot/stainlesssteel" }
   },
   "sounds": {
     "place": "game:block/anvil",

@@ -28,6 +28,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private RotatingMechPartRenderer mechPartRenderer;
 
         public override bool IsActiveEndpoint => true;
+        protected override int MaxConnections => 1;
         public WireNodeKind WireNodeKind => WireNodeKind.RadioEmitter;
         public float PowerPercent { get; private set; }
         public RadioEmitterOperatingMode OperatingMode => operatingMode;
@@ -52,7 +53,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 mechPartRenderer = new RotatingMechPartRenderer(
                     this,
                     capi,
-                    new AssetLocation("rpvoicechat:shapes/block/switchboard/switchboard_mechpart.json"),
+                    new AssetLocation("rpvoicechat:shapes/block/radioemitter/radioemitter_mechpart.json"),
                     GetMechPartBaseRotY());
             }
         }
@@ -96,14 +97,21 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public void SetOperatingMode(RadioEmitterOperatingMode mode)
         {
-            if (mode == RadioEmitterOperatingMode.Repeater && GetConnections().Count > 0)
-            {
-                DisconnectAllWires();
-            }
+            bool leavingRepeater = operatingMode == RadioEmitterOperatingMode.Repeater
+                && mode == RadioEmitterOperatingMode.WiredSource;
 
+            // Keep existing wires when entering repeater mode: they stay dormant for RF
+            // (CollectWiredTransmissionPoints skips repeaters) and become active again
+            // when returning to wired source. New wire connections remain denied while repeating.
             operatingMode = mode;
             MarkDirty();
             dialog?.RefreshData();
+
+            if (leavingRepeater)
+            {
+                RejoinWireNetworkAfterLeavingRepeater();
+            }
+
             SyncWirelessRegistration();
         }
 
@@ -143,6 +151,18 @@ namespace RPVoiceChat.GameContent.BlockEntity
             return count;
         }
 
+        /// <summary>
+        /// Called when antenna segments above this emitter are added/removed so RF range + open GUI stay in sync.
+        /// </summary>
+        public void OnAntennaStackChanged()
+        {
+            dialog?.RefreshData();
+            if (Api?.Side == EnumAppSide.Server)
+            {
+                MarkDirty();
+            }
+        }
+
         public string GetConsoleFrequency()
         {
             return RadioWireNetworkHelper.FindSupervisionConsole(this)?.Frequency ?? "";
@@ -168,12 +188,25 @@ namespace RPVoiceChat.GameContent.BlockEntity
             });
         }
 
-        public void SetRepeaterFrequency(string desired)
+        /// <returns>False when the frequency is already claimed by another transmitter.</returns>
+        public bool TrySetRepeaterFrequency(string desired)
         {
-            repeaterFrequency = (desired ?? "").Trim();
+            string normalized = (desired ?? "").Trim();
+            if (RadioFrequencyUtil.Matches(normalized, repeaterFrequency))
+            {
+                return true;
+            }
+
+            if (Api?.World != null && !RadioTransmitFrequencyGuard.IsFrequencyAvailable(Api.World, normalized, Pos))
+            {
+                return false;
+            }
+
+            repeaterFrequency = normalized;
             MarkDirty();
             dialog?.RefreshData();
             SyncWirelessRegistration();
+            return true;
         }
 
         public bool CanRelayRepeaterFrequency()
@@ -264,29 +297,64 @@ namespace RPVoiceChat.GameContent.BlockEntity
             GetBehavior<BEBehaviorMPBase>()?.CreateJoinAndDiscoverNetwork(connectorFace);
         }
 
-        private void DisconnectAllWires()
+        /// <summary>
+        /// After leaving repeater mode, adopt a neighbor's wire network if we still have
+        /// cable links but lost <see cref="NetworkUID"/> (or were dropped from the network set).
+        /// </summary>
+        private void RejoinWireNetworkAfterLeavingRepeater()
         {
-            foreach (var connection in GetConnections().ToList())
+            if (Api?.Side != EnumAppSide.Server || GetConnections().Count == 0)
             {
-                RemoveConnection(connection);
-                var otherPos = connection.GetOtherBlockPos(Pos);
-                if (Api?.World?.BlockAccessor.GetBlockEntity(otherPos) is BEWireNode other)
+                return;
+            }
+
+            foreach (var connection in GetConnections())
+            {
+                BEWireNode other = connection.GetOtherNode(this);
+                if (other == null || other.NetworkUID == 0)
                 {
-                    other.RemoveConnection(connection);
+                    continue;
+                }
+
+                var network = WireNetworkHandler.GetNetwork(other.NetworkUID);
+                if (network == null)
+                {
+                    continue;
+                }
+
+                network.AddNode(this);
+                NetworkUID = other.NetworkUID;
+                WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(this, network);
+                WireNetworkHandler.RebuildNetworkState(NetworkUID);
+                if (Api is ICoreServerAPI sapi)
+                {
+                    WireTopologyConnectivity.NotifyNode(sapi, this);
+                }
+
+                return;
+            }
+
+            if (NetworkUID != 0)
+            {
+                WireNetworkHandler.RebuildNetworkState(NetworkUID);
+                if (Api is ICoreServerAPI sapi)
+                {
+                    WireTopologyConnectivity.NotifyNode(sapi, this);
                 }
             }
         }
 
         private float GetMechPartBaseRotY()
         {
+            // Same orientation scheme as switchboard (shape + axle hole authored the same way).
             if (Block?.Variant != null && Block.Variant.TryGetValue("side", out string sideStr))
             {
                 return sideStr switch
                 {
                     "north" => 0f,
                     "east" => 270f,
-                    "south" => 180f,
                     "west" => 90f,
+                    "south" => 180f,
                     _ => 0f
                 };
             }
@@ -311,6 +379,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             operatingMode = (RadioEmitterOperatingMode)tree.GetInt("rpvc:radioEmitterMode", (int)operatingMode);
             repeaterFrequency = tree.GetString("rpvc:radioRepeaterFrequency", repeaterFrequency);
             PowerPercent = tree.GetFloat("rpvc:radioEmitterPowerPercent", PowerPercent);
+            DisableConsumerInstancedRenderer();
             dialog?.RefreshData();
         }
 
@@ -322,6 +391,42 @@ namespace RPVoiceChat.GameContent.BlockEntity
             tree.SetFloat("rpvc:radioEmitterPowerPercent", PowerPercent);
         }
 
+        /// <summary>
+        /// Quern/switchboard-style: tessellate the static cabinet explicitly and skip default aggregation
+        /// so MPConsumer cannot steal or double the mesh.
+        /// </summary>
+        public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tesselator)
+        {
+            if (Block == null)
+            {
+                return false;
+            }
+
+            CompositeShape blockShape = Block.Shape;
+            if (blockShape?.Base == null)
+            {
+                return false;
+            }
+
+            AssetLocation shapeLoc = blockShape.Base.Clone().WithPathPrefixOnce("shapes/").WithPathAppendixOnce(".json");
+            Shape shape = Shape.TryGet(Api, shapeLoc);
+            if (shape == null)
+            {
+                return false;
+            }
+
+            tesselator.TesselateShape(
+                Block,
+                shape,
+                out MeshData mesh,
+                new Vec3f(blockShape.rotateX, blockShape.rotateY, blockShape.rotateZ),
+                blockShape.QuantityElements,
+                blockShape.SelectiveElements);
+
+            mesher.AddMeshData(mesh);
+            return true;
+        }
+
         public override void OnBlockRemoved()
         {
             if (Api?.Side == EnumAppSide.Server)
@@ -330,6 +435,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 RadioBlockIndex.UnregisterEmitter(Pos);
             }
 
+            mechPartRenderer?.Dispose();
+            mechPartRenderer = null;
             base.OnBlockRemoved();
             dialog?.TryClose();
         }
@@ -338,6 +445,14 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
             base.GetBlockInfo(forPlayer, dsc);
             dsc.AppendLine(UIUtils.I18n("blockdesc-radioemitter-*"));
+            int power = (int)System.Math.Round(PowerPercent * 100);
+            int minPower = ServerConfigManager.RadioNetworkMinPowerPercent;
+            dsc.AppendLine(UIUtils.I18n("Radio.Emitter.Info.Power", power, minPower));
+            dsc.AppendLine(UIUtils.I18n("Radio.Emitter.Info.Range", GetEffectiveTransmitRangeBlocks()));
+            if (!HasSufficientTransmitPower())
+            {
+                dsc.AppendLine(UIUtils.I18n("Radio.Emitter.Gui.InsufficientPower", minPower));
+            }
         }
 
         public override void OnBlockUnloaded()
@@ -348,6 +463,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 RadioBlockIndex.UnregisterEmitter(Pos);
             }
 
+            mechPartRenderer?.Dispose();
+            mechPartRenderer = null;
             base.OnBlockUnloaded();
         }
     }

@@ -25,7 +25,8 @@ namespace RPVoiceChat.GameContent.Block
             api.RegisterBlockClass("radioconsoleblock", typeof(RadioSupervisionConsoleBlock));
             api.RegisterBlockClass("radiomicrophoneblock", typeof(RadioMicrophoneBlock));
             api.RegisterBlockClass("radioemitterblock", typeof(RadioEmitterBlock));
-            api.RegisterBlockClass("radioantennapartblock", typeof(RadioAntennaPartBlock));
+            api.RegisterBlockClass("radioantenna_partblock", typeof(RadioAntennaPartBlock));
+            api.RegisterBlockClass("radioantennapartblock", typeof(RadioAntennaPartBlock)); // legacy alias
             api.RegisterBlockClass("radiomixingconsoleblock", typeof(RadioMixingConsoleBlock));
             api.RegisterBlockClass("radioreceiverblock", typeof(RadioReceiverBlock));
         }

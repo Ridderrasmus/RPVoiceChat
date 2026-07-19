@@ -1,8 +1,8 @@
-using System.Linq;
 using System.Text;
 using RPVoiceChat.Gui;
 using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Networking.Packets;
+using RPVoiceChat.Systems;
 using RPVoiceChat.Util;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -24,6 +24,15 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public string Frequency => frequency ?? "";
         public string DisplayName => displayName ?? "";
+
+        public override void Initialize(ICoreAPI api)
+        {
+            base.Initialize(api);
+            if (api.Side == EnumAppSide.Server)
+            {
+                RadioBlockIndex.RegisterSupervisionConsole(Pos);
+            }
+        }
 
         public override void OnNetworkCreated(long networkID)
         {
@@ -98,11 +107,24 @@ namespace RPVoiceChat.GameContent.BlockEntity
             RequestSetDisplayName(desiredDisplayName);
         }
 
-        public void SetFrequency(string desired)
+        /// <returns>False when the frequency is already claimed by another transmitter.</returns>
+        public bool TrySetFrequency(string desired)
         {
-            frequency = (desired ?? "").Trim();
+            string normalized = (desired ?? "").Trim();
+            if (RadioFrequencyUtil.Matches(normalized, frequency))
+            {
+                return true;
+            }
+
+            if (Api?.World != null && !RadioTransmitFrequencyGuard.IsFrequencyAvailable(Api.World, normalized, Pos))
+            {
+                return false;
+            }
+
+            frequency = normalized;
             MarkDirty();
             dialog?.RefreshData();
+            return true;
         }
 
         public void SetDisplayName(string desired)
@@ -134,8 +156,23 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public override void OnBlockRemoved()
         {
+            if (Api?.Side == EnumAppSide.Server)
+            {
+                RadioBlockIndex.UnregisterSupervisionConsole(Pos);
+            }
+
             base.OnBlockRemoved();
             dialog?.TryClose();
+        }
+
+        public override void OnBlockUnloaded()
+        {
+            if (Api?.Side == EnumAppSide.Server)
+            {
+                RadioBlockIndex.UnregisterSupervisionConsole(Pos);
+            }
+
+            base.OnBlockUnloaded();
         }
 
         public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
