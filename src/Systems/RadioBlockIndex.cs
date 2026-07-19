@@ -12,6 +12,7 @@ namespace RPVoiceChat.Systems
         private static readonly HashSet<BlockPos> microphonePositions = new();
         private static readonly HashSet<BlockPos> receiverPositions = new();
         private static readonly HashSet<BlockPos> mixingConsolePositions = new();
+        private static readonly HashSet<BlockPos> supervisionConsolePositions = new();
 
         public static void RegisterEmitter(BlockPos pos)
         {
@@ -117,6 +118,22 @@ namespace RPVoiceChat.Systems
             }
         }
 
+        public static void RegisterSupervisionConsole(BlockPos pos)
+        {
+            if (pos != null)
+            {
+                supervisionConsolePositions.Add(pos.Copy());
+            }
+        }
+
+        public static void UnregisterSupervisionConsole(BlockPos pos)
+        {
+            if (pos != null)
+            {
+                supervisionConsolePositions.Remove(pos);
+            }
+        }
+
         public static IEnumerable<BlockEntityRadioMixingConsole> GetLoadedMixingConsoles(IWorldAccessor world)
         {
             if (world?.BlockAccessor == null)
@@ -133,6 +150,26 @@ namespace RPVoiceChat.Systems
                 else
                 {
                     mixingConsolePositions.Remove(pos);
+                }
+            }
+        }
+
+        public static IEnumerable<BlockEntityRadioSupervisionConsole> GetLoadedSupervisionConsoles(IWorldAccessor world)
+        {
+            if (world?.BlockAccessor == null)
+            {
+                yield break;
+            }
+
+            foreach (BlockPos pos in supervisionConsolePositions.ToArray())
+            {
+                if (world.BlockAccessor.GetBlockEntity(pos) is BlockEntityRadioSupervisionConsole console)
+                {
+                    yield return console;
+                }
+                else
+                {
+                    supervisionConsolePositions.Remove(pos);
                 }
             }
         }

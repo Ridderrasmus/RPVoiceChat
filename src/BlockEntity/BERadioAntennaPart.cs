@@ -1,3 +1,5 @@
+using RPVoiceChat.GameContent.Block;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
@@ -6,6 +8,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
 {
     public class BlockEntityRadioAntennaPart : Vintagestory.API.Common.BlockEntity
     {
+        private static readonly AssetLocation TopShapeLoc = new AssetLocation("rpvoicechat", "shapes/block/radioantenna/radioantenna_top.json");
+        private static readonly AssetLocation PartShapeLoc = new AssetLocation("rpvoicechat", "shapes/block/radioantenna/radioantenna_part.json");
+
         private BlockPos baseEmitterPos;
 
         public BlockPos BaseEmitterPos => baseEmitterPos;
@@ -49,6 +54,37 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
         }
 
+        /// <summary>
+        /// Tip of the stack renders radioantenna_top; any segment with another part above renders radioantenna_part.
+        /// </summary>
+        public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tesselator)
+        {
+            if (Block == null || Api == null)
+            {
+                return false;
+            }
+
+            bool hasAntennaAbove = Api.World.BlockAccessor.GetBlock(Pos.UpCopy()) is RadioAntennaPartBlock;
+            AssetLocation shapeLoc = hasAntennaAbove ? PartShapeLoc : TopShapeLoc;
+            Shape shape = Shape.TryGet(Api, shapeLoc);
+            if (shape == null)
+            {
+                return false;
+            }
+
+            CompositeShape blockShape = Block.Shape;
+            tesselator.TesselateShape(
+                Block,
+                shape,
+                out MeshData mesh,
+                new Vec3f(blockShape?.rotateX ?? 0, blockShape?.rotateY ?? 0, blockShape?.rotateZ ?? 0),
+                blockShape?.QuantityElements,
+                blockShape?.SelectiveElements);
+
+            mesher.AddMeshData(mesh);
+            return true;
+        }
+
         public void ResolveBaseEmitter()
         {
             if (Api?.World?.BlockAccessor == null)
@@ -89,14 +125,14 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         private void NotifyBaseEmitterRangeChanged()
         {
-            if (Api?.Side != EnumAppSide.Server || baseEmitterPos == null)
+            if (baseEmitterPos == null || Api?.World?.BlockAccessor == null)
             {
                 return;
             }
 
             if (Api.World.BlockAccessor.GetBlockEntity(baseEmitterPos) is BlockEntityRadioEmitter emitter)
             {
-                emitter.MarkDirty();
+                emitter.OnAntennaStackChanged();
             }
         }
     }

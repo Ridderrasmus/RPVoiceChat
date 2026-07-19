@@ -113,7 +113,7 @@
     "op": "add",
     "path": "/enabled",
     "value": false,
-    "file": "rpvoicechat:blocktypes/radioantennapart.json",
+    "file": "rpvoicechat:blocktypes/radioantenna_part.json",
     "condition": {
       "when": "rpvoicechat:technology-content",
       "isValue": "false"

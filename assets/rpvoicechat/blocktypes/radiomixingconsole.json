@@ -10,11 +10,11 @@
     {
       "name": "BELightable",
       "properties": {
-        "lightLevel": 0.45,
+        "lightLevel": 0.9,
         "lightIntensityScale": 1.35,
         "lightColorX": 1.0,
-        "lightColorY": 0.18,
-        "lightColorZ": 0.1
+        "lightColorY": 0.05,
+        "lightColorZ": 0.02
       }
     }
   ],

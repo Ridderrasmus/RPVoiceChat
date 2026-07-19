@@ -263,7 +263,10 @@ namespace RPVoiceChat
                     {
                         if (packet.Operation == RadioSettingsOperation.SetFrequency)
                         {
-                            console.SetFrequency(packet.Value);
+                            if (!console.TrySetFrequency(packet.Value))
+                            {
+                                SendRadioClientNotification(player, "Radio.Error.FrequencyInUse");
+                            }
                         }
                         else
                         {
@@ -280,7 +283,10 @@ namespace RPVoiceChat
                 case RadioSettingsOperation.SetRepeaterFrequency:
                     if (sapi.World.BlockAccessor.GetBlockEntity(packet.BlockPos) is BlockEntityRadioEmitter repeaterEmitter)
                     {
-                        repeaterEmitter.SetRepeaterFrequency(packet.Value);
+                        if (!repeaterEmitter.TrySetRepeaterFrequency(packet.Value))
+                        {
+                            SendRadioClientNotification(player, "Radio.Error.FrequencyInUse");
+                        }
                     }
                     break;
                 case RadioSettingsOperation.SetReceiverFrequency:
