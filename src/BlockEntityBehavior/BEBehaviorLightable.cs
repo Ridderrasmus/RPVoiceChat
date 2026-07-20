@@ -22,6 +22,8 @@ public class BEBehaviorLightable : BlockEntityBehavior, IPointLight
     /// Scale &gt; 1 makes the dynamic light much brighter / larger-looking (optional JSON lightIntensityScale).
     /// </summary>
     private float lightIntensityScale = 1.0f;
+    /// <summary>Client-only multiplier for smooth pulsing (no MarkDirty).</summary>
+    private float clientPulseFactor = 1.0f;
     private ICoreClientAPI capi;
 
     // IPointLight implementation
@@ -88,6 +90,18 @@ public class BEBehaviorLightable : BlockEntityBehavior, IPointLight
 
     public bool IsLightActive => isLightActive;
 
+    /// <summary>
+    /// Client-only intensity pulse (0..1+). Does not dirty the block entity.
+    /// </summary>
+    public void SetClientPulseFactor(float factor)
+    {
+        clientPulseFactor = Math.Max(0f, factor);
+        if (isLightActive && (Blockentity.Api?.Side == EnumAppSide.Client || capi != null))
+        {
+            UpdateLight();
+        }
+    }
+
     public override void Initialize(ICoreAPI api, JsonObject properties)
     {
         base.Initialize(api, properties);
@@ -132,7 +146,7 @@ public class BEBehaviorLightable : BlockEntityBehavior, IPointLight
             }
             return;
         }
-        float s = lightLevel * lightIntensityScale;
+        float s = lightLevel * lightIntensityScale * clientPulseFactor;
         // lightColor is RGB in JSON/API; VS point-light shader expects BGR (same quirk as particles).
         var c = new Vec3f(lightColor.Z * s, lightColor.Y * s, lightColor.X * s);
         if (lightInRenderList)

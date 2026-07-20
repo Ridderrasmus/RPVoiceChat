@@ -43,6 +43,17 @@ namespace RPVoiceChat.GameContent.Block
             return placed;
         }
 
+        public override bool CanAttachBlockAt(IBlockAccessor blockAccessor, Vintagestory.API.Common.Block block, BlockPos pos, BlockFacing blockFace, Cuboidi attachmentArea = null)
+        {
+            // Allow Unstable stacking: thin antenna is not SideSolid, but parts attach on top.
+            if (blockFace == BlockFacing.UP && IsAntennaPartBlock(block))
+            {
+                return true;
+            }
+
+            return base.CanAttachBlockAt(blockAccessor, block, pos, blockFace, attachmentArea);
+        }
+
         public override void OnNeighbourBlockChange(IWorldAccessor world, BlockPos pos, BlockPos neibpos)
         {
             base.OnNeighbourBlockChange(world, pos, neibpos);
@@ -51,6 +62,13 @@ namespace RPVoiceChat.GameContent.Block
             {
                 world.BlockAccessor.GetBlockEntity(pos)?.MarkDirty(true);
             }
+        }
+
+        private static bool IsAntennaPartBlock(Vintagestory.API.Common.Block block)
+        {
+            return block is RadioAntennaPartBlock
+                || block?.Class == "radioantenna_partblock"
+                || block?.Class == "radioantennapartblock";
         }
 
         /// <summary>
