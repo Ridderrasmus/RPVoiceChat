@@ -3,6 +3,26 @@
   "enabled": true,
   "class": "radioantenna_partblock",
   "entityClass": "BlockEntityRadioAntennaPart",
+  "behaviors": [
+    {
+      "name": "Unstable",
+      "properties": {
+        "attachedToFaces": [ "down" ]
+      }
+    }
+  ],
+  "entityBehaviors": [
+    {
+      "name": "BELightable",
+      "properties": {
+        "lightLevel": 0.85,
+        "lightIntensityScale": 1.2,
+        "lightColorX": 1.0,
+        "lightColorY": 0.05,
+        "lightColorZ": 0.02
+      }
+    }
+  ],
   "creativeinventory": {
     "general": [ "*" ],
     "rpvoicechat": [ "*" ]
@@ -17,7 +37,9 @@
     "base": "block/radioantenna/radioantenna_part"
   },
   "textures": {
-    "stainlesssteel": { "base": "game:block/metal/ingot/stainlesssteel" }
+    "stainlesssteel": { "base": "game:block/metal/ingot/stainlesssteel" },
+    "bakelite": { "base": "game:block/coal/bituminous" },
+    "bulbglass": { "base": "game:block/glass/red" }
   },
   "sounds": {
     "place": "game:block/anvil",

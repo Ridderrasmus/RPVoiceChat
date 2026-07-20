@@ -61,5 +61,18 @@ namespace RPVoiceChat.GameContent.Block
                 (world.BlockAccessor.GetBlockEntity(pos) as BlockEntityRadioEmitter)?.TryDiscoverNetwork();
             }
         }
+
+        public override bool CanAttachBlockAt(IBlockAccessor blockAccessor, Vintagestory.API.Common.Block block, BlockPos pos, BlockFacing blockFace, Cuboidi attachmentArea = null)
+        {
+            if (blockFace == BlockFacing.UP
+                && (block is RadioAntennaPartBlock
+                    || block?.Class == "radioantenna_partblock"
+                    || block?.Class == "radioantennapartblock"))
+            {
+                return true;
+            }
+
+            return base.CanAttachBlockAt(blockAccessor, block, pos, blockFace, attachmentArea);
+        }
     }
 }
