@@ -4,18 +4,30 @@
   "class": "radiomicrophoneblock",
   "entityClass": "BlockEntityRadioMicrophone",
   "behaviors": [
-    { "name": "HorizontalOrientable" }
+    {
+      "name": "HorizontalOrientable"
+    }
+  ],
+  "entityBehaviors": [
+    { "name": "Animatable" }
   ],
   "creativeinventory": {
-    "general": [ "*-north" ],
-    "rpvoicechat": [ "*-north" ]
+    "general": [
+      "*-north"
+    ],
+    "rpvoicechat": [
+      "*-north"
+    ]
   },
   "maxstacksize": 1,
   "blockmaterial": "wood",
   "variantgroups": [
     {
       "code": "wood",
-      "states": [ "aged", "veryaged" ],
+      "states": [
+        "aged",
+        "veryaged"
+      ],
       "loadFromProperties": "block/wood"
     },
     {
@@ -35,10 +47,10 @@
   },
   "attributes": {
     "wireAttachmentOffsets": {
-      "north": [ 0.5, 0.45, 0.2 ],
-      "east": [ 0.8, 0.45, 0.5 ],
-      "south": [ 0.5, 0.45, 0.8 ],
-      "west": [ 0.2, 0.45, 0.5 ]
+      "north": [ 0.497, 0.243, 0.320 ],
+      "east":  [ 0.680, 0.243, 0.497 ],
+      "south": [ 0.503, 0.243, 0.680 ],
+      "west":  [ 0.320, 0.243, 0.503 ]
     }
   },
   "sounds": {
@@ -48,11 +60,41 @@
     "walk": "game:walk/wood"
   },
   "textures": {
-    "wood": { "base": "game:block/wood/debarked/{wood}" }
+    "wood": {
+      "base": "game:block/wood/debarked/{wood}"
+    },
+    "bakelite": {
+      "base": "game:block/coal/bituminous"
+    },
+    "basalt1": {
+      "base": "game:block/stone/cobblestone/basalt1"
+    },
+    "copper": {
+      "base": "game:block/metal/plate/copper"
+    },
+    "gold": {
+      "base": "game:block/metal/tarnished/gold"
+    },
+    "lead": {
+      "base": "game:block/metal/ingot/lead"
+    },
+    "silver": {
+      "base": "game:block/metal/ingot/silver"
+    },
+    "steel": {
+      "base": "game:block/metal/ingot/steel"
+    },
+    "rusty-iron": {
+      "base": "game:block/metal/tarnished/rusty-iron"
+    }
   },
   "rainPermeable": false,
-  "sidesolid": { "all": false },
-  "sideopaque": { "all": false },
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "all": false
+  },
   "lightAbsorption": 15,
   "resistance": 1
 }

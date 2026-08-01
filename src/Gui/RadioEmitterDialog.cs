@@ -76,12 +76,12 @@ namespace RPVoiceChat.Gui
 
             ElementBounds dialogBounds = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.CenterMiddle);
             ElementBounds rangeBounds = ElementBounds.Fixed(0, 35, 420, 22);
-            ElementBounds statusBounds = ElementBounds.Fixed(0, 76, 420, 80);
-            ElementBounds wiredButtonBounds = ElementBounds.Fixed(0, 164, 204, 28);
-            ElementBounds repeaterButtonBounds = ElementBounds.Fixed(216, 164, 204, 28);
-            ElementBounds repeaterLabelBounds = ElementBounds.Fixed(0, 200, 420, 18);
-            ElementBounds repeaterInputBounds = ElementBounds.Fixed(0, 220, 320, 26);
-            ElementBounds repeaterSaveBounds = ElementBounds.Fixed(332, 220, 88, 26);
+            ElementBounds statusBounds = ElementBounds.Fixed(0, 76, 420, 120);
+            ElementBounds wiredButtonBounds = ElementBounds.Fixed(0, 208, 204, 28);
+            ElementBounds repeaterButtonBounds = ElementBounds.Fixed(216, 208, 204, 28);
+            ElementBounds repeaterLabelBounds = ElementBounds.Fixed(0, 248, 420, 18);
+            ElementBounds repeaterInputBounds = ElementBounds.Fixed(0, 268, 320, 26);
+            ElementBounds repeaterSaveBounds = ElementBounds.Fixed(332, 268, 88, 26);
 
             ElementBounds bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
             bgBounds.BothSizing = ElementSizing.FitToChildren;

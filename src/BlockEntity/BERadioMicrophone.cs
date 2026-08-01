@@ -1,3 +1,4 @@
+using System;
 using RPVoiceChat.Config;
 using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Gui;
@@ -6,12 +7,16 @@ using RPVoiceChat.Systems;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
+using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
+using Vintagestory.GameContent;
 
 namespace RPVoiceChat.GameContent.BlockEntity
 {
     public class BlockEntityRadioMicrophone : BEWireNode, IWireTypedNode, IRadioVoiceInput
     {
+        private const string TransmitAnimationCode = "playing-sound";
+
         private RadioMicrophoneDialog dialog;
         private bool isTransmitting;
         private string activeOperatorPlayerUid = "";
@@ -24,6 +29,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public bool IsTransmitting => isTransmitting;
 
         public string ActiveOperatorPlayerUid => activeOperatorPlayerUid ?? "";
+
+        private BEBehaviorAnimatable Animatable => GetBehavior<BEBehaviorAnimatable>();
+        private BlockEntityAnimationUtil AnimUtil => Animatable?.animUtil;
 
         public bool IsBusyForOtherPlayer(string playerUid)
         {
@@ -46,6 +54,10 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (api.Side == EnumAppSide.Server)
             {
                 RadioBlockIndex.RegisterMicrophone(Pos);
+            }
+            else if (api.Side == EnumAppSide.Client)
+            {
+                SyncTransmitAnimationState();
             }
         }
 
@@ -158,6 +170,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             isTransmitting = tree.GetBool("rpvc:radioMicTransmitting", false);
             activeOperatorPlayerUid = tree.GetString("rpvc:radioMicOperatorUid", "");
             dialog?.RefreshData();
+            SyncTransmitAnimationState();
         }
 
         public override void ToTreeAttributes(ITreeAttribute tree)
@@ -188,6 +201,87 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
 
             base.OnBlockUnloaded();
+        }
+
+        private void SyncTransmitAnimationState()
+        {
+            if (Api?.Side != EnumAppSide.Client)
+            {
+                return;
+            }
+
+            InitializeClientAnimator();
+
+            var animUtil = AnimUtil;
+            if (animUtil == null)
+            {
+                return;
+            }
+
+            if (isTransmitting)
+            {
+                StartAnimationIfNotRunning(TransmitAnimationCode);
+            }
+            else
+            {
+                StopAnimation(TransmitAnimationCode);
+            }
+        }
+
+        private void InitializeClientAnimator()
+        {
+            var animUtil = AnimUtil;
+            if (animUtil == null || animUtil.animator != null || Api?.Side != EnumAppSide.Client)
+            {
+                return;
+            }
+
+            string shapePath = Block?.Shape?.Base?.Path ?? "block/radiomicrophone";
+            if (Block?.Code != null && !string.IsNullOrWhiteSpace(shapePath))
+            {
+                var assetLoc = new AssetLocation(Block.Code.Domain, "shapes/" + shapePath + ".json");
+                var shape = Shape.TryGet(Api, assetLoc);
+                if (shape?.Animations != null && shape.Animations.Length > 0)
+                {
+                    shape.InitForAnimations(Api.Logger, shapePath, Array.Empty<string>());
+                }
+            }
+
+            animUtil.InitializeAnimator(shapePath, null, null, new Vec3f(0, GetBlockSideRotY(), 0));
+        }
+
+        private void StartAnimationIfNotRunning(string animationCode)
+        {
+            var animUtil = AnimUtil;
+            if (animUtil == null || animUtil.activeAnimationsByAnimCode.ContainsKey(animationCode))
+            {
+                return;
+            }
+
+            animUtil.StartAnimation(new AnimationMetaData
+            {
+                Animation = animationCode,
+                Code = animationCode
+            });
+        }
+
+        private void StopAnimation(string animationCode)
+        {
+            AnimUtil?.StopAnimation(animationCode);
+        }
+
+        private float GetBlockSideRotY()
+        {
+            return Block?.Variant?.TryGetValue("side", out string side) == true
+                ? side switch
+                {
+                    "north" => 0f,
+                    "east" => 270f,
+                    "west" => 90f,
+                    "south" => 180f,
+                    _ => 0f
+                }
+                : 0f;
         }
     }
 }
