@@ -30,39 +30,66 @@ namespace RPVoiceChat.Systems
             foreach (BlockEntityRadioReceiver receiver in RadioBlockIndex.GetLoadedReceivers(sapi.World))
             {
                 string tunedFrequency = RadioFrequencyUtil.Normalize(receiver.TunedFrequency);
-                int receiverRange = receiver.PlaybackRangeBlocks;
                 if (!receiver.IsEnabled
-                    || receiverRange <= 0
                     || tunedFrequency.Length == 0
                     || !RoutesContainFrequency(routes, tunedFrequency))
                 {
                     continue;
                 }
 
-                double receiverRangeSq = (double)receiverRange * receiverRange;
-                Vec3d receiverPos = receiver.Pos.ToVec3d().Add(0.5, 0.5, 0.5);
-                var listenRoute = new VoiceRoute(
-                    receiverPos,
-                    receiverRange,
+                EmitAroundPoint(
+                    receiver.Pos.ToVec3d().Add(0.5, 0.5, 0.5),
+                    receiver.PlaybackRangeBlocks,
                     receiver.Pos.dimension,
                     tunedFrequency,
-                    acousticEmission: true);
+                    recipients);
 
-                foreach (IServerPlayer player in sapi.World.AllOnlinePlayers)
+                foreach (BlockEntitySpeaker speaker in RadioWireNetworkHelper.FindSpeakers(receiver))
                 {
-                    if (player?.Entity?.Pos == null || player.Entity.Pos.Dimension != receiver.Pos.dimension)
-                    {
-                        continue;
-                    }
-
-                    double distanceSq = SquareDistance(player.Entity.Pos.XYZ, receiverPos);
-                    if (distanceSq > receiverRangeSq)
-                    {
-                        continue;
-                    }
-
-                    TrySetRecipient(player.PlayerUID, listenRoute, distanceSq, recipients);
+                    EmitAroundPoint(
+                        speaker.Pos.ToVec3d().Add(0.5, 0.5, 0.5),
+                        speaker.VoiceEmissionRangeBlocks,
+                        speaker.Pos.dimension,
+                        tunedFrequency,
+                        recipients);
                 }
+            }
+        }
+
+        private void EmitAroundPoint(
+            Vec3d emissionPos,
+            int rangeBlocks,
+            int dimension,
+            string tunedFrequency,
+            Dictionary<string, RoutedVoiceRecipient> recipients)
+        {
+            if (rangeBlocks <= 0)
+            {
+                return;
+            }
+
+            double rangeSq = (double)rangeBlocks * rangeBlocks;
+            var listenRoute = new VoiceRoute(
+                emissionPos,
+                rangeBlocks,
+                dimension,
+                tunedFrequency,
+                acousticEmission: true);
+
+            foreach (IServerPlayer player in sapi.World.AllOnlinePlayers)
+            {
+                if (player?.Entity?.Pos == null || player.Entity.Pos.Dimension != dimension)
+                {
+                    continue;
+                }
+
+                double distanceSq = SquareDistance(player.Entity.Pos.XYZ, emissionPos);
+                if (distanceSq > rangeSq)
+                {
+                    continue;
+                }
+
+                TrySetRecipient(player.PlayerUID, listenRoute, distanceSq, recipients);
             }
         }
 

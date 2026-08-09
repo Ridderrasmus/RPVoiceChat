@@ -13,7 +13,9 @@ namespace RPVoiceChat.GameContent.Systems
         Radio = 3,
         Switchboard = 4,
         RadioConsole = 5,
-        RadioEmitter = 6
+        RadioEmitter = 6,
+        /// <summary>RF listener endpoint for a local speaker PA branch (not a station transmit network).</summary>
+        RadioReceiver = 7
     }
 
     /// <summary>

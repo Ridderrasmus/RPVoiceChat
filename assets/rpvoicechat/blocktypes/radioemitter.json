@@ -42,6 +42,15 @@
       "east": [ 0.87, 0.91, 0.5 ],
       "south": [ 0.5, 0.91, 0.87 ],
       "west": [ 0.13, 0.91, 0.5 ]
+    },
+    "handbook": {
+      "groupBy": [ "radioemitter-*" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-radioemitter.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-radioemitter.Text"
+        }
+      ]
     }
   },
   "sounds": {
@@ -63,5 +72,15 @@
   "sidesolid": { "all": false },
   "sideopaque": { "all": false },
   "lightAbsorption": 15,
-  "resistance": 1
+  "resistance": 1,
+  "guiTransform": {
+		"translation": { "x": 0, "y": -1, "z": 0 },
+		"rotation": { "x": -22.6, "y": 149, "z": 0 },
+		"scale": 1.1
+	},
+  "tpHandTransform": {
+		"translation": { "x": -1.6, "y": -1, "z": -1.4 },
+		"rotation": { "x": 150, "y": 0, "z": -90 },
+		"scale": 0.5
+	}
 }
