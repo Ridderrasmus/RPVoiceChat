@@ -173,167 +173,6 @@
           "scaleZ": 1.0,
           "children": [
             {
-              "name": "OnAirBorder",
-              "from": [
-                3.0,
-                0.5,
-                1.3300000429153442
-              ],
-              "to": [
-                8.0,
-                0.75,
-                3.8300000429153442
-              ],
-              "faces": {
-                "north": {
-                  "texture": "#silver",
-                  "uv": [
-                    0.0,
-                    0.0,
-                    5.0,
-                    0.5
-                  ]
-                },
-                "east": {
-                  "texture": "#silver",
-                  "uv": [
-                    0.0,
-                    0.0,
-                    2.5,
-                    0.5
-                  ]
-                },
-                "south": {
-                  "texture": "#silver",
-                  "uv": [
-                    0.0,
-                    0.0,
-                    5.0,
-                    0.5
-                  ]
-                },
-                "west": {
-                  "texture": "#silver",
-                  "uv": [
-                    0.0,
-                    0.0,
-                    2.5,
-                    0.5
-                  ]
-                },
-                "up": {
-                  "texture": "#silver",
-                  "uv": [
-                    0.0,
-                    0.0,
-                    5.0,
-                    2.5
-                  ]
-                },
-                "down": {
-                  "texture": "#silver",
-                  "uv": [
-                    0.0,
-                    0.0,
-                    5.0,
-                    2.5
-                  ]
-                }
-              },
-              "rotationOrigin": [
-                3.0,
-                0.5,
-                1.3300000429153442
-              ],
-              "scaleX": 1.0,
-              "scaleY": 1.0,
-              "scaleZ": 1.0,
-              "children": [
-                {
-                  "name": "OnAirGlass",
-                  "from": [
-                    0.25,
-                    0.25,
-                    0.25
-                  ],
-                  "to": [
-                    4.75,
-                    0.5,
-                    2.25
-                  ],
-                  "faces": {
-                    "north": {
-                      "texture": "#glass",
-                      "uv": [
-                        0.0,
-                        0.0,
-                        4.5,
-                        0.5
-                      ]
-                    },
-                    "east": {
-                      "texture": "#glass",
-                      "uv": [
-                        0.0,
-                        0.0,
-                        2.0,
-                        0.5
-                      ]
-                    },
-                    "south": {
-                      "texture": "#glass",
-                      "uv": [
-                        0.0,
-                        0.0,
-                        4.5,
-                        0.5
-                      ]
-                    },
-                    "west": {
-                      "texture": "#glass",
-                      "uv": [
-                        0.0,
-                        0.0,
-                        2.0,
-                        0.5
-                      ]
-                    },
-                    "up": {
-                      "texture": "#onairglass",
-                      "uv": [
-                        0.0,
-                        0.0,
-                        64.0,
-                        32.0
-                      ]
-                    },
-                    "down": {
-                      "texture": "#glass",
-                      "uv": [
-                        0.0,
-                        0.0,
-                        4.5,
-                        2.0
-                      ]
-                    }
-                  },
-                  "rotationOrigin": [
-                    0.25,
-                    0.25,
-                    0.25
-                  ],
-                  "scaleX": 1.0,
-                  "scaleY": 1.0,
-                  "scaleZ": 1.0,
-                  "renderPass": 3
-                }
-              ],
-              "uv": [
-                0.0,
-                0.0
-              ]
-            },
-            {
               "name": "Fader1",
               "from": [
                 0.5,
@@ -2610,6 +2449,169 @@
                     0.0,
                     0.0
                   ]
+                }
+              ],
+              "uv": [
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "name": "OnAirBorder",
+              "from": [
+                3.0,
+                0.5,
+                1.3300000429153442
+              ],
+              "to": [
+                8.0,
+                0.75,
+                3.8300000429153442
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#silver",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    5.0,
+                    0.5
+                  ]
+                },
+                "east": {
+                  "texture": "#silver",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.5,
+                    0.5
+                  ]
+                },
+                "south": {
+                  "texture": "#silver",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    5.0,
+                    0.5
+                  ]
+                },
+                "west": {
+                  "texture": "#silver",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.5,
+                    0.5
+                  ]
+                },
+                "up": {
+                  "texture": "#silver",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    5.0,
+                    2.5
+                  ]
+                },
+                "down": {
+                  "texture": "#silver",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    5.0,
+                    2.5
+                  ]
+                }
+              },
+              "rotationOrigin": [
+                3.0,
+                0.5,
+                1.3300000429153442
+              ],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "children": [
+                {
+                  "name": "OnAirGlass",
+                  "from": [
+                    0.25,
+                    0.25,
+                    0.25
+                  ],
+                  "to": [
+                    4.75,
+                    0.5,
+                    2.25
+                  ],
+                  "faces": {
+                    "north": {
+                      "texture": "#glass",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        4.5,
+                        0.25
+                      ]
+                    },
+                    "east": {
+                      "texture": "#glass",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        2.0,
+                        0.25
+                      ]
+                    },
+                    "south": {
+                      "texture": "#glass",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        4.5,
+                        0.25
+                      ]
+                    },
+                    "west": {
+                      "texture": "#glass",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        2.0,
+                        0.25
+                      ]
+                    },
+                    "up": {
+                      "texture": "#onairglass",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        64.0,
+                        32.0
+                      ],
+                      "autoUv": false
+                    },
+                    "down": {
+                      "texture": "#glass",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        4.5,
+                        2.0
+                      ]
+                    }
+                  },
+                  "rotationOrigin": [
+                    0.25,
+                    0.25,
+                    0.25
+                  ],
+                  "scaleX": 1.0,
+                  "scaleY": 1.0,
+                  "scaleZ": 1.0,
+                  "renderPass": 3,
+                  "zOffset": 1
                 }
               ],
               "uv": [
@@ -25444,11 +25446,29 @@
   "textureWidth": 16,
   "textureHeight": 16,
   "textureSizes": {
-    "gold": [16, 16],
-    "copper": [16, 16],
-    "glass": [16, 16],
-    "bakelite": [16, 16],
-    "silver": [16, 16],
-    "onairglass": [64, 32]
+    "gold": [
+      16,
+      16
+    ],
+    "copper": [
+      16,
+      16
+    ],
+    "glass": [
+      16,
+      16
+    ],
+    "bakelite": [
+      16,
+      16
+    ],
+    "silver": [
+      16,
+      16
+    ],
+    "onairglass": [
+      64,
+      32
+    ]
   }
 }
