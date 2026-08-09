@@ -4,7 +4,9 @@
   "class": "radiomixingconsoleblock",
   "entityClass": "BlockEntityRadioMixingConsole",
   "behaviors": [
-    { "name": "HorizontalOrientable" }
+    {
+      "name": "HorizontalOrientable"
+    }
   ],
   "entityBehaviors": [
     {
@@ -19,15 +21,22 @@
     }
   ],
   "creativeinventory": {
-    "general": [ "*-north" ],
-    "rpvoicechat": [ "*-north" ]
+    "general": [
+      "*-north"
+    ],
+    "rpvoicechat": [
+      "*-north"
+    ]
   },
   "maxstacksize": 1,
   "blockmaterial": "wood",
   "variantgroups": [
     {
       "code": "wood",
-      "states": [ "aged", "veryaged" ],
+      "states": [
+        "aged",
+        "veryaged"
+      ],
       "loadFromProperties": "block/wood"
     },
     {
@@ -52,22 +61,71 @@
     "walk": "game:walk/wood"
   },
   "textures": {
-    "wood": { "base": "game:block/wood/debarked/{wood}" },
-    "glass": { "base": "game:block/glass/plain" },
-    "onairglass": { "base": "block/radio/onairglass" },
-    "gold": { "base": "game:block/metal/plate/gold" },
-    "copper": { "base": "game:block/metal/plate/copper" },
-    "silver": { "base": "game:block/metal/ingot/silver" },
-    "bakelite": { "base": "game:block/coal/bituminous" },
-    "red": { "base": "game:block/cloth/basic/red" },
-    "white": { "base": "game:block/cloth/basic/white" },
-    "green": { "base": "game:block/cloth/basic/green" },
-    "blue": { "base": "game:block/cloth/basic/blue" },
-    "purple": { "base": "game:block/cloth/basic/purple" }
+    "wood": {
+      "base": "game:block/wood/debarked/{wood}"
+    },
+    "glass": {
+      "base": "game:block/glass/plain"
+    },
+    "onairglass": {
+      "base": "block/radio/onairglass"
+    },
+    "gold": {
+      "base": "game:block/metal/plate/gold"
+    },
+    "copper": {
+      "base": "game:block/metal/plate/copper"
+    },
+    "silver": {
+      "base": "game:block/metal/ingot/silver"
+    },
+    "bakelite": {
+      "base": "game:block/coal/bituminous"
+    },
+    "red": {
+      "base": "game:block/cloth/basic/red"
+    },
+    "white": {
+      "base": "game:block/cloth/basic/white"
+    },
+    "green": {
+      "base": "game:block/cloth/basic/green"
+    },
+    "blue": {
+      "base": "game:block/cloth/basic/blue"
+    },
+    "purple": {
+      "base": "game:block/cloth/basic/purple"
+    }
   },
   "rainPermeable": false,
-  "sidesolid": { "all": false },
-  "sideopaque": { "all": false },
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "attributes": {
+    "handbook": {
+      "groupBy": [ "radiomixingconsole-*" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-radiomixingconsole.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-radiomixingconsole.Text"
+        }
+      ]
+    }
+  },
   "lightAbsorption": 1,
-  "resistance": 1
+  "resistance": 1,
+  "guiTransform": {
+		"translation": { "x": 0, "y": -7, "z": 0 },
+		"rotation": { "x": -19, "y": 145, "z": 0 },
+		"scale": 1.29
+	},
+  "tpHandTransform": {
+		"translation": { "x": -1.6, "y": -1, "z": -1.4 },
+		"rotation": { "x": 90, "y": 0, "z": -90 },
+		"scale": 0.5
+	}
 }

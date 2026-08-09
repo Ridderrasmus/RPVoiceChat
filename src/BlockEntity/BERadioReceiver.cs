@@ -1,3 +1,5 @@
+using System.Text;
+using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Networking.Packets;
 using RPVoiceChat.Systems;
@@ -9,11 +11,12 @@ using Vintagestory.API.MathTools;
 
 namespace RPVoiceChat.GameContent.BlockEntity
 {
-    public class BlockEntityRadioReceiver : Vintagestory.API.Common.BlockEntity
+    public class BlockEntityRadioReceiver : BEWireNode, IWireTypedNode
     {
         public const int MinPlaybackRangeBlocks = 0;
         public const int MaxPlaybackRangeBlocks = 15;
         public const int DefaultPlaybackRangeBlocks = 8;
+        public const int MaxWiredSpeakers = 4;
 
         private RadioReceiverDialog dialog;
         private string tunedFrequency = "100.0";
@@ -26,6 +29,10 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public bool IsEnabled => isEnabled;
         public int PlaybackRangeBlocks => playbackRangeBlocks;
         public string HeardStationName => heardStationName ?? "";
+
+        protected override int MaxConnections => 1;
+        public override bool IsActiveEndpoint => true;
+        public WireNodeKind WireNodeKind => WireNodeKind.RadioReceiver;
 
         public override void Initialize(ICoreAPI api)
         {
@@ -187,6 +194,12 @@ namespace RPVoiceChat.GameContent.BlockEntity
             tree.SetBool("rpvc:radioReceiverEnabled", isEnabled);
             tree.SetInt("rpvc:radioReceiverPlaybackRange", playbackRangeBlocks);
             tree.SetString("rpvc:radioReceiverHeardStationName", heardStationName ?? "");
+        }
+
+        public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
+        {
+            base.GetBlockInfo(forPlayer, dsc);
+            dsc.AppendLine(UIUtils.I18n("blockdesc-radioreceiver-*"));
         }
 
         public override void OnBlockRemoved()

@@ -39,6 +39,17 @@
     "break": "game:block/planks",
     "walk": "game:walk/wood"
   },
+  "attributes": {
+    "handbook": {
+      "groupBy": [ "radioconsole-*" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-radioconsole.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-radioconsole.Text"
+        }
+      ]
+    }
+  },
   "textures": {
     "wood": { "base": "game:block/wood/debarked/{wood}" },
     "glass": { "base": "game:block/glass/plain" },
@@ -55,5 +66,10 @@
   "resistance": 1,
   "guiTransform": {
     "rotation": { "x": -22.6, "y": 145, "z": 0 }
-  }
+  },
+  "tpHandTransform": {
+		"translation": { "x": -1.6, "y": -1, "z": -1.4 },
+		"rotation": { "x": 90, "y": 0, "z": -90 },
+		"scale": 0.5
+	}
 }

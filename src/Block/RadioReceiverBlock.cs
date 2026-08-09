@@ -4,7 +4,7 @@ using Vintagestory.API.Common;
 
 namespace RPVoiceChat.GameContent.Block
 {
-    public class RadioReceiverBlock : Vintagestory.API.Common.Block
+    public class RadioReceiverBlock : WireNodeBlock
     {
         public override WorldInteraction[] GetPlacedBlockInteractionHelp(IWorldAccessor world, BlockSelection selection, IPlayer forPlayer)
         {
@@ -20,6 +20,11 @@ namespace RPVoiceChat.GameContent.Block
 
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
+            if (byPlayer.InventoryManager.ActiveHotbarSlot?.Itemstack?.Collectible?.Code.ToShortString() == "rpvoicechat:telegraphwire")
+            {
+                return false;
+            }
+
             var receiver = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityRadioReceiver;
             receiver?.OnInteract(byPlayer);
             return true;
