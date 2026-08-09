@@ -51,6 +51,15 @@
       "east":  [ 0.680, 0.243, 0.497 ],
       "south": [ 0.503, 0.243, 0.680 ],
       "west":  [ 0.320, 0.243, 0.503 ]
+    },
+    "handbook": {
+      "groupBy": [ "radiomicrophone-*" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-radiomicrophone.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-radiomicrophone.Text"
+        }
+      ]
     }
   },
   "sounds": {
@@ -96,5 +105,10 @@
     "all": false
   },
   "lightAbsorption": 15,
-  "resistance": 1
+  "resistance": 1,
+  "guiTransform": {
+		"translation": { "x": 0, "y": -17, "z": 0 },
+		"rotation": { "x": -22.6, "y": 131, "z": 0 },
+		"scale": 2.34
+	}
 }

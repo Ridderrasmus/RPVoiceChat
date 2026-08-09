@@ -559,6 +559,7 @@ namespace RPVoiceChat.Systems
             int telegraphCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Telegraph);
             int telephoneCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.Telephone);
             int radioCount = prospectiveComponent.Count(n => WireNodeKindRules.IsRadioFamilyEndpoint(GetNodeKind(n)));
+            int radioReceiverCount = prospectiveComponent.Count(n => GetNodeKind(n) == WireNodeKind.RadioReceiver);
             int radioConsoleCount = prospectiveComponent.OfType<BlockEntityRadioSupervisionConsole>().Count();
             int speakerCount = prospectiveComponent.OfType<BlockEntitySpeaker>().Count();
             int telephoneHandsetCount = prospectiveComponent.OfType<BlockEntityTelephone>().Count();
@@ -566,6 +567,7 @@ namespace RPVoiceChat.Systems
             if (telegraphCount > 0) activeKinds++;
             if (telephoneCount > 0) activeKinds++;
             if (radioCount > 0) activeKinds++;
+            if (radioReceiverCount > 0) activeKinds++;
 
             // Defensive guard: dedicated network rules should prevent mixed endpoint families
             // in normal gameplay. Keep this to reject legacy/invalid graph states.
@@ -595,7 +597,26 @@ namespace RPVoiceChat.Systems
                 // - Telephone networks:
                 //   - up to 2 handsets when there are no speakers (legacy telephone pairing)
                 //   - up to 1 handset when speakers are present (PA-style branch)
-                // - Radio networks: max 1 endpoint
+                // - Radio station networks: max endpoints from config
+                // - Radio receiver PA: exactly 1 receiver + up to 4 speakers
+                if (radioReceiverCount > 0)
+                {
+                    if (radioReceiverCount > 1)
+                    {
+                        denialLangKey = "Wire.ConnectionDenied.RadioReceiverSingle";
+                        return false;
+                    }
+
+                    if (speakerCount > BlockEntityRadioReceiver.MaxWiredSpeakers)
+                    {
+                        denialLangKey = "Wire.ConnectionDenied.RadioReceiverSpeakerCapacity";
+                        denialArgs = new object[] { BlockEntityRadioReceiver.MaxWiredSpeakers };
+                        return false;
+                    }
+
+                    return true;
+                }
+
                 if (speakerCount > 0 && telephoneHandsetCount > 1)
                 {
                     denialLangKey = "Wire.ConnectionDenied.SpeakerNetworkSingleTelephone";
@@ -619,8 +640,8 @@ namespace RPVoiceChat.Systems
                 return true;
             }
 
-            // Managed switchboard components must not contain speakers.
-            if (speakerCount > 0)
+            // Managed switchboard components must not contain speakers or radio receivers.
+            if (speakerCount > 0 || radioReceiverCount > 0)
             {
                 denialLangKey = "Wire.ConnectionDenied.SpeakerWithSwitchboard";
                 return false;

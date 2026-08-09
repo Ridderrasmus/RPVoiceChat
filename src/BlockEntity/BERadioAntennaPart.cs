@@ -116,6 +116,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 blockShape?.SelectiveElements);
 
             mesher.AddMeshData(mesh);
+            // Keep behavior meshes (e.g. Coverable wall/ceiling cover) while skipping the default block shape.
+            base.OnTesselation(mesher, tesselator);
             return true;
         }
 
