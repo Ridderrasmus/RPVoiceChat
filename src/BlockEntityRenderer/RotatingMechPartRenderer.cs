@@ -73,6 +73,7 @@ namespace RPVoiceChat.GameContent.Renderers
             Shape shape = Shape.TryGet(capi, shapeLoc);
             if (shape == null) return;
 
+            // Same path as switchboard: resolve #wood from the owning block (wood variants included).
             capi.Tesselator.TesselateShape(blockEntity.Block, shape, out MeshData meshData, new Vec3f(0f, baseRotYDeg, 0f));
             if (meshData?.VerticesCount > 0)
             {

@@ -1,0 +1,4483 @@
+{
+  "editor": {
+    "allAngles": true,
+    "backdrops": [],
+    "attachments": []
+  },
+  "textures": {
+    "gold": "game:block/metal/plate/gold",
+    "copper": "game:block/metal/plate/copper",
+    "glass": "game:block/glass/plain",
+    "bakelite": "game:block/coal/bituminous",
+    "silver": "game:block/metal/ingot/silver",
+    "stainlesssteel": "game:block/metal/ingot/stainlesssteel"
+  },
+  "elements": [
+    {
+      "name": "Base",
+      "from": [
+        2.0,
+        0.0,
+        1.0
+      ],
+      "to": [
+        14.0,
+        3.0,
+        15.0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#wood",
+          "uv": [
+            0.0,
+            0.0,
+            12.0,
+            3.0
+          ]
+        },
+        "east": {
+          "texture": "#wood",
+          "uv": [
+            0.0,
+            0.0,
+            14.0,
+            3.0
+          ]
+        },
+        "south": {
+          "texture": "#wood",
+          "uv": [
+            0.0,
+            0.0,
+            12.0,
+            3.0
+          ]
+        },
+        "west": {
+          "texture": "#wood",
+          "uv": [
+            0.0,
+            0.0,
+            14.0,
+            3.0
+          ]
+        },
+        "up": {
+          "texture": "#wood",
+          "uv": [
+            0.0,
+            0.0,
+            12.0,
+            14.0
+          ]
+        },
+        "down": {
+          "texture": "#wood",
+          "uv": [
+            0.0,
+            0.0,
+            12.0,
+            14.0
+          ]
+        }
+      },
+      "rotationOrigin": [
+        2.0,
+        0.0,
+        1.0
+      ],
+      "scaleX": 1.0,
+      "scaleY": 1.0,
+      "scaleZ": 1.0,
+      "children": [
+        {
+          "name": "MainFrame",
+          "from": [
+            0.0,
+            3.0,
+            1.0
+          ],
+          "to": [
+            12.0,
+            14.0,
+            12.0
+          ],
+          "faces": {
+            "north": {
+              "texture": "#wood",
+              "uv": [
+                0.0,
+                0.0,
+                12.0,
+                11.0
+              ]
+            },
+            "east": {
+              "texture": "#wood",
+              "uv": [
+                0.0,
+                0.0,
+                11.0,
+                11.0
+              ]
+            },
+            "south": {
+              "texture": "#wood",
+              "uv": [
+                0.0,
+                0.0,
+                12.0,
+                11.0
+              ]
+            },
+            "west": {
+              "texture": "#wood",
+              "uv": [
+                0.0,
+                0.0,
+                11.0,
+                11.0
+              ]
+            },
+            "up": {
+              "texture": "#wood",
+              "uv": [
+                0.0,
+                0.0,
+                12.0,
+                11.0
+              ]
+            },
+            "down": {
+              "texture": "#wood",
+              "uv": [
+                0.0,
+                0.0,
+                12.0,
+                11.0
+              ]
+            }
+          },
+          "rotationOrigin": [
+            0.0,
+            3.0,
+            1.0
+          ],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "children": [
+            {
+              "name": "Door",
+              "from": [
+                0.0,
+                0.0,
+                -1.0
+              ],
+              "to": [
+                12.0,
+                9.0,
+                -0.1
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#wood",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    12.0,
+                    9.0
+                  ]
+                },
+                "east": {
+                  "texture": "#wood",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    9.0
+                  ]
+                },
+                "south": {
+                  "texture": "#wood",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    12.0,
+                    9.0
+                  ]
+                },
+                "west": {
+                  "texture": "#wood",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    9.0
+                  ]
+                },
+                "up": {
+                  "texture": "#wood",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    12.0,
+                    0.5
+                  ]
+                },
+                "down": {
+                  "texture": "#wood",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    12.0,
+                    0.5
+                  ]
+                }
+              },
+              "rotationOrigin": [
+                0.0,
+                0.0,
+                -1.0
+              ],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "children": [],
+              "uv": [
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "name": "DoorJoint",
+              "from": [
+                0.2,
+                0.0,
+                -0.1
+              ],
+              "to": [
+                11.8,
+                8.800000190734863,
+                0.0
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    11.5,
+                    8.5
+                  ]
+                },
+                "east": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    8.5
+                  ]
+                },
+                "south": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    11.5,
+                    8.5
+                  ]
+                },
+                "west": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    8.5
+                  ]
+                },
+                "up": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    11.5,
+                    0.5
+                  ]
+                },
+                "down": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    11.5,
+                    0.5
+                  ]
+                }
+              },
+              "rotationOrigin": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "uv": [
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "name": "Hinge1",
+              "from": [
+                -0.25,
+                -1.0,
+                -0.3
+              ],
+              "to": [
+                0.0,
+                1.0,
+                0.2
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#gold",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    2.0
+                  ]
+                },
+                "east": {
+                  "texture": "#gold",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    2.0
+                  ]
+                },
+                "south": {
+                  "texture": "#gold",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    2.0
+                  ]
+                },
+                "west": {
+                  "texture": "#gold",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    2.0
+                  ]
+                },
+                "up": {
+                  "texture": "#gold",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    0.5
+                  ]
+                },
+                "down": {
+                  "texture": "#gold",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              "rotationOrigin": [
+                0.0,
+                -1.0,
+                0.0
+              ],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "uv": [
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "name": "Hinge2",
+              "from": [
+                -0.25,
+                6.0,
+                -0.3
+              ],
+              "to": [
+                0.0,
+                8.0,
+                0.2
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#gold",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    2.0
+                  ]
+                },
+                "east": {
+                  "texture": "#gold",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    2.0
+                  ]
+                },
+                "south": {
+                  "texture": "#gold",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    2.0
+                  ]
+                },
+                "west": {
+                  "texture": "#gold",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    2.0
+                  ]
+                },
+                "up": {
+                  "texture": "#gold",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    0.5
+                  ]
+                },
+                "down": {
+                  "texture": "#gold",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              "rotationOrigin": [
+                0.0,
+                6.0,
+                0.0
+              ],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "uv": [
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "name": "Latch",
+              "from": [
+                12.0,
+                4.0,
+                -0.5
+              ],
+              "to": [
+                12.25,
+                5.0,
+                2.0
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#gold",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    1.0
+                  ]
+                },
+                "east": {
+                  "texture": "#gold",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.5,
+                    1.0
+                  ]
+                },
+                "south": {
+                  "texture": "#gold",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    1.0
+                  ]
+                },
+                "west": {
+                  "texture": "#gold",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.5,
+                    1.0
+                  ]
+                },
+                "up": {
+                  "texture": "#gold",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    2.5
+                  ]
+                },
+                "down": {
+                  "texture": "#gold",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    2.5
+                  ]
+                }
+              },
+              "rotationOrigin": [
+                12.0,
+                4.0,
+                0.0
+              ],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "uv": [
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "name": "MainFrame2",
+              "from": [
+                0.0,
+                9.0,
+                -1.0
+              ],
+              "to": [
+                12.0,
+                11.0,
+                0.0
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#wood",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    12.0,
+                    2.0
+                  ]
+                },
+                "east": {
+                  "texture": "#wood",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    1.0,
+                    2.0
+                  ]
+                },
+                "south": {
+                  "texture": "#wood",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    12.0,
+                    2.0
+                  ]
+                },
+                "west": {
+                  "texture": "#wood",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    1.0,
+                    2.0
+                  ]
+                },
+                "up": {
+                  "texture": "#wood",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    12.0,
+                    1.0
+                  ]
+                },
+                "down": {
+                  "texture": "#wood",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    12.0,
+                    1.0
+                  ]
+                }
+              },
+              "rotationOrigin": [
+                0.0,
+                9.0,
+                -1.0
+              ],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "children": [],
+              "uv": [
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "uv": [
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "name": "ControlFrame",
+          "from": [
+            1.0,
+            3.5,
+            12.0
+          ],
+          "to": [
+            11.0,
+            13.5,
+            12.5
+          ],
+          "faces": {
+            "north": {
+              "texture": "#gold",
+              "uv": [
+                0.0,
+                0.0,
+                10.0,
+                10.0
+              ]
+            },
+            "east": {
+              "texture": "#gold",
+              "uv": [
+                0.0,
+                0.0,
+                0.5,
+                10.0
+              ]
+            },
+            "south": {
+              "texture": "#gold",
+              "uv": [
+                0.0,
+                0.0,
+                10.0,
+                10.0
+              ]
+            },
+            "west": {
+              "texture": "#gold",
+              "uv": [
+                0.0,
+                0.0,
+                0.5,
+                10.0
+              ]
+            },
+            "up": {
+              "texture": "#gold",
+              "uv": [
+                0.0,
+                0.0,
+                10.0,
+                0.5
+              ]
+            },
+            "down": {
+              "texture": "#gold",
+              "uv": [
+                0.0,
+                0.0,
+                10.0,
+                0.5
+              ]
+            }
+          },
+          "rotationOrigin": [
+            0.0,
+            4.0,
+            12.0
+          ],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "children": [
+            {
+              "name": "Switch1",
+              "from": [
+                0.5,
+                2.5,
+                0.5
+              ],
+              "to": [
+                1.0,
+                3.5,
+                0.75
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#silver",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    1.0
+                  ]
+                },
+                "east": {
+                  "texture": "#silver",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    1.0
+                  ]
+                },
+                "south": {
+                  "texture": "#silver",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    1.0
+                  ]
+                },
+                "west": {
+                  "texture": "#silver",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    1.0
+                  ]
+                },
+                "up": {
+                  "texture": "#silver",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    0.5
+                  ]
+                },
+                "down": {
+                  "texture": "#silver",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              "rotationOrigin": [
+                0.0,
+                2.0,
+                1.0
+              ],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "children": [
+                {
+                  "name": "SwitchPole1",
+                  "from": [
+                    0.125,
+                    0.33,
+                    0.25
+                  ],
+                  "to": [
+                    0.375,
+                    0.58,
+                    0.5
+                  ],
+                  "faces": {
+                    "north": {
+                      "texture": "#silver",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "east": {
+                      "texture": "#silver",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "south": {
+                      "texture": "#silver",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "west": {
+                      "texture": "#silver",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "up": {
+                      "texture": "#silver",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "down": {
+                      "texture": "#silver",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    }
+                  },
+                  "rotationOrigin": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "scaleX": 1.0,
+                  "scaleY": 1.0,
+                  "scaleZ": 1.0,
+                  "uv": [
+                    0.0,
+                    0.0
+                  ]
+                },
+                {
+                  "name": "SwitchHandle1",
+                  "from": [
+                    0.09,
+                    0.3,
+                    0.5
+                  ],
+                  "to": [
+                    0.42,
+                    0.63,
+                    1.5
+                  ],
+                  "faces": {
+                    "north": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "east": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        0.5
+                      ]
+                    },
+                    "south": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "west": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        0.5
+                      ]
+                    },
+                    "up": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        1.0
+                      ]
+                    },
+                    "down": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        1.0
+                      ]
+                    }
+                  },
+                  "rotationOrigin": [
+                    0.0,
+                    0.0,
+                    1.0
+                  ],
+                  "scaleX": 1.0,
+                  "scaleY": 1.0,
+                  "scaleZ": 1.0,
+                  "uv": [
+                    0.0,
+                    0.0
+                  ]
+                }
+              ],
+              "uv": [
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "name": "Switch8",
+              "from": [
+                9.0,
+                2.5,
+                0.5
+              ],
+              "to": [
+                9.5,
+                3.5,
+                0.75
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#silver",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    1.0
+                  ]
+                },
+                "east": {
+                  "texture": "#silver",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    1.0
+                  ]
+                },
+                "south": {
+                  "texture": "#silver",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    1.0
+                  ]
+                },
+                "west": {
+                  "texture": "#silver",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    1.0
+                  ]
+                },
+                "up": {
+                  "texture": "#silver",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    0.5
+                  ]
+                },
+                "down": {
+                  "texture": "#silver",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              "rotationOrigin": [
+                9.0,
+                2.0,
+                1.0
+              ],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "children": [
+                {
+                  "name": "SwitchPole8",
+                  "from": [
+                    0.125,
+                    0.33,
+                    0.25
+                  ],
+                  "to": [
+                    0.375,
+                    0.58,
+                    0.5
+                  ],
+                  "faces": {
+                    "north": {
+                      "texture": "#silver",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "east": {
+                      "texture": "#silver",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "south": {
+                      "texture": "#silver",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "west": {
+                      "texture": "#silver",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "up": {
+                      "texture": "#silver",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "down": {
+                      "texture": "#silver",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    }
+                  },
+                  "rotationOrigin": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "scaleX": 1.0,
+                  "scaleY": 1.0,
+                  "scaleZ": 1.0,
+                  "uv": [
+                    0.0,
+                    0.0
+                  ]
+                },
+                {
+                  "name": "SwitchHandle8",
+                  "from": [
+                    0.09,
+                    0.3,
+                    0.5
+                  ],
+                  "to": [
+                    0.42,
+                    0.63,
+                    1.5
+                  ],
+                  "faces": {
+                    "north": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "east": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        0.5
+                      ]
+                    },
+                    "south": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "west": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        0.5
+                      ]
+                    },
+                    "up": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        1.0
+                      ]
+                    },
+                    "down": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        1.0
+                      ]
+                    }
+                  },
+                  "rotationOrigin": [
+                    0.0,
+                    0.0,
+                    1.0
+                  ],
+                  "scaleX": 1.0,
+                  "scaleY": 1.0,
+                  "scaleZ": 1.0,
+                  "uv": [
+                    0.0,
+                    0.0
+                  ]
+                }
+              ],
+              "uv": [
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "name": "ScreenFrame",
+              "from": [
+                1.0,
+                6.0,
+                0.5
+              ],
+              "to": [
+                1.5,
+                9.0,
+                1.25
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    3.0
+                  ]
+                },
+                "east": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    3.0
+                  ]
+                },
+                "south": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    3.0
+                  ]
+                },
+                "west": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    3.0
+                  ]
+                },
+                "up": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    0.5
+                  ]
+                },
+                "down": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              "rotationOrigin": [
+                1.0,
+                6.0,
+                1.0
+              ],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "children": [
+                {
+                  "name": "ScreenFrame2",
+                  "from": [
+                    0.5,
+                    2.5,
+                    0.0
+                  ],
+                  "to": [
+                    7.5,
+                    3.0,
+                    0.75
+                  ],
+                  "faces": {
+                    "north": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        7.0,
+                        0.5
+                      ]
+                    },
+                    "east": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "south": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        7.0,
+                        0.5
+                      ]
+                    },
+                    "west": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "up": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        7.0,
+                        0.5
+                      ]
+                    },
+                    "down": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        7.0,
+                        0.5
+                      ]
+                    }
+                  },
+                  "rotationOrigin": [
+                    0.5,
+                    2.5,
+                    0.0
+                  ],
+                  "scaleX": 1.0,
+                  "scaleY": 1.0,
+                  "scaleZ": 1.0,
+                  "uv": [
+                    0.0,
+                    0.0
+                  ]
+                },
+                {
+                  "name": "ScreenFrame3",
+                  "from": [
+                    7.5,
+                    0.0,
+                    0.0
+                  ],
+                  "to": [
+                    8.0,
+                    3.0,
+                    0.75
+                  ],
+                  "faces": {
+                    "north": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        3.0
+                      ]
+                    },
+                    "east": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        3.0
+                      ]
+                    },
+                    "south": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        3.0
+                      ]
+                    },
+                    "west": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        3.0
+                      ]
+                    },
+                    "up": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "down": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    }
+                  },
+                  "rotationOrigin": [
+                    7.5,
+                    0.0,
+                    -0.5
+                  ],
+                  "scaleX": 1.0,
+                  "scaleY": 1.0,
+                  "scaleZ": 1.0,
+                  "children": [],
+                  "uv": [
+                    0.0,
+                    0.0
+                  ]
+                },
+                {
+                  "name": "ScreenFrame4",
+                  "from": [
+                    0.0,
+                    -0.5,
+                    0.0
+                  ],
+                  "to": [
+                    8.0,
+                    0.0,
+                    0.75
+                  ],
+                  "faces": {
+                    "north": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        8.0,
+                        0.5
+                      ]
+                    },
+                    "east": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "south": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        8.0,
+                        0.5
+                      ]
+                    },
+                    "west": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "up": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        8.0,
+                        0.5
+                      ]
+                    },
+                    "down": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        8.0,
+                        0.5
+                      ]
+                    }
+                  },
+                  "rotationOrigin": [
+                    0.0,
+                    -0.5,
+                    0.0
+                  ],
+                  "scaleX": 1.0,
+                  "scaleY": 1.0,
+                  "scaleZ": 1.0,
+                  "uv": [
+                    0.0,
+                    0.0
+                  ]
+                },
+                {
+                  "name": "Screen",
+                  "from": [
+                    0.5,
+                    0.0,
+                    0.0
+                  ],
+                  "to": [
+                    7.5,
+                    2.5,
+                    0.5
+                  ],
+                  "faces": {
+                    "north": {
+                      "texture": "#glass",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        7.0,
+                        2.5
+                      ]
+                    },
+                    "east": {
+                      "texture": "#glass",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        2.5
+                      ]
+                    },
+                    "south": {
+                      "texture": "#glass",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        7.0,
+                        2.5
+                      ]
+                    },
+                    "west": {
+                      "texture": "#glass",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        2.5
+                      ]
+                    },
+                    "up": {
+                      "texture": "#glass",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        7.0,
+                        0.5
+                      ]
+                    },
+                    "down": {
+                      "texture": "#glass",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        7.0,
+                        0.5
+                      ]
+                    }
+                  },
+                  "rotationOrigin": [
+                    0.5,
+                    0.0,
+                    0.0
+                  ],
+                  "scaleX": 1.0,
+                  "scaleY": 1.0,
+                  "scaleZ": 1.0,
+                  "uv": [
+                    0.0,
+                    0.0
+                  ]
+                }
+              ],
+              "uv": [
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "name": "Button",
+              "from": [
+                2.25,
+                2.0,
+                0.5
+              ],
+              "to": [
+                4.25,
+                4.0,
+                0.75
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.0,
+                    2.0
+                  ]
+                },
+                "east": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    2.0
+                  ]
+                },
+                "south": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.0,
+                    2.0
+                  ]
+                },
+                "west": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    2.0
+                  ]
+                },
+                "up": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.0,
+                    0.5
+                  ]
+                },
+                "down": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.0,
+                    0.5
+                  ]
+                }
+              },
+              "rotationOrigin": [
+                2.25,
+                2.0,
+                0.5
+              ],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "children": [
+                {
+                  "name": "Button2",
+                  "from": [
+                    0.5,
+                    0.5,
+                    0.0
+                  ],
+                  "to": [
+                    1.5,
+                    1.5,
+                    1.0
+                  ],
+                  "faces": {
+                    "north": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    },
+                    "east": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    },
+                    "south": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    },
+                    "west": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    },
+                    "up": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    },
+                    "down": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    }
+                  },
+                  "rotationOrigin": [
+                    0.5,
+                    0.5,
+                    0.0
+                  ],
+                  "scaleX": 1.0,
+                  "scaleY": 1.0,
+                  "scaleZ": 1.0,
+                  "uv": [
+                    0.0,
+                    0.0
+                  ]
+                },
+                {
+                  "name": "Button3",
+                  "from": [
+                    1.0,
+                    0.25,
+                    0.0
+                  ],
+                  "to": [
+                    2.0,
+                    1.25,
+                    1.0
+                  ],
+                  "faces": {
+                    "north": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    },
+                    "east": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    },
+                    "south": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    },
+                    "west": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    },
+                    "up": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    },
+                    "down": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    }
+                  },
+                  "rotationOrigin": [
+                    1.0,
+                    0.25,
+                    0.0
+                  ],
+                  "rotationZ": 45.0,
+                  "scaleX": 1.0,
+                  "scaleY": 1.0,
+                  "scaleZ": 1.0,
+                  "uv": [
+                    0.0,
+                    0.0
+                  ]
+                },
+                {
+                  "name": "Button4",
+                  "from": [
+                    0.6600000262260437,
+                    0.6600000262260437,
+                    1.0
+                  ],
+                  "to": [
+                    1.4100000262260437,
+                    1.4100000262260437,
+                    1.1500000059604645
+                  ],
+                  "faces": {
+                    "north": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "east": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "south": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "west": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "up": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "down": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    }
+                  },
+                  "rotationOrigin": [
+                    0.6600000262260437,
+                    0.6600000262260437,
+                    1.0
+                  ],
+                  "scaleX": 1.0,
+                  "scaleY": 1.0,
+                  "scaleZ": 1.0,
+                  "uv": [
+                    0.0,
+                    0.0
+                  ]
+                },
+                {
+                  "name": "Button5",
+                  "from": [
+                    1.0,
+                    0.5,
+                    1.0
+                  ],
+                  "to": [
+                    1.75,
+                    1.25,
+                    1.1500000059604645
+                  ],
+                  "faces": {
+                    "north": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "east": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "south": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "west": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "up": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "down": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    }
+                  },
+                  "rotationOrigin": [
+                    1.0,
+                    0.5,
+                    1.0
+                  ],
+                  "rotationZ": 45.0,
+                  "scaleX": 1.0,
+                  "scaleY": 1.0,
+                  "scaleZ": 1.0,
+                  "uv": [
+                    0.0,
+                    0.0
+                  ]
+                }
+              ],
+              "uv": [
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "name": "Button6",
+              "from": [
+                5.75,
+                2.0,
+                0.5
+              ],
+              "to": [
+                7.75,
+                4.0,
+                0.75
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.0,
+                    2.0
+                  ]
+                },
+                "east": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    2.0
+                  ]
+                },
+                "south": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.0,
+                    2.0
+                  ]
+                },
+                "west": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    2.0
+                  ]
+                },
+                "up": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.0,
+                    0.5
+                  ]
+                },
+                "down": {
+                  "texture": "#bakelite",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.0,
+                    0.5
+                  ]
+                }
+              },
+              "rotationOrigin": [
+                5.75,
+                2.0,
+                0.5
+              ],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "children": [
+                {
+                  "name": "Button7",
+                  "from": [
+                    0.5,
+                    0.5,
+                    0.0
+                  ],
+                  "to": [
+                    1.5,
+                    1.5,
+                    1.0
+                  ],
+                  "faces": {
+                    "north": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    },
+                    "east": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    },
+                    "south": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    },
+                    "west": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    },
+                    "up": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    },
+                    "down": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    }
+                  },
+                  "rotationOrigin": [
+                    0.5,
+                    0.5,
+                    0.0
+                  ],
+                  "scaleX": 1.0,
+                  "scaleY": 1.0,
+                  "scaleZ": 1.0,
+                  "uv": [
+                    0.0,
+                    0.0
+                  ]
+                },
+                {
+                  "name": "Button8",
+                  "from": [
+                    1.0,
+                    0.25,
+                    0.0
+                  ],
+                  "to": [
+                    2.0,
+                    1.25,
+                    1.0
+                  ],
+                  "faces": {
+                    "north": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    },
+                    "east": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    },
+                    "south": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    },
+                    "west": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    },
+                    "up": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    },
+                    "down": {
+                      "texture": "#bakelite",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        1.0,
+                        1.0
+                      ]
+                    }
+                  },
+                  "rotationOrigin": [
+                    1.0,
+                    0.25,
+                    0.0
+                  ],
+                  "rotationZ": 45.0,
+                  "scaleX": 1.0,
+                  "scaleY": 1.0,
+                  "scaleZ": 1.0,
+                  "uv": [
+                    0.0,
+                    0.0
+                  ]
+                },
+                {
+                  "name": "Button9",
+                  "from": [
+                    0.6600000262260437,
+                    0.6600000262260437,
+                    1.0
+                  ],
+                  "to": [
+                    1.4100000262260437,
+                    1.4100000262260437,
+                    1.1500000059604645
+                  ],
+                  "faces": {
+                    "north": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "east": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "south": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "west": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "up": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "down": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    }
+                  },
+                  "rotationOrigin": [
+                    0.6600000262260437,
+                    0.6600000262260437,
+                    1.0
+                  ],
+                  "scaleX": 1.0,
+                  "scaleY": 1.0,
+                  "scaleZ": 1.0,
+                  "uv": [
+                    0.0,
+                    0.0
+                  ]
+                },
+                {
+                  "name": "Button10",
+                  "from": [
+                    1.0,
+                    0.5,
+                    1.0
+                  ],
+                  "to": [
+                    1.75,
+                    1.25,
+                    1.1500000059604645
+                  ],
+                  "faces": {
+                    "north": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "east": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "south": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "west": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "up": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    },
+                    "down": {
+                      "texture": "#copper",
+                      "uv": [
+                        0.0,
+                        0.0,
+                        0.5,
+                        0.5
+                      ]
+                    }
+                  },
+                  "rotationOrigin": [
+                    1.0,
+                    0.5,
+                    1.0
+                  ],
+                  "rotationZ": 45.0,
+                  "scaleX": 1.0,
+                  "scaleY": 1.0,
+                  "scaleZ": 1.0,
+                  "uv": [
+                    0.0,
+                    0.0
+                  ]
+                }
+              ],
+              "uv": [
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "uv": [
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "uv": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "Axis1",
+      "from": [
+        5.0,
+        14.0,
+        -2.0
+      ],
+      "to": [
+        6.0,
+        15.25,
+        -1.0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#copper",
+          "uv": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ]
+        },
+        "east": {
+          "texture": "#copper",
+          "uv": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ]
+        },
+        "south": {
+          "texture": "#copper",
+          "uv": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ]
+        },
+        "west": {
+          "texture": "#copper",
+          "uv": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ]
+        },
+        "up": {
+          "texture": "#copper",
+          "uv": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ]
+        },
+        "down": {
+          "texture": "#copper",
+          "uv": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ]
+        }
+      },
+      "rotationOrigin": [
+        10.0,
+        14.0,
+        1.0
+      ],
+      "rotationY": 45.0,
+      "scaleX": 1.0,
+      "scaleY": 1.0,
+      "scaleZ": 1.0,
+      "children": [
+        {
+          "name": "Axis5",
+          "from": [
+            0.2,
+            0.0,
+            0.5
+          ],
+          "to": [
+            1.2,
+            1.25,
+            1.5
+          ],
+          "faces": {
+            "north": {
+              "texture": "#copper",
+              "uv": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ]
+            },
+            "east": {
+              "texture": "#copper",
+              "uv": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ]
+            },
+            "south": {
+              "texture": "#copper",
+              "uv": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ]
+            },
+            "west": {
+              "texture": "#copper",
+              "uv": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ]
+            },
+            "up": {
+              "texture": "#copper",
+              "uv": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ]
+            },
+            "down": {
+              "texture": "#copper",
+              "uv": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "rotationOrigin": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "rotationY": 45.0,
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "uv": [
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "uv": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "Glass1",
+      "from": [
+        5.75,
+        14.300000190734863,
+        1.7000000476837158
+      ],
+      "to": [
+        6.25,
+        14.800000190734863,
+        3.200000047683716
+      ],
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0.0,
+            0.0,
+            0.5,
+            0.5
+          ]
+        },
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0.0,
+            0.0,
+            1.5,
+            0.5
+          ]
+        },
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0.0,
+            0.0,
+            0.5,
+            0.5
+          ]
+        },
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0.0,
+            0.0,
+            1.5,
+            0.5
+          ]
+        },
+        "up": {
+          "texture": "#glass",
+          "uv": [
+            0.0,
+            0.0,
+            0.5,
+            1.5
+          ]
+        },
+        "down": {
+          "texture": "#glass",
+          "uv": [
+            0.0,
+            0.0,
+            0.5,
+            1.5
+          ]
+        }
+      },
+      "rotationOrigin": [
+        5.0,
+        15.000000190734863,
+        0.5000000476837156
+      ],
+      "scaleX": 1.0,
+      "scaleY": 1.0,
+      "scaleZ": 1.0,
+      "renderPass": 3,
+      "children": [
+        {
+          "name": "Glass11",
+          "from": [
+            -2.0,
+            0.0,
+            0.0
+          ],
+          "to": [
+            -1.5,
+            0.5,
+            1.5
+          ],
+          "faces": {
+            "north": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                0.5,
+                0.5
+              ]
+            },
+            "east": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                1.5,
+                0.5
+              ]
+            },
+            "south": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                0.5,
+                0.5
+              ]
+            },
+            "west": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                1.5,
+                0.5
+              ]
+            },
+            "up": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                0.5,
+                1.5
+              ]
+            },
+            "down": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                0.5,
+                1.5
+              ]
+            }
+          },
+          "rotationOrigin": [
+            -2.0,
+            0.0,
+            1.0
+          ],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "renderPass": 3,
+          "uv": [
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "name": "Glass12",
+          "from": [
+            -1.75,
+            0.0,
+            -0.5
+          ],
+          "to": [
+            0.25,
+            0.5,
+            0.0
+          ],
+          "faces": {
+            "north": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.0,
+                0.5
+              ]
+            },
+            "east": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                0.5,
+                0.5
+              ]
+            },
+            "south": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.0,
+                0.5
+              ]
+            },
+            "west": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                0.5,
+                0.5
+              ]
+            },
+            "up": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.0,
+                0.5
+              ]
+            },
+            "down": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.0,
+                0.5
+              ]
+            }
+          },
+          "rotationOrigin": [
+            -2.0,
+            0.0,
+            -1.0
+          ],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "renderPass": 3,
+          "uv": [
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "name": "Glass13",
+          "from": [
+            -1.75,
+            0.0,
+            1.5
+          ],
+          "to": [
+            0.25,
+            0.5,
+            2.0
+          ],
+          "faces": {
+            "north": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.0,
+                0.5
+              ]
+            },
+            "east": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                0.5,
+                0.5
+              ]
+            },
+            "south": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.0,
+                0.5
+              ]
+            },
+            "west": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                0.5,
+                0.5
+              ]
+            },
+            "up": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.0,
+                0.5
+              ]
+            },
+            "down": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.0,
+                0.5
+              ]
+            }
+          },
+          "rotationOrigin": [
+            -2.0,
+            0.0,
+            2.0
+          ],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "renderPass": 3,
+          "uv": [
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "name": "Glass14",
+          "from": [
+            -1.5,
+            0.5,
+            1.25
+          ],
+          "to": [
+            0.0,
+            1.0,
+            1.5
+          ],
+          "faces": {
+            "north": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                1.5,
+                0.5
+              ]
+            },
+            "east": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                0.5,
+                0.5
+              ]
+            },
+            "south": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                1.5,
+                0.5
+              ]
+            },
+            "west": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                0.5,
+                0.5
+              ]
+            },
+            "up": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                1.5,
+                0.5
+              ]
+            },
+            "down": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                1.5,
+                0.5
+              ]
+            }
+          },
+          "rotationOrigin": [
+            -1.25,
+            0.5,
+            3.25
+          ],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "renderPass": 3,
+          "children": [
+            {
+              "name": "Glass15",
+              "from": [
+                0.0,
+                0.0,
+                -1.25
+              ],
+              "to": [
+                1.5,
+                0.5,
+                -1.0
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    1.5,
+                    0.5
+                  ]
+                },
+                "east": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    0.5
+                  ]
+                },
+                "south": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    1.5,
+                    0.5
+                  ]
+                },
+                "west": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    0.5
+                  ]
+                },
+                "up": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    1.5,
+                    0.5
+                  ]
+                },
+                "down": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    1.5,
+                    0.5
+                  ]
+                }
+              },
+              "rotationOrigin": [
+                0.5,
+                0.0,
+                -0.5
+              ],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "renderPass": 3,
+              "uv": [
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "name": "Glass16",
+              "from": [
+                0.0,
+                0.0,
+                -1.0
+              ],
+              "to": [
+                0.25,
+                0.5,
+                0.0
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    0.5
+                  ]
+                },
+                "east": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.5
+                  ]
+                },
+                "south": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    0.5
+                  ]
+                },
+                "west": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.5
+                  ]
+                },
+                "up": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    1.0
+                  ]
+                },
+                "down": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    1.0
+                  ]
+                }
+              },
+              "rotationOrigin": [
+                -0.5,
+                0.0,
+                -0.5
+              ],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "renderPass": 3,
+              "uv": [
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "name": "Glass17",
+              "from": [
+                1.25,
+                0.0,
+                -1.0
+              ],
+              "to": [
+                1.5,
+                0.5,
+                0.0
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    0.5
+                  ]
+                },
+                "east": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.5
+                  ]
+                },
+                "south": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    0.5
+                  ]
+                },
+                "west": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.5
+                  ]
+                },
+                "up": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    1.0
+                  ]
+                },
+                "down": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    1.0
+                  ]
+                }
+              },
+              "rotationOrigin": [
+                1.5,
+                0.0,
+                -0.5
+              ],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "renderPass": 3,
+              "uv": [
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "uv": [
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "name": "Glass-top",
+          "from": [
+            -2.0,
+            1.0,
+            -0.5
+          ],
+          "to": [
+            0.5,
+            1.5,
+            2.0
+          ],
+          "faces": {
+            "north": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.5,
+                0.5
+              ]
+            },
+            "east": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.5,
+                0.5
+              ]
+            },
+            "south": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.5,
+                0.5
+              ]
+            },
+            "west": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.5,
+                0.5
+              ]
+            },
+            "up": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.5,
+                2.5
+              ]
+            },
+            "down": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.5,
+                2.5
+              ]
+            }
+          },
+          "rotationOrigin": [
+            -2.25,
+            1.5,
+            0.25
+          ],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "renderPass": 3,
+          "children": [
+            {
+              "name": "Glass-top2",
+              "from": [
+                0.25,
+                0.5,
+                0.25
+              ],
+              "to": [
+                2.25,
+                0.7,
+                2.25
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.0,
+                    0.5
+                  ]
+                },
+                "east": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.0,
+                    0.5
+                  ]
+                },
+                "south": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.0,
+                    0.5
+                  ]
+                },
+                "west": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.0,
+                    0.5
+                  ]
+                },
+                "up": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.0,
+                    2.0
+                  ]
+                },
+                "down": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.0,
+                    2.0
+                  ]
+                }
+              },
+              "rotationOrigin": [
+                1.5,
+                1.0,
+                1.5
+              ],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "renderPass": 3,
+              "uv": [
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "uv": [
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "uv": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "Axis3",
+      "from": [
+        11.0,
+        14.0,
+        -2.0
+      ],
+      "to": [
+        12.0,
+        15.25,
+        -1.0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#copper",
+          "uv": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ]
+        },
+        "east": {
+          "texture": "#copper",
+          "uv": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ]
+        },
+        "south": {
+          "texture": "#copper",
+          "uv": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ]
+        },
+        "west": {
+          "texture": "#copper",
+          "uv": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ]
+        },
+        "up": {
+          "texture": "#copper",
+          "uv": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ]
+        },
+        "down": {
+          "texture": "#copper",
+          "uv": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ]
+        }
+      },
+      "rotationOrigin": [
+        16.0,
+        14.0,
+        1.0
+      ],
+      "rotationY": 45.0,
+      "scaleX": 1.0,
+      "scaleY": 1.0,
+      "scaleZ": 1.0,
+      "children": [
+        {
+          "name": "Axis4",
+          "from": [
+            0.2,
+            0.0,
+            0.5
+          ],
+          "to": [
+            1.2,
+            1.25,
+            1.5
+          ],
+          "faces": {
+            "north": {
+              "texture": "#copper",
+              "uv": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ]
+            },
+            "east": {
+              "texture": "#copper",
+              "uv": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ]
+            },
+            "south": {
+              "texture": "#copper",
+              "uv": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ]
+            },
+            "west": {
+              "texture": "#copper",
+              "uv": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ]
+            },
+            "up": {
+              "texture": "#copper",
+              "uv": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ]
+            },
+            "down": {
+              "texture": "#copper",
+              "uv": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "rotationOrigin": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "rotationY": 45.0,
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "uv": [
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "uv": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "Glass2",
+      "from": [
+        11.75,
+        14.300000190734863,
+        1.7000000476837158
+      ],
+      "to": [
+        12.25,
+        14.800000190734863,
+        3.200000047683716
+      ],
+      "faces": {
+        "north": {
+          "texture": "#glass",
+          "uv": [
+            0.0,
+            0.0,
+            0.5,
+            0.5
+          ]
+        },
+        "east": {
+          "texture": "#glass",
+          "uv": [
+            0.0,
+            0.0,
+            1.5,
+            0.5
+          ]
+        },
+        "south": {
+          "texture": "#glass",
+          "uv": [
+            0.0,
+            0.0,
+            0.5,
+            0.5
+          ]
+        },
+        "west": {
+          "texture": "#glass",
+          "uv": [
+            0.0,
+            0.0,
+            1.5,
+            0.5
+          ]
+        },
+        "up": {
+          "texture": "#glass",
+          "uv": [
+            0.0,
+            0.0,
+            0.5,
+            1.5
+          ]
+        },
+        "down": {
+          "texture": "#glass",
+          "uv": [
+            0.0,
+            0.0,
+            0.5,
+            1.5
+          ]
+        }
+      },
+      "rotationOrigin": [
+        11.0,
+        15.000000190734863,
+        0.5000000476837156
+      ],
+      "scaleX": 1.0,
+      "scaleY": 1.0,
+      "scaleZ": 1.0,
+      "renderPass": 3,
+      "children": [
+        {
+          "name": "Glass21",
+          "from": [
+            -2.0,
+            0.0,
+            0.0
+          ],
+          "to": [
+            -1.5,
+            0.5,
+            1.5
+          ],
+          "faces": {
+            "north": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                0.5,
+                0.5
+              ]
+            },
+            "east": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                1.5,
+                0.5
+              ]
+            },
+            "south": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                0.5,
+                0.5
+              ]
+            },
+            "west": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                1.5,
+                0.5
+              ]
+            },
+            "up": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                0.5,
+                1.5
+              ]
+            },
+            "down": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                0.5,
+                1.5
+              ]
+            }
+          },
+          "rotationOrigin": [
+            -2.0,
+            0.0,
+            1.0
+          ],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "renderPass": 3,
+          "uv": [
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "name": "Glass22",
+          "from": [
+            -1.75,
+            0.0,
+            -0.5
+          ],
+          "to": [
+            0.25,
+            0.5,
+            0.0
+          ],
+          "faces": {
+            "north": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.0,
+                0.5
+              ]
+            },
+            "east": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                0.5,
+                0.5
+              ]
+            },
+            "south": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.0,
+                0.5
+              ]
+            },
+            "west": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                0.5,
+                0.5
+              ]
+            },
+            "up": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.0,
+                0.5
+              ]
+            },
+            "down": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.0,
+                0.5
+              ]
+            }
+          },
+          "rotationOrigin": [
+            -2.0,
+            0.0,
+            -1.0
+          ],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "renderPass": 3,
+          "uv": [
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "name": "Glass23",
+          "from": [
+            -1.75,
+            0.0,
+            1.5
+          ],
+          "to": [
+            0.25,
+            0.5,
+            2.0
+          ],
+          "faces": {
+            "north": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.0,
+                0.5
+              ]
+            },
+            "east": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                0.5,
+                0.5
+              ]
+            },
+            "south": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.0,
+                0.5
+              ]
+            },
+            "west": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                0.5,
+                0.5
+              ]
+            },
+            "up": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.0,
+                0.5
+              ]
+            },
+            "down": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.0,
+                0.5
+              ]
+            }
+          },
+          "rotationOrigin": [
+            -2.0,
+            0.0,
+            2.0
+          ],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "renderPass": 3,
+          "uv": [
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "name": "Glass24",
+          "from": [
+            -1.5,
+            0.5,
+            1.25
+          ],
+          "to": [
+            0.0,
+            1.0,
+            1.5
+          ],
+          "faces": {
+            "north": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                1.5,
+                0.5
+              ]
+            },
+            "east": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                0.5,
+                0.5
+              ]
+            },
+            "south": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                1.5,
+                0.5
+              ]
+            },
+            "west": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                0.5,
+                0.5
+              ]
+            },
+            "up": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                1.5,
+                0.5
+              ]
+            },
+            "down": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                1.5,
+                0.5
+              ]
+            }
+          },
+          "rotationOrigin": [
+            -1.25,
+            0.5,
+            3.25
+          ],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "renderPass": 3,
+          "children": [
+            {
+              "name": "Glass25",
+              "from": [
+                0.0,
+                0.0,
+                -1.25
+              ],
+              "to": [
+                1.5,
+                0.5,
+                -1.0
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    1.5,
+                    0.5
+                  ]
+                },
+                "east": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    0.5
+                  ]
+                },
+                "south": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    1.5,
+                    0.5
+                  ]
+                },
+                "west": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    0.5
+                  ]
+                },
+                "up": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    1.5,
+                    0.5
+                  ]
+                },
+                "down": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    1.5,
+                    0.5
+                  ]
+                }
+              },
+              "rotationOrigin": [
+                0.5,
+                0.0,
+                -0.5
+              ],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "renderPass": 3,
+              "uv": [
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "name": "Glass26",
+              "from": [
+                0.0,
+                0.0,
+                -1.0
+              ],
+              "to": [
+                0.25,
+                0.5,
+                0.0
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    0.5
+                  ]
+                },
+                "east": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.5
+                  ]
+                },
+                "south": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    0.5
+                  ]
+                },
+                "west": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.5
+                  ]
+                },
+                "up": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    1.0
+                  ]
+                },
+                "down": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    1.0
+                  ]
+                }
+              },
+              "rotationOrigin": [
+                -0.5,
+                0.0,
+                -0.5
+              ],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "renderPass": 3,
+              "uv": [
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "name": "Glass27",
+              "from": [
+                1.25,
+                0.0,
+                -1.0
+              ],
+              "to": [
+                1.5,
+                0.5,
+                0.0
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    0.5
+                  ]
+                },
+                "east": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.5
+                  ]
+                },
+                "south": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    0.5
+                  ]
+                },
+                "west": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.5
+                  ]
+                },
+                "up": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    1.0
+                  ]
+                },
+                "down": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    0.5,
+                    1.0
+                  ]
+                }
+              },
+              "rotationOrigin": [
+                1.5,
+                0.0,
+                -0.5
+              ],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "renderPass": 3,
+              "uv": [
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "uv": [
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "name": "Glass-top3",
+          "from": [
+            -2.0,
+            1.0,
+            -0.5
+          ],
+          "to": [
+            0.5,
+            1.5,
+            2.0
+          ],
+          "faces": {
+            "north": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.5,
+                0.5
+              ]
+            },
+            "east": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.5,
+                0.5
+              ]
+            },
+            "south": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.5,
+                0.5
+              ]
+            },
+            "west": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.5,
+                0.5
+              ]
+            },
+            "up": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.5,
+                2.5
+              ]
+            },
+            "down": {
+              "texture": "#glass",
+              "uv": [
+                0.0,
+                0.0,
+                2.5,
+                2.5
+              ]
+            }
+          },
+          "rotationOrigin": [
+            -2.25,
+            1.5,
+            0.25
+          ],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "renderPass": 3,
+          "children": [
+            {
+              "name": "Glass-top4",
+              "from": [
+                0.25,
+                0.5,
+                0.25
+              ],
+              "to": [
+                2.25,
+                0.7,
+                2.25
+              ],
+              "faces": {
+                "north": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.0,
+                    0.5
+                  ]
+                },
+                "east": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.0,
+                    0.5
+                  ]
+                },
+                "south": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.0,
+                    0.5
+                  ]
+                },
+                "west": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.0,
+                    0.5
+                  ]
+                },
+                "up": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.0,
+                    2.0
+                  ]
+                },
+                "down": {
+                  "texture": "#glass",
+                  "uv": [
+                    0.0,
+                    0.0,
+                    2.0,
+                    2.0
+                  ]
+                }
+              },
+              "rotationOrigin": [
+                1.5,
+                1.0,
+                1.5
+              ],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "renderPass": 3,
+              "uv": [
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "uv": [
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "uv": [
+        0.0,
+        0.0
+      ]
+    }
+  ],
+  "animations": [],
+  "textureWidth": 16,
+  "textureHeight": 16,
+  "textureSizes": {
+    "gold": [
+      16,
+      16
+    ],
+    "copper": [
+      16,
+      16
+    ],
+    "glass": [
+      16,
+      16
+    ],
+    "bakelite": [
+      16,
+      16
+    ],
+    "silver": [
+      16,
+      16
+    ],
+    "stainlesssteel": [
+      16,
+      16
+    ]
+  }
+}

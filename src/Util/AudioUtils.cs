@@ -1,5 +1,6 @@
 using OpenTK.Audio.OpenAL;
 using System;
+using System.Runtime.InteropServices;
 
 namespace RPVoiceChat.Util
 {
@@ -25,6 +26,19 @@ namespace RPVoiceChat.Util
             Buffer.BlockCopy(audio, offset, byteBuffer, offset * sizeof(short), bytesToCopy);
 
             return byteBuffer;
+        }
+
+        public static short[] BytesToShorts(byte[] pcmBytes)
+        {
+            if (pcmBytes == null || pcmBytes.Length < sizeof(short))
+            {
+                return Array.Empty<short>();
+            }
+
+            int sampleCount = pcmBytes.Length / sizeof(short);
+            var samples = new short[sampleCount];
+            Buffer.BlockCopy(pcmBytes, 0, samples, 0, sampleCount * sizeof(short));
+            return samples;
         }
 
         public static float DBsToFactor(float dB)

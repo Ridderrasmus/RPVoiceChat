@@ -1,0 +1,110 @@
+{
+  "code": "radioreceiver",
+  "enabled": true,
+  "class": "radioreceiverblock",
+  "entityClass": "BlockEntityRadioReceiver",
+  "behaviors": [
+    {
+      "name": "HorizontalOrientable"
+    }
+  ],
+  "creativeinventory": {
+    "general": [
+      "*-north"
+    ],
+    "rpvoicechat": [
+      "*-north"
+    ]
+  },
+  "maxstacksize": 1,
+  "blockmaterial": "wood",
+  "variantgroups": [
+    {
+      "code": "wood",
+      "states": [
+        "aged",
+        "veryaged"
+      ],
+      "loadFromProperties": "block/wood"
+    },
+    {
+      "code": "side",
+      "loadFromProperties": "abstract/horizontalorientation"
+    }
+  ],
+  "drawtype": "json",
+  "shape": {
+    "base": "block/radioreceiver",
+    "rotateYByType": {
+      "*-north": 0,
+      "*-east": 270,
+      "*-west": 90,
+      "*-south": 180
+    }
+  },
+  "attributes": {
+    "wireAttachmentOffsets": {
+      "north": [ 0.496, 0.555, 0.309 ],
+      "east":  [ 0.691, 0.555, 0.496 ],
+      "south": [ 0.504, 0.555, 0.691 ],
+      "west":  [ 0.309, 0.555, 0.504 ]
+    },
+    "handbook": {
+      "groupBy": [ "radioreceiver-{wood}-*" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-radioreceiver.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-radioreceiver.Text"
+        }
+      ]
+    }
+  },
+  "sounds": {
+    "place": "game:block/planks",
+    "hit": "game:block/planks",
+    "break": "game:block/planks",
+    "walk": "game:walk/wood"
+  },
+  "textures": {
+    "wood": {
+      "base": "game:block/wood/debarked/{wood}"
+    },
+    "copper": {
+      "base": "game:block/metal/plate/copper"
+    },
+    "bakelite": {
+      "base": "game:block/coal/bituminous"
+    },
+    "silver": {
+      "base": "game:block/metal/ingot/silver"
+    },
+    "gold": {
+      "base": "game:block/metal/plate/gold"
+    },
+    "glass": {
+      "base": "game:block/glass/plain"
+    },
+    "wavescreen": {
+      "base": "block/radio/wavescreen"
+    }
+  },
+  "rainPermeable": false,
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "lightAbsorption": 15,
+  "resistance": 1,
+  "guiTransform": {
+		"translation": { "x": 0, "y": -2, "z": 0 },
+		"rotation": { "x": -22.6, "y": 145, "z": 0 },
+		"scale": 1.33
+	},
+  "tpHandTransform": {
+		"translation": { "x": -1.6, "y": -1, "z": -1.4 },
+		"rotation": { "x": 150, "y": 0, "z": -90 },
+		"scale": 0.5
+	}
+}

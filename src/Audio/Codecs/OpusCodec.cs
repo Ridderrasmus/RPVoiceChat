@@ -17,12 +17,10 @@ namespace RPVoiceChat.Audio
         private IOpusEncoder encoder;
         private IOpusDecoder decoder;
         
-        // Track last broadcast mode to avoid unnecessary parameter changes
-        private bool lastWasBroadcast = false;
-
         // Default bitrates
         private int NormalBitrate => ServerConfigManager.NormalBitrate; // 40 kbps
-        private int BroadcastBitrate => ServerConfigManager.BroadcastBitrate; // 16 kbps 
+        private int BroadcastBitrate => ServerConfigManager.BroadcastBitrate; // 16 kbps
+        private int ProgramStreamBitrate => Math.Max(NormalBitrate, 48000);
 
         public OpusCodec(int frequency, int channelCount)
         {
@@ -58,27 +56,62 @@ namespace RPVoiceChat.Audio
             encoder.UseVBR = true; // Variable bitrate
         }
 
+        private void SetProgramStreamQuality()
+        {
+            encoder.Bitrate = ProgramStreamBitrate;
+            encoder.Complexity = 5;
+            encoder.SignalType = OpusSignal.OPUS_SIGNAL_MUSIC;
+            encoder.ForceMode = OpusMode.MODE_AUTO;
+            encoder.UseDTX = false;
+            encoder.UseInbandFEC = false;
+            encoder.UseVBR = true;
+        }
+
         public byte[] Encode(short[] pcmData)
         {
-            return EncodeInternal(pcmData, false);
+            return EncodeInternal(pcmData, EncoderProfile.Voice);
         }
 
         public byte[] EncodeForBroadcast(short[] pcmData)
         {
-            return EncodeInternal(pcmData, true);
+            return EncodeInternal(pcmData, EncoderProfile.Broadcast);
         }
 
-        private byte[] EncodeInternal(short[] pcmData, bool isBroadcast)
+        /// <summary>
+        /// Continuous program/music stream: no DTX (which would drop quiet frames and sound choppy).
+        /// </summary>
+        public byte[] EncodeForProgramStream(short[] pcmData)
         {
-            // Only change encoder parameters when broadcast mode actually changes
-            // This prevents unnecessary parameter changes that cause CPU spikes
-            if (lastWasBroadcast != isBroadcast)
+            return EncodeInternal(pcmData, EncoderProfile.ProgramStream);
+        }
+
+        private enum EncoderProfile
+        {
+            Voice,
+            Broadcast,
+            ProgramStream
+        }
+
+        private EncoderProfile lastProfile = EncoderProfile.Voice;
+
+        private byte[] EncodeInternal(short[] pcmData, EncoderProfile profile)
+        {
+            if (lastProfile != profile)
             {
-                if (isBroadcast)
-                    SetBroadcastQuality();
-                else
-                    SetNormalQuality();
-                lastWasBroadcast = isBroadcast;
+                switch (profile)
+                {
+                    case EncoderProfile.Broadcast:
+                        SetBroadcastQuality();
+                        break;
+                    case EncoderProfile.ProgramStream:
+                        SetProgramStreamQuality();
+                        break;
+                    default:
+                        SetNormalQuality();
+                        break;
+                }
+
+                lastProfile = profile;
             }
 
             const int maxPacketSize = 1276;

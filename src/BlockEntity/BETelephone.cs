@@ -299,11 +299,64 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public string GetComposeDisabledReasonLangKey() => composeDisabledReasonLangKey ?? "Telegraph.Settings.DisabledNoPower";
         public string GetPhoneNumber() => phoneNumber ?? "";
         public string GetTargetNumber() => targetNumber ?? "";
+        public bool IsCallSessionActive() => callState != TelephoneCallState.Idle;
+
+        public void InvalidateCallIfDisconnected()
+        {
+            if (Api?.Side != EnumAppSide.Server || !IsCallSessionActive())
+            {
+                return;
+            }
+
+            if (NetworkUID == 0)
+            {
+                EndCall();
+                return;
+            }
+
+            if (activePeerTelephonePos != null && !IsWireNodeReachable(activePeerTelephonePos))
+            {
+                EndCall();
+                return;
+            }
+
+            if (incomingCallerTelephonePos != null && !IsWireNodeReachable(incomingCallerTelephonePos))
+            {
+                EndCall();
+                return;
+            }
+
+            if (IsInCall() && !HasReachableVoiceEndpoint())
+            {
+                EndCall();
+            }
+        }
+
+        private bool IsWireNodeReachable(BlockPos targetPos)
+        {
+            if (Api?.World?.BlockAccessor == null || targetPos == null)
+            {
+                return false;
+            }
+
+            BEWireNode targetNode = Api.World.BlockAccessor.GetBlockEntity(targetPos) as BEWireNode;
+            if (targetNode == null)
+            {
+                return false;
+            }
+
+            return WireNetworkHandler.GetReachableNodes(this).Contains(targetNode);
+        }
+
+        private bool HasReachableVoiceEndpoint()
+        {
+            return GetReachableTelephoneVoiceEndpoints().Any();
+        }
+
         public bool IsInCall() => callState == TelephoneCallState.InCall;
         public bool IsWaitingForAnswer() => callState == TelephoneCallState.Ringing && incomingCallerTelephonePos == null;
         public bool HasIncomingCall() => callState == TelephoneCallState.Ringing && incomingCallerTelephonePos != null;
         public bool IsNotInService() => callState == TelephoneCallState.NotInService;
-        public bool IsCallSessionActive() => callState != TelephoneCallState.Idle;
 
         public string[] GetAvailableTargetNumbers()
         {
