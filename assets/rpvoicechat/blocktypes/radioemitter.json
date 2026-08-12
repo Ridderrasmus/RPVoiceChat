@@ -44,7 +44,7 @@
       "west": [ 0.13, 0.91, 0.5 ]
     },
     "handbook": {
-      "groupBy": [ "radioemitter-*" ],
+      "groupBy": [ "radioemitter-{wood}-*" ],
       "extraSections": [
         {
           "title": "rpvoicechat:Handbook.Usage.block-radioemitter.Title",

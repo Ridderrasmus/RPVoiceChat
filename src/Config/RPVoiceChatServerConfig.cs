@@ -50,6 +50,8 @@ namespace RPVoiceChat.Config
         public int RadioMicrophoneCaptureDistance { get; set; } = 2;
         public int RadioTalkieRangeBlocks { get; set; } = 16;
         public int RadioReceiverRangeBlocks { get; set; } = 64;
+        public int RadioReceiverMaxWiredSpeakers { get; set; } = 4;
+        public int TelephoneBroadcastMaxSpeakers { get; set; } = 8;
 
         // Sound Emitting Objects Range Settings
         public int HandbellAudibleDistance { get; set; } = 16;
@@ -108,6 +110,8 @@ namespace RPVoiceChat.Config
             RadioMicrophoneCaptureDistance = previousConfig.RadioMicrophoneCaptureDistance;
             RadioTalkieRangeBlocks = previousConfig.RadioTalkieRangeBlocks;
             RadioReceiverRangeBlocks = previousConfig.RadioReceiverRangeBlocks;
+            RadioReceiverMaxWiredSpeakers = previousConfig.RadioReceiverMaxWiredSpeakers;
+            TelephoneBroadcastMaxSpeakers = previousConfig.TelephoneBroadcastMaxSpeakers;
 
             // Sound Emitting Objects Range Settings
             HandbellAudibleDistance = previousConfig.HandbellAudibleDistance;

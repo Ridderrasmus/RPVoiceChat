@@ -53,7 +53,7 @@
       "west":  [ 0.320, 0.243, 0.503 ]
     },
     "handbook": {
-      "groupBy": [ "radiomicrophone-*" ],
+      "groupBy": [ "radiomicrophone-{wood}-*" ],
       "extraSections": [
         {
           "title": "rpvoicechat:Handbook.Usage.block-radiomicrophone.Title",

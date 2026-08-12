@@ -569,6 +569,13 @@ namespace RPVoiceChat.Systems
             if (radioCount > 0) activeKinds++;
             if (radioReceiverCount > 0) activeKinds++;
 
+            // Radio receiver branches only allow connectors (infrastructure) and speakers.
+            if (radioReceiverCount > 0 && (telegraphCount > 0 || telephoneCount > 0 || radioCount > 0))
+            {
+                denialLangKey = "Wire.ConnectionDenied.RadioReceiverInvalidEndpoint";
+                return false;
+            }
+
             // Defensive guard: dedicated network rules should prevent mixed endpoint families
             // in normal gameplay. Keep this to reject legacy/invalid graph states.
             if (activeKinds > 1)
@@ -607,14 +614,21 @@ namespace RPVoiceChat.Systems
                         return false;
                     }
 
-                    if (speakerCount > BlockEntityRadioReceiver.MaxWiredSpeakers)
+                    if (speakerCount > ServerConfigManager.RadioReceiverMaxWiredSpeakers)
                     {
                         denialLangKey = "Wire.ConnectionDenied.RadioReceiverSpeakerCapacity";
-                        denialArgs = new object[] { BlockEntityRadioReceiver.MaxWiredSpeakers };
+                        denialArgs = new object[] { ServerConfigManager.RadioReceiverMaxWiredSpeakers };
                         return false;
                     }
 
                     return true;
+                }
+
+                if (telephoneHandsetCount > 0 && speakerCount > 0 && speakerCount > ServerConfigManager.TelephoneBroadcastMaxSpeakers)
+                {
+                    denialLangKey = "Wire.ConnectionDenied.TelephoneBroadcastSpeakerCapacity";
+                    denialArgs = new object[] { ServerConfigManager.TelephoneBroadcastMaxSpeakers };
+                    return false;
                 }
 
                 if (speakerCount > 0 && telephoneHandsetCount > 1)
@@ -643,7 +657,9 @@ namespace RPVoiceChat.Systems
             // Managed switchboard components must not contain speakers or radio receivers.
             if (speakerCount > 0 || radioReceiverCount > 0)
             {
-                denialLangKey = "Wire.ConnectionDenied.SpeakerWithSwitchboard";
+                denialLangKey = radioReceiverCount > 0
+                    ? "Wire.ConnectionDenied.RadioReceiverInvalidEndpoint"
+                    : "Wire.ConnectionDenied.SpeakerWithSwitchboard";
                 return false;
             }
 

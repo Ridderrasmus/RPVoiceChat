@@ -1,0 +1,26 @@
+{
+  "code": "radiotalkie",
+  "class": "radiotalkie",
+  "enabled": true,
+  "maxstacksize": 1,
+  "creativeinventory": {
+    "general": [ "*" ],
+    "items": [ "*" ],
+    "tools": [ "*" ],
+    "rpvoicechat": [ "*" ]
+  },
+  "attributes": {
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.item-radiotalkie.Title",
+          "text": "rpvoicechat:Handbook.Usage.item-radiotalkie.Text"
+        }
+      ]
+    }
+  },
+  "drawtype": "json",
+  "shape": {
+    "base": "item/radiotalkie"
+  }
+}
