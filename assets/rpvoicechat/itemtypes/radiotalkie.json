@@ -24,10 +24,10 @@
     "base": "item/radiotalkie"
   },
   "guiTransform": {
-    "translation": { "x": 0, "y": 0, "z": 0 },
-    "rotation": { "x": -20, "y": 45, "z": 0 },
+    "translation": { "x": 0, "y": -2, "z": 0 },
+    "rotation": { "x": 82, "y": -112, "z": -24 },
     "origin": { "x": 0.5, "y": 0.1, "z": 0.5 },
-    "scale": 3.2
+    "scale": 4.14
   },
   "fpHandTransform": {
     "translation": { "x": 0.04, "y": -0.15, "z": -0.3 },
