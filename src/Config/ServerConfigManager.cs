@@ -42,6 +42,8 @@ namespace RPVoiceChat.Config
         public static int RadioMicrophoneCaptureDistance => Config?.RadioMicrophoneCaptureDistance ?? 2;
         public static int RadioTalkieRangeBlocks => Config?.RadioTalkieRangeBlocks ?? 16;
         public static int RadioReceiverRangeBlocks => Config?.RadioReceiverRangeBlocks ?? 64;
+        public static int RadioReceiverMaxWiredSpeakers => Config?.RadioReceiverMaxWiredSpeakers ?? 4;
+        public static int TelephoneBroadcastMaxSpeakers => Config?.TelephoneBroadcastMaxSpeakers ?? 8;
 
         // Sound Emitting Objects Range Settings
         public static int HandbellAudibleDistance => Config?.HandbellAudibleDistance ?? 16;
@@ -167,6 +169,18 @@ namespace RPVoiceChat.Config
             {
                 Logger.server.Warning($"RadioNetworkMaxEndpoints ({RadioNetworkMaxEndpoints}) should be between 1 and 256. Using default (16).");
                 Config.RadioNetworkMaxEndpoints = 16;
+            }
+
+            if (RadioReceiverMaxWiredSpeakers < 1 || RadioReceiverMaxWiredSpeakers > 64)
+            {
+                Logger.server.Warning($"RadioReceiverMaxWiredSpeakers ({RadioReceiverMaxWiredSpeakers}) should be between 1 and 64. Using default (4).");
+                Config.RadioReceiverMaxWiredSpeakers = 4;
+            }
+
+            if (TelephoneBroadcastMaxSpeakers < 1 || TelephoneBroadcastMaxSpeakers > 64)
+            {
+                Logger.server.Warning($"TelephoneBroadcastMaxSpeakers ({TelephoneBroadcastMaxSpeakers}) should be between 1 and 64. Using default (8).");
+                Config.TelephoneBroadcastMaxSpeakers = 8;
             }
 
             // Sound emitting objects range validation

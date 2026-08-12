@@ -1,7 +1,7 @@
 {
   "name": "radioantenna_part",
   "enabled": true,
-  "ingredientPattern": "W,W,M",
+  "ingredientPattern": "MWM,RWR,MWM",
   "ingredients": {
     "W": {
       "type": "item",
@@ -12,9 +12,14 @@
       "type": "block",
       "code": "game:metal-parts",
       "quantity": 1
+    },
+    "R": {
+      "type": "item",
+      "code": "game:rod-iron",
+      "quantity": 1
     }
   },
-  "width": 1,
+  "width": 3,
   "height": 3,
   "output": {
     "type": "block",

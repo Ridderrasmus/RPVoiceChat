@@ -30,6 +30,24 @@ namespace RPVoiceChat.GameContent.Items
             dsc.AppendLine(UIUtils.I18n("Radio.Talkie.Info.Frequency", GetTunedFrequency(inSlot?.Itemstack)));
         }
 
+        public override WorldInteraction[] GetHeldInteractionHelp(ItemSlot inSlot)
+        {
+            return new WorldInteraction[]
+            {
+                new WorldInteraction
+                {
+                    ActionLangCode = RPVoiceChatMod.modID + ":Radio.Talkie.Interaction.Tune",
+                    HotKeyCode = "sneak",
+                    MouseButton = EnumMouseButton.Right
+                },
+                new WorldInteraction
+                {
+                    ActionLangCode = RPVoiceChatMod.modID + ":Radio.Talkie.Interaction.Transmit",
+                    MouseButton = EnumMouseButton.Right
+                }
+            };
+        }
+
         public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handling)
         {
             if (!firstEvent)

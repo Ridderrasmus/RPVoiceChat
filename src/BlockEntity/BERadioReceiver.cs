@@ -16,7 +16,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public const int MinPlaybackRangeBlocks = 0;
         public const int MaxPlaybackRangeBlocks = 15;
         public const int DefaultPlaybackRangeBlocks = 8;
-        public const int MaxWiredSpeakers = 4;
 
         private RadioReceiverDialog dialog;
         private string tunedFrequency = "100.0";
