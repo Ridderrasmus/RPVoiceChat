@@ -40,7 +40,7 @@ namespace RPVoiceChat.Config
         public static int RadioEmitterBaseRangeBlocks => Config?.RadioEmitterBaseRangeBlocks ?? 100;
         public static int RadioAntennaPartRangeBonusBlocks => Config?.RadioAntennaPartRangeBonusBlocks ?? 50;
         public static int RadioMicrophoneCaptureDistance => Config?.RadioMicrophoneCaptureDistance ?? 2;
-        public static int RadioTalkieRangeBlocks => Config?.RadioTalkieRangeBlocks ?? 16;
+        public static int RadioTalkieRangeBlocks => Config?.RadioTalkieRangeBlocks ?? 32;
         public static int RadioReceiverRangeBlocks => Config?.RadioReceiverRangeBlocks ?? 64;
         public static int RadioReceiverMaxWiredSpeakers => Config?.RadioReceiverMaxWiredSpeakers ?? 4;
         public static int TelephoneBroadcastMaxSpeakers => Config?.TelephoneBroadcastMaxSpeakers ?? 8;
@@ -258,8 +258,8 @@ namespace RPVoiceChat.Config
 
             if (RadioTalkieRangeBlocks < 1 || RadioTalkieRangeBlocks > 1000)
             {
-                Logger.server.Warning($"RadioTalkieRangeBlocks ({RadioTalkieRangeBlocks}) should be between 1 and 1000. Using default (16).");
-                Config.RadioTalkieRangeBlocks = 16;
+                Logger.server.Warning($"RadioTalkieRangeBlocks ({RadioTalkieRangeBlocks}) should be between 1 and 1000. Using default (32).");
+                Config.RadioTalkieRangeBlocks = 32;
             }
 
             if (RadioReceiverRangeBlocks < 1 || RadioReceiverRangeBlocks > 10000)

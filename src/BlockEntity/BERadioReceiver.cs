@@ -1,9 +1,7 @@
-using System.Text;
 using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Networking.Packets;
 using RPVoiceChat.Systems;
-using RPVoiceChat.Util;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
@@ -194,12 +192,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
             tree.SetBool("rpvc:radioReceiverEnabled", isEnabled);
             tree.SetInt("rpvc:radioReceiverPlaybackRange", playbackRangeBlocks);
             tree.SetString("rpvc:radioReceiverHeardStationName", heardStationName ?? "");
-        }
-
-        public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
-        {
-            base.GetBlockInfo(forPlayer, dsc);
-            dsc.AppendLine(UIUtils.I18n("blockdesc-radioreceiver-*"));
         }
 
         public override void OnBlockRemoved()
