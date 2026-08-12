@@ -48,7 +48,7 @@ namespace RPVoiceChat.Config
         public int RadioEmitterBaseRangeBlocks { get; set; } = 100;
         public int RadioAntennaPartRangeBonusBlocks { get; set; } = 50;
         public int RadioMicrophoneCaptureDistance { get; set; } = 2;
-        public int RadioTalkieRangeBlocks { get; set; } = 16;
+        public int RadioTalkieRangeBlocks { get; set; } = 32;
         public int RadioReceiverRangeBlocks { get; set; } = 64;
         public int RadioReceiverMaxWiredSpeakers { get; set; } = 4;
         public int TelephoneBroadcastMaxSpeakers { get; set; } = 8;

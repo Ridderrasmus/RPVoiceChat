@@ -444,7 +444,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
         {
             base.GetBlockInfo(forPlayer, dsc);
-            dsc.AppendLine(UIUtils.I18n("blockdesc-radioemitter-*"));
             int power = (int)System.Math.Round(PowerPercent * 100);
             int minPower = ServerConfigManager.RadioNetworkMinPowerPercent;
             dsc.AppendLine(UIUtils.I18n("Radio.Emitter.Info.Power", power, minPower));

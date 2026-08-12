@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using RPVoiceChat.Gui;
 using RPVoiceChat.GameContent.Systems;
 using RPVoiceChat.Networking.Packets;
 using RPVoiceChat.Systems;
-using RPVoiceChat.Util;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
@@ -373,12 +371,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
 
             base.OnBlockUnloaded();
-        }
-
-        public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
-        {
-            base.GetBlockInfo(forPlayer, dsc);
-            dsc.AppendLine(UIUtils.I18n("blockdesc-radioconsole-*"));
         }
     }
 }
