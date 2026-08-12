@@ -1,21 +1,36 @@
 {
   "name": "radioconsole",
   "enabled": true,
-  "ingredientPattern": "PWP,WCW,PWP",
+  "ingredientPattern": "PCP,TRG,PMP",
   "ingredients": {
     "C": {
       "type": "block",
       "code": "rpvoicechat:connector-*",
+      "quantity": 2
+    },
+    "T": {
+      "type": "item",
+      "code": "game:jonasparts-tank01",
       "quantity": 1
     },
-    "W": {
+    "R": {
       "type": "item",
-      "code": "rpvoicechat:telegraphwire",
-      "quantity": 4
+      "code": "game:jonasparts-tank02",
+      "quantity": 1
+    },
+    "G": {
+      "type": "block",
+      "code": "game:glasspane-leaded-*",
+      "quantity": 1
     },
     "P": {
       "type": "item",
       "code": "game:plank-{wood}",
+      "quantity": 2
+    },
+    "M": {
+      "type": "block",
+      "code": "game:metal-parts",
       "quantity": 2
     }
   },

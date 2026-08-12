@@ -63,7 +63,7 @@
       "west": [ 0.2609375, 0.3428125, 0.25625 ]
     },
     "handbook": {
-      "groupBy": [ "telephone-*" ],
+      "groupBy": [ "telephone-{wood}-*" ],
       "extraSections": [
         {
           "title": "rpvoicechat:Handbook.Usage.block-telephone.Title",

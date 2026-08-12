@@ -62,6 +62,7 @@
   "resistance": 1,
   "attributes": {
     "handbook": {
+      "groupBy": [ "radioantenna_part" ],
       "extraSections": [
         {
           "title": "rpvoicechat:Handbook.Usage.block-radioantenna_part.Title",

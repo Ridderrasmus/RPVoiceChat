@@ -107,7 +107,7 @@
   },
   "attributes": {
     "handbook": {
-      "groupBy": [ "radiomixingconsole-*" ],
+      "groupBy": [ "radiomixingconsole-{wood}-*" ],
       "extraSections": [
         {
           "title": "rpvoicechat:Handbook.Usage.block-radiomixingconsole.Title",

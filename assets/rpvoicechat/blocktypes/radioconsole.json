@@ -41,7 +41,7 @@
   },
   "attributes": {
     "handbook": {
-      "groupBy": [ "radioconsole-*" ],
+      "groupBy": [ "radioconsole-{wood}-*" ],
       "extraSections": [
         {
           "title": "rpvoicechat:Handbook.Usage.block-radioconsole.Title",
