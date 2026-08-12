@@ -1,0 +1,114 @@
+{
+  "code": "radiomicrophone",
+  "enabled": true,
+  "class": "radiomicrophoneblock",
+  "entityClass": "BlockEntityRadioMicrophone",
+  "behaviors": [
+    {
+      "name": "HorizontalOrientable"
+    }
+  ],
+  "entityBehaviors": [
+    { "name": "Animatable" }
+  ],
+  "creativeinventory": {
+    "general": [
+      "*-north"
+    ],
+    "rpvoicechat": [
+      "*-north"
+    ]
+  },
+  "maxstacksize": 1,
+  "blockmaterial": "wood",
+  "variantgroups": [
+    {
+      "code": "wood",
+      "states": [
+        "aged",
+        "veryaged"
+      ],
+      "loadFromProperties": "block/wood"
+    },
+    {
+      "code": "side",
+      "loadFromProperties": "abstract/horizontalorientation"
+    }
+  ],
+  "drawtype": "json",
+  "shape": {
+    "base": "block/radiomicrophone",
+    "rotateYByType": {
+      "*-north": 0,
+      "*-east": 270,
+      "*-west": 90,
+      "*-south": 180
+    }
+  },
+  "attributes": {
+    "wireAttachmentOffsets": {
+      "north": [ 0.497, 0.243, 0.320 ],
+      "east":  [ 0.680, 0.243, 0.497 ],
+      "south": [ 0.503, 0.243, 0.680 ],
+      "west":  [ 0.320, 0.243, 0.503 ]
+    },
+    "handbook": {
+      "groupBy": [ "radiomicrophone-{wood}-*" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-radiomicrophone.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-radiomicrophone.Text"
+        }
+      ]
+    }
+  },
+  "sounds": {
+    "place": "game:block/planks",
+    "hit": "game:block/planks",
+    "break": "game:block/planks",
+    "walk": "game:walk/wood"
+  },
+  "textures": {
+    "wood": {
+      "base": "game:block/wood/debarked/{wood}"
+    },
+    "bakelite": {
+      "base": "game:block/coal/bituminous"
+    },
+    "basalt1": {
+      "base": "game:block/stone/cobblestone/basalt1"
+    },
+    "copper": {
+      "base": "game:block/metal/plate/copper"
+    },
+    "gold": {
+      "base": "game:block/metal/tarnished/gold"
+    },
+    "lead": {
+      "base": "game:block/metal/ingot/lead"
+    },
+    "silver": {
+      "base": "game:block/metal/ingot/silver"
+    },
+    "steel": {
+      "base": "game:block/metal/ingot/steel"
+    },
+    "rusty-iron": {
+      "base": "game:block/metal/tarnished/rusty-iron"
+    }
+  },
+  "rainPermeable": false,
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "lightAbsorption": 15,
+  "resistance": 1,
+  "guiTransform": {
+		"translation": { "x": 0, "y": -17, "z": 0 },
+		"rotation": { "x": -22.6, "y": 131, "z": 0 },
+		"scale": 2.34
+	}
+}

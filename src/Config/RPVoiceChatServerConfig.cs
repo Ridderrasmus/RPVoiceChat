@@ -45,6 +45,13 @@ namespace RPVoiceChat.Config
         public int TelephoneNetworkMaxEndpoints { get; set; } = 16;
         public int RadioNetworkMinPowerPercent { get; set; } = 50;
         public int RadioNetworkMaxEndpoints { get; set; } = 16;
+        public int RadioEmitterBaseRangeBlocks { get; set; } = 100;
+        public int RadioAntennaPartRangeBonusBlocks { get; set; } = 50;
+        public int RadioMicrophoneCaptureDistance { get; set; } = 2;
+        public int RadioTalkieRangeBlocks { get; set; } = 32;
+        public int RadioReceiverRangeBlocks { get; set; } = 64;
+        public int RadioReceiverMaxWiredSpeakers { get; set; } = 4;
+        public int TelephoneBroadcastMaxSpeakers { get; set; } = 8;
 
         // Sound Emitting Objects Range Settings
         public int HandbellAudibleDistance { get; set; } = 16;
@@ -98,6 +105,13 @@ namespace RPVoiceChat.Config
             TelephoneNetworkMaxEndpoints = previousConfig.TelephoneNetworkMaxEndpoints;
             RadioNetworkMinPowerPercent = previousConfig.RadioNetworkMinPowerPercent;
             RadioNetworkMaxEndpoints = previousConfig.RadioNetworkMaxEndpoints;
+            RadioEmitterBaseRangeBlocks = previousConfig.RadioEmitterBaseRangeBlocks;
+            RadioAntennaPartRangeBonusBlocks = previousConfig.RadioAntennaPartRangeBonusBlocks;
+            RadioMicrophoneCaptureDistance = previousConfig.RadioMicrophoneCaptureDistance;
+            RadioTalkieRangeBlocks = previousConfig.RadioTalkieRangeBlocks;
+            RadioReceiverRangeBlocks = previousConfig.RadioReceiverRangeBlocks;
+            RadioReceiverMaxWiredSpeakers = previousConfig.RadioReceiverMaxWiredSpeakers;
+            TelephoneBroadcastMaxSpeakers = previousConfig.TelephoneBroadcastMaxSpeakers;
 
             // Sound Emitting Objects Range Settings
             HandbellAudibleDistance = previousConfig.HandbellAudibleDistance;

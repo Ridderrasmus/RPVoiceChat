@@ -270,6 +270,8 @@ namespace RPVoiceChat.GameContent.Systems
                             telephone++;
                             break;
                         case WireNodeKind.Radio:
+                        case WireNodeKind.RadioConsole:
+                        case WireNodeKind.RadioEmitter:
                             radio++;
                             break;
                         case WireNodeKind.Switchboard:
