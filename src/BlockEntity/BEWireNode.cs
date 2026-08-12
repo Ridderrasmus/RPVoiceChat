@@ -577,6 +577,10 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 {
                     RecalculateNetworksAfterDisconnection();
                     WireNetworkHandler.RebuildNetworkState(NetworkUID);
+                    if (Api is ICoreServerAPI sapi)
+                    {
+                        WireTopologyConnectivity.NotifyNode(sapi, this);
+                    }
                 }
             }
         }
@@ -694,7 +698,14 @@ namespace RPVoiceChat.GameContent.BlockEntity
         /// </summary>
         private static void RemoveNodesFromNetwork(IEnumerable<BEWireNode> nodes)
         {
-            foreach (var node in nodes)
+            var nodeList = nodes?.ToList();
+            if (nodeList == null || nodeList.Count == 0)
+            {
+                return;
+            }
+
+            ICoreServerAPI sapi = null;
+            foreach (var node in nodeList)
             {
                 if (node.NetworkUID != 0)
                 {
@@ -703,6 +714,13 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     node.NetworkUID = 0;
                     node.MarkForUpdate();
                 }
+
+                sapi ??= node.Api as ICoreServerAPI;
+            }
+
+            if (sapi != null)
+            {
+                WireTopologyConnectivity.NotifyAffectedNodes(sapi, nodeList);
             }
         }
 
@@ -741,9 +759,14 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
             else if (NetworkUID != 0)
             {
-                // Not a network root, just remove from network
                 var oldNetwork = WireNetworkHandler.GetNetwork(NetworkUID);
                 oldNetwork?.RemoveNode(this);
+                NetworkUID = 0;
+                MarkForUpdate();
+                if (Api is ICoreServerAPI sapi)
+                {
+                    WireTopologyConnectivity.NotifyNode(sapi, this);
+                }
             }
         }
 
@@ -766,10 +789,18 @@ namespace RPVoiceChat.GameContent.BlockEntity
         /// </summary>
         private static void RemoveComponentFromNetwork(HashSet<BEWireNode> component, WireNetwork network)
         {
+            ICoreServerAPI sapi = null;
             foreach (var node in component)
             {
                 node.NetworkUID = 0;
                 network.Nodes.Remove(node);
+                node.MarkForUpdate();
+                sapi ??= node.Api as ICoreServerAPI;
+            }
+
+            if (sapi != null)
+            {
+                WireTopologyConnectivity.NotifyAffectedNodes(sapi, component);
             }
         }
 
@@ -822,10 +853,17 @@ namespace RPVoiceChat.GameContent.BlockEntity
         /// </summary>
         private void RecalculateNetworksAfterDisconnection()
         {
+            ICoreServerAPI serverApi = Api as ICoreServerAPI;
+
             // If this node has no connections, handle isolation
             if (connections.Count == 0)
             {
                 HandleIsolatedNode();
+                if (serverApi != null)
+                {
+                    WireTopologyConnectivity.NotifyNode(serverApi, this);
+                }
+
                 return;
             }
 
@@ -874,13 +912,15 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
             else if (networkRootsInOther == 0)
             {
-                // Other component has no network root, remove it from network
                 RemoveNodesFromNetwork(otherComponent);
-                // This component keeps the network - ensure it has the correct NetworkUID
                 EnsureComponentHasNetworkUID(component, network, network.networkID);
                 WireNetworkHandler.PropagateNetworkUIDToConnectedNodes(this, network);
             }
-            // Case 3: Neither component has INetworkRoot nodes - no recalculation needed
+
+            if (serverApi != null)
+            {
+                WireTopologyConnectivity.NotifyComponents(serverApi, component, otherComponent);
+            }
         }
 
         public override void OnBlockBroken(IPlayer byPlayer)
@@ -1016,7 +1056,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             var resolvedNetwork = WireNetworkHandler.GetNetwork(NetworkUID);
             if (resolvedNetwork != null && resolvedNetwork.IsManagedBySwitchboard && resolvedNetwork.HasPoweredSwitchboard)
             {
-                dsc.AppendLine(UIUtils.I18n("Network.NetworkId", WireNetworkHandler.GetDisplayName(NetworkUID)));
+                dsc.AppendLine(UIUtils.I18n("Network.NetworkId", NetworkUID));
                 string subNetworkName = WireNetworkHandler.GetSubNetworkDisplayName(this);
                 if (!string.IsNullOrWhiteSpace(subNetworkName))
                 {

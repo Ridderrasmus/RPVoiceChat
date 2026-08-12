@@ -53,7 +53,7 @@
     "op": "add",
     "path": "/enabled",
     "value": false,
-    "file": "rpvoicechat:recipes/grid/handheldradio.json",
+    "file": "rpvoicechat:recipes/grid/radiotalkie.json",
     "condition": {
       "when": "rpvoicechat:additional-content",
       "isValue": "false"

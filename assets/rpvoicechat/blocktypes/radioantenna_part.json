@@ -1,0 +1,74 @@
+{
+  "code": "radioantenna_part",
+  "enabled": true,
+  "class": "radioantenna_partblock",
+  "entityClass": "BlockEntityRadioAntennaPart",
+  "behaviors": [
+    {
+      "name": "Unstable",
+      "properties": {
+        "attachedToFaces": [ "down" ]
+      }
+    },
+    { "name": "Coverable" }
+  ],
+  "entityBehaviors": [
+    {
+      "name": "BELightable",
+      "properties": {
+        "lightLevel": 0.85,
+        "lightIntensityScale": 1.2,
+        "lightColorX": 1.0,
+        "lightColorY": 0.05,
+        "lightColorZ": 0.02
+      }
+    },
+    { "name": "Coverable" }
+  ],
+  "creativeinventory": {
+    "general": [ "*" ],
+    "rpvoicechat": [ "*" ]
+  },
+  "maxstacksize": 16,
+  "blockmaterial": "Metal",
+  "drawtype": "json",
+  "shape": {
+    "base": "block/radioantenna/radioantenna_top"
+  },
+  "shapeInventory": {
+    "base": "block/radioantenna/radioantenna_part"
+  },
+  "textures": {
+    "stainlesssteel": { "base": "game:block/metal/ingot/stainlesssteel" },
+    "bakelite": { "base": "game:block/coal/bituminous" },
+    "bulbglass": { "base": "game:block/glass/red" }
+  },
+  "sounds": {
+    "place": "game:block/anvil",
+    "hit": "game:block/anvil",
+    "break": "game:block/anvil",
+    "walk": "game:walk/stone"
+  },
+  "rainPermeable": true,
+  "sidesolid": { "all": false },
+  "sideopaque": { "all": false },
+  "lightAbsorption": 0,
+  "collisionbox": {
+    "x1": 0.4, "y1": 0, "z1": 0.4, "x2": 0.6, "y2": 1, "z2": 0.6
+  },
+  "selectionbox": {
+    "x1": 0.4, "y1": 0, "z1": 0.4, "x2": 0.6, "y2": 1, "z2": 0.6
+  },
+  "resistance": 1,
+  "attributes": {
+    "handbook": {
+      "groupBy": [ "radioantenna_part" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-radioantenna_part.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-radioantenna_part.Text"
+        }
+      ]
+    }
+  }
+}

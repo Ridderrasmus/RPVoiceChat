@@ -8,7 +8,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
     {
         protected override int MaxConnections => 1;
         public override bool IsActiveEndpoint => true;
-        public WireNodeKind WireNodeKind => WireNodeKind.Telephone;
+        public WireNodeKind WireNodeKind => WireNodeKind.Infrastructure;
         public int VoiceEmissionRangeBlocks => ServerConfigManager.SpeakerAudibleDistance;
     }
 }

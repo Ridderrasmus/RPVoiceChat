@@ -5,9 +5,8 @@
   "item-royalhorn": "Королівський горн",
   "item-royalhornhandle": "Руків'я королівського горна",
   "item-royalhornhead-blackbronze": "Основа королівського горну",
-  "item-handheldradio": "Портативне радіо",
+  "item-radiotalkie": "Портативне радіо",
   "item-telegraphwire": "Телеграфний дріт",
-  "item-radiocase": "Кейс для радіо",
   "item-smallbellparts-silver": "Дрібні деталі дзвоника",
   "item-perfectgoathorn": "Чудовий козячий ріжок",
   "item-warhorn": "Піхотний ріжок",
@@ -155,5 +154,5 @@
   "Handbook.Welding.block-churchbell.Title": "Зварювальний процес: Готовий дзвін",
   "Handbook.Welding.block-churchbell.Text": "Процес зварювання всього дзвону полягає в тому, щоб окремо зварити кожен (крім його верхівки) шар дзвону з частин. Весь процес можна знайти на сторінці довідника для <a href='handbook://block-rpvoicechat:churchbell-part-brass-bottom'>частин дзвону</a>. <br><br>Є чотири шари, і коли вони зварені, ви можете з'єднати їх у готовий дзвін. Цей процес можна побачити на сторінці довідника для <a href='handbook://block-rpvoicechat:churchbell-layer-brass-bottom'>шарів</a>.",
   "Handbook.Usage.block-churchbell.Title": "Використання",
-  "Handbook.Usage.block-churchbell.Text": "Це масивний церковний дзвін розміром 3x3x4, який при натисканні правою кнопкою миші дзвенить і його чітко чути на відстані 832 блоків. Його потрібно розмістити на землі і навколо має бути вільний простір розміром 3x3x4."
+  "Handbook.Usage.block-churchbell.Text": "Це масивний церковний дзвін розміром 3x3x4, який при <hk>rightmouse</hk> дзвенить і його чітко чути на відстані 832 блоків. Його потрібно розмістити на землі і навколо має бути вільний простір розміром 3x3x4."
 }
