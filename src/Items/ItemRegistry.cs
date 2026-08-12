@@ -11,7 +11,7 @@ namespace RPVoiceChat.GameContent.Items
             // This prevents "no such class registered" errors when JSON files reference these classes
             api.RegisterItemClass("soundemitting", typeof(ItemSoundEmitting));
             api.RegisterItemClass("voiceamplifier", typeof(ItemVoiceAmplifier));
-            api.RegisterItemClass("handheldradio", typeof(ItemRadio));
+            api.RegisterItemClass("radiotalkie", typeof(ItemRadio));
             api.RegisterItemClass("telegraphwire", typeof(ItemTelegraphWire));
             api.RegisterItemClass("telegram", typeof(ItemTelegram));
             api.RegisterItemClass("wirecutter", typeof(ItemWireCutter));

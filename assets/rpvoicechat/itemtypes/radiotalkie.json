@@ -1,6 +1,6 @@
 {
-  "code": "handheldradio",
-  "class": "handheldradio",
+  "code": "radiotalkie",
+  "class": "radiotalkie",
   "enabled": true,
   "maxstacksize": 1,
   "creativeinventory": {
@@ -9,9 +9,19 @@
     "tools": [ "*" ],
     "rpvoicechat": [ "*" ]
   },
+  "attributes": {
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.item-radiotalkie.Title",
+          "text": "rpvoicechat:Handbook.Usage.item-radiotalkie.Text"
+        }
+      ]
+    }
+  },
   "drawtype": "json",
   "shape": {
-    "base": "item/handheldradio"
+    "base": "item/radiotalkie"
   },
   "guiTransform": {
     "translation": { "x": 0, "y": 0, "z": 0 },
