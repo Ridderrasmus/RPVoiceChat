@@ -1,0 +1,50 @@
+{
+  "code": "radiotalkie",
+  "class": "radiotalkie",
+  "enabled": true,
+  "maxstacksize": 1,
+  "creativeinventory": {
+    "general": [ "*" ],
+    "items": [ "*" ],
+    "tools": [ "*" ],
+    "rpvoicechat": [ "*" ]
+  },
+  "attributes": {
+    "handbook": {
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.item-radiotalkie.Title",
+          "text": "rpvoicechat:Handbook.Usage.item-radiotalkie.Text"
+        }
+      ]
+    }
+  },
+  "drawtype": "json",
+  "shape": {
+    "base": "item/radiotalkie"
+  },
+  "guiTransform": {
+    "translation": { "x": 0, "y": -2, "z": 0 },
+    "rotation": { "x": 82, "y": -112, "z": -24 },
+    "origin": { "x": 0.5, "y": 0.1, "z": 0.5 },
+    "scale": 4.14
+  },
+  "fpHandTransform": {
+    "translation": { "x": 0.04, "y": -0.15, "z": -0.3 },
+    "rotation": { "x": 90, "y": -15, "z": 5 },
+    "origin": { "x": 0.5, "y": 0, "z": 0.5 },
+    "scale": 2.5
+  },
+  "tpHandTransform": {
+    "translation": { "x": -0.4, "y": 0, "z": -0.28 },
+    "rotation": { "x": 90, "y": 0, "z": 0 },
+    "origin": { "x": 0.5, "y": 0, "z": 0.5 },
+    "scale": 2.2
+  },
+  "groundTransform": {
+    "translation": { "x": 0, "y": 0, "z": 0 },
+    "rotation": { "x": 0, "y": 0, "z": 0 },
+    "origin": { "x": 0.5, "y": 0, "z": 0.5 },
+    "scale": 2.8
+  }
+}

@@ -115,6 +115,7 @@ namespace RPVoiceChat.Systems
             return Key.Substring("player:".Length);
         }
 
+        [ProtoIgnore]
         public bool IsValid => !string.IsNullOrEmpty(Key);
 
         public override bool Equals(object obj)

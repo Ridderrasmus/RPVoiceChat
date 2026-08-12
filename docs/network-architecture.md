@@ -200,7 +200,7 @@ Establish **voice calls** between telephones (and **PA-style** branches to speak
 | **Switchboard-managed** | Switchboard present + powered | Handsets dial by **phone number**; capacity from config |
 | **PA branch** | Speakers on the same component | Up to **1 handset** when speakers are present; voice routes to speaker emission points |
 
-Speakers (`BlockEntitySpeaker`) are **voice endpoints** but not `INetworkRoot`. They cannot create a network alone.
+Speakers (`BlockEntitySpeaker`) are **voice endpoints** but not `INetworkRoot`. They cannot create a network alone. The same speaker block also works on **radio** wired graphs (see [Shared blocks](#shared-blocks-telephone--radio)).
 
 ### How a call works
 
@@ -249,66 +249,297 @@ Same pattern as telegraph: `ApplyServerComposeFlags` on each telephone — manag
 
 ### Purpose
 
-**Hybrid network**: radio **machines** are wired into the normal graph; **antennas** (blocks) and **talkies** (players) attach via an **RF overlay** that shares the same `networkId`.
+**Hybrid network**: radio infrastructure is wired; **RF broadcast** is a runtime overlay keyed by **frequency** (defined on the supervision console).
 
 ```
-[Switchboard]──wire──[Radio hub machine]──wire──[Connector]
+                    [Microphone]──┐  (voice input, 1 wire)
+                                  │
+[Standard]──[Radio Supervision Console]══wire══[Radio Emitter]──[Antenna part]×N
+              │  frequency + display name     │  MP power + mode GUI
+              │  max 2 wires, 1 per component │  wireless TX when powered
+              ╞══wire══[Speaker]  (local audio out)
+              │
+              └── [Mixing Console] (stub, 1 wire, behaviour TBD)
                          │
-                    RF overlay (WirelessTopologyRegistry)
+                    RF broadcast (frequency, range)
                          │
-              [Antenna block]     [Player talkie (ItemRadio)]
+         [Talkie TX/RX]   [Radio receiver RX-only]   [Emitter repeater mode]
 ```
 
-### Wired layer (radio family on `WireNetwork`)
+### Block roles
 
-Radio machines are `BEWireNode` endpoints with `WireNodeKind.Radio`. The component is typed `WireNetworkKind.Radio`.
+| Block | `WireNodeKind` | Max wires | `INetworkRoot` | Role |
+|-------|----------------|-----------|----------------|------|
+| **Radio Supervision Console** | `RadioConsole` | **2** | **Yes** | Frequency + display name; owns radio `networkId`; **at most one** per component |
+| **Radio Emitter** | `RadioEmitter` | default* | No | MP consumer; wireless TX; GUI: wired-source vs repeater |
+| **Radio Microphone** | `Radio` | **1** | No | GUI on/off; only the active operator's voice is routed (telephone-style) |
+| **Mixing Console** | `Radio` | **2** | No | Program bus (HLS + mic mix); server-side playback |
+| **Radio Antenna Part** | — (stack) | — | No | On top of emitter/part only; **+50 blocks** TX range each |
+| **Connector / standard** | `Infrastructure` | config | No | Branching |
+| **Speaker** | `Infrastructure`* | **1** | No | **Shared** local audio output — telephone PA **or** radio wired graph |
+| **Radio Receiver** | — (wireless) | — | No | RF appliance: **receive only** on a tuned frequency |
+| **Talkie** (`ItemRadio`) | — (handheld) | — | No | **TX + RX** at very short range (future) |
 
-Connection rules (`WireNetworkHandler.CanConnectNodes`):
+\* Emitter uses default `TelegraphMaxConnectionsPerNode` unless overridden; repeater mode forbids any wire. Speaker reuses existing **`WireNodeKind.Infrastructure`** (see below).
 
-| Setup | Rule |
-|-------|------|
-| No switchboard | At most **1** radio endpoint |
-| With switchboard | Up to `RadioNetworkMaxEndpoints` × switchboard count; requires `RadioNetworkMinPowerPercent` power |
+### Shared blocks (telephone + radio)
 
-Radio endpoints participate in the same persistence model as other wired nodes (`PersistedNodes`, `WireTopologyRegistry`, Join/Detach).
+**Speaker** (`BlockEntitySpeaker`) is the **same block** on both families — one asset, one recipe, no radio-specific variant.
+
+| On network | Role |
+|------------|------|
+| **Telephone** | PA branch: during a call, caller voice is rerouted to reachable speakers (`TelephoneVoiceRoutingSystem`) |
+| **Radio** | Local playback endpoint on the wired graph; hears audio from the radio station (wired inputs + RF feed, via `RadioVoiceRoutingSystem`) |
+
+Implementation:
+
+- Reuse **`WireNodeKind.Infrastructure`** — already neutral: not counted in `telegraphCount` / `telephoneCount` / `radioCount` (see `WireNetworkHandler.CanConnectNodes` and `WireNetwork.RebuildTypedState`). Same role as connectors and standards.
+- `BlockEntitySpeaker` keeps `IsActiveEndpoint => true` and `ITelephoneVoiceEndpoint`; family-specific behaviour is detected by **block type** (`OfType<BlockEntitySpeaker>()`), not by `WireNodeKind`.
+- Resolved `WireNetworkKind` comes from the traffic endpoints on the component (handset, supervision console, telegraph key, …).
+- Change from today: speaker currently declares `WireNodeKind.Telephone` — that wrongly inflates telephone counts and blocks radio graphs; switch to `Infrastructure` at implementation time.
+- Existing telephone rules unchanged: max **1 handset** when speakers are present on a PA branch (still enforced via `OfType<BlockEntitySpeaker>()`).
+
+### Audio inputs (wired radio graph)
+
+The wired radio network needs at least one **sound capture** endpoint before emitters can broadcast meaningful audio.
+
+| Input | Status | Behaviour |
+|-------|--------|-----------|
+| **Radio Microphone** | Done | GUI **on/off**; only the player who goes **on air** has voice routed to the wired graph + RF (like telephone call routing, not proximity capture). |
+| **Mixing Console** | Done | HLS program source (server-side). **Does not capture the radio microphone** — see below. |
+| **Radio Microphone** | Done | GUI on/off operator voice on the **same wired graph** in parallel with the mixing console. |
+| **Telephone** | Not on radio graph | Telephone handsets create `WireNetworkKind.Telephone` networks. Radio identity is owned by the **supervision console**, not telephone roots. |
+
+Planned interface (mirrors `ITelephoneVoiceEndpoint` for outputs):
+
+```csharp
+public interface IRadioVoiceInput
+{
+    int VoiceCaptureRangeBlocks { get; }
+}
+```
+
+`RadioVoiceRoutingSystem` will aggregate inputs on the console's wired component and feed powered emitters.
+
+### Radio Supervision Console
+
+- **GUI**: transmission **frequency** (channel id) + **display name** (human label).
+- **`INetworkRoot`**: creates and owns the radio `networkId`.
+- **Max 2 wire connections** (`MaxConnections => 2`).
+- **One console per wired radio component** — enforced in `WireNetworkHandler.CanConnectNodes`.
+- Multiple **emitters** may connect on the same graph via connectors/standards.
+- Does **not** transmit wirelessly; configures frequency for all wired emitters on that graph.
+- Frequency + name persisted on the block entity and synced to affiliated emitters.
+
+### Radio Microphone
+
+- **`MaxConnections => 1`** (same as `BlockEntitySpeaker` / `BlockEntityTelephone`).
+- **`WireNodeKind.Radio`** — `WireNetworkKind.Radio`, not telephone.
+- **No `INetworkRoot`** — joins the network created by the supervision console.
+- **GUI** with **on / off** (go on air / go off air). Closing the GUI does **not** end transmission — same pattern as telephone calls.
+- **Single operator**: only the player who enabled transmission has voice routed; another player receives a busy error if the mic is already on air.
+- No proximity capture — operator position does not matter once on air.
+- `RadioMicCaptureSystem` arms RF + wired speaker routes for the active operator only.
+
+### Mixing Console (program source — HLS)
+
+- Block + block entity registered; single wire; `WireNodeKind.Radio`; implements `IRadioProgramSource`.
+- **GUI**: internet **HLS URL** field (http/https) + **on / off air** toggle (single operator, same rules as radio microphone).
+- When **on air**, the **dedicated server** pulls the HLS stream via **FFmpeg** (must be installed on the server `PATH`), decodes to PCM, encodes Opus broadcast frames, and injects routed `AudioPacket`s (synthetic source id per console).
+- Broadcast **continues 24/7** after the operator goes on air — the operator may disconnect; only **go off air**, breaking the block, or server restart stops playback.
+- `RadioProgramBroadcastSystem` arms RF routes and owns one FFmpeg session per on-air mixing console.
+
+#### Mixing console + radio microphone (unified program bus)
+
+When a **mixing console is on air** on the wired graph, it owns the **single program output** for that station:
+
+| Source | Behaviour |
+|--------|-----------|
+| **HLS URL** | Server FFmpeg decode → music bed |
+| **Radio microphone** (same graph, on air) | Operator voice is **not** routed directly; packets are consumed by `RadioProgramBroadcastSystem` |
+| **Mix** | Each HLS frame is mixed with queued mic PCM; **music ducks** (~10% level) while the mic is active |
+
+Mic-only is supported: mixing console on air without HLS URL, microphone on air on the same graph → voice on the program bus.
+
+If **no mixing console is on air**, the radio microphone keeps its **direct** RF path (`RadioMicCaptureSystem`).
+
+#### HLS / FFmpeg
+
+| Requirement | Notes |
+|-------------|-------|
+| Stream URL | Persisted on the mixing console BE; validated server-side (`http://` / `https://`, max 2048 chars) |
+| FFmpeg | Auto-download via `Xabe.FFmpeg.Downloader` into `Lib/ffmpeg/auto/` (Win/Linux/macOS). Optional manual bundle: `Lib/ffmpeg/{win|linux|osx}/`. Falls back to server `PATH`. LGPL/GPL — see `Lib/ffmpeg/README.txt`. |
+| Network | Server must reach the HLS URL (internet access on the host running Vintage Story server) |
+
+Example URL shape: `https://example.com/live/stream.m3u8`
+
+#### Program broadcast vs voice capture
+
+| | **Radio Microphone** | **Mixing Console** |
+|---|---------------------|-------------------|
+| Trigger | Operator enables mic in **GUI** (on air) | Mixing console **on air** (HLS and/or mic on same graph) |
+| Human locuteur | Yes (single designated operator) | Mic operator when mic on same graph; else automated HLS |
+| RF routes | Direct mic routes **only if no on-air mixing console** on graph | Single program bus `rpvc:program:…` |
+| Wired speakers | Yes | Yes (via program bus) |
+| Audio origin | Client `AudioPacket` (operator voice) | Server-mixed program `AudioPacket` |
+
+```csharp
+public interface IRadioProgramSource
+{
+    bool IsOnAir { get; }
+    string HlsStreamUrl { get; }
+    string ActiveOperatorPlayerUid { get; }
+}
+```
+
+
+### Radio Emitter
+
+**Mechanical power** (same pattern as `BlockEntitySwitchboard` / `BlockEntityBellHammer`):
+
+- `MPConsumer` + `IMechanicalPowerBlock`
+- Reads `TrueSpeed` server-side; wireless TX active when `PowerPercent >= RadioNetworkMinPowerPercent` (default 50%, server config)
+
+**Wireless range** (runtime, server config):
+
+```
+effectiveRange = RadioEmitterBaseRangeBlocks + (antennaPartCount × RadioAntennaPartRangeBonusBlocks)
+```
+
+| Config key | Default |
+|------------|---------|
+| `RadioEmitterBaseRangeBlocks` | 100 |
+| `RadioAntennaPartRangeBonusBlocks` | 50 |
+
+When powered, the emitter broadcasts **voice/audio from the network** at `effectiveRange` on the console's frequency.
+
+**Operating mode** (GUI, persisted):
+
+| Mode | Wired connection | Behaviour |
+|------|------------------|-----------|
+| **Wired source** | Allowed | Retransmits audio from **wired inputs** (mic, mixing console, …) and **local speakers** on the same graph |
+| **Repeater** | **Forbidden** | Listens to another **powered emitter** on a receivable frequency within range and re-broadcasts that channel; prevents mixing wired radio networks |
+
+Mode is enforced at connection time: repeater emitters reject new wire connections.
+
+### Radio Antenna Parts (stackable)
+
+Inspired by vertical windmill sail stacking ([millwright](https://github.com/SpearAndFang/millwright)):
+
+- Separate block placed **only on top of** a radio emitter or another antenna part.
+- Forms a vertical chain; the **base emitter** counts segments for range bonus.
+- Placement validation on interact/place (scan obstruction optional, same idea as millwright `Obstructed`).
+- Destroying a segment updates the chain and recalculates range.
+
+Not a wire node — purely structural range extension on the emitter below.
+
+### Wired layer rules (`WireNetwork`)
+
+| Rule | Detail |
+|------|--------|
+| Network root | **`RadioConsole`** implements `INetworkRoot` (one `networkId` per radio station) |
+| Console limit | **1** `RadioConsole` per connected component |
+| Console wires | **Max 2** connections on the supervision console |
+| Single-wire endpoints | Microphone, speaker: **`MaxConnections => 1`**; mixing console: **`MaxConnections => 2`** |
+| Speaker | **`WireNodeKind.Infrastructure`** — valid on telephone **and** radio components |
+| Emitters | Multiple `RadioEmitter` nodes allowed on the same graph |
+| Repeater emitter | **No** wire connections |
+| Wired-source emitter | Wire + connectors + standards |
+| Switchboard (optional) | Same power/capacity pattern as other families |
+| Family typing | Component with radio endpoints → `WireNetworkKind.Radio` |
+| Mixed families | Radio and telephone/telegraph endpoints cannot share a component (existing guard) |
+
+### Wireless receivers and talkies
+
+| Device | TX | RX | Range | Notes |
+|--------|----|----|-------|-------|
+| **Talkie** (`ItemRadio`) | Yes | Yes | Very short (server config `RadioTalkieRangeBlocks`, TBD) | Handheld; tune to console frequency; bind via `WirelessTopologyRegistry` |
+| **Radio Receiver** (block) | No | Yes | Configurable listen radius (`RadioReceiverRangeBlocks`, TBD) | Fixed appliance; GUI: frequency tune + volume; no mechanical power required (TBD) |
+| **Radio Emitter** | Yes | No* | `base + antenna parts` | *Repeater mode receives another emitter's RF, then re-transmits |
+
+Receivers filter by **frequency** (and optionally display name in GUI). They do not join the wired graph.
 
 ### Wireless layer (`WirelessTopologyRegistry`)
 
-RF is modeled separately from physical wires:
+Extended for frequency-aware channels:
 
-| Mechanism | API | Use case |
-|-----------|-----|----------|
-| **Network affiliation** | `RegisterAntenna(pos, networkId)`, `BindTalkie(playerUid, networkId)` | Durable membership |
-| **Explicit RF link** | `LinkWireless(antennaRef, talkieRef)` | Point-to-point pairing |
-| **Wired bridge** | `ResolveNetworkIdFromWiredBlock(pos)` | Inherit `networkId` from wired radio hub |
+| Mechanism | Use |
+|-----------|-----|
+| `RegisterAntenna(pos, networkId)` | Emitter affiliated to wired network |
+| Frequency binding | Console frequency applied to all wired emitters on the graph |
+| `BindTalkie(playerUid, networkId)` / frequency tune | Handheld reception (future `ItemRadio`) |
+| Repeater | Runtime only: scan powered emitters in range on target frequency |
 
-SaveGame key: `rpvc:wireless-topology` (RF links + memberships).
-
-`TopologyNodeRef` identities:
-
-- `block:x|y|z` — antenna, radio hub
-- `player:uid` — handheld talkie
-- `entity:id` — future mobile devices
+SaveGame key: `rpvc:wireless-topology`.
 
 ### Voice and range (runtime)
 
-These are **not** stored in the topology registry:
+Not stored in topology registries:
 
-- Antenna ↔ talkie **range** and line-of-sight
-- Signal quality, occlusion
-- Actual voice packet delivery over RF
+- Effective TX range (base + antenna parts)
+- Mechanical power gate
+- Frequency reception filter
+- Line-of-sight / occlusion (future)
 
-The registry holds **durable affiliations**; range checks run at call time when radio voice routing is implemented on top of `RadioNetwork` (`NetworkTransportType.Radio`).
+Planned routing: dedicated `RadioVoiceRoutingSystem` (same hook pattern as `TelephoneVoiceRoutingSystem` → `GameServer` / `IVoiceRouteProvider`).
 
-### Classes
+### Server config (radio)
+
+| Key | Default | Notes |
+|-----|---------|-------|
+| `RadioNetworkMinPowerPercent` | 50 | Min MP speed for wireless TX |
+| `RadioNetworkMaxEndpoints` | 16 | Per switchboard, emitters count |
+| `RadioEmitterBaseRangeBlocks` | 100 | Base wireless TX range |
+| `RadioAntennaPartRangeBonusBlocks` | 50 | Per stacked antenna part |
+| `RadioMicrophoneCaptureDistance` | 2 | Proximity capture at radio microphone |
+| `RadioTalkieRangeBlocks` | 16 | Handheld TX/RX radius |
+| `RadioReceiverRangeBlocks` | 64 | Fixed receiver listen radius |
+
+No in-game command required (same pattern as `SpeakerAudibleDistance`, etc.).
+
+### Implementation status
+
+| Component | Status |
+|-----------|--------|
+| `WirelessTopologyRegistry`, world persistence | Done |
+| `WireNodeKind` radio family + connection rules | Done |
+| `BESpeaker` → `WireNodeKind.Infrastructure` | Done |
+| Server config radio range keys | Done |
+| Radio Supervision Console | Done |
+| Radio Microphone + GUI on/off operator capture | Done |
+| Radio Emitter (MP, modes, antenna range) | Done |
+| Radio Antenna Part (stack placement) | Done |
+| Mixing Console (stub BE) | Done |
+| Radio Receiver block (GUI tune) | Done |
+| RF wired TX (`RadioRfTransmissionService`, repeater relay) | Done |
+| RF reception — talkie (`RadioRfReceptionSystem`) | Done |
+| RF reception — fixed receiver (`RadioReceiverReceptionSystem`) | Done |
+| `ItemRadio` talkie (PTT + tune GUI) | Done |
+| Mixing console — HLS program broadcast (server-side) | Done (FFmpeg on dedicated server) |
+
+### Classes (existing + planned)
 
 | File | Role |
 |------|------|
 | `RadioNetwork.cs` | Radio family on `CommunicationNetworkBase` |
-| `WirelessTopologyRegistry.cs` | RF overlay persistence and queries |
-| `CommunicationTopologyGraph.cs` | Generic graph engine (wired + wireless links) |
-| `TopologyNodeRef.cs` | Block / player / entity node identity |
-| `ItemRadio.cs` | Handheld talkie item (gameplay hook) |
+| `WirelessTopologyRegistry.cs` | RF overlay persistence |
+| `BlockEntityRadioSupervisionConsole.cs` | Console BE — `INetworkRoot`, 2 wires (planned) |
+| `BlockEntityRadioMicrophone.cs` | Mic input BE (planned) |
+| `BlockEntityRadioMixingConsole.cs` | Mixing console stub (planned) |
+| `BlockEntityRadioEmitter.cs` | Emitter BE (planned) |
+| `BlockEntityRadioAntennaPart.cs` | Stack segment BE (planned) |
+| `BlockEntityRadioReceiver.cs` | RX-only appliance BE (planned) |
+| `RadioVoiceRoutingSystem.cs` | Mic + talkie route layers → `GameServer` |
+| `RadioRfTransmissionService.cs` | Wired TX points + repeater relay |
+| `RadioRfReceptionSystem.cs` | Talkie RX expander |
+| `RadioReceiverReceptionSystem.cs` | Fixed receiver listen zone |
+| `RadioTalkieTransmissionSystem.cs` | Talkie PTT TX routes |
+| `RadioBlockIndex.cs` | Server-side radio BE index |
+| `RadioProgramBroadcastSystem.cs` | Server HLS decode + RF routes + audio inject |
+| `RadioProgramMixer.cs` | Music + mic mix with voice ducking |
+| `RadioProgramMicBuffer.cs` | Mic PCM queue for program bus |
+| `RadioHlsStreamCapture.cs` | FFmpeg pipe decoder |
+| `ItemRadio.cs` | Handheld talkie (short TX/RX) |
 
 ---
 

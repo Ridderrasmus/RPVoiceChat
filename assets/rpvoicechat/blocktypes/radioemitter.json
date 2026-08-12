@@ -1,0 +1,86 @@
+{
+  "code": "radioemitter",
+  "enabled": true,
+  "class": "radioemitterblock",
+  "entityClass": "BlockEntityRadioEmitter",
+  "behaviors": [
+    { "name": "HorizontalOrientable" }
+  ],
+  "entityBehaviors": [
+    { "name": "MPConsumer" }
+  ],
+  "creativeinventory": {
+    "general": [ "*-north" ],
+    "rpvoicechat": [ "*-north" ]
+  },
+  "maxstacksize": 1,
+  "blockmaterial": "wood",
+  "variantgroups": [
+    {
+      "code": "wood",
+      "states": [ "aged", "veryaged" ],
+      "loadFromProperties": "block/wood"
+    },
+    {
+      "code": "side",
+      "loadFromProperties": "abstract/horizontalorientation"
+    }
+  ],
+  "drawtype": "json",
+  "shape": {
+    "base": "block/radioemitter/radioemitter",
+    "rotateYByType": {
+      "*-north": 0,
+      "*-east": 270,
+      "*-west": 90,
+      "*-south": 180
+    }
+  },
+  "attributes": {
+    "wireAttachmentOffsets": {
+      "north": [ 0.5, 0.91, 0.13 ],
+      "east": [ 0.87, 0.91, 0.5 ],
+      "south": [ 0.5, 0.91, 0.87 ],
+      "west": [ 0.13, 0.91, 0.5 ]
+    },
+    "handbook": {
+      "groupBy": [ "radioemitter-{wood}-*" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-radioemitter.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-radioemitter.Text"
+        }
+      ]
+    }
+  },
+  "sounds": {
+    "place": "game:block/glass",
+    "hit": "game:block/glass",
+    "break": "game:block/glass",
+    "walk": "game:walk/stone"
+  },
+  "textures": {
+    "wood": { "base": "game:block/wood/debarked/{wood}" },
+    "glass": { "base": "game:block/glass/plain" },
+    "gold": { "base": "game:block/metal/plate/gold" },
+    "copper": { "base": "game:block/metal/plate/copper" },
+    "silver": { "base": "game:block/metal/ingot/silver" },
+    "stainlesssteel": { "base": "game:block/metal/ingot/stainlesssteel" },
+    "bakelite": { "base": "game:block/coal/bituminous" }
+  },
+  "rainPermeable": false,
+  "sidesolid": { "all": false },
+  "sideopaque": { "all": false },
+  "lightAbsorption": 15,
+  "resistance": 1,
+  "guiTransform": {
+		"translation": { "x": 0, "y": -1, "z": 0 },
+		"rotation": { "x": -22.6, "y": 149, "z": 0 },
+		"scale": 1.1
+	},
+  "tpHandTransform": {
+		"translation": { "x": -1.6, "y": -1, "z": -1.4 },
+		"rotation": { "x": 150, "y": 0, "z": -90 },
+		"scale": 0.5
+	}
+}
