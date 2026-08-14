@@ -67,6 +67,11 @@ namespace RPVoiceChat.Audio
         private const int FullUpdateIntervalMs = 50; // Update position/velocity every 50ms (20 Hz)
         private const int WallThicknessUpdateIntervalMs = 200; // Update wall thickness every 200ms (5 Hz)
 
+        // Sound Physics Adapted runs its raycaster on the main thread only, but UpdatePlayer
+        // runs on a network thread. The query is queued and its result cached for the next pass.
+        private volatile float cachedSoundPhysicsGainHF = 1f;
+        private volatile bool soundPhysicsQueryPending;
+
         public PlayerAudioSource(IPlayer player, ICoreClientAPI capi, ClientSettingsRepository clientSettingsRepo)
             : this(player, capi, clientSettingsRepo, syntheticSourceId: null)
         {
@@ -209,7 +214,8 @@ namespace RPVoiceChat.Audio
                     {
                         Vec3d speakerLocation = sourceOverride ?? LocationUtils.GetLocationOfPlayer(player);
                         Vec3d listenerLocation = LocationUtils.GetLocationOfPlayer(capi.World.Player);
-                        gainHF = SoundPhysicsCompat.GetOcclusionGainHF(speakerLocation, listenerLocation);
+                        QueueSoundPhysicsQuery(speakerLocation, listenerLocation);
+                        gainHF = cachedSoundPhysicsGainHF;
                         usedSoundPhysics = true;
                     }
 
@@ -226,6 +232,10 @@ namespace RPVoiceChat.Audio
                         lowpassFilter.Start();
                         lowpassFilter.SetHFGain(gainHF);
                     }
+                }
+                else
+                {
+                    cachedSoundPhysicsGainHF = 1f;
                 }
             }
 
@@ -298,6 +308,30 @@ namespace RPVoiceChat.Audio
         {
             if (source <= 0) return false; // Source is invalid
             return OALW.GetSourceState(source) == ALSourceState.Playing;
+        }
+
+        /// <summary>
+        /// Ask Sound Physics Adapted for the occlusion between the speaker and the listener.
+        /// Its raycaster reads the world and keeps shared state, so it must run on the main
+        /// thread. The result lands in <see cref="cachedSoundPhysicsGainHF"/> for the next
+        /// muffling update. Only one query per source is in flight at a time.
+        /// </summary>
+        private void QueueSoundPhysicsQuery(Vec3d speakerLocation, Vec3d listenerLocation)
+        {
+            if (soundPhysicsQueryPending) return;
+            soundPhysicsQueryPending = true;
+
+            capi.Event.EnqueueMainThreadTask(() =>
+            {
+                try
+                {
+                    cachedSoundPhysicsGainHF = SoundPhysicsCompat.GetOcclusionGainHF(speakerLocation, listenerLocation);
+                }
+                finally
+                {
+                    soundPhysicsQueryPending = false;
+                }
+            }, "rpvoicechat:SoundPhysicsOcclusion");
         }
 
         private float GetFinalGain()
