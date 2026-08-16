@@ -19,9 +19,13 @@ namespace RPVoiceChat
         internal static GameServer VoiceServer;
         private GameServer server;
 
+        /// <summary>True when Sound Physics Adapted is loaded. Its setting stays hidden when it is not.</summary>
+        private bool soundPhysicsModLoaded;
+
         public override void StartServerSide(ICoreServerAPI api)
         {
             sapi = api;
+            soundPhysicsModLoaded = api.ModLoader.IsModEnabled(SoundPhysicsCompatibility.ModId);
 
             // Register/load world config
             WorldConfig.Set(VoiceLevel.Whispering, WorldConfig.GetInt(VoiceLevel.Whispering));
@@ -162,7 +166,7 @@ namespace RPVoiceChat
         {
             var parsers = sapi.ChatCommands.Parsers;
 
-            sapi.ChatCommands
+            var rpvcCommand = sapi.ChatCommands
                 .GetOrCreate("rpvc")
                 .WithAlias("rpvoice", "rpvoicechat")
                 .RequiresPrivilege(Privilege.controlserver)
@@ -219,12 +223,6 @@ namespace RPVoiceChat
                     .WithArgs(parsers.Bool("state"))
                     .HandleWith(ToggleOthersHearSpectators)
                 .EndSub()
-                .BeginSub("soundPhysics")
-                    .WithDesc(UIUtils.I18n("Command.SoundPhysics.Desc"))
-                    .WithAdditionalInformation(UIUtils.I18n("Command.SoundPhysics.Help"))
-                    .WithArgs(parsers.Bool("state"))
-                    .HandleWith(ToggleSoundPhysics)
-                .EndSub()
                 .BeginSub("voiceBan")
                     .WithDesc(UIUtils.I18n("Command.VoiceBan.Desc"))
                     .WithArgs(parsers.Word("player"))
@@ -245,6 +243,19 @@ namespace RPVoiceChat
                     .WithArgs(parsers.All("title | message | duration | glass"))
                     .HandleWith(AnnounceHandler)
                 .EndSub();
+
+            // A compatibility setting exists only while the other mod exists. Registration
+            // without it would advertise a switch that does nothing on this server.
+            if (soundPhysicsModLoaded)
+            {
+                rpvcCommand
+                    .BeginSub("soundPhysics")
+                        .WithDesc(UIUtils.I18n("Command.SoundPhysics.Desc"))
+                        .WithAdditionalInformation(UIUtils.I18n("Command.SoundPhysics.Help"))
+                        .WithArgs(parsers.Bool("state"))
+                        .HandleWith(ToggleSoundPhysics)
+                    .EndSub();
+            }
         }
 
         private TextCommandResult ToggleOthersHearSpectators(TextCommandCallingArgs args)
@@ -359,9 +370,15 @@ namespace RPVoiceChat
             bool forceSpeakerNametag = WorldConfig.GetForceSpeakerNametag();
             bool encoding = WorldConfig.GetBool("encode-audio");
             bool useNametagDynamicRange = WorldConfig.GetBool("use-nametag-dynamic-range", true);
-            bool useSoundPhysics = WorldConfig.GetBool("use-sound-physics-adapted", true);
 
-            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceSpeakerNametag, encoding, useNametagDynamicRange, useSoundPhysics));
+            string info = UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceSpeakerNametag, encoding, useNametagDynamicRange);
+            if (soundPhysicsModLoaded)
+            {
+                bool useSoundPhysics = WorldConfig.GetBool("use-sound-physics-adapted", true);
+                info += "\n" + UIUtils.I18n("Command.Info.SoundPhysics", useSoundPhysics);
+            }
+
+            return TextCommandResult.Success(info);
         }
 
         private TextCommandResult SetWhisperHandler(TextCommandCallingArgs args)
