@@ -40,6 +40,7 @@ namespace RPVoiceChat.Audio
         private short maxSampleValue;
         private List<float> recentGainLimits = new List<float>();
         private ConcurrentQueue<float> recentGainLimitsQueue = new ConcurrentQueue<float>();
+        private ConcurrentQueue<double> recentAmplitudesQueue = new ConcurrentQueue<double>();
 
         // Application interface/audio management
         public double Amplitude { get; private set; }
@@ -138,6 +139,24 @@ namespace RPVoiceChat.Audio
                     recentGainLimits.Add(gainLimit);
 
             return recentGainLimits;
+        }
+
+        public List<double> GetRecentAmplitudes()
+        {
+            var amplitudes = new List<double>();
+
+            double amplitude;
+            while (recentAmplitudesQueue.Count > 0)
+                if (recentAmplitudesQueue.TryDequeue(out amplitude))
+                    amplitudes.Add(amplitude);
+
+            return amplitudes;
+        }
+
+        public void ClearCalibrationSamples()
+        {
+            while (recentGainLimitsQueue.TryDequeue(out _)) { }
+            while (recentAmplitudesQueue.TryDequeue(out _)) { }
         }
 
         public void SetIgnoreDistanceReduction(bool ignore)
@@ -327,6 +346,8 @@ namespace RPVoiceChat.Audio
                     sampleSquareSum += Math.Pow((float)amplified / short.MaxValue, 2);
                 }
                 var amplitude = Math.Sqrt(sampleSquareSum / Math.Max(1, pcmCount));
+                recentAmplitudesQueue.Enqueue(amplitude);
+                if (recentAmplitudesQueue.Count > 20) recentAmplitudesQueue.TryDequeue(out _);
 
                 // Encode audio - ensure we only encode the exact amount of samples
                 // (pool buffer may be larger than pcmCount, which would encode residual data)
@@ -404,16 +425,17 @@ namespace RPVoiceChat.Audio
             transmittingOnPreviousStep = Transmitting;
 
             // Transmit
-            // In voice activation mode, when we just started transmitting, send the previous buffer first
-            // to avoid losing the first syllable (which was captured before we detected voice)
+            // Voice activation: optionally replay previous buffer for soft onset recovery.
+            // Skip when previous already exceeds the gate — replaying it doubles a clear first syllable.
             if (Transmitting || AudioWizardActive)
             {
-                if (justStartedTransmitting && !ModConfig.ClientConfig.PushToTalkEnabled && previousData != null)
+                if (justStartedTransmitting
+                    && !ModConfig.ClientConfig.PushToTalkEnabled
+                    && previousData != null
+                    && previousData.amplitude < inputThreshold)
                 {
-                    // Send previous buffer first (contains the beginning of speech)
                     OnBufferRecorded?.Invoke(previousData);
                 }
-                // Send current buffer
                 OnBufferRecorded?.Invoke(data);
             }
         }
