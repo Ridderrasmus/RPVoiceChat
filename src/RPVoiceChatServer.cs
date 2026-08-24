@@ -19,9 +19,13 @@ namespace RPVoiceChat
         internal static GameServer VoiceServer;
         private GameServer server;
 
+        /// <summary>True when Sound Physics Adapted is loaded. Its setting stays hidden when it is not.</summary>
+        private bool soundPhysicsModLoaded;
+
         public override void StartServerSide(ICoreServerAPI api)
         {
             sapi = api;
+            soundPhysicsModLoaded = api.ModLoader.IsModEnabled(SoundPhysicsCompatibility.ModId);
 
             // Register/load world config
             WorldConfig.Set(VoiceLevel.Whispering, WorldConfig.GetInt(VoiceLevel.Whispering));
@@ -36,6 +40,7 @@ namespace RPVoiceChat
             WorldConfig.Set("encode-audio", WorldConfig.GetBool("encode-audio", true));
             WorldConfig.Set("others-hear-spectators", WorldConfig.GetBool("others-hear-spectators", true));
             WorldConfig.Set("wall-thickness-weighting", WorldConfig.GetFloat("wall-thickness-weighting", 2));
+            WorldConfig.Set("use-sound-physics-adapted", WorldConfig.GetBool("use-sound-physics-adapted", true));
 
             // Register commands
             registerCommands();
@@ -161,7 +166,7 @@ namespace RPVoiceChat
         {
             var parsers = sapi.ChatCommands.Parsers;
 
-            sapi.ChatCommands
+            var rpvcCommand = sapi.ChatCommands
                 .GetOrCreate("rpvc")
                 .WithAlias("rpvoice", "rpvoicechat")
                 .RequiresPrivilege(Privilege.controlserver)
@@ -238,6 +243,19 @@ namespace RPVoiceChat
                     .WithArgs(parsers.All("title | message | duration | glass"))
                     .HandleWith(AnnounceHandler)
                 .EndSub();
+
+            // A compatibility setting exists only while the other mod exists. Registration
+            // without it would advertise a switch that does nothing on this server.
+            if (soundPhysicsModLoaded)
+            {
+                rpvcCommand
+                    .BeginSub("soundPhysics")
+                        .WithDesc(UIUtils.I18n("Command.SoundPhysics.Desc"))
+                        .WithAdditionalInformation(UIUtils.I18n("Command.SoundPhysics.Help"))
+                        .WithArgs(parsers.Bool("state"))
+                        .HandleWith(ToggleSoundPhysics)
+                    .EndSub();
+            }
         }
 
         private TextCommandResult ToggleOthersHearSpectators(TextCommandCallingArgs args)
@@ -248,6 +266,17 @@ namespace RPVoiceChat
             WorldConfig.Set("others-hear-spectators", state);
             string stateAsText = state ? "Enabled" : "Disabled";
 
+            return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
+        }
+
+        private TextCommandResult ToggleSoundPhysics(TextCommandCallingArgs args)
+        {
+            const string i18nPrefix = "Command.SoundPhysics.Success";
+            bool state = (bool)args[0];
+
+            WorldConfig.Set("use-sound-physics-adapted", state);
+
+            string stateAsText = state ? "Enabled" : "Disabled";
             return TextCommandResult.Success(UIUtils.I18n($"{i18nPrefix}.{stateAsText}"));
         }
 
@@ -342,7 +371,14 @@ namespace RPVoiceChat
             bool encoding = WorldConfig.GetBool("encode-audio");
             bool useNametagDynamicRange = WorldConfig.GetBool("use-nametag-dynamic-range", true);
 
-            return TextCommandResult.Success(UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceSpeakerNametag, encoding, useNametagDynamicRange));
+            string info = UIUtils.I18n("Command.Info.Success", whisper, talk, shout, forceSpeakerNametag, encoding, useNametagDynamicRange);
+            if (soundPhysicsModLoaded)
+            {
+                bool useSoundPhysics = WorldConfig.GetBool("use-sound-physics-adapted", true);
+                info += "\n" + UIUtils.I18n("Command.Info.SoundPhysics", useSoundPhysics);
+            }
+
+            return TextCommandResult.Success(info);
         }
 
         private TextCommandResult SetWhisperHandler(TextCommandCallingArgs args)
