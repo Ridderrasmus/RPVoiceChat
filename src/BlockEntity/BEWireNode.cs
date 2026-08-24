@@ -197,7 +197,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
 
             ResolvePendingConnectionsAndNotify();
-            EnsurePendingConnectionRetryListener();
         }
 
         /// <summary>
@@ -278,6 +277,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         /// <summary>
         /// Retries resolving serialized neighbour links when their chunks load later (load order / view distance).
+        /// Must run on the main thread on the client (RegisterGameTickListener is not thread-safe).
+        /// Callers that may run off-thread (client FromTreeAttributes) must enqueue first.
         /// </summary>
         private void EnsurePendingConnectionRetryListener()
         {
@@ -990,10 +991,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             RegisterSerializedTopologyEdges();
 
-            // Resolve immediately on client to ensure wires render without needing hover
-            if (Api?.Side == EnumAppSide.Client)
+            // Resolve immediately on client so wires render without needing hover.
+            // Chunk preload may call FromTreeAttributes off-thread — defer to main thread.
+            if (Api?.Side == EnumAppSide.Client && Api is ICoreClientAPI capi)
             {
-                ResolvePendingConnectionsAndNotify();
+                capi.Event.EnqueueMainThreadTask(ResolvePendingConnectionsAndNotify, "rpvoicechat:ResolvePendingWires");
             }
         }
 
