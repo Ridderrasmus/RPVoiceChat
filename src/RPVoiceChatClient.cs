@@ -70,6 +70,9 @@ namespace RPVoiceChat
             MicrophoneManagerInstance = microphoneManager;
             AudioOutputManagerInstance = audioOutputManager;
 
+            // Detect the optional Sound Physics Adapted mod for voice occlusion
+            SoundPhysicsCompatibility.Init(capi);
+
             // Init voice chat client
             bool forwardPorts = !ModConfig.ServerConfig.ManualPortForwarding;
             var networkTransports = new List<INetworkClient>()
