@@ -549,8 +549,21 @@ namespace RPVoiceChat.GameContent.BlockEntity
             hlsStreamUrl = tree.GetString("rpvc:mixingConsoleHlsUrl", hlsStreamUrl);
             isOnAir = tree.GetBool("rpvc:mixingConsoleOnAir", false);
             activeOperatorPlayerUid = tree.GetString("rpvc:mixingConsoleOperatorUid", "");
-            SyncOnAirVisuals();
-            dialog?.RefreshData();
+
+            // SyncOnAirVisuals touches point lights; chunk preload may run this off-thread on the client.
+            if (Api?.Side == EnumAppSide.Client && Api is ICoreClientAPI capi)
+            {
+                capi.Event.EnqueueMainThreadTask(() =>
+                {
+                    SyncOnAirVisuals();
+                    dialog?.RefreshData();
+                }, "rpvoicechat:MixingConsoleFromTree");
+            }
+            else
+            {
+                SyncOnAirVisuals();
+                dialog?.RefreshData();
+            }
         }
 
         public override void ToTreeAttributes(ITreeAttribute tree)
