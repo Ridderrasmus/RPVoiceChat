@@ -704,6 +704,8 @@
   "Handbook.Usage.block-carillonbell-cupronickel.Text": "This is a carillon bell. Hanging from the ceiling, <hk>rightmouse</hk>-click it to ring it, playing the note A# over a distance of 256 blocks.",
   "Handbook.Usage.block-carillonbell-gold.Text": "This is a carillon bell. Hanging from the ceiling, <hk>rightmouse</hk>-click it to ring it, playing the note B over a distance of 256 blocks.",
   "Handbook.Usage.block-carillonbell-electrum.Text": "This is a carillon bell. Hanging from the ceiling, <hk>rightmouse</hk>-click it to ring it, playing the note C(8va) over a distance of 256 blocks.",
+  "Handbook.Recycling.block-carillonbell.Title": "Recycling",
+  "Handbook.Recycling.block-carillonbell.Text": "A carillon bell can be recycled in a pulverizer. It yields about 120 metal bits of the same metal (enough to remelt roughly 6 ingots). Softer metals need a copper pounder cap, bronze alloys a bronze cap, and cupronickel an iron cap.",
   "Handbook.Usage.item-warhorn.Title": "Usage",
   "Handbook.Usage.item-warhorn.Text": "This is a warhorn, made of genuine goat horn. When held in your hand, <hk>rightmouse</hk>-click it to blow into it. Its sound can be clearly heard up to 128 blocks away.",
   "Handbook.Usage.block-connector.Title": "Usage",

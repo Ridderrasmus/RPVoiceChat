@@ -32,6 +32,7 @@
   ],
   "attributes": {
     "handbook": {
+      "createdBy": "handbook-createdby-anvilwelding",
       "extraSections": [
         {
           "title": "rpvoicechat:Handbook.Welding.block-churchbell.Title",

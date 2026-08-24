@@ -8,6 +8,7 @@
   "attributes": {
     "handbook": {
       "groupBy": [ "churchbell-part-*" ],
+      "createdBy": "Metal molding",
       "extraSections": [
         {
           "title": "rpvoicechat:Handbook.Welding.block-churchbell-part.Title",
