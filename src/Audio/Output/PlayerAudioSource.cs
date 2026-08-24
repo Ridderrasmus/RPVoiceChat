@@ -67,6 +67,11 @@ namespace RPVoiceChat.Audio
         private const int FullUpdateIntervalMs = 50; // Update position/velocity every 50ms (20 Hz)
         private const int WallThicknessUpdateIntervalMs = 200; // Update wall thickness every 200ms (5 Hz)
 
+        // Sound Physics Adapted runs its raycaster on the main thread only, but UpdatePlayer
+        // runs on a network thread. The query is queued and its result cached for the next pass.
+        private volatile float cachedSoundPhysicsGainHF = 1f;
+        private volatile bool soundPhysicsQueryPending;
+
         public PlayerAudioSource(IPlayer player, ICoreClientAPI capi, ClientSettingsRepository clientSettingsRepo)
             : this(player, capi, clientSettingsRepo, syntheticSourceId: null)
         {
@@ -159,12 +164,19 @@ namespace RPVoiceChat.Audio
             bool shouldUpdateWallThickness = lastWallThicknessUpdate == null || 
                 (now - lastWallThicknessUpdate.Value).TotalMilliseconds >= WallThicknessUpdateIntervalMs;
 
+            bool mufflingEnabled = ModConfig.ClientConfig.Muffling;
+
+            // Sound Physics Adapted returns a gainHF in the same range as our own muffling,
+            // so the wall thickness raycast below is not necessary while it supplies the value.
+            bool useSoundPhysics = mufflingEnabled
+                && WorldConfig.GetBool("use-sound-physics-adapted", true)
+                && SoundPhysicsCompatibility.IsAvailable;
+
             // Cache wall thickness calculation (very expensive ray tracing)
             float wallThickness = cachedWallThickness;
             if (shouldUpdateWallThickness)
             {
-                bool mufflingEnabled = ModConfig.ClientConfig.Muffling;
-                if (mufflingEnabled)
+                if (mufflingEnabled && !useSoundPhysics)
                 {
                     if (sourceOverride != null)
                     {
@@ -183,6 +195,8 @@ namespace RPVoiceChat.Audio
                 {
                     wallThickness = 0f;
                     cachedWallThickness = 0f;
+                    // The Sound Physics path keeps the same 5 Hz budget as the raycast it replaces.
+                    if (useSoundPhysics) lastWallThicknessUpdate = now;
                 }
             }
             else if (capi.World.Player.Entity.Swimming && cachedWallThickness > 0)
@@ -194,15 +208,32 @@ namespace RPVoiceChat.Audio
             // Update lowpass filter only when wall thickness changes
             if (shouldUpdateWallThickness)
             {
-                bool mufflingEnabled = ModConfig.ClientConfig.Muffling;
-                float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");
-                
                 lowpassFilter?.Stop();
-                if (mufflingEnabled && wallThickness != 0)
+                if (!useSoundPhysics) cachedSoundPhysicsGainHF = 1f;
+
+                if (mufflingEnabled)
                 {
-                    lowpassFilter = lowpassFilter ?? new LowpassFilter(source);
-                    lowpassFilter.Start();
-                    lowpassFilter.SetHFGain(Math.Max(1.0f - (wallThickness / wallThicknessWeighting), 0.1f));
+                    float gainHF = 1f;
+
+                    if (useSoundPhysics)
+                    {
+                        Vec3d speakerLocation = sourceOverride ?? LocationUtils.GetLocationOfPlayer(player);
+                        Vec3d listenerLocation = LocationUtils.GetLocationOfPlayer(capi.World.Player);
+                        QueueSoundPhysicsQuery(speakerLocation, listenerLocation);
+                        gainHF = cachedSoundPhysicsGainHF;
+                    }
+                    else if (wallThickness != 0)
+                    {
+                        float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");
+                        gainHF = Math.Max(1.0f - (wallThickness / wallThicknessWeighting), 0.1f);
+                    }
+
+                    if (gainHF < 1f)
+                    {
+                        lowpassFilter = lowpassFilter ?? new LowpassFilter(source);
+                        lowpassFilter.Start();
+                        lowpassFilter.SetHFGain(gainHF);
+                    }
                 }
             }
 
@@ -275,6 +306,28 @@ namespace RPVoiceChat.Audio
         {
             if (source <= 0) return false; // Source is invalid
             return OALW.GetSourceState(source) == ALSourceState.Playing;
+        }
+
+        /// <summary>
+        /// Asks Sound Physics Adapted for the occlusion between the speaker and the listener.
+        /// The result serves the next muffling update. One query per source runs at a time.
+        /// </summary>
+        private void QueueSoundPhysicsQuery(Vec3d speakerLocation, Vec3d listenerLocation)
+        {
+            if (soundPhysicsQueryPending) return;
+            soundPhysicsQueryPending = true;
+
+            capi.Event.EnqueueMainThreadTask(() =>
+            {
+                try
+                {
+                    cachedSoundPhysicsGainHF = SoundPhysicsCompatibility.GetOcclusionGainHF(speakerLocation, listenerLocation);
+                }
+                finally
+                {
+                    soundPhysicsQueryPending = false;
+                }
+            }, "rpvoicechat:SoundPhysicsOcclusion");
         }
 
         private float GetFinalGain()
