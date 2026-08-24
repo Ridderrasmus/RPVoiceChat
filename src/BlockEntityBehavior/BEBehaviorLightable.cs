@@ -208,10 +208,11 @@ public class BEBehaviorLightable : BlockEntityBehavior, IPointLight
             lightIntensityScale = GameMath.Clamp(tree.GetFloat("lightIntensityScale", lightIntensityScale), 0.1f, 25f);
         }
 
-        if (Blockentity.Api?.Side == EnumAppSide.Client)
+        // Chunk preload may call FromTreeAttributes off-thread — Add/RemovePointLight must run on main thread.
+        capi ??= worldAccessForResolve?.Api as ICoreClientAPI ?? Blockentity.Api as ICoreClientAPI;
+        if (capi != null && worldAccessForResolve?.Side == EnumAppSide.Client)
         {
-            capi ??= worldAccessForResolve?.Api as ICoreClientAPI;
-            UpdateLight();
+            capi.Event.EnqueueMainThreadTask(UpdateLight, "rpvoicechat:UpdatePointLight");
         }
     }
 
