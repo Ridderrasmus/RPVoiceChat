@@ -24,15 +24,19 @@ namespace RPVoiceChat.Gui
         private const int defaultElementHeight = 30;
         private const int buttonXPadding = 10;
         private const int buttonYPadding = 2;
-        private const int gainCalibrationDuration = 7000;
+        private const int gainCalibrationDuration = 4000;
+        private const int thresholdCalibrationDuration = 4000;
         private const int calibrationUpdateInterval = 50;
-        private const int calibrationSteps = gainCalibrationDuration / calibrationUpdateInterval;
+        private const int gainCalibrationSteps = gainCalibrationDuration / calibrationUpdateInterval;
+        private const int thresholdCalibrationSteps = thresholdCalibrationDuration / calibrationUpdateInterval;
+        private const int totalCalibrationSteps = gainCalibrationSteps + thresholdCalibrationSteps;
         private MicrophoneManager audioInputManager;
         private AudioOutputManager audioOutputManager;
         private CancellationTokenSource configurationCTS;
         private GuiDialog doneDialog;
         private GuiElementDynamicText wizardStatusText;
         private float adjustedGain;
+        private float adjustedThreshold;
         private bool configurationInProcess = false;
 
         public AudioWizardDialog(ICoreClientAPI capi, MicrophoneManager audioInputManager, AudioOutputManager audioOutputManager) : base(capi)
@@ -50,6 +54,7 @@ namespace RPVoiceChat.Gui
             if (ModConfig.ClientConfig.InputGain == 0)
                 audioInputManager.SetGain(1);
             adjustedGain = ModConfig.ClientConfig.InputGain;
+            adjustedThreshold = ModConfig.ClientConfig.InputThreshold;
             ModConfig.ClientConfig.Loopback = true;
             audioOutputManager.IsLoopbackEnabled = true;
             Compose();
@@ -62,7 +67,9 @@ namespace RPVoiceChat.Gui
             configurationCTS.Dispose();
             configurationInProcess = false;
             ModConfig.ClientConfig.InputGain = adjustedGain;
+            ModConfig.ClientConfig.InputThreshold = adjustedThreshold;
             audioInputManager.SetGain(adjustedGain);
+            audioInputManager.SetThreshold(adjustedThreshold);
             if (doneDialog.IsOpened() == false) SaveAndExit();
             return base.TryClose();
         }
@@ -104,8 +111,8 @@ namespace RPVoiceChat.Gui
                 .EndChildElements()
                 .Compose();
 
-            progressBar.SetValues(0, 0, calibrationSteps);
-            progressBar.SetLineInterval(calibrationSteps / 10);
+            progressBar.SetValues(0, 0, totalCalibrationSteps);
+            progressBar.SetLineInterval(totalCalibrationSteps / 10);
             wizardStatusText = SingleComposer.GetDynamicText("wizardStatusText");
             var inputDeviceDropdown = SingleComposer.GetDropDown("inputDevice");
             inputDeviceDropdown.SetSelectedValue(ModConfig.ClientConfig.InputDevice ?? "Default");
@@ -115,48 +122,78 @@ namespace RPVoiceChat.Gui
         {
             if (configurationInProcess) return true;
             configurationInProcess = true;
-            wizardStatusText?.SetNewText("");
+            wizardStatusText?.SetNewText(UIUtils.I18n($"{i18nPrefix}.Status.CalibratingGain"));
 
             float maxGain = AudioUtils.DBsToFactor(20);
             audioInputManager.SetGain(maxGain);
-            StartGainConfiguration();
+            audioInputManager.ClearCalibrationSamples();
+            StartCalibration();
 
             return true;
         }
 
-        private async void StartGainConfiguration()
+        private async void StartCalibration()
         {
             var progressBar = SingleComposer.GetStatbar("progressBar");
             var effectiveGains = new List<float>();
+            var amplitudes = new List<double>();
             try
             {
                 audioInputManager.GetRecentGainLimits();
-                for (var i = 0; i < calibrationSteps; i++)
+                audioInputManager.GetRecentAmplitudes();
+
+                for (var i = 0; i < gainCalibrationSteps; i++)
                 {
                     if (configurationCTS.IsCancellationRequested) return;
 
-                    var recentEffectiveGains = audioInputManager.GetRecentGainLimits();
-                    effectiveGains.AddRange(recentEffectiveGains);
-
-                    progressBar.SetValue(i + 1);
+                    effectiveGains.AddRange(audioInputManager.GetRecentGainLimits());
+                    int step = i + 1;
+                    await RunOnMainThread(() => progressBar.SetValue(step));
                     await Task.Delay(calibrationUpdateInterval);
                 }
 
                 if (effectiveGains.Count == 0)
                 {
-                    wizardStatusText?.SetNewText(UIUtils.I18n("Gui.AudioWizardDialog.NoInputData"));
+                    await RunOnMainThread(() =>
+                        wizardStatusText?.SetNewText(UIUtils.I18n($"{i18nPrefix}.NoInputData")));
                     return;
                 }
 
-                effectiveGains.Sort();
-                float lowerQuartileGain = effectiveGains[effectiveGains.Count / 4];
-                float newGain = AudioUtils.FactorToDBs(lowerQuartileGain);
-                newGain = GameMath.Clamp(newGain, -20, 20);
-                newGain = AudioUtils.DBsToFactor(newGain);
-                adjustedGain = newGain;
+                adjustedGain = ComputeCalibratedGain(effectiveGains);
+                audioInputManager.SetGain(adjustedGain);
+                audioInputManager.ClearCalibrationSamples();
+                await RunOnMainThread(() =>
+                    wizardStatusText?.SetNewText(UIUtils.I18n($"{i18nPrefix}.Status.CalibratingThreshold")));
 
-                doneDialog.TryOpen();
-                TryClose();
+                // Let a couple of frames settle under the new gain before sampling amplitudes.
+                await Task.Delay(calibrationUpdateInterval * 2);
+                audioInputManager.GetRecentAmplitudes();
+
+                for (var i = 0; i < thresholdCalibrationSteps; i++)
+                {
+                    if (configurationCTS.IsCancellationRequested) return;
+
+                    amplitudes.AddRange(audioInputManager.GetRecentAmplitudes());
+                    int step = gainCalibrationSteps + i + 1;
+                    await RunOnMainThread(() => progressBar.SetValue(step));
+                    await Task.Delay(calibrationUpdateInterval);
+                }
+
+                if (amplitudes.Count == 0)
+                {
+                    await RunOnMainThread(() =>
+                        wizardStatusText?.SetNewText(UIUtils.I18n($"{i18nPrefix}.NoInputData")));
+                    return;
+                }
+
+                adjustedThreshold = ComputeCalibratedThreshold(amplitudes);
+                audioInputManager.SetThreshold(adjustedThreshold);
+
+                await RunOnMainThread(() =>
+                {
+                    doneDialog.TryOpen();
+                    TryClose();
+                });
             }
             finally
             {
@@ -164,11 +201,59 @@ namespace RPVoiceChat.Gui
             }
         }
 
+        private Task RunOnMainThread(Action action)
+        {
+            var tcs = new TaskCompletionSource<bool>();
+            capi.Event.EnqueueMainThreadTask(() =>
+            {
+                try
+                {
+                    action();
+                    tcs.TrySetResult(true);
+                }
+                catch (Exception ex)
+                {
+                    tcs.TrySetException(ex);
+                }
+            }, "rpvoicechat:AudioWizard");
+            return tcs.Task;
+        }
+
+        private static float ComputeCalibratedGain(List<float> effectiveGains)
+        {
+            effectiveGains.Sort();
+            float lowerQuartileGain = effectiveGains[effectiveGains.Count / 4];
+            float newGain = AudioUtils.FactorToDBs(lowerQuartileGain);
+            newGain = GameMath.Clamp(newGain, -20, 20);
+            return AudioUtils.DBsToFactor(newGain);
+        }
+
+        private float ComputeCalibratedThreshold(List<double> amplitudes)
+        {
+            amplitudes.Sort();
+            int count = amplitudes.Count;
+            double noiseFloor = amplitudes[Math.Max(0, count / 10)];
+            double speechLevel = amplitudes[Math.Min(count - 1, (count * 6) / 10)];
+            double absoluteThreshold = noiseFloor + (speechLevel - noiseFloor) * 0.35;
+            // Prefer opening slightly early over late (reduces first-syllable doubling).
+            absoluteThreshold = Math.Min(absoluteThreshold, speechLevel * 0.55);
+
+            double maxThreshold = audioInputManager.GetMaxInputThreshold();
+            if (maxThreshold <= 0) return ModConfig.ClientConfig.InputThreshold;
+
+            float normalized = (float)(absoluteThreshold / maxThreshold);
+            return GameMath.Clamp(normalized, 0.08f, 0.75f);
+        }
+
         private void SaveAndExit()
         {
             audioInputManager.AudioWizardActive = false;
             ModConfig.ClientConfig.Loopback = false;
             audioOutputManager.IsLoopbackEnabled = false;
+            ModConfig.ClientConfig.InputGain = adjustedGain;
+            ModConfig.ClientConfig.InputThreshold = adjustedThreshold;
+            audioInputManager.SetGain(adjustedGain);
+            audioInputManager.SetThreshold(adjustedThreshold);
             ModConfig.SaveClient(capi);
             GainCalibrationDone?.Invoke();
         }
