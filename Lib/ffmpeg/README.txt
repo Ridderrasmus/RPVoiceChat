@@ -11,6 +11,8 @@ dedicated server. Resolution order:
 
   2. Auto-download cache (preferred default)
        Lib/ffmpeg/auto/
+     This folder is included empty in the mod zip so the server only
+     needs write permission inside it (not create the path).
      Downloaded on first server start (or first on-air) via the
      Xabe.FFmpeg.Downloader NuGet package for the current OS
      (Windows, Linux, or macOS). Requires outbound internet once.

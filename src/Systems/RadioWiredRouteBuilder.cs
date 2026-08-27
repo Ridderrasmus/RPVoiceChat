@@ -11,40 +11,65 @@ namespace RPVoiceChat.Systems
     {
         public static List<VoiceRoute> BuildRoutesForWiredNode(ICoreServerAPI sapi, BEWireNode node)
         {
-            var routes = new List<VoiceRoute>();
             if (sapi == null || node == null)
             {
-                return routes;
+                return new List<VoiceRoute>();
             }
 
-            var emitters = RadioWireNetworkHelper.FindEmitters(node)
-                .Where(emitter => emitter.IsWirelessTransmitting)
-                .ToList();
             var speakers = RadioWireNetworkHelper.FindSpeakers(node).ToList();
-            if (emitters.Count == 0 && speakers.Count == 0)
+            return BuildRoutesForNetwork(sapi, node.NetworkUID, speakers, node.Pos.dimension);
+        }
+
+        /// <summary>
+        /// RF (+ optional loaded speakers) for a wired network without requiring the program source BE to be loaded.
+        /// </summary>
+        public static List<VoiceRoute> BuildRoutesForNetwork(
+            ICoreServerAPI sapi,
+            long networkId,
+            IEnumerable<BlockEntitySpeaker> speakers = null,
+            int speakerDimension = 0)
+        {
+            var routes = new List<VoiceRoute>();
+            if (sapi == null || networkId == 0)
             {
                 return routes;
             }
 
-            var frequencies = emitters
-                .Select(emitter => RadioFrequencyUtil.Normalize(emitter.GetConsoleFrequency()))
-                .Where(frequency => frequency.Length > 0)
-                .Distinct()
-                .ToList();
+            var speakerList = speakers?.Where(s => s != null).ToList() ?? new List<BlockEntitySpeaker>();
+            var frequencies = RadioRfPresenceRegistry.GetActiveFrequenciesForNetwork(networkId).ToList();
 
-            var transmissionPoints = RadioRfTransmissionService.CollectActiveTransmissionPoints(sapi)
-                .Where(point => frequencies.Any(frequency => RadioFrequencyUtil.Matches(frequency, point.Frequency)))
-                .ToList();
+            // Merge currently loaded transmitting emitters (fresh console frequency).
+            foreach (var emitter in RadioBlockIndex.GetLoadedEmitters(sapi.World)
+                .Where(e => e != null && e.NetworkUID == networkId && e.IsWirelessTransmitting))
+            {
+                string frequency = RadioFrequencyUtil.Normalize(emitter.GetConsoleFrequency());
+                if (frequency.Length > 0 && !frequencies.Any(existing => RadioFrequencyUtil.Matches(existing, frequency)))
+                {
+                    frequencies.Add(frequency);
+                }
+            }
 
-            routes.AddRange(RadioRfTransmissionService.BuildVoiceRoutesForTransmissionPoints(transmissionPoints));
-            RadioRfTransmissionService.AppendReceiverRelayRoutes(sapi, routes, frequencies);
+            if (frequencies.Count == 0 && speakerList.Count == 0)
+            {
+                return routes;
+            }
 
-            foreach (var speaker in speakers)
+            if (frequencies.Count > 0)
+            {
+                var transmissionPoints = RadioRfTransmissionService.CollectActiveTransmissionPoints(sapi)
+                    .Where(point => frequencies.Any(frequency => RadioFrequencyUtil.Matches(frequency, point.Frequency)))
+                    .ToList();
+
+                routes.AddRange(RadioRfTransmissionService.BuildVoiceRoutesForTransmissionPoints(transmissionPoints));
+                RadioRfTransmissionService.AppendReceiverRelayRoutes(sapi, routes, frequencies);
+            }
+
+            foreach (var speaker in speakerList)
             {
                 routes.Add(new VoiceRoute(
                     speaker.Pos.ToVec3d().Add(0.5, 0.5, 0.5),
                     speaker.VoiceEmissionRangeBlocks,
-                    node.Pos.dimension));
+                    speaker.Pos?.dimension ?? speakerDimension));
             }
 
             return routes;
