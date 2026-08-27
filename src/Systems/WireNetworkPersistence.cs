@@ -71,6 +71,9 @@ namespace RPVoiceChat.Systems
             byte[] wirelessTopologyBytes = sapi.WorldManager.SaveGame.GetData(WirelessTopologyRegistry.TopologyDataKey);
             WirelessTopologyRegistry.LoadFromSave(wirelessTopologyBytes);
 
+            byte[] rfPresenceBytes = sapi.WorldManager.SaveGame.GetData(RadioRfPresenceRegistry.PresenceDataKey);
+            RadioRfPresenceRegistry.LoadFromSave(rfPresenceBytes);
+
             byte[] networkBytes = sapi.WorldManager.SaveGame.GetData(NetworksDataKey);
             if (networkBytes == null)
             {
@@ -87,6 +90,7 @@ namespace RPVoiceChat.Systems
             WireNetworkHandler.PersistToSaveGame(sapi.WorldManager.SaveGame);
             sapi.WorldManager.SaveGame.StoreData(WireTopologyRegistry.TopologyDataKey, WireTopologyRegistry.ToSaveBytes());
             sapi.WorldManager.SaveGame.StoreData(WirelessTopologyRegistry.TopologyDataKey, WirelessTopologyRegistry.ToSaveBytes());
+            sapi.WorldManager.SaveGame.StoreData(RadioRfPresenceRegistry.PresenceDataKey, RadioRfPresenceRegistry.ToSaveBytes());
         }
     }
 }

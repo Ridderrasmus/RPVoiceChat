@@ -322,6 +322,15 @@ namespace RPVoiceChat.GameContent.BlockEntity
             frequency = normalized;
             MarkDirty();
             dialog?.RefreshData();
+            if (Api?.Side == EnumAppSide.Server && NetworkUID != 0)
+            {
+                RadioRfPresenceRegistry.UpdateWiredSourceFrequency(NetworkUID, frequency);
+                foreach (var emitter in RadioWireNetworkHelper.FindEmitters(this))
+                {
+                    emitter.PublishRfPresence();
+                }
+            }
+
             return true;
         }
 

@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.Server;
-using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 
@@ -10,63 +8,63 @@ namespace RPVoiceChat.Systems
 {
     public static class RadioRfTransmissionService
     {
+        /// <summary>
+        /// Active wired-source (non-repeater) TX points from the world-level presence registry.
+        /// </summary>
         public static List<RadioTransmissionPoint> CollectWiredTransmissionPoints(ICoreServerAPI sapi)
         {
             var points = new List<RadioTransmissionPoint>();
-            if (sapi?.World?.BlockAccessor == null)
+            if (sapi == null)
             {
                 return points;
             }
 
-            foreach (var emitter in RadioBlockIndex.GetLoadedEmitters(sapi.World))
+            foreach (var emitter in RadioRfPresenceRegistry.GetEmitters())
             {
-                if (emitter.IsRepeaterMode || !emitter.IsWirelessTransmitting)
+                if (emitter.IsRepeater || !emitter.IsActive || emitter.RangeBlocks <= 0)
                 {
                     continue;
                 }
 
-                string frequency = RadioFrequencyUtil.Normalize(emitter.GetConsoleFrequency());
+                string frequency = RadioFrequencyUtil.Normalize(emitter.Frequency);
                 if (frequency.Length == 0)
                 {
                     continue;
                 }
 
-                points.Add(new RadioTransmissionPoint(
-                    emitter.Pos.ToVec3d().Add(0.5, 0.5, 0.5),
-                    emitter.GetEffectiveTransmitRangeBlocks(),
-                    frequency,
-                    emitter.Pos.dimension,
-                    false));
+                points.Add(ToTransmissionPoint(emitter, frequency, isRepeaterRelay: false));
             }
 
             return points;
         }
 
+        /// <summary>
+        /// Wired sources plus repeaters that can hear at least one matching source (chunk-independent).
+        /// </summary>
         public static List<RadioTransmissionPoint> CollectActiveTransmissionPoints(ICoreServerAPI sapi)
         {
             var points = CollectWiredTransmissionPoints(sapi);
-            if (sapi?.World?.BlockAccessor == null)
+            if (sapi == null)
             {
                 return points;
             }
 
-            foreach (var repeater in RadioBlockIndex.GetLoadedEmitters(sapi.World))
+            foreach (var repeater in RadioRfPresenceRegistry.GetEmitters())
             {
-                if (!repeater.IsRepeaterMode || !repeater.HasSufficientTransmitPower())
+                if (!repeater.IsRepeater || !repeater.IsActive || repeater.RangeBlocks <= 0 || repeater.Pos == null)
                 {
                     continue;
                 }
 
-                string frequency = RadioFrequencyUtil.Normalize(repeater.RepeaterFrequency);
+                string frequency = RadioFrequencyUtil.Normalize(repeater.Frequency);
                 if (frequency.Length == 0)
                 {
                     continue;
                 }
 
                 Vec3d repeaterPos = repeater.Pos.ToVec3d().Add(0.5, 0.5, 0.5);
-                int repeaterRange = repeater.GetEffectiveTransmitRangeBlocks();
                 bool canRelay = points.Any(source =>
-                    source.Dimension == repeater.Pos.dimension
+                    source.Dimension == repeater.Dimension
                     && RadioFrequencyUtil.Matches(source.Frequency, frequency)
                     && repeaterPos.DistanceTo(source.Position) <= source.RangeBlocks);
 
@@ -75,12 +73,7 @@ namespace RPVoiceChat.Systems
                     continue;
                 }
 
-                points.Add(new RadioTransmissionPoint(
-                    repeaterPos,
-                    repeaterRange,
-                    frequency,
-                    repeater.Pos.dimension,
-                    true));
+                points.Add(ToTransmissionPoint(repeater, frequency, isRepeaterRelay: true));
             }
 
             return points;
@@ -104,13 +97,13 @@ namespace RPVoiceChat.Systems
 
         public static void AppendReceiverRelayRoutes(ICoreServerAPI sapi, ICollection<VoiceRoute> routes, IEnumerable<string> frequencies)
         {
-            if (sapi?.World?.BlockAccessor == null || routes == null)
+            if (routes == null)
             {
                 return;
             }
 
             var frequencySet = new HashSet<string>();
-            foreach (string frequency in frequencies)
+            foreach (string frequency in frequencies ?? Enumerable.Empty<string>())
             {
                 string normalized = RadioFrequencyUtil.Normalize(frequency);
                 if (normalized.Length > 0)
@@ -124,27 +117,61 @@ namespace RPVoiceChat.Systems
                 return;
             }
 
-            foreach (var receiver in RadioBlockIndex.GetLoadedReceivers(sapi.World))
+            foreach (var receiver in RadioRfPresenceRegistry.GetReceivers())
             {
-                if (receiver == null)
+                if (receiver == null || !receiver.IsEnabled)
                 {
                     continue;
                 }
 
                 string tuned = RadioFrequencyUtil.Normalize(receiver.TunedFrequency);
-                int playbackRange = receiver.PlaybackRangeBlocks;
-                if (!receiver.IsEnabled || playbackRange <= 0 || tuned.Length == 0 || !frequencySet.Contains(tuned))
+                if (tuned.Length == 0 || !frequencySet.Contains(tuned))
+                {
+                    continue;
+                }
+
+                if (receiver.AcousticPoints != null && receiver.AcousticPoints.Count > 0)
+                {
+                    foreach (var acoustic in receiver.AcousticPoints)
+                    {
+                        if (acoustic?.Pos == null || acoustic.RangeBlocks <= 0)
+                        {
+                            continue;
+                        }
+
+                        routes.Add(new VoiceRoute(
+                            acoustic.Pos.ToVec3d().Add(0.5, 0.5, 0.5),
+                            acoustic.RangeBlocks,
+                            acoustic.Dimension,
+                            tuned,
+                            acousticEmission: true));
+                    }
+
+                    continue;
+                }
+
+                if (receiver.Pos == null || receiver.PlaybackRangeBlocks <= 0)
                 {
                     continue;
                 }
 
                 routes.Add(new VoiceRoute(
                     receiver.Pos.ToVec3d().Add(0.5, 0.5, 0.5),
-                    playbackRange,
-                    receiver.Pos.dimension,
+                    receiver.PlaybackRangeBlocks,
+                    receiver.Dimension,
                     tuned,
                     acousticEmission: true));
             }
+        }
+
+        private static RadioTransmissionPoint ToTransmissionPoint(RadioRfEmitterPresence emitter, string frequency, bool isRepeaterRelay)
+        {
+            return new RadioTransmissionPoint(
+                emitter.Pos.ToVec3d().Add(0.5, 0.5, 0.5),
+                emitter.RangeBlocks,
+                frequency,
+                emitter.Dimension,
+                isRepeaterRelay);
         }
     }
 }
