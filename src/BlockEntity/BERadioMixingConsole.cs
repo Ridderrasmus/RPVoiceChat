@@ -286,6 +286,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (api.Side == EnumAppSide.Server)
             {
                 RadioBlockIndex.RegisterMixingConsole(Pos);
+                PublishProgramPresence();
             }
 
             SyncOnAirVisuals();
@@ -426,6 +427,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
 
             hlsStreamUrl = normalized;
+            PublishProgramPresence();
             MarkDirty(true);
             dialog?.RefreshData();
             return true;
@@ -470,6 +472,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             // Sync light + glass before MarkDirty so clients get isOnAir and light state together.
             SyncOnAirVisuals();
+            PublishProgramPresence();
             MarkDirty(true);
             dialog?.RefreshData();
             return MixingConsoleOnAirResult.Success;
@@ -496,7 +499,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             ClearOnAirInternal();
             SyncOnAirVisuals();
+            PublishProgramPresence();
             MarkDirty(true);
+            dialog?.RefreshData();
 
             if (Api?.Side == EnumAppSide.Server)
             {
@@ -508,6 +513,27 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
             isOnAir = false;
             activeOperatorPlayerUid = "";
+        }
+
+        /// <summary>
+        /// World-level snapshot so HLS program audio continues after the mixing console chunk unloads.
+        /// </summary>
+        public void PublishProgramPresence()
+        {
+            if (Api?.Side != EnumAppSide.Server || Pos == null)
+            {
+                return;
+            }
+
+            RadioRfPresenceRegistry.UpsertProgram(new RadioRfProgramPresence
+            {
+                Pos = Pos.Copy(),
+                Dimension = Pos.dimension,
+                NetworkId = NetworkUID,
+                IsOnAir = isOnAir,
+                HlsStreamUrl = hlsStreamUrl ?? "",
+                ActiveOperatorPlayerUid = activeOperatorPlayerUid ?? ""
+            });
         }
 
         public static string NormalizeHlsUrl(string desired)
@@ -579,6 +605,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             ClearOnAir();
             if (Api?.Side == EnumAppSide.Server)
             {
+                RadioRfPresenceRegistry.RemoveProgram(Pos);
                 RadioBlockIndex.UnregisterMixingConsole(Pos);
             }
 
@@ -588,11 +615,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public override void OnBlockUnloaded()
         {
-            // Do NOT ClearOnAir here — that was wiping the persisted On Air flag on chunk unload.
-            // Runtime sessions stop when the console leaves RadioBlockIndex; On Air is restored on reload.
+            // Keep program presence + HLS session alive while the chunk is unloaded.
+            // Mic contributions still require loaded microphones (players talking there).
             if (Api?.Side == EnumAppSide.Server)
             {
-                Api.ModLoader.GetModSystem<RadioVoiceRoutingSystem>()?.ClearProgramRoute(ProgramRouteKey);
+                PublishProgramPresence();
                 RadioBlockIndex.UnregisterMixingConsole(Pos);
             }
 

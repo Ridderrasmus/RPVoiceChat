@@ -47,6 +47,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 (api as ICoreServerAPI)?.Event.RegisterGameTickListener(OnServerTick, 100);
                 TryDiscoverNetwork();
                 RadioBlockIndex.RegisterEmitter(Pos);
+                PublishRfPresence();
             }
             else if (api is ICoreClientAPI capi)
             {
@@ -113,6 +114,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
 
             SyncWirelessRegistration();
+            PublishRfPresence();
         }
 
         public bool HasSufficientTransmitPower()
@@ -160,6 +162,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (Api?.Side == EnumAppSide.Server)
             {
                 MarkDirty();
+                PublishRfPresence();
             }
         }
 
@@ -206,6 +209,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             MarkDirty();
             dialog?.RefreshData();
             SyncWirelessRegistration();
+            PublishRfPresence();
             return true;
         }
 
@@ -256,6 +260,36 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
 
             SyncWirelessRegistration();
+            PublishRfPresence();
+        }
+
+        /// <summary>
+        /// Publishes last-known RF TX state to the world-level registry (survives chunk unload).
+        /// </summary>
+        public void PublishRfPresence()
+        {
+            if (Api?.Side != EnumAppSide.Server || Pos == null)
+            {
+                return;
+            }
+
+            bool isRepeater = IsRepeaterMode;
+            // Repeaters: persist "powered + repeater mode"; relay eligibility is re-checked against sources at collect time.
+            bool isActive = isRepeater
+                ? HasSufficientTransmitPower()
+                : IsWirelessTransmitting;
+            string frequency = RadioFrequencyUtil.Normalize(GetActiveRfFrequency());
+
+            RadioRfPresenceRegistry.UpsertEmitter(new RadioRfEmitterPresence
+            {
+                Pos = Pos.Copy(),
+                Dimension = Pos.dimension,
+                NetworkId = NetworkUID,
+                IsRepeater = isRepeater,
+                Frequency = frequency,
+                RangeBlocks = GetEffectiveTransmitRangeBlocks(),
+                IsActive = isActive && frequency.Length > 0
+            });
         }
 
         private void SyncWirelessRegistration()
@@ -433,6 +467,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             {
                 WirelessTopologyRegistry.UnregisterAntenna(Pos);
                 RadioBlockIndex.UnregisterEmitter(Pos);
+                RadioRfPresenceRegistry.RemoveEmitter(Pos);
             }
 
             mechPartRenderer?.Dispose();
@@ -458,6 +493,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
             if (Api?.Side == EnumAppSide.Server)
             {
+                // Freeze last RF snapshot so TX continues while the chunk is unloaded.
+                PublishRfPresence();
                 WirelessTopologyRegistry.UnregisterAntenna(Pos);
                 RadioBlockIndex.UnregisterEmitter(Pos);
             }

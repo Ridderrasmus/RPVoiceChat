@@ -11,6 +11,7 @@ using RPVoiceChat.Networking;
 using RPVoiceChat.Server;
 using RPVoiceChat.Util;
 using Vintagestory.API.Common;
+using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 
 namespace RPVoiceChat.Systems
@@ -78,25 +79,43 @@ namespace RPVoiceChat.Systems
                 return;
             }
 
+            // Loaded consoles refresh world-level presence (HLS keeps running after unload).
+            foreach (BlockEntityRadioMixingConsole mixingConsole in RadioBlockIndex.GetLoadedMixingConsoles(sapi.World).ToList())
+            {
+                mixingConsole.PublishProgramPresence();
+            }
+
             RefreshMicOperatorBindings();
 
             var activeRouteKeys = new HashSet<string>();
-            foreach (BlockEntityRadioMixingConsole mixingConsole in RadioBlockIndex.GetLoadedMixingConsoles(sapi.World).ToList())
+            foreach (RadioRfProgramPresence program in RadioRfPresenceRegistry.GetPrograms().ToList())
             {
-                string routeKey = RadioProgramRouteKey.ForMixingConsole(mixingConsole.Pos);
+                string routeKey = RadioProgramRouteKey.ForMixingConsole(program.Pos);
                 if (string.IsNullOrWhiteSpace(routeKey))
                 {
                     continue;
                 }
 
-                if (!mixingConsole.IsOnAir)
+                if (!program.IsOnAir || program.NetworkId == 0)
                 {
                     StopSession(routeKey);
                     routing.ClearProgramRoute(routeKey);
                     continue;
                 }
 
-                var routes = RadioWiredRouteBuilder.BuildRoutesForWiredNode(sapi, mixingConsole);
+                IEnumerable<BlockEntitySpeaker> speakers = null;
+                BlockEntityRadioMixingConsole loadedConsole = ResolveLoadedConsole(program.Pos);
+                if (loadedConsole != null)
+                {
+                    speakers = RadioWireNetworkHelper.FindSpeakers(loadedConsole);
+                }
+
+                var routes = RadioWiredRouteBuilder.BuildRoutesForNetwork(
+                    sapi,
+                    program.NetworkId,
+                    speakers,
+                    program.Dimension);
+
                 if (routes.Count == 0)
                 {
                     StopSession(routeKey);
@@ -109,7 +128,7 @@ namespace RPVoiceChat.Systems
 
                 if (!sessions.ContainsKey(routeKey))
                 {
-                    TryStartSession(mixingConsole, routeKey);
+                    TryStartSession(program, routeKey, loadedConsole);
                 }
             }
 
@@ -125,17 +144,33 @@ namespace RPVoiceChat.Systems
             FlushPendingPackets();
         }
 
+        private BlockEntityRadioMixingConsole ResolveLoadedConsole(BlockPos pos)
+        {
+            if (pos == null || sapi?.World == null)
+            {
+                return null;
+            }
+
+            return sapi.World.BlockAccessor.GetBlockEntity(pos) as BlockEntityRadioMixingConsole;
+        }
+
         private void RefreshMicOperatorBindings()
         {
             var nextBindings = new Dictionary<string, string>();
-            foreach (BlockEntityRadioMixingConsole mixingConsole in RadioBlockIndex.GetLoadedMixingConsoles(sapi.World))
+            foreach (RadioRfProgramPresence program in RadioRfPresenceRegistry.GetPrograms())
             {
-                if (!mixingConsole.IsOnAir)
+                if (!program.IsOnAir)
                 {
                     continue;
                 }
 
-                string routeKey = RadioProgramRouteKey.ForMixingConsole(mixingConsole.Pos);
+                string routeKey = RadioProgramRouteKey.ForMixingConsole(program.Pos);
+                BlockEntityRadioMixingConsole mixingConsole = ResolveLoadedConsole(program.Pos);
+                if (mixingConsole == null)
+                {
+                    continue;
+                }
+
                 foreach (BlockEntityRadioMicrophone microphone in RadioWireNetworkHelper.FindMicrophones(mixingConsole))
                 {
                     if (!microphone.IsTransmitting || string.IsNullOrWhiteSpace(microphone.ActiveOperatorPlayerUid))
@@ -161,7 +196,10 @@ namespace RPVoiceChat.Systems
             }
         }
 
-        private void TryStartSession(BlockEntityRadioMixingConsole mixingConsole, string routeKey)
+        private void TryStartSession(
+            RadioRfProgramPresence program,
+            string routeKey,
+            BlockEntityRadioMixingConsole loadedConsole)
         {
             var session = new ProgramSession
             {
@@ -172,22 +210,23 @@ namespace RPVoiceChat.Systems
                 SequenceNumber = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 100
             };
 
-            if (!string.IsNullOrWhiteSpace(mixingConsole.HlsStreamUrl))
+            string hlsUrl = program.HlsStreamUrl ?? "";
+            if (!string.IsNullOrWhiteSpace(hlsUrl))
             {
                 var capture = new RadioHlsStreamCapture();
                 session.Capture = capture;
                 session.FrameHandler = musicFrame => OnMusicFrame(routeKey, musicFrame);
                 capture.OnPcmFrame += session.FrameHandler;
 
-                if (!capture.TryStart(mixingConsole.HlsStreamUrl))
+                if (!capture.TryStart(hlsUrl))
                 {
                     string error = capture.LastError;
                     capture.Dispose();
                     Logger.server.Warning($"[RadioProgram] Failed to start HLS for {routeKey}: {error}");
 
-                    if (!HasActiveMicOnGraph(mixingConsole))
+                    if (!HasActiveMicOnGraph(loadedConsole))
                     {
-                        NotifyOperator(mixingConsole, "Radio.MixingConsole.Error.FfmpegMissing");
+                        NotifyOperator(program, "Radio.MixingConsole.Error.FfmpegMissing");
                         return;
                     }
 
@@ -200,7 +239,7 @@ namespace RPVoiceChat.Systems
                     Logger.server.Notification($"[RadioProgram] Mixed program started for {routeKey} (HLS + mic bus).");
                 }
             }
-            else if (HasActiveMicOnGraph(mixingConsole))
+            else if (HasActiveMicOnGraph(loadedConsole))
             {
                 Logger.server.Notification($"[RadioProgram] Mic-only program bus started for {routeKey}.");
             }
@@ -214,20 +253,26 @@ namespace RPVoiceChat.Systems
 
         private static bool HasActiveMicOnGraph(BlockEntityRadioMixingConsole mixingConsole)
         {
+            if (mixingConsole == null)
+            {
+                return false;
+            }
+
             return RadioWireNetworkHelper.FindMicrophones(mixingConsole)
                 .Any(microphone => microphone.IsTransmitting);
         }
 
-        private static void NotifyOperator(BlockEntityRadioMixingConsole mixingConsole, string langKey)
+        private void NotifyOperator(RadioRfProgramPresence program, string langKey)
         {
-            if (mixingConsole?.Api?.Side != EnumAppSide.Server
-                || string.IsNullOrWhiteSpace(mixingConsole.ActiveOperatorPlayerUid)
+            if (sapi == null
+                || program == null
+                || string.IsNullOrWhiteSpace(program.ActiveOperatorPlayerUid)
                 || string.IsNullOrWhiteSpace(langKey))
             {
                 return;
             }
 
-            if (mixingConsole.Api.World.PlayerByUid(mixingConsole.ActiveOperatorPlayerUid) is IServerPlayer operatorPlayer)
+            if (sapi.World.PlayerByUid(program.ActiveOperatorPlayerUid) is IServerPlayer operatorPlayer)
             {
                 RPVoiceChatMod.SendRadioClientNotification(operatorPlayer, langKey);
             }

@@ -52,7 +52,25 @@ namespace RPVoiceChat.Systems
 
         public static bool HasOnAirMixingConsole(BEWireNode start)
         {
-            return FindMixingConsoles(start).Any(console => console.IsOnAir);
+            if (start == null)
+            {
+                return false;
+            }
+
+            if (FindMixingConsoles(start).Any(console => console.IsOnAir))
+            {
+                return true;
+            }
+
+            // Mixing console may be unloaded while HLS program presence stays on-air.
+            long networkId = start.NetworkUID;
+            if (networkId == 0)
+            {
+                return false;
+            }
+
+            return RadioRfPresenceRegistry.GetPrograms()
+                .Any(program => program.IsOnAir && program.NetworkId == networkId);
         }
 
         public static bool IsRadioWiredNetwork(BEWireNode start)
