@@ -6,7 +6,8 @@ using Vintagestory.API.MathTools;
 namespace RPVoiceChat.Systems
 {
     /// <summary>
-    /// Ensures transmit frequencies (station consoles + repeater emitters) stay unique among loaded blocks.
+    /// Ensures transmit frequencies (station consoles + repeater emitters) stay unique.
+    /// Station consoles are checked while loaded; repeaters via world-level RF presence.
     /// Receivers may still freely tune to any frequency.
     /// </summary>
     public static class RadioTransmitFrequencyGuard
@@ -46,23 +47,9 @@ namespace RPVoiceChat.Systems
                 }
             }
 
-            foreach (BlockEntityRadioEmitter emitter in RadioBlockIndex.GetLoadedEmitters(world))
+            foreach (string frequency in RadioRfPresenceRegistry.EnumerateClaimedTransmitFrequencies(excludePos))
             {
-                if (excludePos != null && emitter.Pos.Equals(excludePos))
-                {
-                    continue;
-                }
-
-                if (!emitter.IsRepeaterMode)
-                {
-                    continue;
-                }
-
-                string frequency = RadioFrequencyUtil.Normalize(emitter.RepeaterFrequency);
-                if (frequency.Length > 0)
-                {
-                    yield return frequency;
-                }
+                yield return frequency;
             }
         }
     }

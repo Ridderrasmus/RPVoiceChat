@@ -347,6 +347,7 @@ public interface IRadioVoiceInput
 - **GUI**: internet **HLS URL** field (http/https) + **on / off air** toggle (single operator, same rules as radio microphone).
 - When **on air**, the **dedicated server** pulls the HLS stream via **FFmpeg** (must be installed on the server `PATH`), decodes to PCM, encodes Opus broadcast frames, and injects routed `AudioPacket`s (synthetic source id per console).
 - Broadcast **continues 24/7** after the operator goes on air — the operator may disconnect; only **go off air**, breaking the block, or server restart stops playback.
+- HLS program audio **does not require the mixing console chunk to stay loaded**: `RadioRfPresenceRegistry` stores on-air / URL / networkId; `RadioProgramBroadcastSystem` drives FFmpeg from that snapshot. **Microphones** still need their chunks loaded (a player must speak into them).
 - `RadioProgramBroadcastSystem` arms RF routes and owns one FFmpeg session per on-air mixing console.
 
 #### Mixing console + radio microphone (unified program bus)

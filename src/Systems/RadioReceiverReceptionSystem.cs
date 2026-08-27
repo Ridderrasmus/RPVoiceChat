@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Server;
 using Vintagestory.API.Common;
@@ -27,7 +26,7 @@ namespace RPVoiceChat.Systems
                 return;
             }
 
-            foreach (BlockEntityRadioReceiver receiver in RadioBlockIndex.GetLoadedReceivers(sapi.World))
+            foreach (var receiver in RadioRfPresenceRegistry.GetReceivers())
             {
                 string tunedFrequency = RadioFrequencyUtil.Normalize(receiver.TunedFrequency);
                 if (!receiver.IsEnabled
@@ -37,22 +36,37 @@ namespace RPVoiceChat.Systems
                     continue;
                 }
 
+                if (receiver.AcousticPoints != null && receiver.AcousticPoints.Count > 0)
+                {
+                    foreach (var acoustic in receiver.AcousticPoints)
+                    {
+                        if (acoustic?.Pos == null || acoustic.RangeBlocks <= 0)
+                        {
+                            continue;
+                        }
+
+                        EmitAroundPoint(
+                            acoustic.Pos.ToVec3d().Add(0.5, 0.5, 0.5),
+                            acoustic.RangeBlocks,
+                            acoustic.Dimension,
+                            tunedFrequency,
+                            recipients);
+                    }
+
+                    continue;
+                }
+
+                if (receiver.Pos == null || receiver.PlaybackRangeBlocks <= 0)
+                {
+                    continue;
+                }
+
                 EmitAroundPoint(
                     receiver.Pos.ToVec3d().Add(0.5, 0.5, 0.5),
                     receiver.PlaybackRangeBlocks,
-                    receiver.Pos.dimension,
+                    receiver.Dimension,
                     tunedFrequency,
                     recipients);
-
-                foreach (BlockEntitySpeaker speaker in RadioWireNetworkHelper.FindSpeakers(receiver))
-                {
-                    EmitAroundPoint(
-                        speaker.Pos.ToVec3d().Add(0.5, 0.5, 0.5),
-                        speaker.VoiceEmissionRangeBlocks,
-                        speaker.Pos.dimension,
-                        tunedFrequency,
-                        recipients);
-                }
             }
         }
 

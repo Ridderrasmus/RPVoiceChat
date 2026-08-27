@@ -39,8 +39,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             if (api.Side == EnumAppSide.Server)
             {
-                RadioBlockIndex.RegisterReceiver(Pos);
                 stationNameListenerId = api.Event.RegisterGameTickListener(OnServerStationNameTick, 1000);
+                PublishRfPresence();
             }
         }
 
@@ -117,6 +117,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             RefreshHeardStationName(force: true);
             MarkDirty();
             dialog?.RefreshData();
+            PublishRfPresence();
         }
 
         public void SetEnabled(bool enabled)
@@ -129,6 +130,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             isEnabled = enabled;
             MarkDirty(true);
             dialog?.RefreshData();
+            PublishRfPresence();
         }
 
         public void SetPlaybackRange(int rangeBlocks)
@@ -142,6 +144,53 @@ namespace RPVoiceChat.GameContent.BlockEntity
             playbackRangeBlocks = clamped;
             MarkDirty(true);
             dialog?.RefreshData();
+            PublishRfPresence();
+        }
+
+        /// <summary>
+        /// Publishes receiver + wired speaker acoustic points so RF→local playback survives chunk unload.
+        /// </summary>
+        public void PublishRfPresence()
+        {
+            if (Api?.Side != EnumAppSide.Server || Pos == null)
+            {
+                return;
+            }
+
+            var acousticPoints = new System.Collections.Generic.List<RadioRfAcousticPresence>
+            {
+                new RadioRfAcousticPresence
+                {
+                    Pos = Pos.Copy(),
+                    Dimension = Pos.dimension,
+                    RangeBlocks = playbackRangeBlocks
+                }
+            };
+
+            foreach (var speaker in RadioWireNetworkHelper.FindSpeakers(this))
+            {
+                if (speaker?.Pos == null)
+                {
+                    continue;
+                }
+
+                acousticPoints.Add(new RadioRfAcousticPresence
+                {
+                    Pos = speaker.Pos.Copy(),
+                    Dimension = speaker.Pos.dimension,
+                    RangeBlocks = speaker.VoiceEmissionRangeBlocks
+                });
+            }
+
+            RadioRfPresenceRegistry.UpsertReceiver(new RadioRfReceiverPresence
+            {
+                Pos = Pos.Copy(),
+                Dimension = Pos.dimension,
+                TunedFrequency = RadioFrequencyUtil.Normalize(tunedFrequency),
+                PlaybackRangeBlocks = playbackRangeBlocks,
+                IsEnabled = isEnabled,
+                AcousticPoints = acousticPoints
+            });
         }
 
         private void OnServerStationNameTick(float dt)
@@ -196,6 +245,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public override void OnBlockRemoved()
         {
+            if (Api?.Side == EnumAppSide.Server)
+            {
+                RadioRfPresenceRegistry.RemoveReceiver(Pos);
+            }
+
             Unregister();
             base.OnBlockRemoved();
             dialog?.TryClose();
@@ -203,6 +257,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public override void OnBlockUnloaded()
         {
+            if (Api?.Side == EnumAppSide.Server)
+            {
+                PublishRfPresence();
+            }
+
             Unregister();
             base.OnBlockUnloaded();
         }
@@ -211,7 +270,6 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
             if (Api?.Side == EnumAppSide.Server)
             {
-                RadioBlockIndex.UnregisterReceiver(Pos);
                 if (stationNameListenerId != -1)
                 {
                     Api.Event.UnregisterGameTickListener(stationNameListenerId);

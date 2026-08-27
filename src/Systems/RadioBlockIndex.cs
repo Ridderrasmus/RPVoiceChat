@@ -10,7 +10,6 @@ namespace RPVoiceChat.Systems
     {
         private static readonly HashSet<BlockPos> emitterPositions = new();
         private static readonly HashSet<BlockPos> microphonePositions = new();
-        private static readonly HashSet<BlockPos> receiverPositions = new();
         private static readonly HashSet<BlockPos> mixingConsolePositions = new();
         private static readonly HashSet<BlockPos> supervisionConsolePositions = new();
 
@@ -43,22 +42,6 @@ namespace RPVoiceChat.Systems
             if (pos != null)
             {
                 microphonePositions.Remove(pos);
-            }
-        }
-
-        public static void RegisterReceiver(BlockPos pos)
-        {
-            if (pos != null)
-            {
-                receiverPositions.Add(pos.Copy());
-            }
-        }
-
-        public static void UnregisterReceiver(BlockPos pos)
-        {
-            if (pos != null)
-            {
-                receiverPositions.Remove(pos);
             }
         }
 
@@ -170,26 +153,6 @@ namespace RPVoiceChat.Systems
                 else
                 {
                     supervisionConsolePositions.Remove(pos);
-                }
-            }
-        }
-
-        public static IEnumerable<BlockEntityRadioReceiver> GetLoadedReceivers(IWorldAccessor world)
-        {
-            if (world?.BlockAccessor == null)
-            {
-                yield break;
-            }
-
-            foreach (BlockPos pos in receiverPositions.ToArray())
-            {
-                if (world.BlockAccessor.GetBlockEntity(pos) is BlockEntityRadioReceiver receiver)
-                {
-                    yield return receiver;
-                }
-                else
-                {
-                    receiverPositions.Remove(pos);
                 }
             }
         }
