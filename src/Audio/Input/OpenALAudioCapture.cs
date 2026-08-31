@@ -61,8 +61,7 @@ namespace RPVoiceChat.Audio
         public static List<string> GetAvailableDevices()
         {
             var devices = ALC.GetString(ALDevice.Null, AlcGetStringList.CaptureDeviceSpecifier);
-
-            return devices;
+            return devices ?? new List<string>();
         }
 
         private void TryOpenDevice(string[] deviceNames, ALFormat[] formats)

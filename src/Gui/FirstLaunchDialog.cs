@@ -2,6 +2,7 @@
 using RPVoiceChat.Config;
 using RPVoiceChat.Util;
 using Vintagestory.API.Client;
+using Vintagestory.API.Config;
 
 namespace RPVoiceChat.Gui
 {
@@ -36,15 +37,21 @@ namespace RPVoiceChat.Gui
 
         private void Compose()
         {
+            bool canCapture = guiManager.audioInputManager.CanUseMicrophoneCapture();
             var drawUtil = new TextDrawUtil();
             var font = CairoFont.WhiteSmallishText();
             var modMenuHotkey = capi.Input.GetHotKeyByCode("voicechatMenu").CurrentMapping.ToString();
 
             var titleBarText = UIUtils.I18n($"{i18nPrefix}.TitleBar");
-            var firstTextBlock = UIUtils.I18n($"{i18nPrefix}.FirstParagraph");
-            var secondTextBlock = UIUtils.I18n($"{i18nPrefix}.SecondParagraph", modMenuHotkey);
-            var notNowButtonText = UIUtils.I18n($"Gui.Button.NotNow");
-            var sureButtonText = UIUtils.I18n($"Gui.Button.Sure");
+            var firstTextBlock = canCapture
+                ? UIUtils.I18n($"{i18nPrefix}.FirstParagraph")
+                : UIUtils.I18n($"{i18nPrefix}.NoMicrophoneFirstParagraph");
+            var secondTextBlock = canCapture
+                ? UIUtils.I18n($"{i18nPrefix}.SecondParagraph", modMenuHotkey)
+                : UIUtils.I18n($"{i18nPrefix}.NoMicrophoneSecondParagraph", modMenuHotkey);
+            var notNowButtonText = UIUtils.I18n("Gui.Button.NotNow");
+            var sureButtonText = UIUtils.I18n("Gui.Button.Sure");
+            var okButtonText = Lang.Get("Ok");
             var firstTextBlockHeight = drawUtil.GetMultilineTextHeight(font, firstTextBlock, textWidth);
             var secondTextBlockHeight = drawUtil.GetMultilineTextHeight(font, secondTextBlock, textWidth);
 
@@ -53,22 +60,35 @@ namespace RPVoiceChat.Gui
             var secondTextBlockBounds = firstTextBlockBounds.BelowCopy(0, textBottomPadding).WithFixedHeight(secondTextBlockHeight);
             var buttonBounds = secondTextBlockBounds.BelowCopy(-textLeftPadding, textBottomPadding).WithFixedSize(0, buttonHeight).WithFixedPadding(buttonXPadding, buttonYPadding);
 
-            SingleComposer = capi.Gui.CreateCompo(composerName, ElementStdBounds.AutosizedMainDialog)
+            var composer = capi.Gui.CreateCompo(composerName, ElementStdBounds.AutosizedMainDialog)
                 .AddShadedDialogBG(bgBounds)
                 .AddDialogTitleBar(titleBarText, () => TryClose())
                 .BeginChildElements(bgBounds)
                     .AddStaticText(firstTextBlock, font, firstTextBlockBounds)
-                    .AddStaticText(secondTextBlock, font, secondTextBlockBounds)
+                    .AddStaticText(secondTextBlock, font, secondTextBlockBounds);
+
+            if (canCapture)
+            {
+                composer
                     .AddButton(notNowButtonText, TryClose, buttonBounds)
-                    .AddButton(sureButtonText, OnSureButtonClick, buttonBounds.FlatCopy().WithAlignment(EnumDialogArea.RightFixed))
-                .EndChildElements()
-                .Compose();
+                    .AddButton(sureButtonText, OnSureButtonClick, buttonBounds.FlatCopy().WithAlignment(EnumDialogArea.RightFixed));
+            }
+            else
+            {
+                composer.AddButton(okButtonText, TryClose, buttonBounds.WithAlignment(EnumDialogArea.CenterFixed));
+            }
+
+            SingleComposer = composer.EndChildElements().Compose();
         }
 
         private bool OnSureButtonClick()
         {
             TryClose();
-            guiManager.audioWizardDialog.TryOpen();
+            if (guiManager.audioInputManager.CanUseMicrophoneCapture())
+            {
+                guiManager.audioWizardDialog.TryOpen();
+            }
+
             return true;
         }
 

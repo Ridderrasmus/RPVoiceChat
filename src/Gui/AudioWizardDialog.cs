@@ -38,6 +38,7 @@ namespace RPVoiceChat.Gui
         private float adjustedGain;
         private float adjustedThreshold;
         private bool configurationInProcess = false;
+        private bool noMicrophoneMode = false;
 
         public AudioWizardDialog(ICoreClientAPI capi, MicrophoneManager audioInputManager, AudioOutputManager audioOutputManager) : base(capi)
         {
@@ -49,12 +50,24 @@ namespace RPVoiceChat.Gui
 
         public override bool TryOpen()
         {
-            audioInputManager.AudioWizardActive = true;
             configurationCTS = new CancellationTokenSource();
-            if (ModConfig.ClientConfig.InputGain == 0)
-                audioInputManager.SetGain(1);
             adjustedGain = ModConfig.ClientConfig.InputGain;
             adjustedThreshold = ModConfig.ClientConfig.InputThreshold;
+            noMicrophoneMode = !audioInputManager.CanUseMicrophoneCapture();
+
+            if (noMicrophoneMode)
+            {
+                ComposeNoMicrophone();
+                return base.TryOpen();
+            }
+
+            audioInputManager.AudioWizardActive = true;
+            // Saved gain 0 silences loopback; use unity gain so the wizard preview can be heard.
+            if (ModConfig.ClientConfig.InputGain == 0)
+            {
+                audioInputManager.SetGain(1);
+            }
+
             ModConfig.ClientConfig.Loopback = true;
             audioOutputManager.IsLoopbackEnabled = true;
             Compose();
@@ -63,15 +76,50 @@ namespace RPVoiceChat.Gui
 
         public override bool TryClose()
         {
-            configurationCTS.Cancel();
-            configurationCTS.Dispose();
+            configurationCTS?.Cancel();
+            configurationCTS?.Dispose();
             configurationInProcess = false;
-            ModConfig.ClientConfig.InputGain = adjustedGain;
-            ModConfig.ClientConfig.InputThreshold = adjustedThreshold;
-            audioInputManager.SetGain(adjustedGain);
-            audioInputManager.SetThreshold(adjustedThreshold);
-            if (doneDialog.IsOpened() == false) SaveAndExit();
+
+            if (!noMicrophoneMode)
+            {
+                ModConfig.ClientConfig.InputGain = adjustedGain;
+                ModConfig.ClientConfig.InputThreshold = adjustedThreshold;
+                audioInputManager.SetGain(adjustedGain);
+                audioInputManager.SetThreshold(adjustedThreshold);
+                if (doneDialog.IsOpened() == false)
+                {
+                    SaveAndExit();
+                }
+            }
+
+            noMicrophoneMode = false;
             return base.TryClose();
+        }
+
+        private void ComposeNoMicrophone()
+        {
+            var drawUtil = new TextDrawUtil();
+            var font = CairoFont.WhiteSmallText();
+            var titleBarText = UIUtils.I18n($"{i18nPrefix}.TitleBar");
+            var bodyText = UIUtils.I18n($"{i18nPrefix}.NoMicrophone");
+            var skipButtonText = UIUtils.I18n($"{i18nPrefix}.Skip");
+            var bodyHeight = drawUtil.GetMultilineTextHeight(font, bodyText, textWidth);
+
+            var bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding).WithSizing(ElementSizing.FitToChildren);
+            var bodyBounds = ElementBounds.Fixed(textLeftPadding, GuiStyle.TitleBarHeight + textYOffset, textWidth, bodyHeight);
+            var buttonBounds = bodyBounds.BelowCopy(0, textBottomPadding)
+                .WithFixedSize(0, defaultElementHeight)
+                .WithFixedPadding(buttonXPadding, buttonYPadding)
+                .WithAlignment(EnumDialogArea.CenterFixed);
+
+            SingleComposer = capi.Gui.CreateCompo(composerName, ElementStdBounds.AutosizedMainDialog)
+                .AddShadedDialogBG(bgBounds)
+                .AddDialogTitleBar(titleBarText, () => TryClose())
+                .BeginChildElements(bgBounds)
+                    .AddStaticText(bodyText, font, bodyBounds)
+                    .AddButton(skipButtonText, () => TryClose(), buttonBounds)
+                .EndChildElements()
+                .Compose();
         }
 
         private void Compose()
@@ -84,6 +132,7 @@ namespace RPVoiceChat.Gui
             var firstTextBlock = UIUtils.I18n($"{i18nPrefix}.FirstParagraph");
             var secondTextBlock = UIUtils.I18n($"{i18nPrefix}.SecondParagraph");
             var startButtonText = Lang.Get("Start");
+            var skipButtonText = UIUtils.I18n($"{i18nPrefix}.Skip");
             var firstTextBlockHeight = drawUtil.GetMultilineTextHeight(font, firstTextBlock, textWidth);
             var secondTextBlockHeight = drawUtil.GetMultilineTextHeight(font, secondTextBlock, textWidth);
 
@@ -93,7 +142,9 @@ namespace RPVoiceChat.Gui
             var secondTextBlockBounds = dropdownBounds.BelowCopy(0, textBottomPadding).WithFixedHeight(secondTextBlockHeight);
             var progressBarBounds = secondTextBlockBounds.BelowCopy(-textLeftPadding, textBottomPadding).WithFixedHeight(defaultElementHeight);
             var statusTextBounds = progressBarBounds.BelowCopy(0, 8).WithFixedHeight(defaultElementHeight);
-            var buttonBounds = statusTextBounds.BelowCopy(0, textBottomPadding).WithFixedSize(0, defaultElementHeight).WithFixedPadding(buttonXPadding, buttonYPadding).WithAlignment(EnumDialogArea.CenterFixed);
+            var buttonBounds = statusTextBounds.BelowCopy(0, textBottomPadding)
+                .WithFixedSize(0, defaultElementHeight)
+                .WithFixedPadding(buttonXPadding, buttonYPadding);
 
             var progressBar = new GuiElementStatbar(capi, progressBarBounds, new double[3] { 0.1, 0.4, 0.1 }, false, false);
             progressBar.ShowValueOnHover = false;
@@ -108,6 +159,7 @@ namespace RPVoiceChat.Gui
                     .AddInteractiveElement(progressBar, "progressBar")
                     .AddDynamicText("", CairoFont.WhiteSmallText(), statusTextBounds, "wizardStatusText")
                     .AddButton(startButtonText, OnStartButtonClick, buttonBounds)
+                    .AddButton(skipButtonText, () => TryClose(), buttonBounds.FlatCopy().WithAlignment(EnumDialogArea.RightFixed))
                 .EndChildElements()
                 .Compose();
 
@@ -120,7 +172,13 @@ namespace RPVoiceChat.Gui
 
         private bool OnStartButtonClick()
         {
-            if (configurationInProcess) return true;
+            if (configurationInProcess || noMicrophoneMode) return true;
+            if (!audioInputManager.CanUseMicrophoneCapture())
+            {
+                wizardStatusText?.SetNewText(UIUtils.I18n($"{i18nPrefix}.NoMicrophone"));
+                return true;
+            }
+
             configurationInProcess = true;
             wizardStatusText?.SetNewText(UIUtils.I18n($"{i18nPrefix}.Status.CalibratingGain"));
 
@@ -134,7 +192,6 @@ namespace RPVoiceChat.Gui
 
         private async void StartCalibration()
         {
-            var progressBar = SingleComposer.GetStatbar("progressBar");
             var effectiveGains = new List<float>();
             var amplitudes = new List<double>();
             try
@@ -148,8 +205,8 @@ namespace RPVoiceChat.Gui
 
                     effectiveGains.AddRange(audioInputManager.GetRecentGainLimits());
                     int step = i + 1;
-                    await RunOnMainThread(() => progressBar.SetValue(step));
-                    await Task.Delay(calibrationUpdateInterval);
+                    await RunOnMainThread(() => SetProgressValue(step));
+                    await Task.Delay(calibrationUpdateInterval, configurationCTS.Token);
                 }
 
                 if (effectiveGains.Count == 0)
@@ -165,8 +222,7 @@ namespace RPVoiceChat.Gui
                 await RunOnMainThread(() =>
                     wizardStatusText?.SetNewText(UIUtils.I18n($"{i18nPrefix}.Status.CalibratingThreshold")));
 
-                // Let a couple of frames settle under the new gain before sampling amplitudes.
-                await Task.Delay(calibrationUpdateInterval * 2);
+                await Task.Delay(calibrationUpdateInterval * 2, configurationCTS.Token);
                 audioInputManager.GetRecentAmplitudes();
 
                 for (var i = 0; i < thresholdCalibrationSteps; i++)
@@ -175,8 +231,8 @@ namespace RPVoiceChat.Gui
 
                     amplitudes.AddRange(audioInputManager.GetRecentAmplitudes());
                     int step = gainCalibrationSteps + i + 1;
-                    await RunOnMainThread(() => progressBar.SetValue(step));
-                    await Task.Delay(calibrationUpdateInterval);
+                    await RunOnMainThread(() => SetProgressValue(step));
+                    await Task.Delay(calibrationUpdateInterval, configurationCTS.Token);
                 }
 
                 if (amplitudes.Count == 0)
@@ -195,9 +251,40 @@ namespace RPVoiceChat.Gui
                     TryClose();
                 });
             }
+            catch (OperationCanceledException)
+            {
+                // Dialog closed while calibrating.
+            }
+            catch (Exception ex)
+            {
+                Logger.client.Warning($"[AudioWizard] Calibration failed: {ex.Message}");
+                try
+                {
+                    await RunOnMainThread(() =>
+                        wizardStatusText?.SetNewText(UIUtils.I18n($"{i18nPrefix}.Status.CalibrationError")));
+                }
+                catch
+                {
+                    // Wizard may already be closed.
+                }
+            }
             finally
             {
                 configurationInProcess = false;
+            }
+        }
+
+        private void SetProgressValue(int step)
+        {
+            if (!IsOpened() || SingleComposer == null)
+            {
+                return;
+            }
+
+            var progressBar = SingleComposer.GetStatbar("progressBar");
+            if (progressBar != null)
+            {
+                progressBar.SetValue(step);
             }
         }
 
@@ -221,6 +308,11 @@ namespace RPVoiceChat.Gui
 
         private static float ComputeCalibratedGain(List<float> effectiveGains)
         {
+            if (effectiveGains == null || effectiveGains.Count == 0)
+            {
+                return ModConfig.ClientConfig.InputGain;
+            }
+
             effectiveGains.Sort();
             float lowerQuartileGain = effectiveGains[effectiveGains.Count / 4];
             float newGain = AudioUtils.FactorToDBs(lowerQuartileGain);
@@ -230,6 +322,11 @@ namespace RPVoiceChat.Gui
 
         private float ComputeCalibratedThreshold(List<double> amplitudes)
         {
+            if (amplitudes == null || amplitudes.Count == 0)
+            {
+                return ModConfig.ClientConfig.InputThreshold;
+            }
+
             amplitudes.Sort();
             int count = amplitudes.Count;
             double noiseFloor = amplitudes[Math.Max(0, count / 10)];
@@ -261,8 +358,13 @@ namespace RPVoiceChat.Gui
         private void OnDropdownSelect(string value, bool selected)
         {
             audioInputManager.SetInputDevice(value);
+            if (!IsOpened() || SingleComposer == null)
+            {
+                return;
+            }
+
             var dropdown = SingleComposer.GetDropDown("inputDevice");
-            dropdown.SetSelectedValue(ModConfig.ClientConfig.InputDevice ?? "Default");
+            dropdown?.SetSelectedValue(ModConfig.ClientConfig.InputDevice ?? "Default");
         }
 
         public override string ToggleKeyCombinationCode => null;
