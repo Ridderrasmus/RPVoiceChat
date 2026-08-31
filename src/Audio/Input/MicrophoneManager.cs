@@ -557,9 +557,29 @@ namespace RPVoiceChat.Audio
         public string[] GetInputDeviceNames()
         {
             var devices = OpenALAudioCapture.GetAvailableDevices();
-            devices.Insert(0, "Default");
+            if (devices.Count == 0)
+            {
+                return new[] { "Default" };
+            }
 
+            devices.Insert(0, "Default");
             return devices.ToArray();
+        }
+
+        /// <summary>
+        /// OpenAL reports at least one capture device (excluding the synthetic Default entry).
+        /// </summary>
+        public bool HasCaptureHardware()
+        {
+            return OpenALAudioCapture.GetAvailableDevices().Count > 0;
+        }
+
+        /// <summary>
+        /// Voice capture is available (initialized device or hardware to select in the wizard).
+        /// </summary>
+        public bool CanUseMicrophoneCapture()
+        {
+            return capture != null || HasCaptureHardware();
         }
 
         public VoiceLevel CycleVoiceLevel()
