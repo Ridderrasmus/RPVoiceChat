@@ -14,7 +14,8 @@ namespace RPVoiceChat.Networking.Packets
         SetMixingConsoleHlsUrl = 6,
         SetMixingConsoleOnAir = 7,
         SetReceiverEnabled = 8,
-        SetReceiverPlaybackRange = 9
+        SetReceiverPlaybackRange = 9,
+        SetReceiverPlaybackVolume = 10
     }
 
     public enum RadioEmitterOperatingMode

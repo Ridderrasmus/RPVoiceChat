@@ -1,6 +1,7 @@
 using RPVoiceChat.Client;
 using RPVoiceChat.Config;
 using RPVoiceChat.DB;
+using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Systems;
@@ -9,6 +10,8 @@ using System;
 using System.Collections.Concurrent;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
+using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 
 namespace RPVoiceChat.Audio
@@ -84,6 +87,11 @@ namespace RPVoiceChat.Audio
                 return;
             }
 
+            if (IsOwnTalkieRfReception(packet))
+            {
+                return;
+            }
+
             PlayerAudioSource source = GetOrCreatePlayerSource(packet.PlayerId);
             if (source == null)
             {
@@ -118,6 +126,36 @@ namespace RPVoiceChat.Audio
             if (!IsLoopbackEnabled) return;
 
             HandleAudioPacket(packet, localPlayerAudioSource);
+        }
+
+        private bool IsOwnTalkieRfReception(AudioPacket packet)
+        {
+            if (!packet.HasSourcePositionOverride || capi.World.Player == null)
+            {
+                return false;
+            }
+
+            if (packet.PlayerId != capi.World.Player.PlayerUID)
+            {
+                return false;
+            }
+
+            EntityPos listenerPos = capi.World.Player.Entity?.Pos;
+            if (listenerPos == null)
+            {
+                return false;
+            }
+
+            var sourcePos = new Vec3d(packet.SourcePosX, packet.SourcePosY, packet.SourcePosZ);
+            if (BlockEntityRadioReceiver.GetPlaybackVolumeGainAtSource(capi, sourcePos, listenerPos.Dimension) >= 0f)
+            {
+                return false;
+            }
+
+            double dx = packet.SourcePosX - listenerPos.X;
+            double dy = packet.SourcePosY - listenerPos.Y;
+            double dz = packet.SourcePosZ - listenerPos.Z;
+            return dx * dx + dy * dy + dz * dz <= 4.0;
         }
 
         private void ClientLoaded()

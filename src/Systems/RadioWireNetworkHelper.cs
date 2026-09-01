@@ -45,6 +45,11 @@ namespace RPVoiceChat.Systems
             return GetReachableWiredNodes(start).OfType<BlockEntitySpeaker>();
         }
 
+        public static IEnumerable<BlockEntityRadioReceiver> FindReceivers(BEWireNode start)
+        {
+            return GetReachableWiredNodes(start).OfType<BlockEntityRadioReceiver>();
+        }
+
         public static IEnumerable<BlockEntityRadioMixingConsole> FindMixingConsoles(BEWireNode start)
         {
             return GetReachableWiredNodes(start).OfType<BlockEntityRadioMixingConsole>();

@@ -128,12 +128,25 @@ namespace RPVoiceChat.Systems
             double distanceSq,
             Dictionary<string, RoutedVoiceRecipient> recipients)
         {
-            if (recipients.TryGetValue(playerUid, out RoutedVoiceRecipient existing) && existing.DistanceSq <= distanceSq)
+            if (recipients.TryGetValue(playerUid, out RoutedVoiceRecipient existing))
             {
-                return;
+                if (existing.DistanceSq <= distanceSq && !ShouldPreferReceiverRelay(existing.DistanceSq, route, distanceSq))
+                {
+                    return;
+                }
             }
 
             recipients[playerUid] = new RoutedVoiceRecipient(playerUid, route, distanceSq);
+        }
+
+        /// <summary>
+        /// Receiver replay should replace handheld RF replay at the transmitter (distanceSq ≈ 0).
+        /// </summary>
+        private static bool ShouldPreferReceiverRelay(double existingDistanceSq, VoiceRoute newRoute, double newDistanceSq)
+        {
+            return existingDistanceSq <= 4.0
+                && !string.IsNullOrEmpty(newRoute.RadioFrequency)
+                && newDistanceSq > existingDistanceSq;
         }
 
         private static double SquareDistance(Vec3d listener, Vec3d source)

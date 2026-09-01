@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using RPVoiceChat.Config;
 using RPVoiceChat.GameContent.Items;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Server;
+using RPVoiceChat.Util;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
@@ -23,7 +25,7 @@ namespace RPVoiceChat.Systems
             IReadOnlyList<VoiceRoute> routes,
             Dictionary<string, RoutedVoiceRecipient> recipients)
         {
-            if (sapi == null || routes == null || routes.Count == 0)
+            if (sapi?.World == null || routes == null || routes.Count == 0 || recipients == null)
             {
                 return;
             }
@@ -37,53 +39,73 @@ namespace RPVoiceChat.Systems
                     continue;
                 }
 
-                string tunedFrequency = ItemRadio.GetTunedFrequency(player);
-                if (string.IsNullOrEmpty(tunedFrequency))
+                if (player.PlayerUID == packet.PlayerId)
                 {
                     continue;
                 }
 
-                Vec3d listenerPos = player.Entity.Pos.XYZ;
-                int dimension = player.Entity.Pos.Dimension;
-
-                for (int routeIndex = 0; routeIndex < routes.Count; routeIndex++)
+                try
                 {
-                    VoiceRoute route = routes[routeIndex];
-                    if (route.EmissionPos == null || route.RangeBlocks <= 0)
+                    EntityAgent entity = player.Entity;
+                    if (entity?.Pos == null)
                     {
                         continue;
                     }
 
-                    if (route.Dimension != dimension)
-                    {
-                        continue;
-                    }
+                    Vec3d listenerPos = entity.Pos.XYZ;
+                    int dimension = entity.Pos.Dimension;
 
-                    if (string.IsNullOrEmpty(route.RadioFrequency))
+                    foreach (string tunedFrequency in ItemRadio.GetActiveListenFrequencies(player))
                     {
-                        continue;
-                    }
+                        if (string.IsNullOrEmpty(tunedFrequency))
+                        {
+                            continue;
+                        }
 
-                    if (!RadioFrequencyUtil.Matches(route.RadioFrequency, tunedFrequency))
-                    {
-                        continue;
-                    }
+                        for (int routeIndex = 0; routeIndex < routes.Count; routeIndex++)
+                        {
+                            VoiceRoute route = routes[routeIndex];
+                            if (route.EmissionPos == null || route.RangeBlocks <= 0)
+                            {
+                                continue;
+                            }
 
-                    // RF coverage uses the transmitter range; audio plays at the handheld, not the antenna.
-                    double distanceSq = SquareDistance(listenerPos, route.EmissionPos);
-                    double rfRangeSq = (double)route.RangeBlocks * route.RangeBlocks;
-                    if (distanceSq > rfRangeSq)
-                    {
-                        continue;
-                    }
+                            if (route.Dimension != dimension)
+                            {
+                                continue;
+                            }
 
-                    var acousticAtPlayer = new VoiceRoute(
-                        listenerPos,
-                        talkieRange,
-                        dimension,
-                        route.RadioFrequency,
-                        acousticEmission: true);
-                    TrySetRecipient(player.PlayerUID, acousticAtPlayer, 0, recipients);
+                            if (string.IsNullOrEmpty(route.RadioFrequency))
+                            {
+                                continue;
+                            }
+
+                            if (!RadioFrequencyUtil.Matches(route.RadioFrequency, tunedFrequency))
+                            {
+                                continue;
+                            }
+
+                            // RF coverage uses the transmitter range; audio plays at the handheld, not the antenna.
+                            double distanceSq = SquareDistance(listenerPos, route.EmissionPos);
+                            double rfRangeSq = (double)route.RangeBlocks * route.RangeBlocks;
+                            if (distanceSq > rfRangeSq)
+                            {
+                                continue;
+                            }
+
+                            var acousticAtPlayer = new VoiceRoute(
+                                listenerPos,
+                                talkieRange,
+                                dimension,
+                                route.RadioFrequency,
+                                acousticEmission: true);
+                            TrySetRecipient(player.PlayerUID, acousticAtPlayer, distanceSq, recipients);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.server?.Warning($"[RadioRfReception] Skipped talkie routing for {player.PlayerUID}: {ex.Message}");
                 }
             }
         }

@@ -459,8 +459,19 @@ namespace RPVoiceChat.Server
         private void TryAccumulateRoutedRecipient(AudioPacket packet, VoiceRoute route, GridPlayer candidate, Dictionary<string, RoutedVoiceRecipient> recipients)
         {
             if (candidate.Dimension != route.Dimension) return;
-            bool allowEmitterFeedback = devicesVoiceFeedbackByPlayer.TryGetValue(candidate.PlayerUID, out bool devicesVoiceFeedback) && devicesVoiceFeedback;
-            if (packet.PlayerId == candidate.PlayerUID && !allowEmitterFeedback) return;
+
+            if (packet.PlayerId == candidate.PlayerUID)
+            {
+                // RF replay at the handheld talkie must not win over receiver/speaker output.
+                if (!string.IsNullOrEmpty(route.RadioFrequency)
+                    && SquareDistance(candidate.X, candidate.Y, candidate.Z, route.EmissionPos) <= 4.0)
+                {
+                    return;
+                }
+
+                bool allowEmitterFeedback = devicesVoiceFeedbackByPlayer.TryGetValue(candidate.PlayerUID, out bool devicesVoiceFeedback) && devicesVoiceFeedback;
+                if (!allowEmitterFeedback) return;
+            }
 
             double distanceSq = SquareDistance(candidate.X, candidate.Y, candidate.Z, route.EmissionPos);
             TrySetRoutedRecipient(candidate.PlayerUID, route, distanceSq, recipients);

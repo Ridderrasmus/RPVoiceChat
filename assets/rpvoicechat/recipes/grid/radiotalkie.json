@@ -1,6 +1,6 @@
 {
-  "enabled": false,
-  "ingredientPattern": "_R_,HM_,EPE",
+  "enabled": true,
+  "ingredientPattern": "_R_,HMT,EPE",
   "ingredients": {
     "R": {
       "type": "item",
@@ -10,6 +10,11 @@
     "P": {
       "type": "item",
       "code": "game:metalplate-silver",
+      "quantity": 1
+    },
+    "T": {
+      "type": "item",
+      "code": "game:jonasparts-tank02",
       "quantity": 1
     },
     "H": {

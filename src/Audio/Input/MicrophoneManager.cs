@@ -59,6 +59,7 @@ namespace RPVoiceChat.Audio
 
         // Megaphone management (separate from voice level)
         private int customTransmissionRange = 0; // 0 = use default from VoiceLevel
+        private int talkieHeldTransmitDepth = 0;
         private bool ignoreDistanceReduction = false;
         private float wallThicknessOverride = -1f;
         private bool isGlobalBroadcast = false;
@@ -127,6 +128,18 @@ namespace RPVoiceChat.Audio
         public void ResetTransmissionRange()
         {
             customTransmissionRange = 0;
+        }
+
+        public void SetTalkieHeldTransmit(bool active)
+        {
+            if (active)
+            {
+                talkieHeldTransmitDepth++;
+            }
+            else
+            {
+                talkieHeldTransmitDepth = Math.Max(0, talkieHeldTransmitDepth - 1);
+            }
         }
 
         public List<float> GetRecentGainLimits()
@@ -410,7 +423,8 @@ namespace RPVoiceChat.Audio
             }
 
             // Check if activation conditions are met
-            bool isPTTKeyPressed = capi.Input.KeyboardKeyState[capi.Input.GetHotKeyByCode("voicechatPTT").CurrentMapping.KeyCode];
+            bool isPTTKeyPressed = capi.Input.KeyboardKeyState[capi.Input.GetHotKeyByCode("voicechatPTT").CurrentMapping.KeyCode]
+                || talkieHeldTransmitDepth > 0;
             bool isAboveInputThreshold = Amplitude >= inputThreshold;
             Transmitting = ModConfig.ClientConfig.PushToTalkEnabled ? isPTTKeyPressed : isAboveInputThreshold;
 

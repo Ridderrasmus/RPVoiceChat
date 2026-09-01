@@ -2,6 +2,8 @@ using OpenTK.Audio.OpenAL;
 using RPVoiceChat.Audio.Effects;
 using RPVoiceChat.Config;
 using RPVoiceChat.DB;
+using RPVoiceChat.GameContent.BlockEntity;
+using RPVoiceChat.GameContent.Items;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Util;
 using System;
@@ -276,6 +278,21 @@ namespace RPVoiceChat.Audio
             }
 
             float gain = GetFinalGain() * GetDistanceAttenuationGain(effectiveSpeakerPos, listenerPos);
+            if (sourceOverride != null && IsTalkieRfAtListener(sourceOverride, listenerPos))
+            {
+                gain *= ItemRadio.GetLocalTalkieListenVolumeGain(capi);
+            }
+            else if (sourceOverride != null)
+            {
+                float receiverGain = BlockEntityRadioReceiver.GetPlaybackVolumeGainAtSource(
+                    capi,
+                    sourceOverride,
+                    listenerPos.Dimension);
+                if (receiverGain >= 0f)
+                {
+                    gain *= receiverGain;
+                }
+            }
             var sourcePosition = new Vec3f();
             var velocity = new Vec3f();
 
@@ -365,6 +382,14 @@ namespace RPVoiceChat.Audio
             const float edgeGain = 0.06f;
             float shaped = (float)Math.Pow(1.0 - t, 1.35);
             return edgeGain + (1f - edgeGain) * shaped;
+        }
+
+        private static bool IsTalkieRfAtListener(Vec3d sourceOverride, EntityPos listenerPos)
+        {
+            double dx = sourceOverride.X - listenerPos.X;
+            double dy = sourceOverride.Y - listenerPos.Y;
+            double dz = sourceOverride.Z - listenerPos.Z;
+            return dx * dx + dy * dy + dz * dz <= 4.0;
         }
 
         private Vec3f GetRelativeSourcePosition(Vec3d speakerPos, EntityPos listenerPos)
@@ -683,7 +708,7 @@ namespace RPVoiceChat.Audio
 
         public void StopPlaying()
         {
-            if (source <= 0) return; // Source is invalid
+            if (source <= 0 || IsDisposed) return;
             OALW.SourceStop(source);
             OnSourceStop();
         }
@@ -698,9 +723,13 @@ namespace RPVoiceChat.Audio
         {
             if (IsDisposed) return;
 
-            OALW.SourceStop(source);
-            OALW.DeleteSource(source);
-            source = 0; // Mark source as invalid
+            if (source > 0)
+            {
+                OALW.SourceStop(source);
+                OALW.DeleteSource(source);
+            }
+
+            source = 0;
             buffer.OnEmptyingQueue -= OnSourceStop;
             currentSoundEffect?.Clear();
             buffer?.Dispose();

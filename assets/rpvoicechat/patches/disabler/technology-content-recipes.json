@@ -263,6 +263,16 @@
     "op": "add",
     "path": "/enabled",
     "value": false,
+    "file": "rpvoicechat:recipes/grid/radiotalkie.json",
+    "condition": {
+      "when": "rpvoicechat:technology-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
     "file": "rpvoicechat:recipes/grid/radioconsole.json",
     "condition": {
       "when": "rpvoicechat:additional-content",
@@ -314,6 +324,16 @@
     "path": "/enabled",
     "value": false,
     "file": "rpvoicechat:recipes/grid/radiomixingconsole.json",
+    "condition": {
+      "when": "rpvoicechat:additional-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:recipes/grid/radiotalkie.json",
     "condition": {
       "when": "rpvoicechat:additional-content",
       "isValue": "false"
