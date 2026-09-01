@@ -7,10 +7,12 @@ namespace RPVoiceChat.Gui
     public class RadioReceiverDialog : GuiDialogBlockEntity
     {
         private const string RangeSliderKey = "radioReceiverRangeSlider";
+        private const string VolumeSliderKey = "radioReceiverVolumeSlider";
 
         private readonly BlockEntityRadioReceiver receiver;
         private GuiElementTextInput frequencyInput;
         private NamedSlider rangeSlider;
+        private NamedSlider volumeSlider;
         private string pendingFrequency = "";
         private string actionButtonLangKey = "Radio.Receiver.Gui.TurnOn";
 
@@ -44,6 +46,12 @@ namespace RPVoiceChat.Gui
                 BlockEntityRadioReceiver.MaxPlaybackRangeBlocks,
                 1,
                 "");
+            volumeSlider?.SetValues(
+                receiver.PlaybackVolumePercent,
+                BlockEntityRadioReceiver.MinPlaybackVolumePercent,
+                BlockEntityRadioReceiver.MaxPlaybackVolumePercent,
+                1,
+                "%");
             SingleComposer.GetDynamicText("radioReceiverStationText")?.SetNewText(GetStationText());
 
             string newActionKey = receiver.IsEnabled
@@ -80,6 +88,8 @@ namespace RPVoiceChat.Gui
             ElementBounds toggleBounds = ElementBounds.Fixed(0, 120, 160, 28);
             ElementBounds rangeLabelBounds = ElementBounds.Fixed(0, 160, 420, 18);
             ElementBounds rangeSliderBounds = ElementBounds.Fixed(0, 180, 420, 26);
+            ElementBounds volumeLabelBounds = ElementBounds.Fixed(0, 220, 420, 18);
+            ElementBounds volumeSliderBounds = ElementBounds.Fixed(0, 240, 420, 26);
 
             ElementBounds bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
             bgBounds.BothSizing = ElementSizing.FitToChildren;
@@ -90,7 +100,9 @@ namespace RPVoiceChat.Gui
                 stationBounds,
                 toggleBounds,
                 rangeLabelBounds,
-                rangeSliderBounds);
+                rangeSliderBounds,
+                volumeLabelBounds,
+                volumeSliderBounds);
 
             rangeSlider = new NamedSlider(capi, RangeSliderKey, OnPlaybackRangeChanged, rangeSliderBounds);
             rangeSlider.SetValues(
@@ -99,6 +111,14 @@ namespace RPVoiceChat.Gui
                 BlockEntityRadioReceiver.MaxPlaybackRangeBlocks,
                 1,
                 "");
+
+            volumeSlider = new NamedSlider(capi, VolumeSliderKey, OnPlaybackVolumeChanged, volumeSliderBounds);
+            volumeSlider.SetValues(
+                receiver.PlaybackVolumePercent,
+                BlockEntityRadioReceiver.MinPlaybackVolumePercent,
+                BlockEntityRadioReceiver.MaxPlaybackVolumePercent,
+                1,
+                "%");
 
             SingleComposer = capi.Gui.CreateCompo("radioreceiver", dialogBounds)
                 .AddShadedDialogBG(bgBounds)
@@ -110,6 +130,8 @@ namespace RPVoiceChat.Gui
                 .AddSmallButton(UIUtils.I18n(actionButtonLangKey), OnToggleEnabledClicked, toggleBounds)
                 .AddStaticText(UIUtils.I18n("Radio.Receiver.Gui.PlaybackRange"), CairoFont.WhiteSmallText(), rangeLabelBounds)
                 .AddInteractiveElement(rangeSlider, RangeSliderKey)
+                .AddStaticText(UIUtils.I18n("Radio.Receiver.Gui.PlaybackVolume"), CairoFont.WhiteSmallText(), volumeLabelBounds)
+                .AddInteractiveElement(volumeSlider, VolumeSliderKey)
                 .Compose();
 
             frequencyInput = SingleComposer.GetTextInput("radioReceiverFrequencyInput");
@@ -133,6 +155,12 @@ namespace RPVoiceChat.Gui
         private bool OnPlaybackRangeChanged(int value, string _)
         {
             receiver.RequestSetPlaybackRange(value);
+            return true;
+        }
+
+        private bool OnPlaybackVolumeChanged(int value, string _)
+        {
+            receiver.RequestSetPlaybackVolume(value);
             return true;
         }
 

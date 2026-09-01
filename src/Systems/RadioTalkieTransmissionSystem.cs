@@ -23,6 +23,11 @@ namespace RPVoiceChat.Systems
             api.Event.PlayerDisconnect += OnPlayerDisconnect;
         }
 
+        public bool IsTalkieTransmitting(string playerUid)
+        {
+            return !string.IsNullOrEmpty(playerUid) && activeTalkieFrequencies.ContainsKey(playerUid);
+        }
+
         public void SetTalkieTransmitting(IServerPlayer player, bool transmitting, string frequency)
         {
             if (player == null)
@@ -32,7 +37,9 @@ namespace RPVoiceChat.Systems
 
             if (transmitting && !string.IsNullOrWhiteSpace(frequency))
             {
-                activeTalkieFrequencies[player.PlayerUID] = RadioFrequencyUtil.Normalize(frequency);
+                string normalized = RadioFrequencyUtil.Normalize(frequency);
+                activeTalkieFrequencies[player.PlayerUID] = normalized;
+                ApplyTalkieRoute(player, normalized);
             }
             else
             {
@@ -69,17 +76,27 @@ namespace RPVoiceChat.Systems
                     continue;
                 }
 
-                Vec3d emissionPos = player.Entity.Pos.XYZ;
-                routing.SetTalkieRoutes(entry.Key, new[]
-                {
-                    new VoiceRoute(
-                        emissionPos,
-                        ServerConfigManager.RadioTalkieRangeBlocks,
-                        player.Entity.Pos.Dimension,
-                        entry.Value,
-                        acousticEmission: true)
-                });
+                ApplyTalkieRoute(player, entry.Value);
             }
+        }
+
+        private void ApplyTalkieRoute(IServerPlayer player, string frequency)
+        {
+            if (routing == null || player?.Entity?.Pos == null || string.IsNullOrEmpty(frequency))
+            {
+                return;
+            }
+
+            Vec3d emissionPos = player.Entity.Pos.XYZ;
+            routing.SetTalkieRoutes(player.PlayerUID, new[]
+            {
+                new VoiceRoute(
+                    emissionPos,
+                    ServerConfigManager.RadioTalkieRangeBlocks,
+                    player.Entity.Pos.Dimension,
+                    frequency,
+                    acousticEmission: true)
+            });
         }
     }
 }
