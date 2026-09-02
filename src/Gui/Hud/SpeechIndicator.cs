@@ -23,6 +23,12 @@ namespace RPVoiceChat.Gui
         private string voiceType;
         private VoiceLevel currentVoiceLevel;
         private bool isVoiceBanned = false;
+        private VoiceLevel lastBuiltVoiceLevel;
+        private string lastBuiltVoiceType;
+        private bool lastBuiltMinimalHud;
+        private bool lastBuiltMuted;
+        private bool lastBuiltBanned;
+        private bool lastShouldDisplay;
 
         public SpeechIndicator(ICoreClientAPI capi, MicrophoneManager microphoneManager) : base(capi)
         {
@@ -63,13 +69,19 @@ namespace RPVoiceChat.Gui
 
         private void OnHudUpdate(string _, ref EnumHandling __, object ___)
         {
-            bindToMainThread(SetupIcon)();
+            bindToMainThread(UpdateDisplay)();
         }
 
         private void OnVoiceBanUpdate(string _, ref EnumHandling __, object ___)
         {
             CheckVoiceBanStatus();
             bindToMainThread(SetupIcon)();
+        }
+
+        public override void Dispose()
+        {
+            SingleComposer?.Dispose();
+            base.Dispose();
         }
 
         private void CheckVoiceBanStatus()
@@ -96,6 +108,13 @@ namespace RPVoiceChat.Gui
                 // In normal mode, show when talking or when muted or banned
                 shouldDisplay = (ModConfig.ClientConfig.IsMuted || isVoiceBanned || isTalking) && ModConfig.ClientConfig.ShowHud;
             }
+
+            if (shouldDisplay == lastShouldDisplay && IsOpened() == shouldDisplay)
+            {
+                return;
+            }
+
+            lastShouldDisplay = shouldDisplay;
             
             bool successful = shouldDisplay ? TryOpen() : TryClose();
 
@@ -104,8 +123,32 @@ namespace RPVoiceChat.Gui
 
         public void SetupIcon()
         {
+            bool minimalHud = ModConfig.ClientConfig.IsMinimalHud;
+            bool isMuted = ModConfig.ClientConfig.IsMuted;
+            if (SingleComposer != null
+                && currentVoiceLevel == lastBuiltVoiceLevel
+                && voiceType == lastBuiltVoiceType
+                && minimalHud == lastBuiltMinimalHud
+                && isMuted == lastBuiltMuted
+                && isVoiceBanned == lastBuiltBanned)
+            {
+                UpdateDisplay();
+                return;
+            }
+
+            lastBuiltVoiceLevel = currentVoiceLevel;
+            lastBuiltVoiceType = voiceType;
+            lastBuiltMinimalHud = minimalHud;
+            lastBuiltMuted = isMuted;
+            lastBuiltBanned = isVoiceBanned;
+
+            if (IsOpened())
+            {
+                TryClose();
+            }
+
             // In minimal mode, always show the minimal indicator
-            if (ModConfig.ClientConfig.IsMinimalHud)
+            if (minimalHud)
             {
                 // Choose color based on microphone manager voice level
                 string colorIcon = currentVoiceLevel switch
@@ -116,6 +159,7 @@ namespace RPVoiceChat.Gui
                     _ => "minimal-green.png" // Default to green for talk
                 };
 
+                SingleComposer?.Dispose();
                 SingleComposer = capi.Gui.CreateCompo("rpvcspeechindicator", dialogBounds)
                     .AddImage(ElementBounds.Fixed(16, 16, 32, 32), new AssetLocation(RPVoiceChatMod.modID, "textures/gui/" + colorIcon))
                     .AddIf(isVoiceBanned)
@@ -137,6 +181,7 @@ namespace RPVoiceChat.Gui
                     voiceIcon = new AssetLocation(RPVoiceChatMod.modID, "textures/gui/megaphone.png");
                 }
 
+                SingleComposer?.Dispose();
                 SingleComposer = capi.Gui.CreateCompo("rpvcspeechindicator", dialogBounds)
                     .AddImage(ElementBounds.Fixed(0, 0, size, size), voiceIcon)
                     .AddIf(isVoiceBanned)

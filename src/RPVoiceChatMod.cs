@@ -78,7 +78,8 @@ namespace RPVoiceChat
                     .RegisterMessageType<RadioSettingsPacket>()
                     .RegisterMessageType<RadioClientNotificationPacket>();
                 RadioTalkieClientChannel = capi.Network.RegisterChannel("radiotalkie")
-                    .RegisterMessageType<RadioTalkieStatePacket>();
+                    .RegisterMessageType<RadioTalkieStatePacket>()
+                    .RegisterMessageType<RadioTalkieSettingsPacket>();
                 SwitchboardClientChannel = capi.Network.RegisterChannel("switchboardsettings")
                     .RegisterMessageType<SwitchboardRenameNetworkPacket>()
                     .RegisterMessageType<SwitchboardPowerModePacket>();
@@ -111,7 +112,9 @@ namespace RPVoiceChat
                     .SetMessageHandler<RadioSettingsPacket>(OnRadioSettingsPacket);
                 RadioTalkieServerChannel = sapi.Network.RegisterChannel("radiotalkie")
                     .RegisterMessageType<RadioTalkieStatePacket>()
-                    .SetMessageHandler<RadioTalkieStatePacket>(OnRadioTalkieStatePacket);
+                    .RegisterMessageType<RadioTalkieSettingsPacket>()
+                    .SetMessageHandler<RadioTalkieStatePacket>(OnRadioTalkieStatePacket)
+                    .SetMessageHandler<RadioTalkieSettingsPacket>(OnRadioTalkieSettingsPacket);
                 SwitchboardServerChannel = sapi.Network.RegisterChannel("switchboardsettings")
                     .RegisterMessageType<SwitchboardRenameNetworkPacket>()
                     .RegisterMessageType<SwitchboardPowerModePacket>()
@@ -307,6 +310,12 @@ namespace RPVoiceChat
                         receiverRange.SetPlaybackRange(packet.IntValue);
                     }
                     break;
+                case RadioSettingsOperation.SetReceiverPlaybackVolume:
+                    if (sapi.World.BlockAccessor.GetBlockEntity(packet.BlockPos) is BlockEntityRadioReceiver receiverVolume)
+                    {
+                        receiverVolume.SetPlaybackVolume(packet.IntValue);
+                    }
+                    break;
                 case RadioSettingsOperation.SetMicrophoneTransmit:
                     if (sapi.World.BlockAccessor.GetBlockEntity(packet.BlockPos) is BlockEntityRadioMicrophone microphone)
                     {
@@ -337,6 +346,21 @@ namespace RPVoiceChat
         {
             sapi.ModLoader.GetModSystem<RadioTalkieTransmissionSystem>()
                 ?.SetTalkieTransmitting(player, packet?.Transmitting == true, packet?.Frequency);
+        }
+
+        private void OnRadioTalkieSettingsPacket(IServerPlayer player, RadioTalkieSettingsPacket packet)
+        {
+            if (player == null || packet == null)
+            {
+                return;
+            }
+
+            ItemRadio.TryApplyServerSettings(
+                player,
+                packet.SlotNumber,
+                packet.Frequency,
+                packet.InventoryListen,
+                packet.ListenVolumePercent);
         }
 
         private void OnSwitchboardPowerModePacket(IServerPlayer player, SwitchboardPowerModePacket packet)

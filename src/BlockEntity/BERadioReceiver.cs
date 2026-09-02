@@ -15,17 +15,22 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public const int MaxPlaybackRangeBlocks = 15;
         public const int DefaultPlaybackRangeBlocks = 8;
         public const int MaxWiredSpeakers = 4;
+        public const int MinPlaybackVolumePercent = 0;
+        public const int MaxPlaybackVolumePercent = 100;
+        public const int DefaultPlaybackVolumePercent = 100;
 
         private RadioReceiverDialog dialog;
         private string tunedFrequency = "100.0";
         private bool isEnabled = false;
         private int playbackRangeBlocks = DefaultPlaybackRangeBlocks;
+        private int playbackVolumePercent = DefaultPlaybackVolumePercent;
         private string heardStationName = "";
         private long stationNameListenerId = -1;
 
         public string TunedFrequency => tunedFrequency ?? "";
         public bool IsEnabled => isEnabled;
         public int PlaybackRangeBlocks => playbackRangeBlocks;
+        public int PlaybackVolumePercent => playbackVolumePercent;
         public string HeardStationName => heardStationName ?? "";
 
         protected override int MaxConnections => 1;
@@ -36,6 +41,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
             base.Initialize(api);
             playbackRangeBlocks = GameMath.Clamp(playbackRangeBlocks, MinPlaybackRangeBlocks, MaxPlaybackRangeBlocks);
+            playbackVolumePercent = GameMath.Clamp(playbackVolumePercent, MinPlaybackVolumePercent, MaxPlaybackVolumePercent);
 
             if (api.Side == EnumAppSide.Server)
             {
@@ -111,6 +117,51 @@ namespace RPVoiceChat.GameContent.BlockEntity
             });
         }
 
+        public void RequestSetPlaybackVolume(int volumePercent)
+        {
+            if (Api?.Side != EnumAppSide.Client)
+            {
+                return;
+            }
+
+            RPVoiceChatMod.RadioSettingsClientChannel?.SendPacket(new RadioSettingsPacket
+            {
+                BlockPos = Pos,
+                Operation = RadioSettingsOperation.SetReceiverPlaybackVolume,
+                IntValue = GameMath.Clamp(volumePercent, MinPlaybackVolumePercent, MaxPlaybackVolumePercent)
+            });
+        }
+
+        public static float GetPlaybackVolumeGainAtSource(ICoreClientAPI capi, Vec3d sourceOverride, int dimension)
+        {
+            if (capi?.World?.BlockAccessor == null || sourceOverride == null)
+            {
+                return -1f;
+            }
+
+            BlockPos blockPos = new BlockPos(
+                (int)System.Math.Floor(sourceOverride.X),
+                (int)System.Math.Floor(sourceOverride.Y),
+                (int)System.Math.Floor(sourceOverride.Z));
+            blockPos.dimension = dimension;
+
+            Vintagestory.API.Common.BlockEntity blockEntity = capi.World.BlockAccessor.GetBlockEntity(blockPos);
+            if (blockEntity is BlockEntityRadioReceiver receiver)
+            {
+                return receiver.PlaybackVolumePercent / 100f;
+            }
+
+            if (blockEntity is BlockEntitySpeaker speaker)
+            {
+                foreach (BlockEntityRadioReceiver wiredReceiver in RadioWireNetworkHelper.FindReceivers(speaker))
+                {
+                    return wiredReceiver.PlaybackVolumePercent / 100f;
+                }
+            }
+
+            return -1f;
+        }
+
         public void SetTunedFrequency(string desired)
         {
             tunedFrequency = (desired ?? "").Trim();
@@ -145,6 +196,19 @@ namespace RPVoiceChat.GameContent.BlockEntity
             MarkDirty(true);
             dialog?.RefreshData();
             PublishRfPresence();
+        }
+
+        public void SetPlaybackVolume(int volumePercent)
+        {
+            int clamped = GameMath.Clamp(volumePercent, MinPlaybackVolumePercent, MaxPlaybackVolumePercent);
+            if (playbackVolumePercent == clamped)
+            {
+                return;
+            }
+
+            playbackVolumePercent = clamped;
+            MarkDirty(true);
+            dialog?.RefreshData();
         }
 
         /// <summary>
@@ -230,6 +294,10 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 tree.GetInt("rpvc:radioReceiverPlaybackRange", DefaultPlaybackRangeBlocks),
                 MinPlaybackRangeBlocks,
                 MaxPlaybackRangeBlocks);
+            playbackVolumePercent = GameMath.Clamp(
+                tree.GetInt("rpvc:radioReceiverPlaybackVolume", DefaultPlaybackVolumePercent),
+                MinPlaybackVolumePercent,
+                MaxPlaybackVolumePercent);
             heardStationName = tree.GetString("rpvc:radioReceiverHeardStationName", heardStationName) ?? "";
             dialog?.RefreshData();
         }
@@ -240,6 +308,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
             tree.SetString("rpvc:radioReceiverFrequency", tunedFrequency ?? "");
             tree.SetBool("rpvc:radioReceiverEnabled", isEnabled);
             tree.SetInt("rpvc:radioReceiverPlaybackRange", playbackRangeBlocks);
+            tree.SetInt("rpvc:radioReceiverPlaybackVolume", playbackVolumePercent);
             tree.SetString("rpvc:radioReceiverHeardStationName", heardStationName ?? "");
         }
 
