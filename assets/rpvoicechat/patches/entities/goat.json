@@ -12,6 +12,11 @@
       },
       "fixedweight": true
     },
-    "file": "game:entities/animal/mammal/hooved/goat-adult.json"
+    "file": "game:entities/animal/mammal/hooved/goat-adult.json",
+    "condition": {
+      "when": "rpvoicechat:additional-content",
+      "useRegisteredDefault": true,
+      "isValue": "true"
+    }
   }
 ]
