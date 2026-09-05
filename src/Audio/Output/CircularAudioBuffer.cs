@@ -27,42 +27,56 @@ namespace RPVoiceChat.Audio
 
         public void QueueAudio(byte[] audio, ALFormat format, int frequency)
         {
+            if (!TryQueueAudio(audio, format, frequency))
+            {
+                // Voice path: drop rather than block the dequeue loop.
+                Logger.client.Debug("CircularAudioBuffer had to skip queuing audio");
+            }
+        }
+
+        /// <summary>
+        /// Queue PCM into OpenAL. Returns false when all buffers are in use (caller should wait).
+        /// </summary>
+        public bool TryQueueAudio(byte[] audio, ALFormat format, int frequency)
+        {
             FreeProcessedBuffers();
 
-            // We aren't playing back audio fast enough, better to skip the audio
             if (availableBuffers.Count == 0)
             {
-                Logger.client.Debug("CircularAudioBuffer had to skip queuing audio");
-                return;
+                return false;
             }
 
             lock (buffer_queue_lock)
             {
+                if (availableBuffers.Count == 0)
+                {
+                    return false;
+                }
+
                 int currentBuffer = availableBuffers[0];
                 availableBuffers.RemoveAt(0);
                 OALW.ClearError();
-                
-                // Check for errors after BufferData
+
                 OALW.BufferData(currentBuffer, format, audio, frequency);
                 var bufferError = AL.GetError();
                 if (bufferError != ALError.NoError)
                 {
                     Logger.client.Warning($"OpenAL error while setting buffer data: {bufferError}");
-                    availableBuffers.Add(currentBuffer); // Return buffer to available pool
-                    return;
+                    availableBuffers.Add(currentBuffer);
+                    return false;
                 }
-                
-                // Check for errors after SourceQueueBuffer
+
                 OALW.SourceQueueBuffer(source, currentBuffer);
                 var queueError = AL.GetError();
                 if (queueError != ALError.NoError)
                 {
                     Logger.client.Warning($"OpenAL error while queuing buffer: {queueError}");
-                    availableBuffers.Add(currentBuffer); // Return buffer to available pool
-                    return;
+                    availableBuffers.Add(currentBuffer);
+                    return false;
                 }
-                
+
                 queuedBuffers.Add(currentBuffer);
+                return true;
             }
         }
 

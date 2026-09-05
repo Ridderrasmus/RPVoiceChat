@@ -1,0 +1,29 @@
+{
+  "name": "radioantenna_part",
+  "enabled": true,
+  "ingredientPattern": "MWM,RWR,MWM",
+  "ingredients": {
+    "W": {
+      "type": "item",
+      "code": "rpvoicechat:telegraphwire",
+      "quantity": 2
+    },
+    "M": {
+      "type": "block",
+      "code": "game:metal-parts",
+      "quantity": 1
+    },
+    "R": {
+      "type": "item",
+      "code": "game:rod-iron",
+      "quantity": 1
+    }
+  },
+  "width": 3,
+  "height": 3,
+  "output": {
+    "type": "block",
+    "code": "rpvoicechat:radioantenna_part",
+    "quantity": 2
+  }
+}

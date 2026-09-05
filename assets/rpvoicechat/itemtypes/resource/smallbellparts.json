@@ -4,7 +4,7 @@
   "attributes": {
     "handbook": {
       "groupBy": [ "smallbellparts-*" ],
-      "createdBy": "metalmolding",
+      "createdBy": "Metal molding",
       "extraSections": [
         {
           "title": "rpvoicechat:Handbook.Usage.smallbellparts.Title",

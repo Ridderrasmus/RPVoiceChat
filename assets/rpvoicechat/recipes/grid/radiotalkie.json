@@ -1,0 +1,43 @@
+{
+  "enabled": true,
+  "ingredientPattern": "_R_,HMT,EPE",
+  "ingredients": {
+    "R": {
+      "type": "item",
+      "code": "game:rod-copper",
+      "quantity": 1
+    },
+    "P": {
+      "type": "item",
+      "code": "game:metalplate-silver",
+      "quantity": 1
+    },
+    "T": {
+      "type": "item",
+      "code": "game:jonasparts-tank02",
+      "quantity": 1
+    },
+    "H": {
+      "type": "item",
+      "code": "game:hammer-*",
+      "isTool": true,
+      "toolDurabilityCost": 2
+    },
+    "M": {
+      "type": "block",
+      "code": "rpvoicechat:radiomicrophone-*",
+      "quantity": 1
+    },
+    "E": {
+      "type": "block",
+      "code": "game:metal-parts",
+      "quantity": 1
+    }
+  },
+  "width": 3,
+  "height": 3,
+  "output": {
+    "type": "item",
+    "code": "rpvoicechat:radiotalkie"
+  }
+}

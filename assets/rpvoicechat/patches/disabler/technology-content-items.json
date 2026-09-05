@@ -53,6 +53,16 @@
     "op": "add",
     "path": "/enabled",
     "value": false,
+    "file": "rpvoicechat:itemtypes/radiotalkie.json",
+    "condition": {
+      "when": "rpvoicechat:technology-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
     "file": "rpvoicechat:itemtypes/resource/telegraphwire.json",
     "condition": {
       "when": "rpvoicechat:additional-content",
@@ -94,6 +104,16 @@
     "path": "/enabled",
     "value": false,
     "file": "rpvoicechat:itemtypes/wirecutter.json",
+    "condition": {
+      "when": "rpvoicechat:additional-content",
+      "isValue": "false"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/enabled",
+    "value": false,
+    "file": "rpvoicechat:itemtypes/radiotalkie.json",
     "condition": {
       "when": "rpvoicechat:additional-content",
       "isValue": "false"

@@ -1,0 +1,38 @@
+{
+  "name": "radioreceiver",
+  "enabled": true,
+  "ingredientPattern": "PRP,PTG,PMP",
+  "ingredients": {
+    "R": {
+      "type": "item",
+      "code": "game:rod-copper",
+      "quantity": 1
+    },
+    "T": {
+      "type": "item",
+      "code": "game:jonasparts-tank01",
+      "quantity": 1
+    },
+    "G": {
+      "type": "block",
+      "code": "game:glasspane-leaded-*",
+      "quantity": 1
+    },
+    "M": {
+      "type": "block",
+      "code": "game:metal-parts",
+      "quantity": 2
+    },
+    "P": {
+      "type": "item",
+      "code": "game:plank-{wood}",
+      "quantity": 2
+    }
+  },
+  "width": 3,
+  "height": 3,
+  "output": {
+    "type": "block",
+    "code": "rpvoicechat:radioreceiver-{wood}-north"
+  }
+}

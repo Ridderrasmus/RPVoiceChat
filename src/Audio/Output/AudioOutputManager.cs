@@ -1,13 +1,17 @@
 using RPVoiceChat.Client;
 using RPVoiceChat.Config;
 using RPVoiceChat.DB;
+using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.Gui;
 using RPVoiceChat.Networking;
+using RPVoiceChat.Systems;
 using RPVoiceChat.Util;
 using System;
 using System.Collections.Concurrent;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
+using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 
 namespace RPVoiceChat.Audio
@@ -76,8 +80,14 @@ namespace RPVoiceChat.Audio
             }
 
             // Check if the player is banned - don't process their audio (additional client-side security)
-            if (RPVoiceChatClient.VoiceBanManagerInstance != null && 
-                RPVoiceChatClient.VoiceBanManagerInstance.IsPlayerBanned(packet.PlayerId))
+            if (!RadioProgramRouteKey.IsProgramSource(packet.PlayerId)
+                && RPVoiceChatClient.VoiceBanManagerInstance != null
+                && RPVoiceChatClient.VoiceBanManagerInstance.IsPlayerBanned(packet.PlayerId))
+            {
+                return;
+            }
+
+            if (IsOwnTalkieRfReception(packet))
             {
                 return;
             }
@@ -107,6 +117,7 @@ namespace RPVoiceChat.Audio
                 source.UpdateVoiceLevel(packet.VoiceLevel);
 
             source.SetForceFlatPlayback(audioData.forceFlatPlayback);
+            source.PrepareForPacket(audioData);
             source.UpdatePlayer();
             source.UpdateAudioFormat(codec, frequency, channels);
             source.EnqueueAudio(audioData, packet.SequenceNumber);
@@ -146,6 +157,36 @@ namespace RPVoiceChat.Audio
             HandleAudioPacket(packet, localPlayerAudioSource);
         }
 
+        private bool IsOwnTalkieRfReception(AudioPacket packet)
+        {
+            if (!packet.HasSourcePositionOverride || capi.World.Player == null)
+            {
+                return false;
+            }
+
+            if (packet.PlayerId != capi.World.Player.PlayerUID)
+            {
+                return false;
+            }
+
+            EntityPos listenerPos = capi.World.Player.Entity?.Pos;
+            if (listenerPos == null)
+            {
+                return false;
+            }
+
+            var sourcePos = new Vec3d(packet.SourcePosX, packet.SourcePosY, packet.SourcePosZ);
+            if (BlockEntityRadioReceiver.GetPlaybackVolumeGainAtSource(capi, sourcePos, listenerPos.Dimension) >= 0f)
+            {
+                return false;
+            }
+
+            double dx = packet.SourcePosX - listenerPos.X;
+            double dy = packet.SourcePosY - listenerPos.Y;
+            double dz = packet.SourcePosZ - listenerPos.Z;
+            return dx * dx + dy * dy + dz * dz <= 4.0;
+        }
+
         private void ClientLoaded()
         {
             localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, capi, clientSettingsRepo)
@@ -163,6 +204,9 @@ namespace RPVoiceChat.Audio
             if (playerSources.TryGetValue(playerId, out source) && !source.IsDisposed)
                 return source;
 
+            if (RadioProgramRouteKey.IsProgramSource(playerId))
+                return CreateSyntheticSource(playerId);
+
             var player = capi.World.PlayerByUid(playerId);
             if (player == null) return null;
 
@@ -173,6 +217,14 @@ namespace RPVoiceChat.Audio
         {
             var source = new PlayerAudioSource(player, capi, clientSettingsRepo);
             playerSources.AddOrUpdate(player.PlayerUID, source, (_, __) => source);
+            return source;
+        }
+
+        private PlayerAudioSource CreateSyntheticSource(string sourceId)
+        {
+            // Program bus / RF block emission: no real player UID — position comes from packet override.
+            var source = new PlayerAudioSource(capi.World.Player, capi, clientSettingsRepo, sourceId);
+            playerSources.AddOrUpdate(sourceId, source, (_, __) => source);
             return source;
         }
 

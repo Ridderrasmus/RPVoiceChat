@@ -1,0 +1,1112 @@
+{
+  "editor": {
+    "allAngles": true,
+    "backdrops": [],
+    "attachments": []
+  },
+  "textures": {
+    "stainlesssteel": "game:block/metal/ingot/stainlesssteel"
+  },
+  "elements": [
+    {
+      "name": "AntennaBase",
+      "from":[5.25,0.0,5.25],
+      "to":[7.25,1.0,10.75],
+      "faces": {
+        "north": {
+          "texture": "#stainlesssteel",
+          "uv":[0.0,0.0,2.0,1.0]
+        },
+        "east": {
+          "texture": "#stainlesssteel",
+          "uv":[0.0,0.0,5.5,1.0]
+        },
+        "south": {
+          "texture": "#stainlesssteel",
+          "uv":[0.0,0.0,2.0,1.0]
+        },
+        "west": {
+          "texture": "#stainlesssteel",
+          "uv":[0.0,0.0,5.5,1.0]
+        },
+        "up": {
+          "texture": "#stainlesssteel",
+          "uv":[0.0,0.0,2.0,5.5]
+        },
+        "down": {
+          "texture": "#stainlesssteel",
+          "uv":[0.0,0.0,2.0,5.5]
+        }
+      },
+      "rotationOrigin":[5.25,0.0,5.25],
+      "scaleX": 1.0,
+      "scaleY": 1.0,
+      "scaleZ": 1.0,
+      "children": [
+        {
+          "name": "Bar1",
+          "from":[0.5,1.0,0.5],
+          "to":[1.0,15.0,1.0],
+          "faces": {
+            "north": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,14.0]
+            },
+            "east": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,14.0]
+            },
+            "south": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,14.0]
+            },
+            "west": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,14.0]
+            },
+            "up": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            },
+            "down": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            }
+          },
+          "rotationOrigin":[0.5,1.0,0.5],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "children": [
+            {
+              "name": "Cross1",
+              "from":[0.25,1.5,0.5],
+              "to":[0.75,2.0,4.0],
+              "faces": {
+                "north": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,0.5]
+                },
+                "east": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                },
+                "south": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,0.5]
+                },
+                "west": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                },
+                "up": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,3.5]
+                },
+                "down": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,3.5]
+                }
+              },
+              "rotationOrigin":[0.25,1.5,0.5],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "uv":[0.0,0.0]
+            },
+            {
+              "name": "Cross2",
+              "from":[0.25,4.5,0.5],
+              "to":[0.75,5.0,4.0],
+              "faces": {
+                "north": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,0.5]
+                },
+                "east": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                },
+                "south": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,0.5]
+                },
+                "west": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                },
+                "up": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,3.5]
+                },
+                "down": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,3.5]
+                }
+              },
+              "rotationOrigin":[0.25,4.5,0.5],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "uv":[0.0,0.0]
+            },
+            {
+              "name": "Cross3",
+              "from":[3.75,1.5,0.5],
+              "to":[4.25,2.0,4.0],
+              "faces": {
+                "north": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,0.5]
+                },
+                "east": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                },
+                "south": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,0.5]
+                },
+                "west": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                },
+                "up": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,3.5]
+                },
+                "down": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,3.5]
+                }
+              },
+              "rotationOrigin":[3.75,1.5,0.5],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "uv":[0.0,0.0]
+            },
+            {
+              "name": "Cross4",
+              "from":[3.75,4.5,0.5],
+              "to":[4.25,5.0,4.0],
+              "faces": {
+                "north": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,0.5]
+                },
+                "east": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                },
+                "south": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,0.5]
+                },
+                "west": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                },
+                "up": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,3.5]
+                },
+                "down": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,3.5]
+                }
+              },
+              "rotationOrigin":[3.75,4.5,0.5],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "uv":[0.0,0.0]
+            },
+            {
+              "name": "Cross5",
+              "from":[0.5,4.5,0.25],
+              "to":[4.0,5.0,0.75],
+              "faces": {
+                "north": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                },
+                "east": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,0.5]
+                },
+                "south": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                },
+                "west": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,0.5]
+                },
+                "up": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                },
+                "down": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                }
+              },
+              "rotationOrigin":[0.5,4.5,0.25],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "uv":[0.0,0.0]
+            },
+            {
+              "name": "Cross6",
+              "from":[0.5,4.5,3.75],
+              "to":[4.0,5.0,4.25],
+              "faces": {
+                "north": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                },
+                "east": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,0.5]
+                },
+                "south": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                },
+                "west": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,0.5]
+                },
+                "up": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                },
+                "down": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                }
+              },
+              "rotationOrigin":[0.5,4.5,3.75],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "uv":[0.0,0.0]
+            },
+            {
+              "name": "Cross7",
+              "from":[0.5,1.5,3.75],
+              "to":[4.0,2.0,4.25],
+              "faces": {
+                "north": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                },
+                "east": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,0.5]
+                },
+                "south": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                },
+                "west": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,0.5]
+                },
+                "up": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                },
+                "down": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                }
+              },
+              "rotationOrigin":[0.5,1.5,3.75],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "uv":[0.0,0.0]
+            },
+            {
+              "name": "Cross8",
+              "from":[0.5,1.5,0.25],
+              "to":[4.0,2.0,0.75],
+              "faces": {
+                "north": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                },
+                "east": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,0.5]
+                },
+                "south": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                },
+                "west": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,0.5,0.5]
+                },
+                "up": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                },
+                "down": {
+                  "texture": "#stainlesssteel",
+                  "uv":[0.0,0.0,3.5,0.5]
+                }
+              },
+              "rotationOrigin":[0.5,1.5,0.25],
+              "scaleX": 1.0,
+              "scaleY": 1.0,
+              "scaleZ": 1.0,
+              "uv":[0.0,0.0]
+            }
+          ],
+          "uv":[0.0,0.0]
+        },
+        {
+          "name": "Bar2",
+          "from":[0.5,1.0,4.5],
+          "to":[1.0,15.0,5.0],
+          "faces": {
+            "north": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,14.0]
+            },
+            "east": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,14.0]
+            },
+            "south": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,14.0]
+            },
+            "west": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,14.0]
+            },
+            "up": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            },
+            "down": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            }
+          },
+          "rotationOrigin":[0.5,1.0,4.5],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "uv":[0.0,0.0]
+        },
+        {
+          "name": "Bar3",
+          "from":[4.5,1.0,0.5],
+          "to":[5.0,15.0,1.0],
+          "faces": {
+            "north": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,14.0]
+            },
+            "east": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,14.0]
+            },
+            "south": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,14.0]
+            },
+            "west": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,14.0]
+            },
+            "up": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            },
+            "down": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            }
+          },
+          "rotationOrigin":[4.5,1.0,0.5],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "uv":[0.0,0.0]
+        },
+        {
+          "name": "Bar4",
+          "from":[4.5,1.0,4.5],
+          "to":[5.0,15.0,5.0],
+          "faces": {
+            "north": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,14.0]
+            },
+            "east": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,14.0]
+            },
+            "south": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,14.0]
+            },
+            "west": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,14.0]
+            },
+            "up": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            },
+            "down": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            }
+          },
+          "rotationOrigin":[4.5,1.0,4.5],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "uv":[0.0,0.0]
+        },
+        {
+          "name": "Bar5",
+          "from":[2.5,0.0,2.5],
+          "to":[3.0,16.0,3.0],
+          "faces": {
+            "north": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,16.0]
+            },
+            "east": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,16.0]
+            },
+            "south": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,16.0]
+            },
+            "west": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,16.0]
+            },
+            "up": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            },
+            "down": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            }
+          },
+          "rotationOrigin":[2.5,0.0,2.5],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "uv":[0.0,0.0]
+        },
+        {
+          "name": "AntennaBase_2",
+          "from":[3.5,0.0,0.0],
+          "to":[5.5,1.0,5.5],
+          "faces": {
+            "north": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,2.0,1.0]
+            },
+            "east": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,5.5,1.0]
+            },
+            "south": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,2.0,1.0]
+            },
+            "west": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,5.5,1.0]
+            },
+            "up": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,2.0,5.5]
+            },
+            "down": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,2.0,5.5]
+            }
+          },
+          "rotationOrigin":[3.5,0.0,0.0],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "children": [],
+          "uv":[0.0,0.0]
+        },
+        {
+          "name": "AntennaBase_3",
+          "from":[2.0,0.0,0.0],
+          "to":[3.5,1.0,2.0],
+          "faces": {
+            "north": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,1.5,1.0]
+            },
+            "east": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,2.0,1.0]
+            },
+            "south": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,1.5,1.0]
+            },
+            "west": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,2.0,1.0]
+            },
+            "up": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,1.5,2.0]
+            },
+            "down": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,1.5,2.0]
+            }
+          },
+          "rotationOrigin":[2.0,0.0,0.0],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "children": [],
+          "uv":[0.0,0.0]
+        },
+        {
+          "name": "AntennaBase_4",
+          "from":[2.0,0.0,3.5],
+          "to":[3.5,1.0,5.5],
+          "faces": {
+            "north": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,1.5,1.0]
+            },
+            "east": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,2.0,1.0]
+            },
+            "south": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,1.5,1.0]
+            },
+            "west": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,2.0,1.0]
+            },
+            "up": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,1.5,2.0]
+            },
+            "down": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,1.5,2.0]
+            }
+          },
+          "rotationOrigin":[2.0,0.0,3.5],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "children": [],
+          "uv":[0.0,0.0]
+        }
+      ],
+      "uv":[0.0,0.0]
+    },
+    {
+      "name": "AntennaBase2",
+      "from":[5.25,7.5,5.25],
+      "to":[10.75,8.5,10.75],
+      "faces": {
+        "north": {
+          "texture": "#stainlesssteel",
+          "uv":[0.0,0.0,5.5,1.0]
+        },
+        "east": {
+          "texture": "#stainlesssteel",
+          "uv":[0.0,0.0,5.5,1.0]
+        },
+        "south": {
+          "texture": "#stainlesssteel",
+          "uv":[0.0,0.0,5.5,1.0]
+        },
+        "west": {
+          "texture": "#stainlesssteel",
+          "uv":[0.0,0.0,5.5,1.0]
+        },
+        "up": {
+          "texture": "#stainlesssteel",
+          "uv":[0.0,0.0,5.5,5.5]
+        },
+        "down": {
+          "texture": "#stainlesssteel",
+          "uv":[0.0,0.0,5.5,5.5]
+        }
+      },
+      "rotationOrigin":[5.25,7.5,5.25],
+      "scaleX": 1.0,
+      "scaleY": 1.0,
+      "scaleZ": 1.0,
+      "children": [
+        {
+          "name": "Cross9",
+          "from":[0.75,2.5,1.0],
+          "to":[1.25,3.0,4.5],
+          "faces": {
+            "north": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            },
+            "east": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            },
+            "south": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            },
+            "west": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            },
+            "up": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,3.5]
+            },
+            "down": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,3.5]
+            }
+          },
+          "rotationOrigin":[0.75,2.5,1.0],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "uv":[0.0,0.0]
+        },
+        {
+          "name": "Cross10",
+          "from":[0.75,5.5,1.0],
+          "to":[1.25,6.0,4.5],
+          "faces": {
+            "north": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            },
+            "east": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            },
+            "south": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            },
+            "west": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            },
+            "up": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,3.5]
+            },
+            "down": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,3.5]
+            }
+          },
+          "rotationOrigin":[0.75,5.5,1.0],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "uv":[0.0,0.0]
+        },
+        {
+          "name": "Cross11",
+          "from":[4.25,2.5,1.0],
+          "to":[4.75,3.0,4.5],
+          "faces": {
+            "north": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            },
+            "east": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            },
+            "south": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            },
+            "west": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            },
+            "up": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,3.5]
+            },
+            "down": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,3.5]
+            }
+          },
+          "rotationOrigin":[4.25,2.5,1.0],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "uv":[0.0,0.0]
+        },
+        {
+          "name": "Cross12",
+          "from":[4.25,5.5,1.0],
+          "to":[4.75,6.0,4.5],
+          "faces": {
+            "north": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            },
+            "east": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            },
+            "south": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            },
+            "west": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            },
+            "up": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,3.5]
+            },
+            "down": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,3.5]
+            }
+          },
+          "rotationOrigin":[4.25,5.5,1.0],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "uv":[0.0,0.0]
+        },
+        {
+          "name": "Cross13",
+          "from":[1.0,2.5,0.75],
+          "to":[4.5,3.0,1.25],
+          "faces": {
+            "north": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            },
+            "east": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            },
+            "south": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            },
+            "west": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            },
+            "up": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            },
+            "down": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            }
+          },
+          "rotationOrigin":[1.0,2.5,0.75],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "uv":[0.0,0.0]
+        },
+        {
+          "name": "Cross14",
+          "from":[1.0,5.5,0.75],
+          "to":[4.5,6.0,1.25],
+          "faces": {
+            "north": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            },
+            "east": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            },
+            "south": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            },
+            "west": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            },
+            "up": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            },
+            "down": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            }
+          },
+          "rotationOrigin":[1.0,5.5,0.75],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "uv":[0.0,0.0]
+        },
+        {
+          "name": "Cross15",
+          "from":[1.0,2.5,4.25],
+          "to":[4.5,3.0,4.75],
+          "faces": {
+            "north": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            },
+            "east": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            },
+            "south": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            },
+            "west": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            },
+            "up": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            },
+            "down": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            }
+          },
+          "rotationOrigin":[1.0,2.5,4.25],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "uv":[0.0,0.0]
+        },
+        {
+          "name": "Cross16",
+          "from":[1.0,5.5,4.25],
+          "to":[4.5,6.0,4.75],
+          "faces": {
+            "north": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            },
+            "east": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            },
+            "south": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            },
+            "west": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,0.5,0.5]
+            },
+            "up": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            },
+            "down": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,3.5,0.5]
+            }
+          },
+          "rotationOrigin":[1.0,5.5,4.25],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "uv":[0.0,0.0]
+        }
+      ],
+      "uv":[0.0,0.0]
+    },
+    {
+      "name": "AntennaBase3",
+      "from":[5.25,15.0,5.25],
+      "to":[7.25,16.0,10.75],
+      "faces": {
+        "north": {
+          "texture": "#stainlesssteel",
+          "uv":[0.0,0.0,2.0,1.0]
+        },
+        "east": {
+          "texture": "#stainlesssteel",
+          "uv":[0.0,0.0,5.5,1.0]
+        },
+        "south": {
+          "texture": "#stainlesssteel",
+          "uv":[0.0,0.0,2.0,1.0]
+        },
+        "west": {
+          "texture": "#stainlesssteel",
+          "uv":[0.0,0.0,5.5,1.0]
+        },
+        "up": {
+          "texture": "#stainlesssteel",
+          "uv":[0.0,0.0,2.0,5.5]
+        },
+        "down": {
+          "texture": "#stainlesssteel",
+          "uv":[0.0,0.0,2.0,5.5]
+        }
+      },
+      "rotationOrigin":[5.25,15.0,5.25],
+      "scaleX": 1.0,
+      "scaleY": 1.0,
+      "scaleZ": 1.0,
+      "children": [
+        {
+          "name": "AntennaBase3_2",
+          "from":[3.5,0.0,0.0],
+          "to":[5.5,1.0,5.5],
+          "faces": {
+            "north": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,2.0,1.0]
+            },
+            "east": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,5.5,1.0]
+            },
+            "south": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,2.0,1.0]
+            },
+            "west": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,5.5,1.0]
+            },
+            "up": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,2.0,5.5]
+            },
+            "down": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,2.0,5.5]
+            }
+          },
+          "rotationOrigin":[3.5,0.0,0.0],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "uv":[0.0,0.0]
+        },
+        {
+          "name": "AntennaBase3_3",
+          "from":[2.0,0.0,0.0],
+          "to":[3.5,1.0,2.0],
+          "faces": {
+            "north": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,1.5,1.0]
+            },
+            "east": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,2.0,1.0]
+            },
+            "south": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,1.5,1.0]
+            },
+            "west": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,2.0,1.0]
+            },
+            "up": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,1.5,2.0]
+            },
+            "down": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,1.5,2.0]
+            }
+          },
+          "rotationOrigin":[2.0,0.0,0.0],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "uv":[0.0,0.0]
+        },
+        {
+          "name": "AntennaBase3_4",
+          "from":[2.0,0.0,3.5],
+          "to":[3.5,1.0,5.5],
+          "faces": {
+            "north": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,1.5,1.0]
+            },
+            "east": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,2.0,1.0]
+            },
+            "south": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,1.5,1.0]
+            },
+            "west": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,2.0,1.0]
+            },
+            "up": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,1.5,2.0]
+            },
+            "down": {
+              "texture": "#stainlesssteel",
+              "uv":[0.0,0.0,1.5,2.0]
+            }
+          },
+          "rotationOrigin":[2.0,0.0,3.5],
+          "scaleX": 1.0,
+          "scaleY": 1.0,
+          "scaleZ": 1.0,
+          "uv":[0.0,0.0]
+        }
+      ],
+      "uv":[0.0,0.0]
+    }
+  ],
+  "animations": [],
+  "textureWidth": 16,
+  "textureHeight": 16,
+  "textureSizes": {
+    "stainlesssteel": [
+      16,
+      16
+    ]
+  }
+}

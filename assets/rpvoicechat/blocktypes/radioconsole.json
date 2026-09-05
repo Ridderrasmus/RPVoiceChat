@@ -1,0 +1,75 @@
+{
+  "code": "radioconsole",
+  "enabled": true,
+  "class": "radioconsoleblock",
+  "entityClass": "BlockEntityRadioSupervisionConsole",
+  "behaviors": [
+    { "name": "HorizontalOrientable" }
+  ],
+  "creativeinventory": {
+    "general": [ "*-north" ],
+    "rpvoicechat": [ "*-north" ]
+  },
+  "maxstacksize": 1,
+  "blockmaterial": "wood",
+  "variantgroups": [
+    {
+      "code": "wood",
+      "states": [ "aged", "veryaged" ],
+      "loadFromProperties": "block/wood"
+    },
+    {
+      "code": "side",
+      "loadFromProperties": "abstract/horizontalorientation"
+    }
+  ],
+  "drawtype": "json",
+  "shape": {
+    "base": "block/radioconsole",
+    "rotateYByType": {
+      "*-north": 0,
+      "*-east": 270,
+      "*-west": 90,
+      "*-south": 180
+    }
+  },
+  "sounds": {
+    "place": "game:block/planks",
+    "hit": "game:block/planks",
+    "break": "game:block/planks",
+    "walk": "game:walk/wood"
+  },
+  "attributes": {
+    "handbook": {
+      "groupBy": [ "radioconsole-{wood}-*" ],
+      "extraSections": [
+        {
+          "title": "rpvoicechat:Handbook.Usage.block-radioconsole.Title",
+          "text": "rpvoicechat:Handbook.Usage.block-radioconsole.Text"
+        }
+      ]
+    }
+  },
+  "textures": {
+    "wood": { "base": "game:block/wood/debarked/{wood}" },
+    "glass": { "base": "game:block/glass/plain" },
+    "gold": { "base": "game:block/metal/plate/gold" },
+    "copper": { "base": "game:block/metal/plate/copper" },
+    "silver": { "base": "game:block/metal/ingot/silver" },
+    "bakelite": { "base": "game:block/coal/bituminous" },
+    "stainlesssteel": { "base": "game:block/metal/ingot/stainlesssteel" }
+  },
+  "rainPermeable": false,
+  "sidesolid": { "all": false },
+  "sideopaque": { "all": false },
+  "lightAbsorption": 15,
+  "resistance": 1,
+  "guiTransform": {
+    "rotation": { "x": -22.6, "y": 145, "z": 0 }
+  },
+  "tpHandTransform": {
+		"translation": { "x": -1.6, "y": -1, "z": -1.4 },
+		"rotation": { "x": 150, "y": 0, "z": -90 },
+		"scale": 0.5
+	}
+}

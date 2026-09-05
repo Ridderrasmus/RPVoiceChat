@@ -29,6 +29,23 @@
 	},
 	"elements": [
 		{
+			"name": "UprightRoot",
+			"from": [ 0.0, 0.0, 0.0 ],
+			"to": [ 16.0, 16.0, 16.0 ],
+			"rotationOrigin": [ 8.0, 0.0, 8.0 ],
+			"rotationX": -90.0,
+			"rotationY": -90.0,
+			"rotationZ": -90.0,
+			"faces": {
+				"north": { "texture": "#lead", "uv": [ 0.0, 0.0, 16.0, 16.0 ], "enabled": false },
+				"east": { "texture": "#lead", "uv": [ 0.0, 0.0, 16.0, 16.0 ], "enabled": false },
+				"south": { "texture": "#lead", "uv": [ 0.0, 0.0, 16.0, 16.0 ], "enabled": false },
+				"west": { "texture": "#lead", "uv": [ 0.0, 0.0, 16.0, 16.0 ], "enabled": false },
+				"up": { "texture": "#lead", "uv": [ 0.0, 0.0, 16.0, 16.0 ], "enabled": false },
+				"down": { "texture": "#lead", "uv": [ 0.0, 0.0, 16.0, 16.0 ], "enabled": false }
+			},
+			"children": [
+		{
 			"name": "WirelessTelecomuncationDevice",
 			"from": [ 7.0, 0.0, 8.0 ],
 			"to": [ 9.0, 0.7, 10.0 ],
@@ -1532,6 +1549,8 @@
 						}
 					]
 				}
+			]
+		}
 			]
 		}
 	],

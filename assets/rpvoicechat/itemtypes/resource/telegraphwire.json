@@ -28,8 +28,8 @@
   "shape": { "base": "item/telegraphwire" },
   "attributes": {
     "helvehammerworkable": true,
-    "createdBy": "smithing",
     "handbook": {
+      "createdBy": "Smithing",
       "extraSections": [
         {
           "title": "rpvoicechat:Handbook.Usage.item-telegraphwire.Title",

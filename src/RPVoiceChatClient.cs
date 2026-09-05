@@ -56,6 +56,7 @@ namespace RPVoiceChat
             // Set up handler for announcements (channel already registered in Start())
             AnnounceClientChannel.SetMessageHandler<AnnouncePacket>(OnAnnounceReceived);
             NametagConfigClientChannel.SetMessageHandler<NametagConfigChangedPacket>(OnNametagConfigChanged);
+            RadioSettingsClientChannel.SetMessageHandler<RadioClientNotificationPacket>(OnRadioClientNotification);
 
             // Sneak in native dlls
             EmbeddedDllClass.ExtractEmbeddedDlls();
@@ -70,6 +71,9 @@ namespace RPVoiceChat
             // Static property for easy access with to apply effects on voice
             MicrophoneManagerInstance = microphoneManager;
             AudioOutputManagerInstance = audioOutputManager;
+
+            // Detect the optional Sound Physics Adapted mod for voice occlusion
+            SoundPhysicsCompatibility.Init(capi);
 
             // Init voice chat client
             bool forwardPorts = !ModConfig.ServerConfig.ManualPortForwarding;
@@ -216,6 +220,16 @@ namespace RPVoiceChat
             WorldConfig.Set("use-nametag-dynamic-range", packet.UseNametagDynamicRange);
 
             PlayerNameTagRenderer.RefreshAllPlayerNameTags();
+        }
+
+        private void OnRadioClientNotification(RadioClientNotificationPacket packet)
+        {
+            if (packet == null || string.IsNullOrWhiteSpace(packet.LangKey))
+            {
+                return;
+            }
+
+            capi.TriggerIngameError(this, "radio-notification", UIUtils.I18n(packet.LangKey));
         }
 
         public override void Dispose()

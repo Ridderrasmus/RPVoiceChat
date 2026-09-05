@@ -1,0 +1,43 @@
+{
+  "name": "radioemitter",
+  "enabled": true,
+  "ingredientPattern": "PCP,TRY,PMP",
+  "ingredients": {
+    "C": {
+      "type": "block",
+      "code": "rpvoicechat:connector-*",
+      "quantity": 1
+    },
+    "T": {
+      "type": "item",
+      "code": "game:jonasparts-tank01",
+      "quantity": 1
+    },
+    "R": {
+      "type": "item",
+      "code": "game:jonasparts-tank02",
+      "quantity": 1
+    },
+    "M": {
+      "type": "block",
+      "code": "game:metal-parts",
+      "quantity": 2
+    },
+    "P": {
+      "type": "item",
+      "code": "game:plank-{wood}",
+      "quantity": 2
+    },
+    "Y": {
+      "type": "item",
+      "code": "game:jonasparts-cylinder01",
+      "quantity": 1
+    }
+  },
+  "width": 3,
+  "height": 3,
+  "output": {
+    "type": "block",
+    "code": "rpvoicechat:radioemitter-{wood}-north"
+  }
+}

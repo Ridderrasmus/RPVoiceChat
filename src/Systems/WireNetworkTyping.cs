@@ -11,7 +11,11 @@ namespace RPVoiceChat.GameContent.Systems
         Telegraph = 1,
         Telephone = 2,
         Radio = 3,
-        Switchboard = 4
+        Switchboard = 4,
+        RadioConsole = 5,
+        RadioEmitter = 6,
+        /// <summary>RF listener endpoint for a local speaker PA branch (not a station transmit network).</summary>
+        RadioReceiver = 7
     }
 
     /// <summary>
@@ -105,5 +109,27 @@ namespace RPVoiceChat.GameContent.Systems
     public interface ITelephoneVoiceEndpoint
     {
         int VoiceEmissionRangeBlocks { get; }
+    }
+
+    public interface IRadioVoiceInput
+    {
+        int VoiceCaptureRangeBlocks { get; }
+    }
+
+    public interface IRadioProgramSource
+    {
+        bool IsOnAir { get; }
+        string HlsStreamUrl { get; }
+        string ActiveOperatorPlayerUid { get; }
+    }
+
+    public static class WireNodeKindRules
+    {
+        public static bool IsRadioFamilyEndpoint(WireNodeKind kind)
+        {
+            return kind == WireNodeKind.Radio
+                || kind == WireNodeKind.RadioConsole
+                || kind == WireNodeKind.RadioEmitter;
+        }
     }
 }

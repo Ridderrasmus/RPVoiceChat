@@ -27,6 +27,8 @@ namespace RPVoiceChat.Gui
         };
 
         VoiceLevel currentVoiceLevel;
+        private VoiceLevel lastBuiltVoiceLevel;
+        private bool lastShouldDisplay;
 
         public VoiceLevelIcon(ICoreClientAPI capi, MicrophoneManager microphoneManager) : base(capi)
         {
@@ -54,13 +56,25 @@ namespace RPVoiceChat.Gui
 
         private void OnHudUpdate(string _, ref EnumHandling __, object ___)
         {
-            bindToMainThread(SetupIcon)();
+            bindToMainThread(UpdateDisplay)();
+        }
+
+        public override void Dispose()
+        {
+            SingleComposer?.Dispose();
+            base.Dispose();
         }
 
         private void UpdateDisplay()
         {
             // Hide in minimal mode, show only in normal mode
             bool shouldDisplay = ModConfig.ClientConfig.ShowHud && !ModConfig.ClientConfig.IsMinimalHud;
+            if (shouldDisplay == lastShouldDisplay && IsOpened() == shouldDisplay)
+            {
+                return;
+            }
+
+            lastShouldDisplay = shouldDisplay;
             bool successful = shouldDisplay ? TryOpen() : TryClose();
 
             if (!successful) bindToMainThread(UpdateDisplay)();
@@ -68,7 +82,21 @@ namespace RPVoiceChat.Gui
 
         public void SetupIcon()
         {
+            if (SingleComposer != null && currentVoiceLevel == lastBuiltVoiceLevel)
+            {
+                UpdateDisplay();
+                return;
+            }
+
+            lastBuiltVoiceLevel = currentVoiceLevel;
             string voiceLevel = textureNameByVoiceLevel[currentVoiceLevel];
+
+            if (IsOpened())
+            {
+                TryClose();
+            }
+
+            SingleComposer?.Dispose();
             SingleComposer = capi.Gui.CreateCompo("rpvcvoicelevelicon", dialogBounds)
                 .AddImage(ElementBounds.Fixed(0, 0, size, size), new AssetLocation(RPVoiceChatMod.modID, $"textures/gui/{voiceLevel}.png"))
                 .Compose();

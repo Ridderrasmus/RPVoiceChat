@@ -24,6 +24,56 @@
       }
     }
   },
+  "attributesByType": {
+    "churchbell-layer-*-topmost": {
+      "handbook": {
+        "groupBy": [ "churchbell-layer-*" ],
+        "createdBy": "Metal molding",
+        "extraSections": [
+          {
+            "title": "rpvoicechat:Handbook.Welding.block-churchbell-layer.Title",
+            "text": "rpvoicechat:Handbook.Welding.block-churchbell-layer.Text"
+          }
+        ]
+      }
+    },
+    "churchbell-layer-*-bottom": {
+      "handbook": {
+        "groupBy": [ "churchbell-layer-*" ],
+        "createdBy": "handbook-createdby-anvilwelding",
+        "extraSections": [
+          {
+            "title": "rpvoicechat:Handbook.Welding.block-churchbell-layer.Title",
+            "text": "rpvoicechat:Handbook.Welding.block-churchbell-layer.Text"
+          }
+        ]
+      }
+    },
+    "churchbell-layer-*-middle": {
+      "handbook": {
+        "groupBy": [ "churchbell-layer-*" ],
+        "createdBy": "handbook-createdby-anvilwelding",
+        "extraSections": [
+          {
+            "title": "rpvoicechat:Handbook.Welding.block-churchbell-layer.Title",
+            "text": "rpvoicechat:Handbook.Welding.block-churchbell-layer.Text"
+          }
+        ]
+      }
+    },
+    "churchbell-layer-*-top": {
+      "handbook": {
+        "groupBy": [ "churchbell-layer-*" ],
+        "createdBy": "handbook-createdby-anvilwelding",
+        "extraSections": [
+          {
+            "title": "rpvoicechat:Handbook.Welding.block-churchbell-layer.Title",
+            "text": "rpvoicechat:Handbook.Welding.block-churchbell-layer.Text"
+          }
+        ]
+      }
+    }
+  },
   "variantgroups": [
     {
       "code": "metal",
