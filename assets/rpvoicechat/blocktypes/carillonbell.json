@@ -60,14 +60,85 @@
       "base": "game:block/metal/sheet/{metal}1"
     }
   },
+  "crushingPropsByType": {
+    "carillonbell-tinbronze-*": {
+      "crushedStack": { "type": "item", "code": "game:metalbit-{metal}", "quantity": 1 },
+      "quantity": { "avg": 120 },
+      "hardnessTier": 2
+    },
+    "carillonbell-bismuthbronze-*": {
+      "crushedStack": { "type": "item", "code": "game:metalbit-{metal}", "quantity": 1 },
+      "quantity": { "avg": 120 },
+      "hardnessTier": 2
+    },
+    "carillonbell-blackbronze-*": {
+      "crushedStack": { "type": "item", "code": "game:metalbit-{metal}", "quantity": 1 },
+      "quantity": { "avg": 120 },
+      "hardnessTier": 2
+    },
+    "carillonbell-brass-*": {
+      "crushedStack": { "type": "item", "code": "game:metalbit-{metal}", "quantity": 1 },
+      "quantity": { "avg": 120 },
+      "hardnessTier": 2
+    },
+    "carillonbell-cupronickel-*": {
+      "crushedStack": { "type": "item", "code": "game:metalbit-{metal}", "quantity": 1 },
+      "quantity": { "avg": 120 },
+      "hardnessTier": 3
+    },
+    "carillonbell-copper-*": {
+      "crushedStack": { "type": "item", "code": "game:metalbit-{metal}", "quantity": 1 },
+      "quantity": { "avg": 120 },
+      "hardnessTier": 1
+    },
+    "carillonbell-tin-*": {
+      "crushedStack": { "type": "item", "code": "game:metalbit-{metal}", "quantity": 1 },
+      "quantity": { "avg": 120 },
+      "hardnessTier": 1
+    },
+    "carillonbell-zinc-*": {
+      "crushedStack": { "type": "item", "code": "game:metalbit-{metal}", "quantity": 1 },
+      "quantity": { "avg": 120 },
+      "hardnessTier": 1
+    },
+    "carillonbell-lead-*": {
+      "crushedStack": { "type": "item", "code": "game:metalbit-{metal}", "quantity": 1 },
+      "quantity": { "avg": 120 },
+      "hardnessTier": 1
+    },
+    "carillonbell-bismuth-*": {
+      "crushedStack": { "type": "item", "code": "game:metalbit-{metal}", "quantity": 1 },
+      "quantity": { "avg": 120 },
+      "hardnessTier": 1
+    },
+    "carillonbell-silver-*": {
+      "crushedStack": { "type": "item", "code": "game:metalbit-{metal}", "quantity": 1 },
+      "quantity": { "avg": 120 },
+      "hardnessTier": 1
+    },
+    "carillonbell-gold-*": {
+      "crushedStack": { "type": "item", "code": "game:metalbit-{metal}", "quantity": 1 },
+      "quantity": { "avg": 120 },
+      "hardnessTier": 1
+    },
+    "carillonbell-electrum-*": {
+      "crushedStack": { "type": "item", "code": "game:metalbit-{metal}", "quantity": 1 },
+      "quantity": { "avg": 120 },
+      "hardnessTier": 1
+    }
+  },
   "attributes": {
     "handbook": {
       "groupBy": [ "carillonbell-*" ],
-      "createdBy": "metalmolding",
+      "createdBy": "Metal molding",
       "extraSections": [
         {
           "title": "rpvoicechat:Handbook.Usage.block-carillonbell.Title",
           "text": "rpvoicechat:Handbook.Usage.block-carillonbell-{metal}.Text"
+        },
+        {
+          "title": "rpvoicechat:Handbook.Recycling.block-carillonbell.Title",
+          "text": "rpvoicechat:Handbook.Recycling.block-carillonbell.Text"
         }
       ]
     },

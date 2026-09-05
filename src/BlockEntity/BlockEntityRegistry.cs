@@ -22,6 +22,12 @@ namespace RPVoiceChat.GameContent.BlockEntity
             api.RegisterBlockEntityClass("BlockEntitySwitchboard", typeof(BlockEntitySwitchboard));
             api.RegisterBlockEntityClass("BlockEntityTelephone", typeof(BlockEntityTelephone));
             api.RegisterBlockEntityClass("BlockEntitySpeaker", typeof(BlockEntitySpeaker));
+            api.RegisterBlockEntityClass("BlockEntityRadioSupervisionConsole", typeof(BlockEntityRadioSupervisionConsole));
+            api.RegisterBlockEntityClass("BlockEntityRadioMicrophone", typeof(BlockEntityRadioMicrophone));
+            api.RegisterBlockEntityClass("BlockEntityRadioEmitter", typeof(BlockEntityRadioEmitter));
+            api.RegisterBlockEntityClass("BlockEntityRadioAntennaPart", typeof(BlockEntityRadioAntennaPart));
+            api.RegisterBlockEntityClass("BlockEntityRadioMixingConsole", typeof(BlockEntityRadioMixingConsole));
+            api.RegisterBlockEntityClass("BlockEntityRadioReceiver", typeof(BlockEntityRadioReceiver));
         }
     }
 }

@@ -1,0 +1,33 @@
+{
+  "name": "radiomicrophone",
+  "enabled": true,
+  "ingredientPattern": "OCM,PPP",
+  "ingredients": {
+    "C": {
+      "type": "block",
+      "code": "rpvoicechat:connector-*",
+      "quantity": 1
+    },
+    "M": {
+      "type": "block",
+      "code": "game:metal-parts",
+      "quantity": 2
+    },
+    "O": {
+        "type": "item",
+        "code": "game:jonasparts-cylinder02",
+        "quantity": 1
+    },
+    "P": {
+      "type": "item",
+      "code": "game:plank-{wood}",
+      "quantity": 1
+    }
+  },
+  "width": 3,
+  "height": 2,
+  "output": {
+    "type": "block",
+    "code": "rpvoicechat:radiomicrophone-{wood}-north"
+  }
+}

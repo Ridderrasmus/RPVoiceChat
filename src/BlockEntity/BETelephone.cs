@@ -299,11 +299,64 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public string GetComposeDisabledReasonLangKey() => composeDisabledReasonLangKey ?? "Telegraph.Settings.DisabledNoPower";
         public string GetPhoneNumber() => phoneNumber ?? "";
         public string GetTargetNumber() => targetNumber ?? "";
+        public bool IsCallSessionActive() => callState != TelephoneCallState.Idle;
+
+        public void InvalidateCallIfDisconnected()
+        {
+            if (Api?.Side != EnumAppSide.Server || !IsCallSessionActive())
+            {
+                return;
+            }
+
+            if (NetworkUID == 0)
+            {
+                EndCall();
+                return;
+            }
+
+            if (activePeerTelephonePos != null && !IsWireNodeReachable(activePeerTelephonePos))
+            {
+                EndCall();
+                return;
+            }
+
+            if (incomingCallerTelephonePos != null && !IsWireNodeReachable(incomingCallerTelephonePos))
+            {
+                EndCall();
+                return;
+            }
+
+            if (IsInCall() && !HasReachableVoiceEndpoint())
+            {
+                EndCall();
+            }
+        }
+
+        private bool IsWireNodeReachable(BlockPos targetPos)
+        {
+            if (Api?.World?.BlockAccessor == null || targetPos == null)
+            {
+                return false;
+            }
+
+            BEWireNode targetNode = Api.World.BlockAccessor.GetBlockEntity(targetPos) as BEWireNode;
+            if (targetNode == null)
+            {
+                return false;
+            }
+
+            return WireNetworkHandler.GetReachableNodes(this).Contains(targetNode);
+        }
+
+        private bool HasReachableVoiceEndpoint()
+        {
+            return GetReachableTelephoneVoiceEndpoints().Any();
+        }
+
         public bool IsInCall() => callState == TelephoneCallState.InCall;
         public bool IsWaitingForAnswer() => callState == TelephoneCallState.Ringing && incomingCallerTelephonePos == null;
         public bool HasIncomingCall() => callState == TelephoneCallState.Ringing && incomingCallerTelephonePos != null;
         public bool IsNotInService() => callState == TelephoneCallState.NotInService;
-        public bool IsCallSessionActive() => callState != TelephoneCallState.Idle;
 
         public string[] GetAvailableTargetNumbers()
         {
@@ -541,7 +594,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     .OfType<BlockEntitySpeaker>()
                     .Select(speaker => new VoiceRoute(
                         new Vec3d(speaker.Pos.X + 0.5, speaker.Pos.Y + 1.2, speaker.Pos.Z + 0.5),
-                        speaker.VoiceEmissionRangeBlocks
+                        speaker.VoiceEmissionRangeBlocks,
+                        speaker.Pos.dimension
                     ))
                     .ToList();
 
@@ -553,7 +607,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 {
                     int emitRange = targetNode is ITelephoneVoiceEndpoint voiceEndpoint ? voiceEndpoint.VoiceEmissionRangeBlocks : 2;
                     Vec3d emitPos = new Vec3d(targetNode.Pos.X + 0.5, targetNode.Pos.Y + 1.2, targetNode.Pos.Z + 0.5);
-                    routingSystem?.SetRoute(byPlayer.PlayerUID, emitPos, emitRange);
+                    routingSystem?.SetRoute(byPlayer.PlayerUID, emitPos, emitRange, targetNode.Pos.dimension);
                 }
             }
             MarkDirty(true);
@@ -909,7 +963,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 Api?.ModLoader.GetModSystem<TelephoneVoiceRoutingSystem>()?.SetRoute(
                     incomingCallerPlayerUid,
                     emitPosForCaller,
-                    VoiceEmissionRangeBlocks
+                    VoiceEmissionRangeBlocks,
+                    Pos.dimension
                 );
             }
 
@@ -920,7 +975,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 Api?.ModLoader.GetModSystem<TelephoneVoiceRoutingSystem>()?.SetRoute(
                     byPlayer.PlayerUID,
                     emitPosForCallee,
-                    callerTelephone.VoiceEmissionRangeBlocks
+                    callerTelephone.VoiceEmissionRangeBlocks,
+                    callerTelephone.Pos.dimension
                 );
             }
 

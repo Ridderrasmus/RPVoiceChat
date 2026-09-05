@@ -1,0 +1,75 @@
+# Code scanning (free on public repos). Requires a successful C# build for analysis.
+name: CodeQL
+
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+    branches: [main, development]
+  schedule:
+    - cron: "30 5 * * 1"
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  VS_GAME_VERSION: "1.22.0"
+
+jobs:
+  analyze:
+    name: Analyze C#
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache Vintage Story server
+        id: cache-vs
+        uses: actions/cache@v5
+        with:
+          path: ~/vs-server
+          key: vs-server-linux-x64-${{ env.VS_GAME_VERSION }}
+
+      - name: Download Vintage Story server
+        if: steps.cache-vs.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          curl -fsSL \
+            "https://cdn.vintagestory.at/gamefiles/stable/vs_server_linux-x64_${VS_GAME_VERSION}.tar.gz" \
+            -o /tmp/vs_server.tar.gz
+          mkdir -p "$HOME/vs-server"
+          tar -xzf /tmp/vs_server.tar.gz -C "$HOME/vs-server"
+
+      - name: Resolve VINTAGE_STORY
+        run: |
+          set -euo pipefail
+          dll_dir="$(dirname "$(find "$HOME/vs-server" -name VintagestoryAPI.dll | head -1)")"
+          if [ -z "$dll_dir" ]; then
+            echo "VintagestoryAPI.dll not found in server package" >&2
+            exit 1
+          fi
+          echo "VINTAGE_STORY=$dll_dir" >> "$GITHUB_ENV"
+          echo "Using VINTAGE_STORY=$dll_dir"
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: csharp
+          build-mode: none
+
+      - name: Build for CodeQL
+        run: dotnet build RPVoiceChat.csproj -c Release
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:csharp"

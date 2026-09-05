@@ -1,0 +1,44 @@
+{
+  "name": "radiomixingconsole",
+  "enabled": true,
+  "ingredientPattern": "PCP,WVG,PMP",
+  "ingredients": {
+    "C": {
+      "type": "block",
+      "code": "rpvoicechat:connector-*",
+      "quantity": 3
+    },
+    "M": {
+      "type": "block",
+      "code": "game:metal-parts",
+      "quantity": 2
+    },
+    "G": {
+      "type": "block",
+      "code": "game:glasspane-leaded-*",
+      "quantity": 1
+    },
+    "P": {
+      "type": "item",
+      "code": "game:plank-{wood}",
+      "quantity": 2
+    },
+    "V": {
+      "type": "item",
+      "code": "game:jonasparts-valve01",
+      "quantity": 1
+    },
+    "W": {
+      "type": "item",
+      "code": "rpvoicechat:telegraphwire",
+      "quantity": 2
+    }
+  },
+  "width": 3,
+  "height": 3,
+  "output": {
+    "type": "block",
+    "code": "rpvoicechat:radiomixingconsole-{wood}-north"
+  }
+}
+

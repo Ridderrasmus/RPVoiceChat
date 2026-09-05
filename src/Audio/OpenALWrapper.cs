@@ -67,7 +67,7 @@ namespace RPVoiceChat.Audio
         public static int SourceUnqueueBuffer(int source)
         {
             var buffer = AL.SourceUnqueueBuffer(source);
-            CheckError("Error SourceUnqueueBuffer", ALError.InvalidValue);
+            CheckError("Error SourceUnqueueBuffer", ALError.InvalidValue, ALError.InvalidName);
 
             return buffer;
         }
@@ -81,7 +81,7 @@ namespace RPVoiceChat.Audio
         public static void SourceStop(int source)
         {
             AL.SourceStop(source);
-            CheckError("Error stop playing source", ALError.InvalidValue);
+            CheckError("Error stop playing source", ALError.InvalidValue, ALError.InvalidName);
         }
 
         public static void DeleteSource(int source)
@@ -119,13 +119,39 @@ namespace RPVoiceChat.Audio
             AL.GetError();
         }
 
-        public static void CheckError(string Value, ALError ignoredErrors = ALError.NoError)
+        public static void CheckError(string value, ALError ignoredErrors = ALError.NoError)
         {
-            var error = AL.GetError();
-            if (error == ALError.NoError) return;
-            if (ignoredErrors == error) return;
+            ALError error = AL.GetError();
+            if (error == ALError.NoError)
+            {
+                return;
+            }
 
-            Logger.client.Debug("{0} {1}", Value, AL.GetErrorString(error));
+            if (error == ignoredErrors)
+            {
+                return;
+            }
+
+            Logger.client.Debug("{0} {1}", value, AL.GetErrorString(error));
+        }
+
+        public static void CheckError(string value, params ALError[] ignoredErrors)
+        {
+            ALError error = AL.GetError();
+            if (error == ALError.NoError)
+            {
+                return;
+            }
+
+            foreach (ALError ignoredError in ignoredErrors)
+            {
+                if (error == ignoredError)
+                {
+                    return;
+                }
+            }
+
+            Logger.client.Debug("{0} {1}", value, AL.GetErrorString(error));
         }
     }
 }

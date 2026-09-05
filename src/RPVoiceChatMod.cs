@@ -1,10 +1,15 @@
-﻿using System.Linq;
+﻿using System.IO;
+using System.Linq;
+using System.Reflection;
+using RPVoiceChat.Audio.Input;
 using RPVoiceChat.Config;
 using RPVoiceChat.GameContent.BlockEntity;
 using RPVoiceChat.GameContent.Block;
 using RPVoiceChat.GameContent.Items;
+using RPVoiceChat.Gui;
 using RPVoiceChat.src.Networking.Packets;
 using RPVoiceChat.Networking.Packets;
+using RPVoiceChat.Systems;
 using RPVoiceChat.Util;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -30,6 +35,10 @@ namespace RPVoiceChat
         internal static IServerNetworkChannel SwitchboardServerChannel;
         internal static IClientNetworkChannel AnnounceClientChannel;
         internal static IServerNetworkChannel AnnounceServerChannel;
+        internal static IClientNetworkChannel RadioSettingsClientChannel;
+        internal static IServerNetworkChannel RadioSettingsServerChannel;
+        internal static IClientNetworkChannel RadioTalkieClientChannel;
+        internal static IServerNetworkChannel RadioTalkieServerChannel;
         internal static IClientNetworkChannel NametagConfigClientChannel;
         internal static IServerNetworkChannel NametagConfigServerChannel;
 
@@ -47,6 +56,11 @@ namespace RPVoiceChat
         public override void Start(ICoreAPI api)
         {
             ModApi = api;
+            string modFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            if (!string.IsNullOrWhiteSpace(modFolder))
+            {
+                FfmpegLocator.SetModFolder(modFolder);
+            }
 
             if (api.Side == EnumAppSide.Client)
             {
@@ -60,6 +74,12 @@ namespace RPVoiceChat
                     .RegisterMessageType<TelegraphSettingsPacket>();
                 TelephoneSettingsClientChannel = capi.Network.RegisterChannel("telephonesettings")
                     .RegisterMessageType<TelephoneSettingsPacket>();
+                RadioSettingsClientChannel = capi.Network.RegisterChannel("radiosettings")
+                    .RegisterMessageType<RadioSettingsPacket>()
+                    .RegisterMessageType<RadioClientNotificationPacket>();
+                RadioTalkieClientChannel = capi.Network.RegisterChannel("radiotalkie")
+                    .RegisterMessageType<RadioTalkieStatePacket>()
+                    .RegisterMessageType<RadioTalkieSettingsPacket>();
                 SwitchboardClientChannel = capi.Network.RegisterChannel("switchboardsettings")
                     .RegisterMessageType<SwitchboardRenameNetworkPacket>()
                     .RegisterMessageType<SwitchboardPowerModePacket>();
@@ -68,6 +88,7 @@ namespace RPVoiceChat
                     .RegisterMessageType<AnnouncePacket>();
                 NametagConfigClientChannel = capi.Network.RegisterChannel("rpvc-nametag-config")
                     .RegisterMessageType<NametagConfigChangedPacket>();
+                PlayerNameTagRenderer.Init(capi);
             }
             else if (api.Side == EnumAppSide.Server)
             {
@@ -85,6 +106,15 @@ namespace RPVoiceChat
                 TelephoneSettingsServerChannel = sapi.Network.RegisterChannel("telephonesettings")
                     .RegisterMessageType<TelephoneSettingsPacket>()
                     .SetMessageHandler<TelephoneSettingsPacket>(OnTelephoneSettingsPacket);
+                RadioSettingsServerChannel = sapi.Network.RegisterChannel("radiosettings")
+                    .RegisterMessageType<RadioSettingsPacket>()
+                    .RegisterMessageType<RadioClientNotificationPacket>()
+                    .SetMessageHandler<RadioSettingsPacket>(OnRadioSettingsPacket);
+                RadioTalkieServerChannel = sapi.Network.RegisterChannel("radiotalkie")
+                    .RegisterMessageType<RadioTalkieStatePacket>()
+                    .RegisterMessageType<RadioTalkieSettingsPacket>()
+                    .SetMessageHandler<RadioTalkieStatePacket>(OnRadioTalkieStatePacket)
+                    .SetMessageHandler<RadioTalkieSettingsPacket>(OnRadioTalkieSettingsPacket);
                 SwitchboardServerChannel = sapi.Network.RegisterChannel("switchboardsettings")
                     .RegisterMessageType<SwitchboardRenameNetworkPacket>()
                     .RegisterMessageType<SwitchboardPowerModePacket>()
@@ -206,6 +236,131 @@ namespace RPVoiceChat
                     telephone.EndCall();
                     break;
             }
+        }
+
+        internal static void SendRadioClientNotification(IServerPlayer player, string langKey)
+        {
+            if (player == null || string.IsNullOrWhiteSpace(langKey))
+            {
+                return;
+            }
+
+            RadioSettingsServerChannel?.SendPacket(new RadioClientNotificationPacket
+            {
+                LangKey = langKey
+            }, player);
+        }
+
+        private void OnRadioSettingsPacket(IServerPlayer player, RadioSettingsPacket packet)
+        {
+            if (packet?.BlockPos == null)
+            {
+                return;
+            }
+
+            switch (packet.Operation)
+            {
+                case RadioSettingsOperation.SetFrequency:
+                case RadioSettingsOperation.SetDisplayName:
+                    if (sapi.World.BlockAccessor.GetBlockEntity(packet.BlockPos) is BlockEntityRadioSupervisionConsole console)
+                    {
+                        if (packet.Operation == RadioSettingsOperation.SetFrequency)
+                        {
+                            if (!console.TrySetFrequency(packet.Value))
+                            {
+                                SendRadioClientNotification(player, "Radio.Error.FrequencyInUse");
+                            }
+                        }
+                        else
+                        {
+                            console.SetDisplayName(packet.Value);
+                        }
+                    }
+                    break;
+                case RadioSettingsOperation.SetEmitterMode:
+                    if (sapi.World.BlockAccessor.GetBlockEntity(packet.BlockPos) is BlockEntityRadioEmitter emitter)
+                    {
+                        emitter.SetOperatingMode((RadioEmitterOperatingMode)packet.IntValue);
+                    }
+                    break;
+                case RadioSettingsOperation.SetRepeaterFrequency:
+                    if (sapi.World.BlockAccessor.GetBlockEntity(packet.BlockPos) is BlockEntityRadioEmitter repeaterEmitter)
+                    {
+                        if (!repeaterEmitter.TrySetRepeaterFrequency(packet.Value))
+                        {
+                            SendRadioClientNotification(player, "Radio.Error.FrequencyInUse");
+                        }
+                    }
+                    break;
+                case RadioSettingsOperation.SetReceiverFrequency:
+                    if (sapi.World.BlockAccessor.GetBlockEntity(packet.BlockPos) is BlockEntityRadioReceiver receiver)
+                    {
+                        receiver.SetTunedFrequency(packet.Value);
+                    }
+                    break;
+                case RadioSettingsOperation.SetReceiverEnabled:
+                    if (sapi.World.BlockAccessor.GetBlockEntity(packet.BlockPos) is BlockEntityRadioReceiver receiverPower)
+                    {
+                        receiverPower.SetEnabled(packet.IntValue != 0);
+                    }
+                    break;
+                case RadioSettingsOperation.SetReceiverPlaybackRange:
+                    if (sapi.World.BlockAccessor.GetBlockEntity(packet.BlockPos) is BlockEntityRadioReceiver receiverRange)
+                    {
+                        receiverRange.SetPlaybackRange(packet.IntValue);
+                    }
+                    break;
+                case RadioSettingsOperation.SetReceiverPlaybackVolume:
+                    if (sapi.World.BlockAccessor.GetBlockEntity(packet.BlockPos) is BlockEntityRadioReceiver receiverVolume)
+                    {
+                        receiverVolume.SetPlaybackVolume(packet.IntValue);
+                    }
+                    break;
+                case RadioSettingsOperation.SetMicrophoneTransmit:
+                    if (sapi.World.BlockAccessor.GetBlockEntity(packet.BlockPos) is BlockEntityRadioMicrophone microphone)
+                    {
+                        microphone.SetTransmitting(player, packet.IntValue != 0);
+                    }
+                    break;
+                case RadioSettingsOperation.SetMixingConsoleHlsUrl:
+                    if (sapi.World.BlockAccessor.GetBlockEntity(packet.BlockPos) is BlockEntityRadioMixingConsole mixingConsoleUrl)
+                    {
+                        mixingConsoleUrl.SetHlsUrl(packet.Value);
+                    }
+                    break;
+                case RadioSettingsOperation.SetMixingConsoleOnAir:
+                    if (sapi.World.BlockAccessor.GetBlockEntity(packet.BlockPos) is BlockEntityRadioMixingConsole mixingConsoleAir)
+                    {
+                        MixingConsoleOnAirResult result = mixingConsoleAir.SetOnAir(player, packet.IntValue != 0);
+                        string failureLangKey = BlockEntityRadioMixingConsole.GetOnAirFailureLangKey(result);
+                        if (!string.IsNullOrWhiteSpace(failureLangKey))
+                        {
+                            SendRadioClientNotification(player, failureLangKey);
+                        }
+                    }
+                    break;
+            }
+        }
+
+        private void OnRadioTalkieStatePacket(IServerPlayer player, RadioTalkieStatePacket packet)
+        {
+            sapi.ModLoader.GetModSystem<RadioTalkieTransmissionSystem>()
+                ?.SetTalkieTransmitting(player, packet?.Transmitting == true, packet?.Frequency);
+        }
+
+        private void OnRadioTalkieSettingsPacket(IServerPlayer player, RadioTalkieSettingsPacket packet)
+        {
+            if (player == null || packet == null)
+            {
+                return;
+            }
+
+            ItemRadio.TryApplyServerSettings(
+                player,
+                packet.SlotNumber,
+                packet.Frequency,
+                packet.InventoryListen,
+                packet.ListenVolumePercent);
         }
 
         private void OnSwitchboardPowerModePacket(IServerPlayer player, SwitchboardPowerModePacket packet)

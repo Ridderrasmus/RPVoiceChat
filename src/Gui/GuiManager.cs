@@ -7,6 +7,7 @@ namespace RPVoiceChat.Gui
 {
     public class GuiManager : IDisposable
     {
+        public MicrophoneManager audioInputManager { get; }
         public AudioWizardDialog audioWizardDialog { get; }
         public FirstLaunchDialog firstLaunchDialog { get; }
         public ModMenuDialog modMenuDialog { get; }
@@ -14,6 +15,7 @@ namespace RPVoiceChat.Gui
 
         public GuiManager(ICoreClientAPI capi, MicrophoneManager audioInputManager, AudioOutputManager audioOutputManager, ClientSettingsRepository settingsRepository)
         {
+            this.audioInputManager = audioInputManager;
             audioWizardDialog = new AudioWizardDialog(capi, audioInputManager, audioOutputManager);
             firstLaunchDialog = new FirstLaunchDialog(capi, this);
             modMenuDialog = new ModMenuDialog(capi, audioInputManager, audioOutputManager, settingsRepository, this);

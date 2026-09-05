@@ -14,6 +14,7 @@ namespace RPVoiceChat.Config
         // Audio Performance Settings
         public static float MaxAudioGain => Config?.MaxAudioGain ?? 2f;
         public static float MaxVolumeLimit => Config?.MaxVolumeLimit ?? 0.8f;
+        public static int GridCellSizeBlocks => Config?.GridCellSizeBlocks ?? 64;
 
         // Codec Settings
         public static int NormalBitrate => Config?.NormalBitrate ?? (40 * 1024);
@@ -37,6 +38,13 @@ namespace RPVoiceChat.Config
         public static int TelephoneNetworkMaxEndpoints => Config?.TelephoneNetworkMaxEndpoints ?? 16;
         public static int RadioNetworkMinPowerPercent => Config?.RadioNetworkMinPowerPercent ?? 50;
         public static int RadioNetworkMaxEndpoints => Config?.RadioNetworkMaxEndpoints ?? 16;
+        public static int RadioEmitterBaseRangeBlocks => Config?.RadioEmitterBaseRangeBlocks ?? 100;
+        public static int RadioAntennaPartRangeBonusBlocks => Config?.RadioAntennaPartRangeBonusBlocks ?? 50;
+        public static int RadioMicrophoneCaptureDistance => Config?.RadioMicrophoneCaptureDistance ?? 2;
+        public static int RadioTalkieRangeBlocks => Config?.RadioTalkieRangeBlocks ?? 32;
+        public static int RadioReceiverRangeBlocks => Config?.RadioReceiverRangeBlocks ?? 64;
+        public static int RadioReceiverMaxWiredSpeakers => Config?.RadioReceiverMaxWiredSpeakers ?? 4;
+        public static int TelephoneBroadcastMaxSpeakers => Config?.TelephoneBroadcastMaxSpeakers ?? 8;
 
         // Sound Emitting Objects Range Settings
         public static int HandbellAudibleDistance => Config?.HandbellAudibleDistance ?? 16;
@@ -67,6 +75,21 @@ namespace RPVoiceChat.Config
             {
                 Logger.server.Warning($"MaxVolumeLimit ({MaxVolumeLimit}) should be between 0.1 and 1.0. Using default (0.8).");
                 Config.MaxVolumeLimit = 0.8f;
+            }
+
+            if (GridCellSizeBlocks < 8 || GridCellSizeBlocks > 512)
+            {
+                Logger.server.Warning($"GridCellSizeBlocks ({GridCellSizeBlocks}) should be between 8 and 512. Using default (64).");
+                Config.GridCellSizeBlocks = 64;
+            }
+            else if ((GridCellSizeBlocks & (GridCellSizeBlocks - 1)) != 0)
+            {
+                int powerOfTwo = 1;
+                while (powerOfTwo < GridCellSizeBlocks) powerOfTwo <<= 1;
+                int adjusted = powerOfTwo > 512 ? 512 : powerOfTwo;
+
+                Logger.server.Warning($"GridCellSizeBlocks ({GridCellSizeBlocks}) should be a power of two. Using {adjusted}.");
+                Config.GridCellSizeBlocks = adjusted;
             }
 
             // Codec validation
@@ -149,6 +172,18 @@ namespace RPVoiceChat.Config
                 Config.RadioNetworkMaxEndpoints = 16;
             }
 
+            if (RadioReceiverMaxWiredSpeakers < 1 || RadioReceiverMaxWiredSpeakers > 64)
+            {
+                Logger.server.Warning($"RadioReceiverMaxWiredSpeakers ({RadioReceiverMaxWiredSpeakers}) should be between 1 and 64. Using default (4).");
+                Config.RadioReceiverMaxWiredSpeakers = 4;
+            }
+
+            if (TelephoneBroadcastMaxSpeakers < 1 || TelephoneBroadcastMaxSpeakers > 64)
+            {
+                Logger.server.Warning($"TelephoneBroadcastMaxSpeakers ({TelephoneBroadcastMaxSpeakers}) should be between 1 and 64. Using default (8).");
+                Config.TelephoneBroadcastMaxSpeakers = 8;
+            }
+
             // Sound emitting objects range validation
             if (HandbellAudibleDistance < 1 || HandbellAudibleDistance > 1000)
             {
@@ -202,6 +237,36 @@ namespace RPVoiceChat.Config
             {
                 Logger.server.Warning($"SpeakerAudibleDistance ({SpeakerAudibleDistance}) should be between 1 and 1000. Using default (30).");
                 Config.SpeakerAudibleDistance = 30;
+            }
+
+            if (RadioEmitterBaseRangeBlocks < 1 || RadioEmitterBaseRangeBlocks > 10000)
+            {
+                Logger.server.Warning($"RadioEmitterBaseRangeBlocks ({RadioEmitterBaseRangeBlocks}) should be between 1 and 10000. Using default (100).");
+                Config.RadioEmitterBaseRangeBlocks = 100;
+            }
+
+            if (RadioAntennaPartRangeBonusBlocks < 0 || RadioAntennaPartRangeBonusBlocks > 10000)
+            {
+                Logger.server.Warning($"RadioAntennaPartRangeBonusBlocks ({RadioAntennaPartRangeBonusBlocks}) should be between 0 and 10000. Using default (50).");
+                Config.RadioAntennaPartRangeBonusBlocks = 50;
+            }
+
+            if (RadioMicrophoneCaptureDistance < 1 || RadioMicrophoneCaptureDistance > 1000)
+            {
+                Logger.server.Warning($"RadioMicrophoneCaptureDistance ({RadioMicrophoneCaptureDistance}) should be between 1 and 1000. Using default (2).");
+                Config.RadioMicrophoneCaptureDistance = 2;
+            }
+
+            if (RadioTalkieRangeBlocks < 1 || RadioTalkieRangeBlocks > 1000)
+            {
+                Logger.server.Warning($"RadioTalkieRangeBlocks ({RadioTalkieRangeBlocks}) should be between 1 and 1000. Using default (32).");
+                Config.RadioTalkieRangeBlocks = 32;
+            }
+
+            if (RadioReceiverRangeBlocks < 1 || RadioReceiverRangeBlocks > 10000)
+            {
+                Logger.server.Warning($"RadioReceiverRangeBlocks ({RadioReceiverRangeBlocks}) should be between 1 and 10000. Using default (64).");
+                Config.RadioReceiverRangeBlocks = 64;
             }
 
             if (NametagFallbackRenderRange < 1 || NametagFallbackRenderRange > 1000)
