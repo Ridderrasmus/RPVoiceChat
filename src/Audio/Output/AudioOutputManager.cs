@@ -126,13 +126,13 @@ namespace RPVoiceChat.Audio
         private bool ShouldForceFlatPlayback(AudioPacket packet)
         {
             var listenerPlayer = capi.World.Player;
-            if (listenerPlayer?.Entity?.SidedPos == null)
+            if (listenerPlayer?.Entity?.Pos == null)
             {
                 return false;
             }
 
             var speakerPlayer = capi.World.PlayerByUid(packet.PlayerId);
-            if (speakerPlayer?.Entity?.SidedPos == null)
+            if (speakerPlayer?.Entity?.Pos == null)
             {
                 return true;
             }
@@ -146,7 +146,7 @@ namespace RPVoiceChat.Audio
                 return true;
             }
 
-            double distance = speakerPlayer.Entity.SidedPos.DistanceTo(listenerPlayer.Entity.SidedPos);
+            double distance = speakerPlayer.Entity.Pos.DistanceTo(listenerPlayer.Entity.Pos);
             return distance > effectiveRange;
         }
 
