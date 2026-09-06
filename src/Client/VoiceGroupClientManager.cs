@@ -40,8 +40,8 @@ namespace RPVoiceChat.Client
                     IsReady = true;
                     ApplyGroups(packet.Groups);
                     Changed?.Invoke();
-                    if (packet.Invitations.Except(previousInvitations).Any())
-                        capi.ShowChatMessage(RPVoiceChat.Util.UIUtils.I18n("Gui.VoiceGroups.InvitationNotice"));
+                    foreach (string groupName in packet.Invitations.Except(previousInvitations))
+                        capi.ShowChatMessage(RPVoiceChat.Util.UIUtils.I18n("Gui.VoiceGroups.InvitationNotice", groupName));
                 }, "rpvoicechat:groupUiState"))
                 .SetMessageHandler<VoiceGroupActionResultPacket>(packet => capi.Event.EnqueueMainThreadTask(() =>
                 {

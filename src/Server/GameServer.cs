@@ -211,6 +211,8 @@ namespace RPVoiceChat.Server
 
             if (IsVoiceGroupsEnabled())
             {
+                bool restrictSpectatorVoice = !WorldConfig.GetBool("others-hear-spectators", true)
+                    && api.World.PlayerByUid(packet.PlayerId)?.WorldData.CurrentGameMode == EnumGameMode.Spectator;
                 var groupMembers = voiceGroupManager.GetGroupMembersForPlayer(packet.PlayerId);
                 foreach (var memberUid in groupMembers)
                 {
@@ -221,6 +223,11 @@ namespace RPVoiceChat.Server
 
                     var memberPlayer = api.World.PlayerByUid(memberUid) as IServerPlayer;
                     if (memberPlayer == null || memberPlayer.ConnectionState != EnumClientState.Playing)
+                    {
+                        continue;
+                    }
+
+                    if (restrictSpectatorVoice && memberPlayer.WorldData.CurrentGameMode != EnumGameMode.Spectator)
                     {
                         continue;
                     }
