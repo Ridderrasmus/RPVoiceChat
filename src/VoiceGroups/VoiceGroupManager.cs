@@ -431,6 +431,20 @@ namespace RPVoiceChat.Server
                 .ToList();
         }
 
+        public List<string> GetPendingInvitations(string playerUid)
+        {
+            CleanupExpiredInvitesAndPersist();
+            return groupsByName.Values.Where(group => group.PendingInvites.Contains(playerUid))
+                .OrderBy(group => group.Name, StringComparer.OrdinalIgnoreCase).Select(group => group.Name).ToList();
+        }
+
+        public bool ExpireInvitations()
+        {
+            if (!CleanupExpiredInvites()) return false;
+            Persist();
+            return true;
+        }
+
         public string GetGroupSummaryForPlayer(string playerUid)
         {
             if (!groupByPlayerUid.TryGetValue(playerUid, out var groupName) || !groupsByName.TryGetValue(groupName, out var group))

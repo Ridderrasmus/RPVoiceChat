@@ -11,7 +11,7 @@ using Vintagestory.API.Server;
 
 namespace RPVoiceChat.Server
 {
-    public class GameServer : IDisposable
+    public partial class GameServer : IDisposable
     {
         private ICoreServerAPI api;
         private List<INetworkServer> _initialTransports;
@@ -62,12 +62,17 @@ namespace RPVoiceChat.Server
                 .RegisterMessageType<VoiceBanStatusPacket>();
             voiceGroupChannel = sapi.Network
                 .RegisterChannel("RPVoiceGroups")
-                .RegisterMessageType<VoiceGroupStatePacket>();
+                .RegisterMessageType<VoiceGroupStatePacket>()
+                .RegisterMessageType<VoiceGroupActionPacket>()
+                .RegisterMessageType<VoiceGroupUiStatePacket>()
+                .RegisterMessageType<VoiceGroupActionResultPacket>()
+                .SetMessageHandler<VoiceGroupActionPacket>(OnVoiceGroupAction);
             listenerUpdateTickListener = sapi.Event.RegisterGameTickListener(RebuildVoiceRoutingSnapshot, 500);
         }
 
         private void RebuildVoiceRoutingSnapshot(float gameTick)
         {
+            if (voiceGroupManager.ExpireInvitations()) NotifyAllPlayersVoiceGroupsUpdated();
             Grid newGrid = Grid.Build(api, ServerConfigManager.GridCellSizeBlocks);
             var newListeners = new ConcurrentDictionary<string, HashSet<IPlayer>>();
 
@@ -150,6 +155,7 @@ namespace RPVoiceChat.Server
             // Send the ban status of all banned players to the new player
             SendAllBannedPlayersStatus(player);
             SendVoiceGroupsStateToPlayer(player);
+            NotifyVoiceGroupUiPlayers();
             // Notify all other players if this player is banned
             if (voiceBanManager.IsPlayerBanned(player.PlayerUID))
             {
@@ -159,6 +165,8 @@ namespace RPVoiceChat.Server
 
         public void PlayerLeft(IServerPlayer player)
         {
+            lastGroupRequest.Remove(player.PlayerUID);
+            api.Event.EnqueueMainThreadTask(NotifyVoiceGroupUiPlayers, "rpvoicechat:groupPlayerLeft");
             devicesVoiceFeedbackByPlayer.TryRemove(player.PlayerUID, out _);
             foreach (var server in activeServers)
             {
@@ -455,6 +463,7 @@ namespace RPVoiceChat.Server
 
         public void NotifyAllPlayersVoiceGroupsUpdated()
         {
+            NotifyVoiceGroupUiPlayers();
             var packet = IsVoiceGroupsEnabled()
                 ? new VoiceGroupStatePacket(voiceGroupManager.BuildStateEntries())
                 : new VoiceGroupStatePacket(new List<VoiceGroupStateEntry>());
