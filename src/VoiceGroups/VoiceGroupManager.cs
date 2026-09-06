@@ -12,7 +12,7 @@ namespace RPVoiceChat.Server
     public class VoiceGroupManager : IDisposable
     {
         private const string SaveDataKey = "rpvoicechat:voicegroups";
-        private const long InviteTimeoutMs = 30_000;
+        private const long InviteTimeoutMs = 100_000;
 
         private readonly ICoreServerAPI api;
         private readonly Dictionary<string, VoiceGroup> groupsByName = new Dictionary<string, VoiceGroup>(StringComparer.OrdinalIgnoreCase);
