@@ -258,10 +258,10 @@ namespace RPVoiceChat.Audio
             if (playerSources.TryGetValue(playerId, out var source))
                 return source.IsPlaying;
 
-            if (capi.World.Player.PlayerUID == playerId)
-                return localPlayerAudioSource.IsPlaying;
+            if (capi.World.Player?.PlayerUID == playerId)
+                return localPlayerAudioSource?.IsPlaying == true;
 
-            Logger.client.Warning($"Could not find player audio source for {playerId}, assuming player isn't talking");
+            // Group members can be silent, offline, or outside entity range; no source is normal.
             return false;
         }
 

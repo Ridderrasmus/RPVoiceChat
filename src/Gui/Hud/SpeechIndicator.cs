@@ -69,7 +69,8 @@ namespace RPVoiceChat.Gui
 
         private void OnHudUpdate(string _, ref EnumHandling __, object ___)
         {
-            bindToMainThread(UpdateDisplay)();
+            // Mute and minimal-HUD changes affect the composed images, not just visibility.
+            bindToMainThread(SetupIcon)();
         }
 
         private void OnVoiceBanUpdate(string _, ref EnumHandling __, object ___)

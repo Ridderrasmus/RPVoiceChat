@@ -805,6 +805,7 @@ namespace RPVoiceChat
                 return TextCommandResult.Error(message);
             }
 
+            server.NotifyAllPlayersVoiceGroupsUpdated();
             return TextCommandResult.Success(message);
         }
 
@@ -871,6 +872,7 @@ namespace RPVoiceChat
                 return TextCommandResult.Error(message);
             }
 
+            server.NotifyAllPlayersVoiceGroupsUpdated();
             return TextCommandResult.Success(message);
         }
 

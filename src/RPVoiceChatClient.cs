@@ -95,6 +95,12 @@ namespace RPVoiceChat
 
             // Initialize gui
             guiManager = new GuiManager(capi, microphoneManager, audioOutputManager, clientSettingsRepository);
+            capi.Input.RegisterHotKey("voicechatGroups", UIUtils.I18n("Hotkey.VoiceGroups"), GlKeys.G, HotkeyType.GUIOrOtherControls, ctrlPressed: true);
+            capi.Input.SetHotKeyHandler("voicechatGroups", _ =>
+            {
+                if (guiManager.voiceGroupDialog.IsOpened()) return guiManager.voiceGroupDialog.TryClose();
+                return guiManager.voiceGroupDialog.TryOpen();
+            });
 
             // Set up keybinds
             capi.Input.RegisterHotKey("voicechatMenu", UIUtils.I18n("Hotkey.ModMenu"), GlKeys.Semicolon, HotkeyType.GUIOrOtherControls);
@@ -238,10 +244,12 @@ namespace RPVoiceChat
             {
                 ModConfig.SaveClient(capi);
                 PlayerNameTagRenderer.CleanupAllNametagCache();
+                guiManager?.Dispose();
+                voiceGroupManager?.Dispose();
+                VoiceGroupManagerInstance = null;
                 microphoneManager?.Dispose();
                 audioOutputManager?.Dispose();
                 client?.Dispose();
-                guiManager?.Dispose();
                 clientSettingsRepository?.Dispose();
             }
             catch (Exception e)
