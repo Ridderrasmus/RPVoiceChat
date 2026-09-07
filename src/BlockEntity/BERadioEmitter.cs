@@ -191,18 +191,13 @@ namespace RPVoiceChat.GameContent.BlockEntity
             });
         }
 
-        /// <returns>False when the frequency is already claimed by another transmitter.</returns>
+        /// <returns>Always true; repeaters may share the station frequency they relay.</returns>
         public bool TrySetRepeaterFrequency(string desired)
         {
             string normalized = (desired ?? "").Trim();
             if (RadioFrequencyUtil.Matches(normalized, repeaterFrequency))
             {
                 return true;
-            }
-
-            if (Api?.World != null && !RadioTransmitFrequencyGuard.IsFrequencyAvailable(Api.World, normalized, Pos))
-            {
-                return false;
             }
 
             repeaterFrequency = normalized;

@@ -243,6 +243,8 @@ namespace RPVoiceChat.Systems
 
         public static IEnumerable<string> EnumerateClaimedTransmitFrequencies(BlockPos excludePos)
         {
+            // Only wired origin transmitters claim exclusive TX frequencies.
+            // Repeaters intentionally share the station frequency they relay.
             foreach (var entry in GetEmitters())
             {
                 if (excludePos != null && entry.Pos.Equals(excludePos))
@@ -250,8 +252,7 @@ namespace RPVoiceChat.Systems
                     continue;
                 }
 
-                // Wired sources claim via console; repeaters claim their listen/TX frequency.
-                if (!entry.IsRepeater)
+                if (entry.IsRepeater || !entry.IsActive)
                 {
                     continue;
                 }
