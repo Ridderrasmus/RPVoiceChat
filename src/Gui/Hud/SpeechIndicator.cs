@@ -69,7 +69,8 @@ namespace RPVoiceChat.Gui
 
         private void OnHudUpdate(string _, ref EnumHandling __, object ___)
         {
-            bindToMainThread(UpdateDisplay)();
+            // Must rebuild when mute / minimal HUD change: UpdateDisplay alone would reopen a stale composer.
+            bindToMainThread(SetupIcon)();
         }
 
         private void OnVoiceBanUpdate(string _, ref EnumHandling __, object ___)
