@@ -360,6 +360,15 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public void SendSignal(char keyChar)
         {
+            SendSignal(keyChar, playLocalAudio: true);
+        }
+
+        /// <param name="playLocalAudio">
+        /// When false, skip local Morse playback (used by hardcore hold input which already played each symbol).
+        /// Network + message buffer are unchanged.
+        /// </param>
+        public void SendSignal(char keyChar, bool playLocalAudio)
+        {
             if (Api.Side != EnumAppSide.Client)
                 return;
 
@@ -379,7 +388,10 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             UpdateActivityTime();
             UpdateSentActivityTime(); // Update sent message activity time
-            pendingSignals.Enqueue(keyChar);
+            if (playLocalAudio)
+            {
+                pendingSignals.Enqueue(keyChar);
+            }
             
             string messageToSend = keyChar.ToString(); // Always send latin characters on network
 
@@ -409,7 +421,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
                     });
             }
 
-            if (!IsPlaying)
+            if (playLocalAudio && !IsPlaying)
             {
                 _ = ProcessNextSignalAsync();
             }
@@ -472,6 +484,26 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
 
             IsPlaying = false;
+        }
+
+        /// <summary>Immediate local feedback for one Morse element during hardcore keying.</summary>
+        public void PlayMorseSymbol(char symbol)
+        {
+            if (Api.Side != EnumAppSide.Client || Api is not ICoreClientAPI capi)
+            {
+                return;
+            }
+
+            if (symbol == '.')
+            {
+                capi.World.PlaySoundAt(new AssetLocation(RPVoiceChatMod.modID, "sounds/morse/dot"), Pos.X, Pos.Y, Pos.Z, randomizePitch: false, range: Volume);
+            }
+            else if (symbol == '-')
+            {
+                capi.World.PlaySoundAt(new AssetLocation(RPVoiceChatMod.modID, "sounds/morse/dash"), Pos.X, Pos.Y, Pos.Z, randomizePitch: false, range: Volume);
+            }
+
+            TriggerKeyClickAnimation();
         }
 
         public void ProcessPrintPacket(string message, string sourceEndpointName = null, string targetEndpointName = null, string networkName = null)
@@ -601,6 +633,57 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 case '9': return "----.";
                 case '.': return ".-.-.-";
                 default: return "";
+            }
+        }
+
+        /// <summary>Decode a Morse sequence (dots/dashes only) into a Latin character. Returns '\0' if unknown.</summary>
+        public static char ConvertMorseToKeyCode(string morse)
+        {
+            if (string.IsNullOrEmpty(morse))
+            {
+                return '\0';
+            }
+
+            switch (morse)
+            {
+                case ".-": return 'A';
+                case "-...": return 'B';
+                case "-.-.": return 'C';
+                case "-..": return 'D';
+                case ".": return 'E';
+                case "..-.": return 'F';
+                case "--.": return 'G';
+                case "....": return 'H';
+                case "..": return 'I';
+                case ".---": return 'J';
+                case "-.-": return 'K';
+                case ".-..": return 'L';
+                case "--": return 'M';
+                case "-.": return 'N';
+                case "---": return 'O';
+                case ".--.": return 'P';
+                case "--.-": return 'Q';
+                case ".-.": return 'R';
+                case "...": return 'S';
+                case "-": return 'T';
+                case "..-": return 'U';
+                case "...-": return 'V';
+                case ".--": return 'W';
+                case "-..-": return 'X';
+                case "-.--": return 'Y';
+                case "--..": return 'Z';
+                case "-----": return '0';
+                case ".----": return '1';
+                case "..---": return '2';
+                case "...--": return '3';
+                case "....-": return '4';
+                case ".....": return '5';
+                case "-....": return '6';
+                case "--...": return '7';
+                case "---..": return '8';
+                case "----.": return '9';
+                case ".-.-.-": return '.';
+                default: return '\0';
             }
         }
 
