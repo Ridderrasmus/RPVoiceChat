@@ -569,13 +569,13 @@ Telephone **voice** bypasses wire packets entirely and uses `TelephoneVoiceRouti
 
 ## Files to read first
 
-1. `src/Systems/WireNetworkPersistence.cs`
-2. `src/Systems/WireTopologyRegistry.cs`
-3. `src/Systems/WireNetwork.cs`
-4. `src/Systems/WireNetworkHandler.cs`
-5. `src/BlockEntity/BEWireNode.cs`
-6. `src/BlockEntity/BETelegraph.cs`
-7. `src/BlockEntity/BETelephone.cs`
-8. `src/Systems/TelephoneVoiceRoutingSystem.cs`
-9. `src/Systems/WirelessTopologyRegistry.cs`
-10. `src/Systems/RadioNetwork.cs`
+1. `RPVoiceChat/src/Systems/WireNetworkPersistence.cs`
+2. `RPVoiceChat/src/Systems/WireTopologyRegistry.cs`
+3. `RPVoiceChat/src/Systems/WireNetwork.cs`
+4. `RPVoiceChat/src/Systems/WireNetworkHandler.cs`
+5. `RPVoiceChat/src/BlockEntity/BEWireNode.cs`
+6. `RPVoiceChat/src/BlockEntity/BETelegraph.cs`
+7. `RPVoiceChat/src/BlockEntity/BETelephone.cs`
+8. `RPVoiceChat/src/Systems/TelephoneVoiceRoutingSystem.cs`
+9. `RPVoiceChat/src/Systems/WirelessTopologyRegistry.cs`
+10. `RPVoiceChat/src/Systems/RadioNetwork.cs`

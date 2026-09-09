@@ -92,6 +92,7 @@ https://github.com/Ridderrasmus/RPVoiceChat/wiki/Server-Administration#in-game-c
 
 Mod developers and contributors:
 
+- **[Development setup and builds](CONTRIBUTING.md#setting-up-environment)** — clone the repository, open `RPVoiceChat.sln`, and build or package the mod.
 - **[Communication network architecture](docs/network-architecture.md)** — wired/wireless topology, telegraph, telephone, and radio networks; world persistence and chunk lifecycle.
 
 ---
