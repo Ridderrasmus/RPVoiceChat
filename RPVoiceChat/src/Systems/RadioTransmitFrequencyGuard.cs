@@ -6,8 +6,8 @@ using Vintagestory.API.MathTools;
 namespace RPVoiceChat.Systems
 {
     /// <summary>
-    /// Ensures transmit frequencies (station consoles + repeater emitters) stay unique.
-    /// Station consoles are checked while loaded; repeaters via world-level RF presence.
+    /// Ensures origin transmit frequencies stay unique (station consoles / wired emitters).
+    /// Repeaters may share a station frequency so they can relay it further.
     /// Receivers may still freely tune to any frequency.
     /// </summary>
     public static class RadioTransmitFrequencyGuard
