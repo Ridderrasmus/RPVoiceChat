@@ -70,6 +70,13 @@ namespace RPVoiceChat.Gui
             return UIUtils.I18n("Radio.Emitter.Gui.Range", emitter.GetEffectiveTransmitRangeBlocks());
         }
 
+        private string BuildModeHintText()
+        {
+            return emitter.IsRepeaterMode
+                ? UIUtils.I18n("Radio.Emitter.Gui.RepeaterFrequencyHint")
+                : UIUtils.I18n("Radio.Emitter.Gui.WiredFrequencyHint");
+        }
+
         private void BuildComposer()
         {
             showingRepeaterControls = emitter.IsRepeaterMode;
@@ -79,19 +86,33 @@ namespace RPVoiceChat.Gui
             ElementBounds statusBounds = ElementBounds.Fixed(0, 76, 420, 120);
             ElementBounds wiredButtonBounds = ElementBounds.Fixed(0, 208, 204, 28);
             ElementBounds repeaterButtonBounds = ElementBounds.Fixed(216, 208, 204, 28);
-            ElementBounds repeaterLabelBounds = ElementBounds.Fixed(0, 248, 420, 18);
-            ElementBounds repeaterInputBounds = ElementBounds.Fixed(0, 268, 320, 26);
-            ElementBounds repeaterSaveBounds = ElementBounds.Fixed(332, 268, 88, 26);
+            ElementBounds modeHintBounds = ElementBounds.Fixed(0, 244, 420, 36);
+            ElementBounds repeaterLabelBounds = ElementBounds.Fixed(0, 288, 420, 18);
+            ElementBounds repeaterInputBounds = ElementBounds.Fixed(0, 308, 320, 26);
+            ElementBounds repeaterSaveBounds = ElementBounds.Fixed(332, 308, 88, 26);
 
             ElementBounds bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
             bgBounds.BothSizing = ElementSizing.FitToChildren;
             if (showingRepeaterControls)
             {
-                bgBounds.WithChildren(rangeBounds, statusBounds, wiredButtonBounds, repeaterButtonBounds, repeaterLabelBounds, repeaterInputBounds, repeaterSaveBounds);
+                bgBounds.WithChildren(
+                    rangeBounds,
+                    statusBounds,
+                    wiredButtonBounds,
+                    repeaterButtonBounds,
+                    modeHintBounds,
+                    repeaterLabelBounds,
+                    repeaterInputBounds,
+                    repeaterSaveBounds);
             }
             else
             {
-                bgBounds.WithChildren(rangeBounds, statusBounds, wiredButtonBounds, repeaterButtonBounds);
+                bgBounds.WithChildren(
+                    rangeBounds,
+                    statusBounds,
+                    wiredButtonBounds,
+                    repeaterButtonBounds,
+                    modeHintBounds);
             }
 
             pendingRepeaterFrequency = emitter.RepeaterFrequency;
@@ -101,7 +122,8 @@ namespace RPVoiceChat.Gui
                 .AddDynamicText(BuildRangeText(), CairoFont.WhiteSmallishText(), rangeBounds, "radioEmitterRange")
                 .AddDynamicText(BuildStatusText(), CairoFont.WhiteSmallText(), statusBounds, "radioEmitterStatus")
                 .AddSmallButton(UIUtils.I18n("Radio.Emitter.Mode.WiredSource"), OnWiredSourceClicked, wiredButtonBounds)
-                .AddSmallButton(UIUtils.I18n("Radio.Emitter.Mode.Repeater"), OnRepeaterClicked, repeaterButtonBounds);
+                .AddSmallButton(UIUtils.I18n("Radio.Emitter.Mode.Repeater"), OnRepeaterClicked, repeaterButtonBounds)
+                .AddStaticText(BuildModeHintText(), CairoFont.WhiteSmallText(), modeHintBounds);
 
             if (showingRepeaterControls)
             {

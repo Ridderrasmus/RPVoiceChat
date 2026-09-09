@@ -69,7 +69,7 @@ namespace RPVoiceChat.Gui
 
         private void OnHudUpdate(string _, ref EnumHandling __, object ___)
         {
-            // Mute and minimal-HUD changes affect the composed images, not just visibility.
+            // Must rebuild when mute / minimal HUD change: UpdateDisplay alone would reopen a stale composer.
             bindToMainThread(SetupIcon)();
         }
 
