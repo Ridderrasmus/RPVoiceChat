@@ -130,9 +130,19 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 .Select(RotateLocalOffsetByBlockSide)
                 .ToArray();
 
-            var entries = GetConnections()
+            // Include the queried neighbour even if AddConnection order has not listed it yet,
+            // so peer mesh rebuilds never fall back to the mid-block default (visible "low" flicker).
+            var neighbourPositions = GetConnections()
                 .Select(c => c.GetOtherBlockPos(Pos))
                 .Where(p => p != null)
+                .ToList();
+
+            if (!neighbourPositions.Any(p => p.Equals(otherNodePos)))
+            {
+                neighbourPositions.Add(otherNodePos);
+            }
+
+            var entries = neighbourPositions
                 .Select(p => (
                     Pos: p,
                     LocalCurrent: new Vec3f(

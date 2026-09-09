@@ -28,6 +28,7 @@ namespace RPVoiceChat.Config
         public static int TelegraphMaxConnectionsPerNode => Config?.TelegraphMaxConnectionsPerNode ?? 4;
         public static int TelegraphMaxMessageLength => Config?.TelegraphMaxMessageLength ?? 100;
         public static int TelegraphMinDelayBetweenKeysMs => Config?.TelegraphMinDelayBetweenKeysMs ?? 200;
+        public static int TelegraphMorseKeyThresholdMs => Config?.TelegraphMorseKeyThresholdMs ?? 200;
         public static double BellRingCooldownSeconds => Config?.BellRingCooldownSeconds ?? 1.5;
         public static bool TelegraphGenuineMorseCharacters => Config?.TelegraphGenuineMorseCharacters ?? false;
         public static int TelegraphMessageDeletionDelaySeconds => Config?.TelegraphMessageDeletionDelaySeconds ?? 10;
@@ -121,6 +122,18 @@ namespace RPVoiceChat.Config
             {
                 Logger.server.Warning($"TelegraphMaxMessageLength ({TelegraphMaxMessageLength}) should be between 10 and 1000. Using default (100).");
                 Config.TelegraphMaxMessageLength = 100;
+            }
+
+            if (TelegraphMinDelayBetweenKeysMs < 0 || TelegraphMinDelayBetweenKeysMs > 2000)
+            {
+                Logger.server.Warning($"TelegraphMinDelayBetweenKeysMs ({TelegraphMinDelayBetweenKeysMs}) should be between 0 and 2000. Using default (200).");
+                Config.TelegraphMinDelayBetweenKeysMs = 200;
+            }
+
+            if (TelegraphMorseKeyThresholdMs < 50 || TelegraphMorseKeyThresholdMs > 1000)
+            {
+                Logger.server.Warning($"TelegraphMorseKeyThresholdMs ({TelegraphMorseKeyThresholdMs}) should be between 50 and 1000. Using default (200).");
+                Config.TelegraphMorseKeyThresholdMs = 200;
             }
 
             if (BellRingCooldownSeconds < 0.1 || BellRingCooldownSeconds > 10.0)

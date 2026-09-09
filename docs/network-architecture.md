@@ -155,12 +155,22 @@ sequenceDiagram
     Net->>Rx: OnReceivedSignal (client display + sound)
 ```
 
-1. **Client** sends `WireNetworkMessage` on channel `rpvc:wire-network` for each keypress (`BETelegraph.SendSignal`).
+1. **Client** sends `WireNetworkMessage` on channel `rpvc:wire-network` for each keyed **letter** (`BETelegraph.SendSignal`). The payload is always a **Latin** character (even in hardcore Morse input mode).
 2. **Server** resolves routing in `ApplyRoutingOnServer`:
    - `WireRouteMode.All` — every telegraph on the network
    - `WireRouteMode.NamedEndpoint` — `ResolveTelegraphByName(networkId, targetName)` → sets `TargetPos`
 3. **Relay** is hop-by-hop through **loaded** `BEWireNode` instances (with topology fallback for neighbour discovery).
 4. **Receiving telegraphs** update their display and play Morse audio client-side.
+
+### Soft vs hardcore keying (`rpvoicechat-server.json`)
+
+| Setting | Role |
+|---------|------|
+| `TelegraphGenuineMorseCharacters` | `false` (default): soft mode — type Latin letters. `true`: hardcore — display Morse and **press-and-hold** any key to send dots/dashes. |
+| `TelegraphMinDelayBetweenKeysMs` | Soft mode only: minimum delay between typed Latin characters (anti-spam). **Not used** when hardcore is enabled. |
+| `TelegraphMorseKeyThresholdMs` | Hardcore only: hold duration under this value = `.`, at/above = `-` (default `200`). Letter commit after ~3× this silence. |
+
+Hardcore decoding to Latin happens **on the sender** before `SendSignal`; receivers and printers keep the existing Latin-in / Morse-display pipeline.
 
 ### Endpoint identity
 

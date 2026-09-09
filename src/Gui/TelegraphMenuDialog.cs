@@ -3,6 +3,7 @@ using RPVoiceChat.GameContent.BlockEntity;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text;
 using RPVoiceChat.Util;
 using Vintagestory.API.Client;
 using Vintagestory.API.MathTools;
@@ -13,9 +14,19 @@ namespace RPVoiceChat.Gui
     {
         private BlockEntityTelegraph telegraphBlock;
 
-        // For anti-spam: time of last sending
+        // Soft Latin typing only — unused when TelegraphGenuineMorseCharacters (hardcore hold input).
         private long lastKeySentMs = 0;
-        private int MinDelayBetweenKeysMs => ServerConfigManager.TelegraphMinDelayBetweenKeysMs; // ms between two keystrokes max
+        private int MinDelayBetweenKeysMs => ServerConfigManager.TelegraphMinDelayBetweenKeysMs;
+
+        // Hardcore Morse keying (when TelegraphGenuineMorseCharacters is enabled)
+        private bool morseKeyHeld;
+        private int morseHeldKeyCode = -1;
+        private long morsePressStartMs;
+        private readonly StringBuilder pendingMorse = new StringBuilder();
+        private long lastMorseSymbolReleaseMs;
+        private int MorseKeyThresholdMs => ServerConfigManager.TelegraphMorseKeyThresholdMs;
+        private int MorseLetterGapMs => Math.Max(MorseKeyThresholdMs * 3, 300);
+        private bool UseHardcoreMorseInput => ServerConfigManager.TelegraphGenuineMorseCharacters;
 
         // Display fields for sent/received text
         private GuiElementDynamicText sentTextElem;
@@ -164,11 +175,35 @@ namespace RPVoiceChat.Gui
         {
             if (args.KeyCode == (int)GlKeys.Escape)
             {
+                ResetMorseKeyingState();
                 TryClose();
                 return;
             }
 
+            if (IsEndpointInputFocused())
+            {
+                base.OnKeyDown(args);
+                return;
+            }
+
+            if (UseHardcoreMorseInput)
+            {
+                BeginMorseKeyPress(args);
+                return;
+            }
+
             base.OnKeyDown(args);
+        }
+
+        public override void OnKeyUp(KeyEvent args)
+        {
+            if (UseHardcoreMorseInput && !IsEndpointInputFocused())
+            {
+                EndMorseKeyPress(args);
+                return;
+            }
+
+            base.OnKeyUp(args);
         }
 
         public override void OnKeyPress(KeyEvent args)
@@ -181,6 +216,12 @@ namespace RPVoiceChat.Gui
                 }
 
                 HandleEndpointInputKey(args);
+                return;
+            }
+
+            // Hardcore Morse: symbols come from hold duration (KeyDown/KeyUp), not typed Latin.
+            if (UseHardcoreMorseInput)
+            {
                 return;
             }
 
@@ -198,12 +239,24 @@ namespace RPVoiceChat.Gui
             }
         }
 
+        public override void OnGuiClosed()
+        {
+            ResetMorseKeyingState();
+            base.OnGuiClosed();
+        }
+
         public override bool CaptureAllInputs() => true;
         public override string ToggleKeyCombinationCode => null;
         
         public override void OnRenderGUI(float deltaTime)
         {
             base.OnRenderGUI(deltaTime);
+
+            if (UseHardcoreMorseInput && !morseKeyHeld)
+            {
+                TryFlushPendingMorseLetter();
+            }
+
             if (!telegraphBlock.IsManagedBySwitchboard())
             {
                 return;
@@ -222,6 +275,94 @@ namespace RPVoiceChat.Gui
                 TryClose();
                 return;
             }
+        }
+
+        private void BeginMorseKeyPress(KeyEvent args)
+        {
+            if (morseKeyHeld || args.KeyCode <= 0)
+            {
+                return;
+            }
+
+            // Modifier-only presses are not a telegraph key.
+            if (args.KeyCode == (int)GlKeys.ShiftLeft
+                || args.KeyCode == (int)GlKeys.ShiftRight
+                || args.KeyCode == (int)GlKeys.ControlLeft
+                || args.KeyCode == (int)GlKeys.ControlRight
+                || args.KeyCode == (int)GlKeys.AltLeft
+                || args.KeyCode == (int)GlKeys.AltRight
+                || args.KeyCode == (int)GlKeys.LWin
+                || args.KeyCode == (int)GlKeys.RWin)
+            {
+                return;
+            }
+
+            morseKeyHeld = true;
+            morseHeldKeyCode = args.KeyCode;
+            morsePressStartMs = capi.World.ElapsedMilliseconds;
+        }
+
+        private void EndMorseKeyPress(KeyEvent args)
+        {
+            if (!morseKeyHeld)
+            {
+                return;
+            }
+
+            if (morseHeldKeyCode >= 0 && args.KeyCode != morseHeldKeyCode)
+            {
+                return;
+            }
+
+            long nowMs = capi.World.ElapsedMilliseconds;
+            long heldMs = Math.Max(0, nowMs - morsePressStartMs);
+            morseKeyHeld = false;
+            morseHeldKeyCode = -1;
+
+            char symbol = heldMs < MorseKeyThresholdMs ? '.' : '-';
+            if (pendingMorse.Length >= 8)
+            {
+                pendingMorse.Clear();
+            }
+
+            pendingMorse.Append(symbol);
+            lastMorseSymbolReleaseMs = nowMs;
+            telegraphBlock.PlayMorseSymbol(symbol);
+        }
+
+        private void TryFlushPendingMorseLetter()
+        {
+            if (pendingMorse.Length == 0)
+            {
+                return;
+            }
+
+            long nowMs = capi.World.ElapsedMilliseconds;
+            if (nowMs - lastMorseSymbolReleaseMs < MorseLetterGapMs)
+            {
+                return;
+            }
+
+            string pattern = pendingMorse.ToString();
+            pendingMorse.Clear();
+
+            char decoded = BlockEntityTelegraph.ConvertMorseToKeyCode(pattern);
+            if (decoded == '\0')
+            {
+                return;
+            }
+
+            // Symbols already played while keying; skip letter replay to avoid blocking further input.
+            // Hardcore pacing uses MorseKeyThresholdMs / letter gap only — not TelegraphMinDelayBetweenKeysMs.
+            telegraphBlock.SendSignal(decoded, playLocalAudio: false);
+        }
+
+        private void ResetMorseKeyingState()
+        {
+            morseKeyHeld = false;
+            morseHeldKeyCode = -1;
+            pendingMorse.Clear();
+            lastMorseSymbolReleaseMs = 0;
         }
 
         public void RefreshRoutingControls()
