@@ -251,6 +251,21 @@ namespace RPVoiceChat.Gui
             RegisterTab(interfaceTab);
             RegisterTab(playerListTab);
             RegisterTab(advancedTab);
+            var groupsTab = new ConfigTab("VoiceGroups");
+            RegisterTab(groupsTab);
+            RegisterOption(new ConfigOption
+            {
+                Key = "voiceGroups",
+                Type = ElementType.Button,
+                Label = true,
+                Tooltip = true,
+                Tab = groupsTab,
+                ButtonAction = () =>
+                {
+                    TryClose();
+                    return guiManager.voiceGroupDialog.TryOpen();
+                }
+            });
 
             RegisterOption(new ConfigOption
             {

@@ -12,12 +12,17 @@ namespace RPVoiceChat.Gui
         public FirstLaunchDialog firstLaunchDialog { get; }
         public ModMenuDialog modMenuDialog { get; }
         public Announce announce { get; }
+        public VoiceGroupDialog voiceGroupDialog { get; }
+        private readonly VoiceGroupHud voiceGroupHud;
 
         public GuiManager(ICoreClientAPI capi, MicrophoneManager audioInputManager, AudioOutputManager audioOutputManager, ClientSettingsRepository settingsRepository)
         {
             this.audioInputManager = audioInputManager;
             audioWizardDialog = new AudioWizardDialog(capi, audioInputManager, audioOutputManager);
             firstLaunchDialog = new FirstLaunchDialog(capi, this);
+            voiceGroupDialog = new VoiceGroupDialog(capi, RPVoiceChatClient.VoiceGroupManagerInstance);
+            voiceGroupHud = new VoiceGroupHud(capi, RPVoiceChatClient.VoiceGroupManagerInstance, audioInputManager, audioOutputManager);
+            capi.Gui.RegisterDialog(voiceGroupHud);
             modMenuDialog = new ModMenuDialog(capi, audioInputManager, audioOutputManager, settingsRepository, this);
             capi.Gui.RegisterDialog(new SpeechIndicator(capi, audioInputManager));
             capi.Gui.RegisterDialog(new VoiceLevelIcon(capi, audioInputManager));
@@ -28,6 +33,8 @@ namespace RPVoiceChat.Gui
 
         public void Dispose()
         {
+            voiceGroupDialog?.Dispose();
+            voiceGroupHud?.Dispose();
             audioWizardDialog?.Dispose();
             firstLaunchDialog?.Dispose();
             modMenuDialog?.Dispose();

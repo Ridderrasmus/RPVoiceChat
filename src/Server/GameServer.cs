@@ -1,4 +1,4 @@
-﻿using RPVoiceChat.Config;
+using RPVoiceChat.Config;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Util;
 using System;
@@ -11,16 +11,18 @@ using Vintagestory.API.Server;
 
 namespace RPVoiceChat.Server
 {
-    public class GameServer : IDisposable
+    public partial class GameServer : IDisposable
     {
         private ICoreServerAPI api;
         private List<INetworkServer> _initialTransports;
         private List<INetworkServer> activeServers = new List<INetworkServer>();
         private IServerNetworkChannel handshakeChannel;
         private IServerNetworkChannel voiceBanChannel;
+        private IServerNetworkChannel voiceGroupChannel;
         private Dictionary<string, INetworkServer> serverByTransportID = new Dictionary<string, INetworkServer>();
         private ConnectionRequest connectionRequest;
         private VoiceBanManager voiceBanManager;
+        private VoiceGroupManager voiceGroupManager;
 
         // Stored players and their associated listeners
         private long listenerUpdateTickListener = 0;
@@ -49,6 +51,7 @@ namespace RPVoiceChat.Server
                 .Where(expander => expander != null)
                 .ToList() ?? new List<IVoiceRecipientExpander>();
             voiceBanManager = new VoiceBanManager(sapi);
+            voiceGroupManager = new VoiceGroupManager(sapi);
             handshakeChannel = sapi.Network
                 .RegisterChannel("RPVCHandshake")
                 .RegisterMessageType<ConnectionRequest>()
@@ -57,11 +60,19 @@ namespace RPVoiceChat.Server
             voiceBanChannel = sapi.Network
                 .RegisterChannel("RPVoiceBan")
                 .RegisterMessageType<VoiceBanStatusPacket>();
+            voiceGroupChannel = sapi.Network
+                .RegisterChannel("RPVoiceGroups")
+                .RegisterMessageType<VoiceGroupStatePacket>()
+                .RegisterMessageType<VoiceGroupActionPacket>()
+                .RegisterMessageType<VoiceGroupUiStatePacket>()
+                .RegisterMessageType<VoiceGroupActionResultPacket>()
+                .SetMessageHandler<VoiceGroupActionPacket>(OnVoiceGroupAction);
             listenerUpdateTickListener = sapi.Event.RegisterGameTickListener(RebuildVoiceRoutingSnapshot, 500);
         }
 
         private void RebuildVoiceRoutingSnapshot(float gameTick)
         {
+            if (voiceGroupManager.ExpireInvitations()) NotifyAllPlayersVoiceGroupsUpdated();
             Grid newGrid = Grid.Build(api, ServerConfigManager.GridCellSizeBlocks);
             var newListeners = new ConcurrentDictionary<string, HashSet<IPlayer>>();
 
@@ -143,6 +154,8 @@ namespace RPVoiceChat.Server
             InitHandshake(player);
             // Send the ban status of all banned players to the new player
             SendAllBannedPlayersStatus(player);
+            SendVoiceGroupsStateToPlayer(player);
+            NotifyVoiceGroupUiPlayers();
             // Notify all other players if this player is banned
             if (voiceBanManager.IsPlayerBanned(player.PlayerUID))
             {
@@ -152,6 +165,8 @@ namespace RPVoiceChat.Server
 
         public void PlayerLeft(IServerPlayer player)
         {
+            lastGroupRequest.Remove(player.PlayerUID);
+            api.Event.EnqueueMainThreadTask(NotifyVoiceGroupUiPlayers, "rpvoicechat:groupPlayerLeft");
             devicesVoiceFeedbackByPlayer.TryRemove(player.PlayerUID, out _);
             foreach (var server in activeServers)
             {
@@ -184,11 +199,46 @@ namespace RPVoiceChat.Server
                 return;
             }
 
-            if (!playerListeners.TryGetValue(packet.PlayerId, out var recipients)) return;
+            var recipientUids = new HashSet<string>();
 
-            foreach (var recipient in recipients)
+            if (playerListeners.TryGetValue(packet.PlayerId, out var listeners))
             {
-                SendPacket(packet, recipient.PlayerUID);
+                foreach (var recipient in listeners)
+                {
+                    recipientUids.Add(recipient.PlayerUID);
+                }
+            }
+
+            if (IsVoiceGroupsEnabled())
+            {
+                bool restrictSpectatorVoice = !WorldConfig.GetBool("others-hear-spectators", true)
+                    && api.World.PlayerByUid(packet.PlayerId)?.WorldData.CurrentGameMode == EnumGameMode.Spectator;
+                var groupMembers = voiceGroupManager.GetGroupMembersForPlayer(packet.PlayerId);
+                foreach (var memberUid in groupMembers)
+                {
+                    if (memberUid == packet.PlayerId)
+                    {
+                        continue;
+                    }
+
+                    var memberPlayer = api.World.PlayerByUid(memberUid) as IServerPlayer;
+                    if (memberPlayer == null || memberPlayer.ConnectionState != EnumClientState.Playing)
+                    {
+                        continue;
+                    }
+
+                    if (restrictSpectatorVoice && memberPlayer.WorldData.CurrentGameMode != EnumGameMode.Spectator)
+                    {
+                        continue;
+                    }
+
+                    recipientUids.Add(memberUid);
+                }
+            }
+
+            foreach (var recipientUid in recipientUids)
+            {
+                SendPacket(packet, recipientUid);
             }
         }
 
@@ -418,9 +468,48 @@ namespace RPVoiceChat.Server
             }
         }
 
+        public void NotifyAllPlayersVoiceGroupsUpdated()
+        {
+            NotifyVoiceGroupUiPlayers();
+            var packet = IsVoiceGroupsEnabled()
+                ? new VoiceGroupStatePacket(voiceGroupManager.BuildStateEntries())
+                : new VoiceGroupStatePacket(new List<VoiceGroupStateEntry>());
+
+            foreach (IServerPlayer player in api.World.AllOnlinePlayers)
+            {
+                if (player.ConnectionState == EnumClientState.Playing)
+                {
+                    voiceGroupChannel.SendPacket(packet, player);
+                }
+            }
+        }
+
+        private void SendVoiceGroupsStateToPlayer(IServerPlayer player)
+        {
+            if (player.ConnectionState != EnumClientState.Playing)
+            {
+                return;
+            }
+
+            var packet = IsVoiceGroupsEnabled()
+                ? new VoiceGroupStatePacket(voiceGroupManager.BuildStateEntries())
+                : new VoiceGroupStatePacket(new List<VoiceGroupStateEntry>());
+            voiceGroupChannel.SendPacket(packet, player);
+        }
+
+        private bool IsVoiceGroupsEnabled()
+        {
+            return ServerConfigManager.VoiceGroupsEnabled;
+        }
+
         public VoiceBanManager GetVoiceBanManager()
         {
             return voiceBanManager;
+        }
+
+        public VoiceGroupManager GetVoiceGroupManager()
+        {
+            return voiceGroupManager;
         }
 
         /// <summary>
@@ -555,6 +644,8 @@ namespace RPVoiceChat.Server
             {
                 foreach (var server in activeServers)
                     server.Dispose();
+
+                voiceGroupManager?.Dispose();
             }
             catch (Exception e)
             {
@@ -577,4 +668,3 @@ namespace RPVoiceChat.Server
         }
     }
 }
-

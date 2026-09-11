@@ -108,6 +108,7 @@ namespace RPVoiceChat.Audio
             int frequency = packet.Frequency;
             int channels = AudioUtils.ChannelsPerFormat(packet.Format);
             AudioData audioData = AudioData.FromPacket(packet);
+            audioData.forceFlatPlayback = ShouldForceFlatPlayback(packet);
 
             // The server has already calculated the effective range and sent packets only to players within range
             // Here we just need to update the voice level for audio quality
@@ -115,10 +116,38 @@ namespace RPVoiceChat.Audio
             if (source.voiceLevel != packet.VoiceLevel)
                 source.UpdateVoiceLevel(packet.VoiceLevel);
 
+            source.SetForceFlatPlayback(audioData.forceFlatPlayback);
             source.PrepareForPacket(audioData);
             source.UpdatePlayer();
             source.UpdateAudioFormat(codec, frequency, channels);
             source.EnqueueAudio(audioData, packet.SequenceNumber);
+        }
+
+        private bool ShouldForceFlatPlayback(AudioPacket packet)
+        {
+            var listenerPlayer = capi.World.Player;
+            if (listenerPlayer?.Entity?.Pos == null)
+            {
+                return false;
+            }
+
+            var speakerPlayer = capi.World.PlayerByUid(packet.PlayerId);
+            if (speakerPlayer?.Entity?.Pos == null)
+            {
+                return true;
+            }
+
+            int effectiveRange = packet.TransmissionRangeBlocks > 0
+                ? packet.TransmissionRangeBlocks
+                : WorldConfig.GetInt(packet.VoiceLevel);
+
+            if (effectiveRange <= 0)
+            {
+                return true;
+            }
+
+            double distance = speakerPlayer.Entity.Pos.DistanceTo(listenerPlayer.Entity.Pos);
+            return distance > effectiveRange;
         }
 
         public void HandleLoopback(AudioPacket packet)
@@ -229,10 +258,10 @@ namespace RPVoiceChat.Audio
             if (playerSources.TryGetValue(playerId, out var source))
                 return source.IsPlaying;
 
-            if (capi.World.Player.PlayerUID == playerId)
-                return localPlayerAudioSource.IsPlaying;
+            if (capi.World.Player?.PlayerUID == playerId)
+                return localPlayerAudioSource?.IsPlaying == true;
 
-            Logger.client.Warning($"Could not find player audio source for {playerId}, assuming player isn't talking");
+            // Group members can be silent, offline, or outside entity range; no source is normal.
             return false;
         }
 
