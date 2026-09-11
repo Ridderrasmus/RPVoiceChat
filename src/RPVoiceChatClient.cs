@@ -23,6 +23,7 @@ namespace RPVoiceChat
         private PlayerNetworkClient client;
         private GuiManager guiManager;
         private VoiceBanClientManager voiceBanManager;
+        private VoiceGroupClientManager voiceGroupManager;
         private bool isReady = false;
         private bool mutePressed = false;
         private bool voiceMenuPressed = false;
@@ -31,6 +32,7 @@ namespace RPVoiceChat
         public static AudioOutputManager AudioOutputManagerInstance { get; private set; }
         public static MicrophoneManager MicrophoneManagerInstance { get; private set; }
         public static VoiceBanClientManager VoiceBanManagerInstance { get; private set; }
+        public static VoiceGroupClientManager VoiceGroupManagerInstance { get; private set; }
 
         public override bool ShouldLoad(EnumAppSide forSide)
         {
@@ -87,8 +89,18 @@ namespace RPVoiceChat
             voiceBanManager = new VoiceBanClientManager(capi);
             VoiceBanManagerInstance = voiceBanManager;
 
+            // Initialize voice group manager
+            voiceGroupManager = new VoiceGroupClientManager(capi);
+            VoiceGroupManagerInstance = voiceGroupManager;
+
             // Initialize gui
             guiManager = new GuiManager(capi, microphoneManager, audioOutputManager, clientSettingsRepository);
+            capi.Input.RegisterHotKey("voicechatGroups", UIUtils.I18n("Hotkey.VoiceGroups"), GlKeys.G, HotkeyType.GUIOrOtherControls, ctrlPressed: true);
+            capi.Input.SetHotKeyHandler("voicechatGroups", _ =>
+            {
+                if (guiManager.voiceGroupDialog.IsOpened()) return guiManager.voiceGroupDialog.TryClose();
+                return guiManager.voiceGroupDialog.TryOpen();
+            });
 
             // Set up keybinds
             capi.Input.RegisterHotKey("voicechatMenu", UIUtils.I18n("Hotkey.ModMenu"), GlKeys.Semicolon, HotkeyType.GUIOrOtherControls);
@@ -232,10 +244,12 @@ namespace RPVoiceChat
             {
                 ModConfig.SaveClient(capi);
                 PlayerNameTagRenderer.CleanupAllNametagCache();
+                guiManager?.Dispose();
+                voiceGroupManager?.Dispose();
+                VoiceGroupManagerInstance = null;
                 microphoneManager?.Dispose();
                 audioOutputManager?.Dispose();
                 client?.Dispose();
-                guiManager?.Dispose();
                 clientSettingsRepository?.Dispose();
             }
             catch (Exception e)
