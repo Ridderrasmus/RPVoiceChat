@@ -1,3 +1,5 @@
+using RPVoiceChat.Audio.Effects;
+using System.Collections.Generic;
 using RPVoiceChat.Client;
 using RPVoiceChat.Config;
 using RPVoiceChat.DB;
@@ -47,6 +49,8 @@ namespace RPVoiceChat.Audio
         private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
         public bool UsesExplicitDeliveryMetadata { get; set; }
         private PlayerAudioSource localPlayerAudioSource;
+        private volatile Dictionary<string, (float Drunk, float Temporal)> effectStates = new();
+        private long effectStateTick;
         private ClientSettingsRepository clientSettingsRepo;
 
         public AudioOutputManager(ICoreClientAPI api, ClientSettingsRepository settingsRepository)
@@ -62,6 +66,8 @@ namespace RPVoiceChat.Audio
             capi.Event.PlayerEntitySpawn += PlayerSpawned;
             capi.Event.PlayerEntityDespawn += PlayerDespawned;
             ClientLoaded();
+            UpdateEffectStates(0);
+            effectStateTick = capi.Event.RegisterGameTickListener(UpdateEffectStates, 250);
         }
 
         // Called when the client receives an audio packet supplying the audio packet
@@ -116,6 +122,11 @@ namespace RPVoiceChat.Audio
                     || (listener != null && speaker.DistanceTo(listener) > audioData.effectiveRange);
             }
 
+            if (!packet.HasVoiceEffectState && effectStates.TryGetValue(packet.PlayerId, out var state))
+            {
+                audioData.drunkStrength = state.Drunk;
+                audioData.temporalStrength = state.Temporal;
+            }
             // Metadata is applied in playback order, not network arrival order.
             source.EnqueueAudio(audioData, packet.SequenceNumber);
         }
@@ -126,6 +137,11 @@ namespace RPVoiceChat.Audio
 
             var audio = AudioData.FromPacket(packet);
             audio.forceFlatPlayback = true;
+            if (effectStates.TryGetValue(packet.PlayerId, out var state))
+            {
+                audio.drunkStrength = state.Drunk;
+                audio.temporalStrength = state.Temporal;
+            }
             localPlayerAudioSource?.EnqueueAudio(audio, packet.SequenceNumber);
         }
 
@@ -246,8 +262,22 @@ namespace RPVoiceChat.Audio
             return true;
         }
 
+        private void UpdateEffectStates(float dt)
+        {
+            var states = new Dictionary<string, (float, float)>();
+            bool temporalEnabled = capi.World.Config.GetBool("temporalStability", true);
+            foreach (var player in capi.World.AllOnlinePlayers)
+            {
+                var attributes = player.Entity?.WatchedAttributes;
+                states[player.PlayerUID] = (VoiceEffectStrength.Drunk(attributes?.GetFloat("intoxication", 0) ?? 0),
+                    VoiceEffectStrength.Temporal(attributes?.GetDouble("temporalStability", 1) ?? 1, temporalEnabled));
+            }
+            effectStates = states;
+        }
+
         public void Dispose()
         {
+            capi.Event.UnregisterGameTickListener(effectStateTick);
             try
             {
                 PlayerListener.Dispose();

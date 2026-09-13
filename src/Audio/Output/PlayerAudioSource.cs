@@ -49,8 +49,7 @@ namespace RPVoiceChat.Audio
         private IAudioCodec codec;
         private LowpassFilter lowpassFilter;
         private ReverbEffect reverbEffect;
-        private IntoxicatedEffect intoxicatedEffect;
-        private UnstableEffect unstableEffect;
+        private readonly VoicePcmProcessorChain voiceProcessors;
         private ICoreClientAPI capi;
         private IPlayer player;
         private ClientSettingsRepository clientSettingsRepo;
@@ -62,7 +61,7 @@ namespace RPVoiceChat.Audio
         private DateTime? lastSpeakerUpdate;
         private AudioData currentAudio; // Store current audio data for distance factor calculation
         private bool forceFlatPlayback;
-        
+
         private int? _lastQueuedNametagRenderRange;
 
         // Performance optimization: throttle expensive calculations
@@ -89,6 +88,7 @@ namespace RPVoiceChat.Audio
             string syntheticSourceId)
         {
             this.player = player;
+            voiceProcessors = new VoicePcmProcessorChain(syntheticSourceId ?? player.PlayerUID);
             this.capi = capi;
             this.clientSettingsRepo = clientSettingsRepo;
             IsSyntheticSource = !string.IsNullOrWhiteSpace(syntheticSourceId);
@@ -175,9 +175,9 @@ namespace RPVoiceChat.Audio
             Vec3d effectiveSpeakerPos = sourceOverride ?? new Vec3d(speakerPos.X, speakerPos.Y, speakerPos.Z);
 
             DateTime now = DateTime.Now;
-            bool shouldDoFullUpdate = lastFullUpdate == null || 
+            bool shouldDoFullUpdate = lastFullUpdate == null ||
                 (now - lastFullUpdate.Value).TotalMilliseconds >= FullUpdateIntervalMs;
-            bool shouldUpdateWallThickness = lastWallThicknessUpdate == null || 
+            bool shouldUpdateWallThickness = lastWallThicknessUpdate == null ||
                 (now - lastWallThicknessUpdate.Value).TotalMilliseconds >= WallThicknessUpdateIntervalMs;
 
             bool mufflingEnabled = ModConfig.ClientConfig.Muffling;
@@ -267,28 +267,6 @@ namespace RPVoiceChat.Audio
             {
                 reverbEffect = reverbEffect ?? new ReverbEffect(source);
                 reverbEffect.Apply();
-            }
-
-            // DEACTIVATED : TO BE IMPLEMENTED
-            // If the player has a temporal stability of less than 0.5, then the player's voice should be distorted
-            // Values are temporary currently
-            unstableEffect?.Clear();
-            if (toBeImplementedToggle && player.Entity.WatchedAttributes.GetDouble("temporalStability") < 0.5)
-            {
-                unstableEffect = unstableEffect ?? new UnstableEffect(source);
-                unstableEffect.Apply();
-            }
-
-            // DEACTIVATED : TO BE IMPLEMENTED
-            // If the player is drunk, then the player's voice should be affected
-            // Values are temporary currently
-            intoxicatedEffect?.Clear();
-            float drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
-            if (toBeImplementedToggle && drunkness > 0)
-            {
-                intoxicatedEffect = intoxicatedEffect ?? new IntoxicatedEffect(source);
-                intoxicatedEffect.SetToxicRate(drunkness);
-                intoxicatedEffect.Apply();
             }
 
             float gain = GetFinalGain() * GetDistanceAttenuationGain(effectiveSpeakerPos, listenerPos);
@@ -607,7 +585,7 @@ namespace RPVoiceChat.Audio
                 {
                     if (IsDisposed) return;
                     ready = voiceBuffer.TryTake(IsPlaying, out audio, out waitMs, out bool reset);
-                    if (reset) { buffer.Reset(); codec = null; fadeVoiceOnset = true; }
+                    if (reset) { buffer.Reset(); codec = null; fadeVoiceOnset = true; voiceProcessors.Reset(); }
                 }
                 if (!ready)
                 {
@@ -658,6 +636,8 @@ namespace RPVoiceChat.Audio
 
             if (!IsSyntheticSource && audio.data.Length > audio.frequency * AudioUtils.ChannelsPerFormat(audio.format) * 2 / 5)
                 return false;
+            if (!IsSyntheticSource)
+                voiceProcessors.Process(audio, ModConfig.ClientConfig.DrunkVoiceEffects, ModConfig.ClientConfig.TemporalVoiceEffects);
             float finalGain = GetFinalGain();
             PcmUtils.ApplyGainWithSoftClipping(ref audio.data, audio.format, finalGain);
 
@@ -776,14 +756,20 @@ namespace RPVoiceChat.Audio
 
         public void StopPlaying()
         {
-            if (source <= 0 || IsDisposed) return;
-            OALW.SourceStop(source);
-            OnSourceStop();
+            lock (playbackLock)
+            {
+                if (IsDisposed) return;
+
+                if (source <= 0) return;
+                OALW.SourceStop(source);
+                OnSourceStop();
+            }
         }
 
         private void OnSourceStop()
         {
             if (IsSyntheticSource) return;
+            if (!dequeueTaskRunning && !voiceBuffer.HasPending) voiceProcessors.Reset();
             PlayerNameTagRenderer.UpdatePlayerNameTag(player, false);
         }
 
@@ -794,9 +780,12 @@ namespace RPVoiceChat.Audio
                 if (IsDisposed) return;
                 IsDisposed = true;
                 voiceBuffer.Clear();
+                voiceProcessors.Reset();
                 lock (ordering_queue_lock) orderingQueue.Clear();
                 buffer.OnEmptyingQueue -= OnSourceStop;
-                currentSoundEffect?.Clear();
+                currentSoundEffect?.Dispose();
+                reverbEffect?.Dispose();
+                lowpassFilter?.Dispose();
                 buffer?.Dispose();
                 if (source > 0) OALW.DeleteSource(source);
                 source = 0;
@@ -805,29 +794,39 @@ namespace RPVoiceChat.Audio
 
         public void SetSoundEffect(string effectName)
         {
-            if (string.IsNullOrWhiteSpace(effectName) || currentEffectName == effectName)
-                return;
-
-            // Check if source is still valid before creating effects
-            if (source <= 0)
+            lock (playbackLock)
             {
-                Logger.client.Warning("Cannot apply sound effect: source is invalid");
-                return;
+                if (IsDisposed) return;
+
+                if (string.IsNullOrWhiteSpace(effectName) || currentEffectName == effectName)
+                    return;
+
+                // Check if source is still valid before creating effects
+                if (source <= 0)
+                {
+                    Logger.client.Warning("Cannot apply sound effect: source is invalid");
+                    return;
+                }
+
+                currentSoundEffect?.Dispose();
+
+                currentSoundEffect = SoundEffect.Create(effectName, source);
+                currentSoundEffect?.Apply();
+
+                currentEffectName = effectName;
             }
-
-            currentSoundEffect?.Clear();
-
-            currentSoundEffect = SoundEffect.Create(effectName, source);
-            currentSoundEffect?.Apply();
-
-            currentEffectName = effectName;
         }
 
         public void ClearSoundEffect()
         {
-            currentSoundEffect?.Clear();
-            currentSoundEffect = null;
-            currentEffectName = null;
+            lock (playbackLock)
+            {
+                if (IsDisposed) return;
+
+                currentSoundEffect?.Dispose();
+                currentSoundEffect = null;
+                currentEffectName = null;
+            }
         }
     }
 }

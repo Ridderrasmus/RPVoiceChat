@@ -150,6 +150,10 @@ namespace RPVoiceChat.Server
         {
             if (packet == null || string.IsNullOrEmpty(packet.PlayerId) || !timedVoiceClients.ContainsKey(packet.PlayerId)) return;
             packet.GroupDelivery = false;
+            if (!routingSnapshot.Grid.TryGetPlayer(packet.PlayerId, out var effectState)) return;
+            packet.DrunkStrength = effectState.DrunkStrength;
+            packet.TemporalStrength = effectState.TemporalStrength;
+            packet.HasVoiceEffectState = true;
             // Check if the player is banned - don't send their audio to other players
             if (voiceBanManager.IsPlayerBanned(packet.PlayerId))
             {
@@ -295,6 +299,9 @@ namespace RPVoiceChat.Server
                 CaptureSampleTime = src.CaptureSampleTime,
                 SampleCount = src.SampleCount,
                 CaptureSession = src.CaptureSession,
+                DrunkStrength = src.DrunkStrength,
+                TemporalStrength = src.TemporalStrength,
+                HasVoiceEffectState = src.HasVoiceEffectState,
                 GroupDelivery = src.GroupDelivery,
                 SourceDimension = src.SourceDimension,
                 Codec = src.Codec,

@@ -33,6 +33,10 @@ namespace RPVoiceChat.Networking
         [ProtoMember(123)] public bool GroupDelivery { get; set; }
         [ProtoMember(124)] public int SourceDimension { get; set; }
 
+        [ProtoMember(125)] public float DrunkStrength { get; set; }
+        [ProtoMember(126)] public float TemporalStrength { get; set; }
+        [ProtoMember(127)] public bool HasVoiceEffectState { get; set; }
+
         public AudioPacket() { }
 
         public AudioPacket(string playerId, AudioData audioData, long sequenceNumber)

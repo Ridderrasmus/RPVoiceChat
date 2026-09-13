@@ -430,6 +430,23 @@ namespace RPVoiceChat.Gui
                 ToggleAction = OnToggleMuffling
             });
 
+            foreach (string key in new[] { "drunkVoiceEffects", "temporalVoiceEffects" })
+            {
+                bool drunk = key == "drunkVoiceEffects";
+                RegisterOption(new ConfigOption
+                {
+                    Key = key, Type = ElementType.Dropdown, Label = true, Tooltip = true, Tab = effectsTab,
+                    DropdownValues = new[] { "Off", "Reduced", "Full" },
+                    DropdownNames = new[] { UIUtils.I18n("Gui.ModMenu.effectMode.Off"), UIUtils.I18n("Gui.ModMenu.effectMode.Reduced"), UIUtils.I18n("Gui.ModMenu.effectMode.Full") },
+                    DropdownSelect = (value, selected) =>
+                    {
+                        if (!Enum.TryParse<VoiceEffectMode>(value, out var mode)) return;
+                        if (drunk) ModConfig.ClientConfig.DrunkVoiceEffects = mode;
+                        else ModConfig.ClientConfig.TemporalVoiceEffects = mode;
+                    }
+                });
+            }
+
             RegisterOption(new ConfigOption
             {
                 Enabled = audioInputManager.IsDenoisingAvailable,
@@ -524,6 +541,8 @@ namespace RPVoiceChat.Gui
             SetValue("toggleHUD", ModConfig.ClientConfig.ShowHud);
             SetValue("minimalHUD", ModConfig.ClientConfig.IsMinimalHud);
             SetValue("toggleMuffling", ModConfig.ClientConfig.Muffling);
+            SetValue("drunkVoiceEffects", ModConfig.ClientConfig.DrunkVoiceEffects.ToString());
+            SetValue("temporalVoiceEffects", ModConfig.ClientConfig.TemporalVoiceEffects.ToString());
             SetValue("toggleDenoising", ModConfig.ClientConfig.Denoising);
             SetValue("denoisingSensitivity", new dynamic[] { denoisingSensitivity, 0, 100, 1, "%" });
             SetValue("denoisingStrength", new dynamic[] { denoisingStrength, 0, 100, 1, "%" });
