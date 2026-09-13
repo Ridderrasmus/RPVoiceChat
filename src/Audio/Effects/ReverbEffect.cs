@@ -8,8 +8,8 @@ namespace RPVoiceChat.Audio.Effects
 
         protected override int GenerateEffect()
         {
-            effect = ALC.EFX.GenEffect();
-            slot = ALC.EFX.GenAuxiliaryEffectSlot();
+            effect = AllocateEffect();
+            slot = AllocateSlot();
 
             ALC.EFX.Effect(effect, EffectInteger.EffectType, (int)EffectType.Reverb);
             ALC.EFX.Effect(effect, EffectFloat.ReverbDecayTime, 3.0f);

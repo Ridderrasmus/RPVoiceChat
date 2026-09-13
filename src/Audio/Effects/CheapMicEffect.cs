@@ -11,8 +11,8 @@ namespace RPVoiceChat.Audio.Effects
         protected override int GenerateEffect()
         {
             // Create reverb effect
-            effect = ALC.EFX.GenEffect();
-            slot = ALC.EFX.GenAuxiliaryEffectSlot();
+            effect = AllocateEffect();
+            slot = AllocateSlot();
 
             ALC.EFX.Effect(effect, EffectInteger.EffectType, (int)EffectType.Reverb);
 
@@ -27,7 +27,7 @@ namespace RPVoiceChat.Audio.Effects
 
             ALC.EFX.AuxiliaryEffectSlot(slot, EffectSlotInteger.Effect, effect);
 
-            lowpassFilter = ALC.EFX.GenFilter();
+            lowpassFilter = AllocateFilter();
             ALC.EFX.Filter(lowpassFilter, FilterInteger.FilterType, (int)FilterType.Lowpass);
 
             ALC.EFX.Filter(lowpassFilter, FilterFloat.LowpassGain, 0.6f);  
@@ -39,6 +39,7 @@ namespace RPVoiceChat.Audio.Effects
         public override void Apply()
         {
             base.Apply();
+            if (!IsEnabled) return;
 
             ALC.EFX.Source(source, EFXSourceInteger3.AuxiliarySendFilter, slot, 0, 0);
 
@@ -47,15 +48,20 @@ namespace RPVoiceChat.Audio.Effects
 
         public override void Clear()
         {
+            if (!IsEnabled) return;
             base.Clear();
 
             if (lowpassFilter != 0)
             {
                 ALC.EFX.Source(source, EFXSourceInteger.DirectFilter, 0);
 
-                ALC.EFX.DeleteFilter(lowpassFilter);
-                lowpassFilter = 0;
             }
+        }
+
+        protected override void ReleaseFilters()
+        {
+            if (lowpassFilter != 0) ALC.EFX.DeleteFilter(lowpassFilter);
+            lowpassFilter = 0;
         }
     }
 }
