@@ -34,10 +34,12 @@ namespace RPVoiceChat.Audio
         private int source;
         public int SourceId => source;
         private CircularAudioBuffer buffer;
+        private readonly VoicePlayoutBuffer voiceBuffer = new();
+        private readonly object playbackLock = new();
         private SortedList<long, AudioData> orderingQueue = new SortedList<long, AudioData>();
         private object ordering_queue_lock = new object();
         private object dequeue_audio_lock = new object();
-        private int orderingDelay = 50; // Reduced from 100ms to 50ms for lower latency and fewer async tasks
+        private bool fadeVoiceOnset;
         private bool syntheticPlaybackPrimed;
         private long lastAudioSequenceNumber = -1;
         private bool dequeueTaskRunning = false; // Prevent multiple concurrent dequeue tasks
@@ -91,7 +93,6 @@ namespace RPVoiceChat.Audio
             this.clientSettingsRepo = clientSettingsRepo;
             IsSyntheticSource = !string.IsNullOrWhiteSpace(syntheticSourceId);
             // Voice: low latency. Program streams use an explicit prime buffer in DequeueAudio.
-            orderingDelay = IsSyntheticSource ? SyntheticPrimeTimeoutMs : 50;
 
             lastSpeakerCoords = player.Entity?.Pos?.XYZFloat;
             lastSpeakerUpdate = DateTime.Now;
@@ -156,9 +157,15 @@ namespace RPVoiceChat.Audio
             if (listenerPos == null)
                 return;
 
-            if (forceFlatPlayback || currentAudio?.forceFlatPlayback == true || speakerPos == null)
+            if (forceFlatPlayback || currentAudio?.forceFlatPlayback == true)
             {
                 ApplyFlatPlayback(GetFinalGain());
+                return;
+            }
+
+            if (speakerPos == null && currentAudio?.sourcePosOverride == null)
+            {
+                ApplyFlatPlayback(0f);
                 return;
             }
 
@@ -377,7 +384,7 @@ namespace RPVoiceChat.Audio
         /// </summary>
         private float GetDistanceAttenuationGain(Vec3d speakerPos, EntityPos listenerPos)
         {
-            if (currentAudio?.isGlobalBroadcast == true || currentAudio?.ignoreDistanceReduction == true)
+            if (currentAudio?.isGlobalBroadcast == true)
             {
                 return 1f;
             }
@@ -394,10 +401,10 @@ namespace RPVoiceChat.Audio
             float distance = (float)speakerPos.DistanceTo(listenerPos.XYZ);
             float t = GameMath.Clamp(distance / maxHearingDistance, 0f, 1f);
 
-            // Gradual from the first step away; ~6% remaining at max hearing distance.
-            const float edgeGain = 0.06f;
-            float shaped = (float)Math.Pow(1.0 - t, 1.35);
-            return edgeGain + (1f - edgeGain) * shaped;
+            if (currentAudio != null && listenerPos.Dimension != currentAudio.sourceDimension) return 0f;
+            if (distance >= maxHearingDistance) return 0f;
+            if (currentAudio?.ignoreDistanceReduction == true) return 1f;
+            return (float)Math.Pow(1.0 - t, 1.35);
         }
 
         private static bool IsTalkieRfAtListener(Vec3d sourceOverride, EntityPos listenerPos)
@@ -443,6 +450,13 @@ namespace RPVoiceChat.Audio
 
         public void EnqueueAudio(AudioData audio, long sequenceNumber)
         {
+            if (IsDisposed) return;
+            if (!IsSyntheticSource)
+            {
+                voiceBuffer.Enqueue(audio, sequenceNumber);
+                DequeueAudio();
+                return;
+            }
             lock (ordering_queue_lock)
             {
                 if (orderingQueue.ContainsKey(sequenceNumber)) return;
@@ -488,7 +502,7 @@ namespace RPVoiceChat.Audio
         {
             lock (dequeue_audio_lock)
             {
-                if (dequeueTaskRunning) return;
+                if (IsDisposed || dequeueTaskRunning) return;
                 dequeueTaskRunning = true;
             }
 
@@ -505,6 +519,7 @@ namespace RPVoiceChat.Audio
             }
             catch (Exception e)
             {
+                voiceBuffer.Clear();
                 Logger.client.Warning($"Error in DequeueAudio: {e.Message}");
             }
             finally
@@ -513,6 +528,8 @@ namespace RPVoiceChat.Audio
                 {
                     dequeueTaskRunning = false;
                 }
+                // Close the enqueue/worker-exit race without waiting for the end-of-playback poll.
+                if (!IsDisposed && !IsSyntheticSource && voiceBuffer.HasPending) DequeueAudio();
             }
         }
 
@@ -558,54 +575,75 @@ namespace RPVoiceChat.Audio
                     orderingQueue.RemoveAt(0);
                 }
 
-                if (!TryPreparePcm(ref audio))
+                lock (playbackLock)
                 {
-                    continue;
+                    if (IsDisposed) return;
+                    if (!TryPreparePcm(ref audio)) continue;
                 }
-
-                while (!buffer.TryQueueAudio(audio.data, audio.format, audio.frequency))
+                while (!IsDisposed)
                 {
+                    lock (playbackLock)
+                    {
+                        if (IsDisposed) return;
+                        if (buffer.TryQueueAudio(audio.data, audio.format, audio.frequency))
+                        {
+                            EnsurePlaying();
+                            break;
+                        }
+                    }
                     await Task.Delay(5);
                 }
-
-                EnsurePlaying();
             }
         }
 
         private async Task DrainVoiceAudioAsync()
         {
-            while (true)
+            while (!IsDisposed)
             {
-                await Task.Delay(orderingDelay);
-
                 AudioData audio;
-                lock (ordering_queue_lock)
+                int waitMs;
+                bool ready;
+                lock (playbackLock)
                 {
-                    if (orderingQueue.Count == 0)
-                    {
-                        SchedulePlaybackEndCheck();
-                        return;
-                    }
-
-                    lastAudioSequenceNumber = orderingQueue.Keys[0];
-                    audio = orderingQueue[lastAudioSequenceNumber];
-                    orderingQueue.RemoveAt(0);
+                    if (IsDisposed) return;
+                    ready = voiceBuffer.TryTake(IsPlaying, out audio, out waitMs, out bool reset);
+                    if (reset) { buffer.Reset(); codec = null; fadeVoiceOnset = true; }
                 }
-
-                if (!TryPreparePcm(ref audio))
+                if (!ready)
                 {
+                    if (waitMs == 0) { SchedulePlaybackEndCheck(); return; }
+                    await Task.Delay(waitMs);
                     continue;
                 }
-
-                buffer.QueueAudio(audio.data, audio.format, audio.frequency);
-                EnsurePlaying();
+                lock (playbackLock)
+                {
+                    if (IsDisposed) return;
+                    if (!TryPreparePcm(ref audio)) continue;
+                }
+                long deadline = Environment.TickCount64 + 100;
+                while (!IsDisposed && Environment.TickCount64 < deadline)
+                {
+                    lock (playbackLock)
+                    {
+                        if (IsDisposed) return;
+                        if (buffer.TryQueueAudio(audio.data, audio.format, audio.frequency, 120))
+                        {
+                            EnsurePlaying();
+                            break;
+                        }
+                    }
+                    await Task.Delay(5);
+                }
             }
         }
 
         private bool TryPreparePcm(ref AudioData audio)
         {
             currentAudio = audio;
+            forceFlatPlayback = audio.forceFlatPlayback;
             UpdateVoiceLevel(audio.voiceLevel);
+            UpdateAudioFormat(audio.codec, audio.frequency, AudioUtils.ChannelsPerFormat(audio.format));
+            UpdatePlayer();
 
             if (codec != null)
             {
@@ -618,6 +656,8 @@ namespace RPVoiceChat.Audio
                 return false;
             }
 
+            if (!IsSyntheticSource && audio.data.Length > audio.frequency * AudioUtils.ChannelsPerFormat(audio.format) * 2 / 5)
+                return false;
             float finalGain = GetFinalGain();
             PcmUtils.ApplyGainWithSoftClipping(ref audio.data, audio.format, finalGain);
 
@@ -626,13 +666,22 @@ namespace RPVoiceChat.Audio
             {
                 PcmUtils.ApplyCompressor(ref audio.data, audio.format);
 
-                int maxFadeDuration = Math.Min(
-                    2 * audio.frequency / 1000,
-                    audio.data.Length / 4
-                );
-                if (audio.data.Length > maxFadeDuration * 2)
+                if (fadeVoiceOnset)
                 {
-                    AudioUtils.FadeEdges(audio.data, maxFadeDuration);
+                    int channels = AudioUtils.ChannelsPerFormat(audio.format);
+                    int fadeSamples = Math.Min(audio.frequency * 2 / 1000, audio.data.Length / (2 * channels));
+                    for (int frame = 0; frame < fadeSamples; frame++)
+                    {
+                        for (int channel = 0; channel < channels; channel++)
+                        {
+                            int offset = (frame * channels + channel) * 2;
+                            short value = BitConverter.ToInt16(audio.data, offset);
+                            short faded = (short)(value * frame / Math.Max(1, fadeSamples - 1));
+                            audio.data[offset] = (byte)faded;
+                            audio.data[offset + 1] = (byte)(faded >> 8);
+                        }
+                    }
+                    fadeVoiceOnset = false;
                 }
             }
 
@@ -672,7 +721,7 @@ namespace RPVoiceChat.Audio
                     bool hasPendingPackets;
                     lock (ordering_queue_lock)
                     {
-                        hasPendingPackets = orderingQueue.Count > 0;
+                        hasPendingPackets = IsSyntheticSource ? orderingQueue.Count > 0 : voiceBuffer.HasPending;
                     }
                     if (hasPendingPackets)
                     {
@@ -680,18 +729,16 @@ namespace RPVoiceChat.Audio
                         return;
                     }
 
-                    if (source <= 0) return;
-
-                    var state = OALW.GetSourceState(source);
-                    if (state != ALSourceState.Playing)
+                    lock (playbackLock)
                     {
-                        if (IsSyntheticSource)
+                        if (IsDisposed || source <= 0) return;
+                        var state = OALW.GetSourceState(source);
+                        if (state != ALSourceState.Playing)
                         {
-                            syntheticPlaybackPrimed = false;
+                            if (IsSyntheticSource) syntheticPlaybackPrimed = false;
+                            OnSourceStop();
+                            return;
                         }
-
-                        OnSourceStop();
-                        return;
                     }
                 }
 
@@ -742,20 +789,18 @@ namespace RPVoiceChat.Audio
 
         public void Dispose()
         {
-            if (IsDisposed) return;
-
-            if (source > 0)
+            lock (playbackLock)
             {
-                OALW.SourceStop(source);
-                OALW.DeleteSource(source);
+                if (IsDisposed) return;
+                IsDisposed = true;
+                voiceBuffer.Clear();
+                lock (ordering_queue_lock) orderingQueue.Clear();
+                buffer.OnEmptyingQueue -= OnSourceStop;
+                currentSoundEffect?.Clear();
+                buffer?.Dispose();
+                if (source > 0) OALW.DeleteSource(source);
+                source = 0;
             }
-
-            source = 0;
-            buffer.OnEmptyingQueue -= OnSourceStop;
-            currentSoundEffect?.Clear();
-            buffer?.Dispose();
-
-            IsDisposed = true;
         }
 
         public void SetSoundEffect(string effectName)

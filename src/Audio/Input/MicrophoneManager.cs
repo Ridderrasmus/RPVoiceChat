@@ -47,10 +47,14 @@ namespace RPVoiceChat.Audio
         public bool IsDenoisingAvailable = false;
         public bool Transmitting = false;
         public bool AudioWizardActive = false;
-        private const int deactivationWindow = 4;
-        private int stepsSinceLastTransmission = deactivationWindow;
+        private const int DeactivationWindowMs = 400;
+        private int silenceDurationMs = DeactivationWindowMs;
+        public volatile int PacketDurationMs = 100; // 20ms after the server advertises timed playback.
+        private long captureSampleTime;
+        private readonly string captureSession = Guid.NewGuid().ToString("N");
+        private readonly Queue<AudioData> onsetBuffers = new();
+        private const int OnsetWindowMs = 100;
         private bool transmittingOnPreviousStep = false;
-        private AudioData previousBuffer = null; // Keep previous buffer for voice activation
         private ICoreClientAPI capi;
         private VoiceLevel voiceLevel = VoiceLevel.Talking;
         private double inputThreshold;
@@ -222,7 +226,7 @@ namespace RPVoiceChat.Audio
                 {
                     // Use WaitHandle instead of Thread.Sleep for proper cancellation
                     // Use consistent timing to prevent CPU spikes with multiple players
-                    int sleepMs = 100;
+                    int sleepMs = 5;
                     ct.WaitHandle.WaitOne(sleepMs);
                     if (ct.IsCancellationRequested) break;
                     
@@ -254,9 +258,23 @@ namespace RPVoiceChat.Audio
             SetCodec(targetCodec);
 
             int samplesAvailable = capture.AvailableSamples;
-            int frameSize = codec.FrameSize;
-            int samplesToRead = samplesAvailable - samplesAvailable % frameSize;
-            if (samplesToRead <= 0) return;
+            int durationMs = PacketDurationMs;
+            int samplesToRead = Frequency * durationMs / 1000;
+            if (samplesAvailable < samplesToRead) return;
+
+            // Discard capture backlog after a stall; never transmit seconds of old speech.
+            if (samplesAvailable > Frequency / 5)
+            {
+                int discarded = samplesAvailable - samplesToRead;
+                capture.ReadSamples(new byte[discarded * SampleSize * InputChannelCount], discarded);
+                captureSampleTime += discarded;
+                onsetBuffers.Clear();
+                recentAmplitudes.Clear();
+                recentGainLimits.Clear();
+                silenceDurationMs = DeactivationWindowMs;
+            }
+            long packetSampleTime = captureSampleTime;
+            captureSampleTime += samplesToRead;
 
             int bufferLength = samplesToRead * SampleSize * InputChannelCount;
 
@@ -269,20 +287,24 @@ namespace RPVoiceChat.Audio
             bool forceProcessing = AudioWizardActive;
             if (canSkipProcessing && !forceProcessing)
             {
-                if (recentAmplitudes.Count == 0) return;
                 recentAmplitudes.Clear();
                 Amplitude = 0;
+                bool wasTransmitting = Transmitting;
                 Transmitting = false;
-                TransmissionStateChanged?.Invoke();
+                if (wasTransmitting) TransmissionStateChanged?.Invoke();
                 transmittingOnPreviousStep = Transmitting;
-                previousBuffer = null; // Clear previous buffer when muted
-                stepsSinceLastTransmission = deactivationWindow;
+                onsetBuffers.Clear();
+                silenceDurationMs = DeactivationWindowMs;
                 return;
             }
 
             AudioData data = ProcessAudio(sampleBuffer);
-            TransmitAudio(data, previousBuffer);
-            previousBuffer = data;
+            data.sampleCount = samplesToRead;
+            data.captureSampleTime = packetSampleTime;
+            data.captureSession = captureSession;
+            TransmitAudio(data);
+            onsetBuffers.Enqueue(data);
+            while (onsetBuffers.Count > Math.Max(1, OnsetWindowMs / durationMs)) onsetBuffers.Dequeue();
         }
 
         /// <summary>
@@ -338,9 +360,9 @@ namespace RPVoiceChat.Audio
                 // Calculate volume amplification
                 float maxSafeGain = Math.Min(gain, (float)(maxSampleValue / peakPcmValue));
                 recentGainLimits.Add(maxSafeGain);
-                if (recentGainLimits.Count > 10) recentGainLimits.RemoveAt(0);
+                if (recentGainLimits.Count > 1000 / PacketDurationMs) recentGainLimits.RemoveAt(0);
                 recentGainLimitsQueue.Enqueue(maxSafeGain);
-                if (recentGainLimitsQueue.Count > 10) recentGainLimitsQueue.TryDequeue(out _);
+                if (recentGainLimitsQueue.Count > 1000 / PacketDurationMs) recentGainLimitsQueue.TryDequeue(out _);
                 // Use current gain if list is empty to avoid incorrect amplification at startup
                 float volumeAmplification = recentGainLimits.Count > 0 
                     ? Math.Min(maxSafeGain, recentGainLimits.Average()) 
@@ -360,7 +382,7 @@ namespace RPVoiceChat.Audio
                 }
                 var amplitude = Math.Sqrt(sampleSquareSum / Math.Max(1, pcmCount));
                 recentAmplitudesQueue.Enqueue(amplitude);
-                if (recentAmplitudesQueue.Count > 20) recentAmplitudesQueue.TryDequeue(out _);
+                if (recentAmplitudesQueue.Count > 2000 / PacketDurationMs) recentAmplitudesQueue.TryDequeue(out _);
 
                 // Encode audio - ensure we only encode the exact amount of samples
                 // (pool buffer may be larger than pcmCount, which would encode residual data)
@@ -404,11 +426,11 @@ namespace RPVoiceChat.Audio
             }
         }
 
-        private void TransmitAudio(AudioData data, AudioData previousData = null)
+        private void TransmitAudio(AudioData data)
         {
             // Smooth out amplitude changes
             recentAmplitudes.Add(data.amplitude);
-            if (recentAmplitudes.Count > 3) recentAmplitudes.RemoveAt(0);
+            if (recentAmplitudes.Count > 300 / PacketDurationMs) recentAmplitudes.RemoveAt(0);
             
             // For detection, use raw amplitude if it's above threshold
             // This allows immediate activation without waiting for smoothing
@@ -428,9 +450,8 @@ namespace RPVoiceChat.Audio
             bool isAboveInputThreshold = Amplitude >= inputThreshold;
             Transmitting = ModConfig.ClientConfig.PushToTalkEnabled ? isPTTKeyPressed : isAboveInputThreshold;
 
-            stepsSinceLastTransmission++;
-            if (Transmitting) stepsSinceLastTransmission = 0;
-            Transmitting = stepsSinceLastTransmission < deactivationWindow;
+            silenceDurationMs = Transmitting ? 0 : silenceDurationMs + PacketDurationMs;
+            Transmitting = silenceDurationMs < DeactivationWindowMs;
 
             // Trigger notifcation when start/stop transmitting
             bool justStartedTransmitting = !transmittingOnPreviousStep && Transmitting;
@@ -443,12 +464,12 @@ namespace RPVoiceChat.Audio
             // Skip when previous already exceeds the gate — replaying it doubles a clear first syllable.
             if (Transmitting || AudioWizardActive)
             {
-                if (justStartedTransmitting
-                    && !ModConfig.ClientConfig.PushToTalkEnabled
-                    && previousData != null
-                    && previousData.amplitude < inputThreshold)
+                if (justStartedTransmitting && !ModConfig.ClientConfig.PushToTalkEnabled)
                 {
-                    OnBufferRecorded?.Invoke(previousData);
+                    foreach (var previous in onsetBuffers)
+                    {
+                        if (previous.amplitude < inputThreshold) OnBufferRecorded?.Invoke(previous);
+                    }
                 }
                 OnBufferRecorded?.Invoke(data);
             }
