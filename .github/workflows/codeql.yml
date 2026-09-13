@@ -64,7 +64,8 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: csharp
-          build-mode: none
+          # Trace the real dotnet build below. `none` skips compilation and reports low analysis quality.
+          build-mode: manual
 
       - name: Build for CodeQL
         run: dotnet build RPVoiceChat.csproj -c Release
