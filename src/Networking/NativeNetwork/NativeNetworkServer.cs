@@ -39,9 +39,13 @@ namespace RPVoiceChat.Networking
         }
 
         public bool SendPacket(NetworkPacket packet, string playerId)
+            => SendPacket(new PreparedNetworkPacket(packet), playerId);
+
+        public bool SendPacket(PreparedNetworkPacket packet, string playerId)
         {
             var player = api.World.PlayerByUid(playerId) as IServerPlayer;
-            channel.SendPacket(packet as AudioPacket, player);
+            if (player == null || player.ConnectionState != EnumClientState.Playing) return false;
+            channel.SendPacket((AudioPacket)packet.Packet, packet.Payload, player);
             return true;
         }
 

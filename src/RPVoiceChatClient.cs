@@ -185,6 +185,8 @@ namespace RPVoiceChat
             audioOutputManager.HandleAudioPacket(packet);
         }
 
+        private long lastCaptureSequence;
+
         private void OnBufferRecorded(AudioData audioData)
         {
             // Don't send empty packets - they can cause client crashes or disconnections
@@ -192,7 +194,8 @@ namespace RPVoiceChat
             if (audioData.data == null || audioData.data.Length == 0) return;
 
             string sender = capi.World.Player.PlayerUID;
-            var sequenceNumber = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var sequenceNumber = Math.Max(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), lastCaptureSequence + 1);
+            lastCaptureSequence = sequenceNumber;
             AudioPacket packet = new AudioPacket(sender, audioData, sequenceNumber);
             audioOutputManager.HandleLoopback(packet);
 
