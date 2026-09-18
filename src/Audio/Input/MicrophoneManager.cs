@@ -51,6 +51,7 @@ namespace RPVoiceChat.Audio
         private int silenceDurationMs = DeactivationWindowMs;
         public volatile int PacketDurationMs = 100; // 20ms after the server advertises timed playback.
         private long captureSampleTime;
+        private long transmittedSampleEnd;
         private readonly string captureSession = Guid.NewGuid().ToString("N");
         private readonly Queue<AudioData> onsetBuffers = new();
         private const int OnsetWindowMs = 100;
@@ -460,19 +461,31 @@ namespace RPVoiceChat.Audio
             transmittingOnPreviousStep = Transmitting;
 
             // Transmit
-            // Voice activation: optionally replay previous buffer for soft onset recovery.
-            // Skip when previous already exceeds the gate — replaying it doubles a clear first syllable.
+            // Voice activation: send the unsent lead-in to preserve the first syllable.
+            // Capture timestamps exclude frames already sent during the previous speech tail.
             if (Transmitting || AudioWizardActive)
             {
                 if (justStartedTransmitting && !ModConfig.ClientConfig.PushToTalkEnabled)
                 {
                     foreach (var previous in onsetBuffers)
                     {
-                        if (previous.amplitude < inputThreshold) OnBufferRecorded?.Invoke(previous);
+                        TransmitOnce(previous);
                     }
                 }
-                OnBufferRecorded?.Invoke(data);
+                TransmitOnce(data);
             }
+        }
+
+        private void TransmitOnce(AudioData data)
+        {
+            if (data.captureSampleTime < transmittedSampleEnd)
+            {
+                VoiceDiagnostics.Count("capture-duplicate-suppressed");
+                return;
+            }
+            transmittedSampleEnd = data.captureSampleTime + data.sampleCount;
+            OnBufferRecorded?.Invoke(data);
+            VoiceDiagnostics.Count("capture-sent");
         }
 
         private IAudioCapture CreateNewCapture(string deviceName, ALFormat? captureFormat = null)

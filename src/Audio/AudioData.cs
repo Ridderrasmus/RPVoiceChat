@@ -17,8 +17,6 @@ namespace RPVoiceChat.Audio
         public int sampleCount;
         public string captureSession;
         public int sourceDimension;
-        public float drunkStrength;
-        public float temporalStrength;
         public int transmissionRangeBlocks;
         public int effectiveRange;
         public bool ignoreDistanceReduction { get; set; } = false;
@@ -42,8 +40,6 @@ namespace RPVoiceChat.Audio
                 sampleCount = audioPacket.SampleCount,
                 captureSession = audioPacket.CaptureSession,
                 sourceDimension = audioPacket.SourceDimension,
-                drunkStrength = audioPacket.DrunkStrength,
-                temporalStrength = audioPacket.TemporalStrength,
                 forceFlatPlayback = audioPacket.GroupDelivery || audioPacket.IsGlobalBroadcast,
                 transmissionRangeBlocks = audioPacket.TransmissionRangeBlocks,
                 effectiveRange = audioPacket.TransmissionRangeBlocks > 0

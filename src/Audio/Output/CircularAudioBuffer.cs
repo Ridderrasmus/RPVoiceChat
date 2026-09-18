@@ -55,6 +55,7 @@ namespace RPVoiceChat.Audio
                 double duration = audio.Length * 1000d / (frequency * AudioUtils.ChannelsPerFormat(format) * 2);
                 if (disposed || availableBuffers.Count == 0 || (queuedBuffers.Count > 0 && queuedMilliseconds + duration > maxBufferedMilliseconds))
                 {
+                    VoiceDiagnostics.Count("hardware-backpressure-poll");
                     return false;
                 }
 
@@ -71,6 +72,9 @@ namespace RPVoiceChat.Audio
                     return false;
                 }
 
+                // The source may have drained while BufferData uploaded the new PCM.
+                // Reclaim that finished audio before appending and restarting.
+                if (OALW.GetSourceState(source) == ALSourceState.Stopped) TryDequeueBuffers();
                 OALW.SourceQueueBuffer(source, currentBuffer);
                 var queueError = AL.GetError();
                 if (queueError != ALError.NoError)
@@ -83,6 +87,8 @@ namespace RPVoiceChat.Audio
                 queuedBuffers.Add(currentBuffer);
                 durations[currentBuffer] = duration;
                 queuedMilliseconds += duration;
+                VoiceDiagnostics.Count("hardware-queued");
+                VoiceDiagnostics.Peak("hardware-queue-ms", queuedMilliseconds);
                 return true;
             }
         }
@@ -97,12 +103,12 @@ namespace RPVoiceChat.Audio
                 var sourceState = OALW.GetSourceState(source);
                 sourceHasStopped = sourceState == ALSourceState.Stopped;
 
-                // Only process buffers once after stopping
-                if (sourceHasStopped && sourceState == previousSourceState) return;
-
-                // Source is Playing or just entered Stopped state
+                // Playback can start AND finish between polls. A repeated Stopped
+                // observation does not mean that the processed buffers are unchanged.
+                bool notifyStopped = sourceHasStopped && sourceState != previousSourceState;
                 previousSourceState = sourceState;
                 TryDequeueBuffers();
+                sourceHasStopped = notifyStopped;
             }
 
             if (sourceHasStopped) OnEmptyingQueue?.Invoke();
@@ -131,9 +137,10 @@ namespace RPVoiceChat.Audio
                     break;
                 }
 
-                queuedBuffers.Remove(buffer);
+                if (!queuedBuffers.Remove(buffer)) break;
                 if (durations.Remove(buffer, out double duration)) queuedMilliseconds -= duration;
                 availableBuffers.Add(buffer);
+                VoiceDiagnostics.Count("hardware-reclaimed");
             }
         }
 
@@ -146,8 +153,7 @@ namespace RPVoiceChat.Audio
                 while (queuedBuffers.Count > 0)
                 {
                     int id = OALW.SourceUnqueueBuffer(source);
-                    if (id == 0) break;
-                    queuedBuffers.Remove(id);
+                    if (id == 0 || !queuedBuffers.Remove(id)) break;
                     availableBuffers.Add(id);
                 }
                 durations.Clear();
