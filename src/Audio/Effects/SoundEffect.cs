@@ -5,14 +5,14 @@ using RPVoiceChat.Util;
 
 namespace RPVoiceChat.Audio.Effects
 {
-    public abstract class SoundEffect : IDisposable
+    public abstract class SoundEffect
     {
         public string Name { get; }
 
         protected int source;
         protected int effect;
         protected int slot;
-        private bool disposed;
+        private int nullEffect;
 
         public bool IsEnabled { get; set; } = false;
 
@@ -20,21 +20,12 @@ namespace RPVoiceChat.Audio.Effects
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
             this.source = source;
-            var device = ALC.GetContextsDevice(ALC.GetCurrentContext());
-            if (device == IntPtr.Zero || !ALC.IsExtensionPresent(device, "ALC_EXT_EFX"))
-                throw new NotSupportedException("OpenAL EFX is unavailable; using dry voice.");
-            OALW.ClearError();
-            try
-            {
-                effect = GenerateEffect();
-                if (AL.GetError() != ALError.NoError) throw new InvalidOperationException("Unable to configure OpenAL effect.");
-            }
-            catch { Dispose(); throw; }
+            this.nullEffect = ALC.EFX.GenEffect();
+            this.effect = GenerateEffect();
         }
 
         public virtual void Apply()
         {
-            if (disposed) return;
             var device = ALC.GetContextsDevice(ALC.GetCurrentContext());
 
             if (device == IntPtr.Zero || !ALC.IsExtensionPresent(device, "ALC_EXT_EFX"))
@@ -61,51 +52,11 @@ namespace RPVoiceChat.Audio.Effects
 
         protected abstract int GenerateEffect();
 
-        protected static int AllocateEffect()
-        {
-            int id = ALC.EFX.GenEffect();
-            if (AL.GetError() == ALError.NoError && id != 0) return id;
-            if (id != 0) ALC.EFX.DeleteEffect(id);
-            throw new InvalidOperationException("No OpenAL effects available.");
-        }
-
-        protected static int AllocateSlot()
-        {
-            int id = ALC.EFX.GenAuxiliaryEffectSlot();
-            if (AL.GetError() == ALError.NoError && id != 0) return id;
-            if (id != 0) ALC.EFX.DeleteAuxiliaryEffectSlot(id);
-            throw new InvalidOperationException("No OpenAL effect slots available.");
-        }
-
-        protected static int AllocateFilter()
-        {
-            int id = ALC.EFX.GenFilter();
-            if (AL.GetError() == ALError.NoError && id != 0) return id;
-            if (id != 0) ALC.EFX.DeleteFilter(id);
-            throw new InvalidOperationException("No OpenAL filters available.");
-        }
-
-        protected virtual void ReleaseFilters() { }
-
-        public void Dispose()
-        {
-            if (disposed) return;
-            Clear();
-            disposed = true;
-            ReleaseFilters();
-            if (slot != 0)
-            {
-                ALC.EFX.AuxiliaryEffectSlot(slot, EffectSlotInteger.Effect, 0);
-                ALC.EFX.DeleteAuxiliaryEffectSlot(slot);
-                slot = 0;
-            }
-            if (effect != 0) { ALC.EFX.DeleteEffect(effect); effect = 0; }
-        }
-
         private static readonly Dictionary<string, Func<int, SoundEffect>> registry = new()
         {
             { "cheapmic", source => new CheapMicEffect(source) },
             { "reverb", source => new ReverbEffect(source) },
+            { "intoxicated", source => new IntoxicatedEffect(source) },
         };
 
         public static SoundEffect Create(string name, int source)

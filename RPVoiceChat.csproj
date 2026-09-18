@@ -1,12 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>net10.0</TargetFramework>
-		<Version>2.6.7-pre.1</Version>
+		<Version>2.6.7-pre.3</Version>
 		<LangVersion>11</LangVersion>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<OutputPath>bin\$(Configuration)\Mods\mod</OutputPath>
 		<RootNamespace>RPVoiceChat</RootNamespace>
 		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+	</PropertyGroup>
+
+	<!-- Explicit opt-in: dotnet publish -c Release -p:VoiceDiagnostics=true -->
+	<PropertyGroup Condition="'$(VoiceDiagnostics)' == 'true'">
+		<DefineConstants>$(DefineConstants);VOICE_DIAGNOSTICS</DefineConstants>
 	</PropertyGroup>
 
 	<ItemGroup>

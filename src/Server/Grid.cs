@@ -1,4 +1,3 @@
-using RPVoiceChat.Audio.Effects;
 using System;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
@@ -154,7 +153,6 @@ namespace RPVoiceChat.Server
         public readonly double X, Y, Z;
 
         public readonly bool IsSpectator;
-        public readonly float DrunkStrength, TemporalStrength;
 
         public GridPlayer(IServerPlayer player, int dimension, double x, double y, double z, bool isSpectator)
         {
@@ -164,10 +162,6 @@ namespace RPVoiceChat.Server
             Dimension = dimension;
             X = x; Y = y; Z = z;
             IsSpectator = isSpectator;
-            var attributes = player?.Entity?.WatchedAttributes;
-            DrunkStrength = VoiceEffectStrength.Drunk(attributes?.GetFloat("intoxication", 0) ?? 0);
-            bool temporalEnabled = player?.Entity?.World?.Config?.GetBool("temporalStability", true) ?? false;
-            TemporalStrength = VoiceEffectStrength.Temporal(attributes?.GetDouble("temporalStability", 1) ?? 1, temporalEnabled);
         }
     }
 }

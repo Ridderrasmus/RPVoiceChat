@@ -93,29 +93,40 @@ namespace RPVoiceChat.Util
 
         public static float GetWallThickness(ICoreClientAPI capi, Vec3d origin, Vec3d destination)
         {
-            var obstructingBlocks = RayTraceThrough(capi, origin, destination).Item1;
             float thickness = 0;
-            foreach (BlockEntry blockEntry in obstructingBlocks)
-            {
-                var blockPos = blockEntry.Item1;
-                var block = blockEntry.Item2;
-                if (transparentBlocks.Contains(block?.Class)) continue;
-
-                var collisionBoxes = new Cuboidf[0];
-                try
-                {
-                    collisionBoxes = block?.GetCollisionBoxes(capi.World.BlockAccessor, blockPos) ?? collisionBoxes;
-                }
-                catch (Exception e)
-                {
-                    Logger.client.Warning($"Couldn't retrieve collision boxes for {block.Class} at {blockPos}:\n{e}");
-                }
-
-                foreach (Cuboidf box in collisionBoxes)
-                    thickness += box.Length * box.Height * box.Width;
-            }
-
+            foreach (float value in GetWallThicknessSteps(capi, origin, destination)) thickness = value;
             return thickness;
+        }
+
+        // Enumerate on the main thread: block collision boxes can call into other mods.
+        // Use our own block-only tester, never the game's shared interaction raycaster.
+        internal static IEnumerable<float> GetWallThicknessSteps(ICoreClientAPI capi, Vec3d origin, Vec3d destination)
+        {
+            if (capi.World is not IWorldIntersectionSupplier supplier) yield break;
+            double distance = origin.DistanceTo(destination);
+            if (!double.IsFinite(distance) || distance <= 0.001) yield break;
+            if (distance > maxRayTraceDistance)
+            {
+                destination = origin + (destination - origin) * (maxRayTraceDistance / distance);
+            }
+            var tester = new AABBIntersectionTest(supplier);
+            var visited = new HashSet<BlockPos>();
+            BlockFilter filter = (pos, block) => !visited.Contains(pos);
+            float thickness = 0;
+            for (int i = 0; i < maxRayTraceDistance; i++)
+            {
+                var selection = tester.GetSelectedBlock(origin, destination, filter);
+                if (selection?.Block == null || !visited.Add(selection.Position.Copy())) break;
+                var block = selection.Block;
+                if (!transparentBlocks.Contains(block.Class))
+                {
+                    var boxes = block.GetCollisionBoxes(capi.World.BlockAccessor, selection.Position);
+                    if (boxes != null)
+                        foreach (Cuboidf box in boxes) thickness += box.Length * box.Height * box.Width;
+                }
+                yield return thickness;
+            }
+            yield return thickness;
         }
 
         /// <summary>

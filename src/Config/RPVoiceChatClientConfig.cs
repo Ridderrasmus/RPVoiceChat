@@ -2,8 +2,6 @@
 
 namespace RPVoiceChat.Config
 {
-    public enum VoiceEffectMode { Off, Reduced, Full }
-
     public class RPVoiceChatClientConfig : IModConfig
     {
         // Audio Output Settings
@@ -33,8 +31,6 @@ namespace RPVoiceChat.Config
         public bool Loopback { get; set; } = false;
         public bool DevicesVoiceFeedback { get; set; } = true;
         public bool Muffling { get; set; } = true;
-        public VoiceEffectMode DrunkVoiceEffects { get; set; } = VoiceEffectMode.Full;
-        public VoiceEffectMode TemporalVoiceEffects { get; set; } = VoiceEffectMode.Full;
         public bool ChannelGuessing { get; set; } = true;
 
         // System Settings
@@ -68,8 +64,6 @@ namespace RPVoiceChat.Config
             Loopback = previousConfig.Loopback;
             DevicesVoiceFeedback = previousConfig.DevicesVoiceFeedback;
             Muffling = previousConfig.Muffling;
-            DrunkVoiceEffects = previousConfig.DrunkVoiceEffects;
-            TemporalVoiceEffects = previousConfig.TemporalVoiceEffects;
             ChannelGuessing = previousConfig.ChannelGuessing;
 
             FirstTimeUse = previousConfig.FirstTimeUse;

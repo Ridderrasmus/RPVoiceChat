@@ -12,6 +12,8 @@ namespace RPVoiceChat.Audio
         private string session;
         private double anchorMedia, anchorLocal, lastArrival, lastMedia, jitter;
         private long lastPlayed = -1;
+        private double playedMediaEnd = double.NegativeInfinity;
+        private bool needsPrime = true, primeAnchored, observedPlaying;
         private bool anchored;
         private double queuedDuration;
         public bool ResetRequired { get; private set; }
@@ -24,10 +26,12 @@ namespace RPVoiceChat.Audio
         public void Enqueue(AudioData audio, long sequence)
         {
             double duration = Duration(audio);
-            if (duration <= 0 || duration > 200 || audio.frequency <= 0) return;
+            if (duration <= 0 || duration > 200 || audio.frequency <= 0)
+            { VoiceDiagnostics.Count("invalid-packet"); return; }
             double now = Now;
             bool timed = !string.IsNullOrEmpty(audio.captureSession) && audio.sampleCount > 0;
             double media = timed ? audio.captureSampleTime * 1000d / audio.frequency : sequence;
+            long order = timed ? audio.captureSampleTime : sequence;
             lock (queue)
             {
                 string incomingSession = timed ? audio.captureSession : "legacy";
@@ -43,10 +47,18 @@ namespace RPVoiceChat.Audio
                     queue.Clear();
                     queuedDuration = 0;
                     lastPlayed = -1;
+                    playedMediaEnd = double.NegativeInfinity;
+                    jitter = 0;
                     anchored = false;
                     ResetRequired = true;
                 }
-                if (sequence <= lastPlayed || queue.ContainsKey(sequence)) return;
+                if (order <= lastPlayed || (timed && media < playedMediaEnd - 0.01) || queue.ContainsKey(order))
+                { VoiceDiagnostics.Count("duplicate-or-overlap"); return; }
+                if (timed) foreach (var queued in queue.Values)
+                {
+                    if (media < queued.Media + queued.Duration - 0.01 && media + duration > queued.Media + 0.01)
+                    { VoiceDiagnostics.Count("duplicate-or-overlap"); return; }
+                }
 
                 bool restart = !anchored || now - lastArrival > 500;
                 if (!restart && media > lastMedia)
@@ -65,16 +77,27 @@ namespace RPVoiceChat.Audio
                     anchorLocal = now + Math.Clamp(40 + 4 * jitter, 40, 100);
                     anchored = true;
                     ResetRequired = true;
+                    needsPrime = true;
+                    primeAnchored = true;
+                    observedPlaying = false;
+                    VoiceDiagnostics.Count("playout-reset");
                 }
                 if (media >= lastMedia || restart)
                 {
                     lastArrival = now;
                     lastMedia = media;
                 }
-                queue.Add(sequence, new Entry(audio, media, duration, now));
+                queue.Add(order, new Entry(audio, media, duration, now));
                 queuedDuration += duration;
+                VoiceDiagnostics.Count("playout-received");
+                VoiceDiagnostics.Peak("software-queue-ms", queuedDuration);
                 while (queue.Count > 0 && (queuedDuration > 200 || now - queue.Values[0].Arrival > 200))
+                {
+                    lastPlayed = queue.Keys[0];
+                    playedMediaEnd = queue.Values[0].Media + queue.Values[0].Duration;
+                    VoiceDiagnostics.Count("backlog-drop");
                     RemoveFirst();
+                }
             }
         }
 
@@ -86,25 +109,59 @@ namespace RPVoiceChat.Audio
                 waitMs = 0;
                 reset = ResetRequired;
                 ResetRequired = false;
+                if (!playing && observedPlaying && !reset)
+                {
+                    needsPrime = true;
+                    primeAnchored = false;
+                    VoiceDiagnostics.Count("playback-drained");
+                }
+                observedPlaying = playing && !reset;
                 while (queue.Count > 0)
                 {
                     Entry entry = queue.Values[0];
                     double now = Now;
-                    double due = anchorLocal + entry.Media - anchorMedia;
-                    if (now - due > 100 || now - entry.Arrival > 200)
+                    if (now - entry.Arrival > 200)
                     {
                         lastPlayed = queue.Keys[0];
+                        playedMediaEnd = entry.Media + entry.Duration;
                         RemoveFirst();
+                        VoiceDiagnostics.Count("late-drop");
                         continue;
                     }
-                    // A short hardware lookahead avoids an underrun at every packet boundary.
-                    double remaining = due - now - (playing ? 20 : 0);
+                    if (needsPrime && !primeAnchored)
+                    {
+                        // Start a fresh bounded cushion after an underrun or speech pause.
+                        // Do not repeatedly restart one already-late packet at a time.
+                        anchorMedia = entry.Media;
+                        anchorLocal = now + Math.Clamp(40 + 4 * jitter, 40, 100);
+                        primeAnchored = true;
+                        VoiceDiagnostics.Count("reprime");
+                    }
+                    double due = anchorLocal + entry.Media - anchorMedia;
+                    if (now - due > 100)
+                    {
+                        lastPlayed = queue.Keys[0];
+                        playedMediaEnd = entry.Media + entry.Duration;
+                        RemoveFirst();
+                        VoiceDiagnostics.Count("late-drop");
+                        continue;
+                    }
+                    // Once primed, keep two 20ms packets ahead in OpenAL. This is
+                    // hardware lookahead, not extra delay added to each packet.
+                    double remaining = due - now - (playing && !needsPrime ? 40 : 0);
                     if (remaining > 0)
                     {
                         waitMs = Math.Clamp((int)Math.Ceiling(remaining), 1, 10);
                         return false;
                     }
                     lastPlayed = queue.Keys[0];
+                    if (double.IsFinite(playedMediaEnd) && entry.Media > playedMediaEnd + 0.01)
+                    {
+                        VoiceDiagnostics.Count("capture-gap");
+                        VoiceDiagnostics.Peak("capture-gap-ms", entry.Media - playedMediaEnd);
+                    }
+                    playedMediaEnd = entry.Media + entry.Duration;
+                    needsPrime = false;
                     audio = entry.Audio;
                     RemoveFirst();
                     return true;
@@ -121,7 +178,11 @@ namespace RPVoiceChat.Audio
 
         public void Clear()
         {
-            lock (queue) { queue.Clear(); queuedDuration = 0; anchored = false; }
+            lock (queue)
+            {
+                queue.Clear(); queuedDuration = 0; anchored = false;
+                needsPrime = true; primeAnchored = false; observedPlaying = false;
+            }
         }
 
         private static double Duration(AudioData audio)

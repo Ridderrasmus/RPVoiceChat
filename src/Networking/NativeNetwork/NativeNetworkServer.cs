@@ -1,8 +1,5 @@
-using HarmonyLib;
 using System;
-using System.Reflection;
 using Vintagestory.API.Server;
-using Vintagestory.Server;
 
 namespace RPVoiceChat.Networking
 {
@@ -11,25 +8,24 @@ namespace RPVoiceChat.Networking
         public event Action<AudioPacket> AudioPacketReceived;
         private ICoreServerAPI api;
         private IServerNetworkChannel channel;
-        private ServerSystemNetworkProcess networkProcess;
+        private readonly VoicePacketWorker<AudioPacket> incoming;
 
         public NativeNetworkServer(ICoreServerAPI sapi) : base(sapi)
         {
             api = sapi;
+            incoming = new VoicePacketWorker<AudioPacket>(packet => AudioPacketReceived?.Invoke(packet),
+                error => api.Logger.Warning("[RPVoiceChat] Native voice routing failed: " + error.Message));
             channel = api.Network.GetChannel(ChannelName).SetMessageHandler<AudioPacket>(ReceivedAudioPacketFromClient);
             if (api.Server.IsDedicated == false)
                 api.Network.RegisterChannel(SPChannelName)
                     .RegisterMessageType<AudioPacket>()
                     .SetMessageHandler<AudioPacket>(ReceivedAudioPacketFromClient);
 
-            NetworkAPIPatch.OnHandleCustomPacket += ShouldProcessInBackground;
         }
 
         public void Launch()
         {
-            networkProcess = new ServerSystemNetworkProcess(api);
-            networkProcess.OnProcessInBackground += ProcessInBackground;
-            networkProcess.Launch();
+            VoiceDiagnostics.Start(api.Logger);
         }
 
         public ConnectionInfo GetConnectionInfo()
@@ -49,34 +45,19 @@ namespace RPVoiceChat.Networking
             return true;
         }
 
-        private bool ProcessInBackground(int channelId, Packet_CustomPacket customPacket, IServerPlayer sender)
-        {
-            if (ShouldProcessInBackground(channelId) == false) return false;
-
-            ((NetworkChannel)channel).OnPacket(customPacket, sender);
-            return true;
-        }
-
-        private static FieldInfo channelIdField = AccessTools.Field(typeof(NetworkChannel), "channelId");
-
-        private bool ShouldProcessInBackground(int channelId)
-        {
-            if (channel is not NetworkChannel) return false;
-            var expectedChannelId = (int)channelIdField.GetValue(channel);
-            return channelId == expectedChannelId;
-        }
-
         private void ReceivedAudioPacketFromClient(IServerPlayer player, AudioPacket packet)
         {
             // Security: ignore client-supplied PlayerId and use the authenticated sender
             packet.PlayerId = player.PlayerUID;
-            AudioPacketReceived?.Invoke(packet);
+            // Use the game's authenticated channel dispatch; do not copy and deserialize
+            // every movement/interaction packet on a second thread to find voice packets.
+            incoming.Enqueue(packet);
         }
 
         public void Dispose()
         {
-            NetworkAPIPatch.OnHandleCustomPacket -= ShouldProcessInBackground;
-            networkProcess?.Dispose();
+            VoiceDiagnostics.Stop();
+            incoming.Dispose();
         }
     }
 }

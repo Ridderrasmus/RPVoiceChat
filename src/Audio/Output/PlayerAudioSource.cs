@@ -8,6 +8,7 @@ using RPVoiceChat.Gui;
 using RPVoiceChat.Util;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -18,8 +19,9 @@ namespace RPVoiceChat.Audio
 {
     public class PlayerAudioSource : IDisposable
     {
-        public bool IsDisposed = false;
+        public volatile bool IsDisposed = false;
         public bool IsPlaying { get => _IsPlaying(); }
+        public bool IsSpeaking => speakingNotificationActive && !IsDisposed;
         public bool IsSyntheticSource { get; }
         public float MaxGain => ServerConfigManager.MaxAudioGain;
 
@@ -44,12 +46,15 @@ namespace RPVoiceChat.Audio
         private long lastAudioSequenceNumber = -1;
         private bool dequeueTaskRunning = false; // Prevent multiple concurrent dequeue tasks
         private bool playbackEndCheckRunning = false;
+        private volatile bool speakingNotificationActive;
+        private long lastAudioReceivedAt;
         private string currentEffectName;
 
         private IAudioCodec codec;
         private LowpassFilter lowpassFilter;
         private ReverbEffect reverbEffect;
-        private readonly VoicePcmProcessorChain voiceProcessors;
+        private IntoxicatedEffect intoxicatedEffect;
+        private UnstableEffect unstableEffect;
         private ICoreClientAPI capi;
         private IPlayer player;
         private ClientSettingsRepository clientSettingsRepo;
@@ -67,14 +72,14 @@ namespace RPVoiceChat.Audio
         // Performance optimization: throttle expensive calculations
         private DateTime? lastFullUpdate;
         private DateTime? lastWallThicknessUpdate;
-        private float cachedWallThickness = 0f;
+        private volatile float cachedWallThickness = 0f;
         private const int FullUpdateIntervalMs = 50; // Update position/velocity every 50ms (20 Hz)
         private const int WallThicknessUpdateIntervalMs = 200; // Update wall thickness every 200ms (5 Hz)
 
-        // Sound Physics Adapted runs its raycaster on the main thread only, but UpdatePlayer
-        // runs on a network thread. The query is queued and its result cached for the next pass.
+        // Occlusion queries use the shared main-thread budget; playback only reads the cache.
         private volatile float cachedSoundPhysicsGainHF = 1f;
-        private volatile bool soundPhysicsQueryPending;
+        private volatile bool occlusionQueryPending;
+        private readonly VoiceOcclusionScheduler occlusionScheduler;
 
         public PlayerAudioSource(IPlayer player, ICoreClientAPI capi, ClientSettingsRepository clientSettingsRepo)
             : this(player, capi, clientSettingsRepo, syntheticSourceId: null)
@@ -85,10 +90,10 @@ namespace RPVoiceChat.Audio
             IPlayer player,
             ICoreClientAPI capi,
             ClientSettingsRepository clientSettingsRepo,
-            string syntheticSourceId)
+            string syntheticSourceId, VoiceOcclusionScheduler occlusionScheduler = null)
         {
             this.player = player;
-            voiceProcessors = new VoicePcmProcessorChain(syntheticSourceId ?? player.PlayerUID);
+            this.occlusionScheduler = occlusionScheduler;
             this.capi = capi;
             this.clientSettingsRepo = clientSettingsRepo;
             IsSyntheticSource = !string.IsNullOrWhiteSpace(syntheticSourceId);
@@ -99,7 +104,6 @@ namespace RPVoiceChat.Audio
 
             source = OALW.GenSource();
             buffer = new CircularAudioBuffer(source, IsSyntheticSource ? SyntheticBufferCount : BufferCount);
-            buffer.OnEmptyingQueue += OnSourceStop;
 
             float gain = GetFinalGain();
             OALW.Source(source, ALSourceb.Looping, false);
@@ -188,65 +192,30 @@ namespace RPVoiceChat.Audio
                 && WorldConfig.GetBool("use-sound-physics-adapted", true)
                 && SoundPhysicsCompatibility.IsAvailable;
 
-            // Cache wall thickness calculation (very expensive ray tracing)
-            float wallThickness = cachedWallThickness;
             if (shouldUpdateWallThickness)
             {
-                if (mufflingEnabled && !useSoundPhysics)
+                lastWallThicknessUpdate = now;
+                if (mufflingEnabled)
                 {
-                    if (sourceOverride != null)
-                    {
-                        wallThickness = LocationUtils.GetWallThickness(capi, sourceOverride, LocationUtils.GetLocationOfPlayer(capi.World.Player));
-                    }
-                    else
-                    {
-                        wallThickness = LocationUtils.GetWallThickness(capi, player, capi.World.Player);
-                    }
-                    if (capi.World.Player.Entity.Swimming)
-                        wallThickness += 1.0f;
-                    cachedWallThickness = wallThickness;
-                    lastWallThicknessUpdate = now;
+                    Vec3d speakerLocation = sourceOverride ?? LocationUtils.GetLocationOfPlayer(player);
+                    Vec3d listenerLocation = LocationUtils.GetLocationOfPlayer(capi.World.Player);
+                    QueueOcclusionQuery(speakerLocation, listenerLocation, useSoundPhysics);
                 }
                 else
                 {
-                    wallThickness = 0f;
                     cachedWallThickness = 0f;
-                    // The Sound Physics path keeps the same 5 Hz budget as the raycast it replaces.
-                    if (useSoundPhysics) lastWallThicknessUpdate = now;
+                    cachedSoundPhysicsGainHF = 1f;
                 }
-            }
-            else if (capi.World.Player.Entity.Swimming && cachedWallThickness > 0)
-            {
-                // Apply swimming modifier to cached value
-                wallThickness = cachedWallThickness + 1.0f;
-            }
 
-            // Update lowpass filter only when wall thickness changes
-            if (shouldUpdateWallThickness)
-            {
                 lowpassFilter?.Stop();
-                if (!useSoundPhysics) cachedSoundPhysicsGainHF = 1f;
-
                 if (mufflingEnabled)
                 {
-                    float gainHF = 1f;
-
-                    if (useSoundPhysics)
-                    {
-                        Vec3d speakerLocation = sourceOverride ?? LocationUtils.GetLocationOfPlayer(player);
-                        Vec3d listenerLocation = LocationUtils.GetLocationOfPlayer(capi.World.Player);
-                        QueueSoundPhysicsQuery(speakerLocation, listenerLocation);
-                        gainHF = cachedSoundPhysicsGainHF;
-                    }
-                    else if (wallThickness != 0)
-                    {
-                        float wallThicknessWeighting = WorldConfig.GetFloat("wall-thickness-weighting");
-                        gainHF = Math.Max(1.0f - (wallThickness / wallThicknessWeighting), 0.1f);
-                    }
-
+                    float wallThickness = cachedWallThickness + (capi.World.Player.Entity.Swimming ? 1f : 0f);
+                    float weighting = Math.Max(0.001f, WorldConfig.GetFloat("wall-thickness-weighting"));
+                    float gainHF = useSoundPhysics ? cachedSoundPhysicsGainHF : Math.Max(1f - wallThickness / weighting, 0.1f);
                     if (gainHF < 1f)
                     {
-                        lowpassFilter = lowpassFilter ?? new LowpassFilter(source);
+                        lowpassFilter ??= new LowpassFilter(source);
                         lowpassFilter.Start();
                         lowpassFilter.SetHFGain(gainHF);
                     }
@@ -267,6 +236,28 @@ namespace RPVoiceChat.Audio
             {
                 reverbEffect = reverbEffect ?? new ReverbEffect(source);
                 reverbEffect.Apply();
+            }
+
+            // DEACTIVATED : TO BE IMPLEMENTED
+            // If the player has a temporal stability of less than 0.5, then the player's voice should be distorted
+            // Values are temporary currently
+            unstableEffect?.Clear();
+            if (toBeImplementedToggle && player.Entity.WatchedAttributes.GetDouble("temporalStability") < 0.5)
+            {
+                unstableEffect = unstableEffect ?? new UnstableEffect(source);
+                unstableEffect.Apply();
+            }
+
+            // DEACTIVATED : TO BE IMPLEMENTED
+            // If the player is drunk, then the player's voice should be affected
+            // Values are temporary currently
+            intoxicatedEffect?.Clear();
+            float drunkness = player.Entity.WatchedAttributes.GetFloat("intoxication");
+            if (toBeImplementedToggle && drunkness > 0)
+            {
+                intoxicatedEffect = intoxicatedEffect ?? new IntoxicatedEffect(source);
+                intoxicatedEffect.SetToxicRate(drunkness);
+                intoxicatedEffect.Apply();
             }
 
             float gain = GetFinalGain() * GetDistanceAttenuationGain(effectiveSpeakerPos, listenerPos);
@@ -326,26 +317,37 @@ namespace RPVoiceChat.Audio
             return OALW.GetSourceState(source) == ALSourceState.Playing;
         }
 
-        /// <summary>
-        /// Asks Sound Physics Adapted for the occlusion between the speaker and the listener.
-        /// The result serves the next muffling update. One query per source runs at a time.
-        /// </summary>
-        private void QueueSoundPhysicsQuery(Vec3d speakerLocation, Vec3d listenerLocation)
+        private void QueueOcclusionQuery(Vec3d speakerLocation, Vec3d listenerLocation, bool useSoundPhysics)
         {
-            if (soundPhysicsQueryPending) return;
-            soundPhysicsQueryPending = true;
-
-            capi.Event.EnqueueMainThreadTask(() =>
+            if (occlusionQueryPending || occlusionScheduler == null) return;
+            occlusionQueryPending = true;
+            var steps = useSoundPhysics ? null : LocationUtils.GetWallThicknessSteps(capi, speakerLocation, listenerLocation).GetEnumerator();
+            float thickness = 0;
+            bool accepted = occlusionScheduler.TryEnqueue(() =>
             {
-                try
+                if (IsDisposed || !ModConfig.ClientConfig.Muffling) return false;
+                if (useSoundPhysics)
                 {
                     cachedSoundPhysicsGainHF = SoundPhysicsCompatibility.GetOcclusionGainHF(speakerLocation, listenerLocation);
+                    return false;
                 }
-                finally
+                if (steps.MoveNext())
                 {
-                    soundPhysicsQueryPending = false;
+                    thickness = steps.Current;
+                    return true;
                 }
-            }, "rpvoicechat:SoundPhysicsOcclusion");
+                cachedWallThickness = thickness;
+                return false;
+            }, () =>
+            {
+                steps?.Dispose();
+                occlusionQueryPending = false;
+            });
+            if (!accepted)
+            {
+                steps?.Dispose();
+                occlusionQueryPending = false;
+            }
         }
 
         private float GetFinalGain()
@@ -429,6 +431,7 @@ namespace RPVoiceChat.Audio
         public void EnqueueAudio(AudioData audio, long sequenceNumber)
         {
             if (IsDisposed) return;
+            Volatile.Write(ref lastAudioReceivedAt, Environment.TickCount64);
             if (!IsSyntheticSource)
             {
                 voiceBuffer.Enqueue(audio, sequenceNumber);
@@ -476,7 +479,7 @@ namespace RPVoiceChat.Audio
             forceFlatPlayback = forceFlat;
         }
 
-        public async void DequeueAudio()
+        public void DequeueAudio()
         {
             lock (dequeue_audio_lock)
             {
@@ -484,15 +487,22 @@ namespace RPVoiceChat.Audio
                 dequeueTaskRunning = true;
             }
 
+            // An async method runs on its caller until the first incomplete await. Timed
+            // packets can already be due here, so explicitly leave the game/network thread.
+            _ = Task.Run(DrainAudioAsync);
+        }
+
+        private async Task DrainAudioAsync()
+        {
             try
             {
                 if (IsSyntheticSource)
                 {
-                    await DrainSyntheticAudioAsync();
+                    await DrainSyntheticAudioAsync().ConfigureAwait(false);
                 }
                 else
                 {
-                    await DrainVoiceAudioAsync();
+                    await DrainVoiceAudioAsync().ConfigureAwait(false);
                 }
             }
             catch (Exception e)
@@ -530,7 +540,7 @@ namespace RPVoiceChat.Audio
                         }
                     }
 
-                    await Task.Delay(10);
+                    await Task.Delay(10).ConfigureAwait(false);
                 }
 
                 syntheticPlaybackPrimed = true;
@@ -569,7 +579,7 @@ namespace RPVoiceChat.Audio
                             break;
                         }
                     }
-                    await Task.Delay(5);
+                    await Task.Delay(5).ConfigureAwait(false);
                 }
             }
         }
@@ -585,12 +595,12 @@ namespace RPVoiceChat.Audio
                 {
                     if (IsDisposed) return;
                     ready = voiceBuffer.TryTake(IsPlaying, out audio, out waitMs, out bool reset);
-                    if (reset) { buffer.Reset(); codec = null; fadeVoiceOnset = true; voiceProcessors.Reset(); }
+                    if (reset) { buffer.Reset(); codec = null; fadeVoiceOnset = true; }
                 }
                 if (!ready)
                 {
                     if (waitMs == 0) { SchedulePlaybackEndCheck(); return; }
-                    await Task.Delay(waitMs);
+                    await Task.Delay(waitMs).ConfigureAwait(false);
                     continue;
                 }
                 lock (playbackLock)
@@ -599,6 +609,7 @@ namespace RPVoiceChat.Audio
                     if (!TryPreparePcm(ref audio)) continue;
                 }
                 long deadline = Environment.TickCount64 + 100;
+                bool queued = false;
                 while (!IsDisposed && Environment.TickCount64 < deadline)
                 {
                     lock (playbackLock)
@@ -607,16 +618,21 @@ namespace RPVoiceChat.Audio
                         if (buffer.TryQueueAudio(audio.data, audio.format, audio.frequency, 120))
                         {
                             EnsurePlaying();
+                            queued = true;
                             break;
                         }
                     }
-                    await Task.Delay(5);
+                    await Task.Delay(5).ConfigureAwait(false);
                 }
+                if (!queued && !IsDisposed) VoiceDiagnostics.Count("hardware-timeout-drop");
             }
         }
 
         private bool TryPreparePcm(ref AudioData audio)
         {
+#if VOICE_DIAGNOSTICS
+            long processingStarted = System.Diagnostics.Stopwatch.GetTimestamp();
+#endif
             currentAudio = audio;
             forceFlatPlayback = audio.forceFlatPlayback;
             UpdateVoiceLevel(audio.voiceLevel);
@@ -636,8 +652,6 @@ namespace RPVoiceChat.Audio
 
             if (!IsSyntheticSource && audio.data.Length > audio.frequency * AudioUtils.ChannelsPerFormat(audio.format) * 2 / 5)
                 return false;
-            if (!IsSyntheticSource)
-                voiceProcessors.Process(audio, ModConfig.ClientConfig.DrunkVoiceEffects, ModConfig.ClientConfig.TemporalVoiceEffects);
             float finalGain = GetFinalGain();
             PcmUtils.ApplyGainWithSoftClipping(ref audio.data, audio.format, finalGain);
 
@@ -665,6 +679,9 @@ namespace RPVoiceChat.Audio
                 }
             }
 
+#if VOICE_DIAGNOSTICS
+            VoiceDiagnostics.Peak("prepare-pcm-ms", System.Diagnostics.Stopwatch.GetElapsedTime(processingStarted).TotalMilliseconds);
+#endif
             return true;
         }
 
@@ -696,7 +713,7 @@ namespace RPVoiceChat.Audio
                 // Wait until OpenAL naturally drains the last queued buffers.
                 for (int i = 0; i < 20; i++)
                 {
-                    await Task.Delay(75);
+                    await Task.Delay(75).ConfigureAwait(false);
 
                     bool hasPendingPackets;
                     lock (ordering_queue_lock)
@@ -715,6 +732,9 @@ namespace RPVoiceChat.Audio
                         var state = OALW.GetSourceState(source);
                         if (state != ALSourceState.Playing)
                         {
+                            // Short 20ms packet underruns are not speech transitions. Rebuilding
+                            // nametag textures on each underrun can stall rendering and input.
+                            if (Environment.TickCount64 - Volatile.Read(ref lastAudioReceivedAt) < 150) continue;
                             if (IsSyntheticSource) syntheticPlaybackPrimed = false;
                             OnSourceStop();
                             return;
@@ -750,7 +770,8 @@ namespace RPVoiceChat.Audio
 
         private void NotifyStartedSpeaking()
         {
-            if (IsSyntheticSource) return;
+            if (IsSyntheticSource || speakingNotificationActive) return;
+            speakingNotificationActive = true;
             PlayerNameTagRenderer.UpdatePlayerNameTag(player, true);
         }
 
@@ -769,7 +790,8 @@ namespace RPVoiceChat.Audio
         private void OnSourceStop()
         {
             if (IsSyntheticSource) return;
-            if (!dequeueTaskRunning && !voiceBuffer.HasPending) voiceProcessors.Reset();
+            if (!speakingNotificationActive) return;
+            speakingNotificationActive = false;
             PlayerNameTagRenderer.UpdatePlayerNameTag(player, false);
         }
 
@@ -780,12 +802,8 @@ namespace RPVoiceChat.Audio
                 if (IsDisposed) return;
                 IsDisposed = true;
                 voiceBuffer.Clear();
-                voiceProcessors.Reset();
                 lock (ordering_queue_lock) orderingQueue.Clear();
-                buffer.OnEmptyingQueue -= OnSourceStop;
-                currentSoundEffect?.Dispose();
-                reverbEffect?.Dispose();
-                lowpassFilter?.Dispose();
+                currentSoundEffect?.Clear();
                 buffer?.Dispose();
                 if (source > 0) OALW.DeleteSource(source);
                 source = 0;
@@ -808,7 +826,7 @@ namespace RPVoiceChat.Audio
                     return;
                 }
 
-                currentSoundEffect?.Dispose();
+                currentSoundEffect?.Clear();
 
                 currentSoundEffect = SoundEffect.Create(effectName, source);
                 currentSoundEffect?.Apply();
@@ -823,7 +841,7 @@ namespace RPVoiceChat.Audio
             {
                 if (IsDisposed) return;
 
-                currentSoundEffect?.Dispose();
+                currentSoundEffect?.Clear();
                 currentSoundEffect = null;
                 currentEffectName = null;
             }
