@@ -59,7 +59,6 @@ namespace RPVoiceChat.Audio
 
         public void Launch()
         {
-            VoiceDiagnostics.Start(capi.Logger);
             PlayerListener.Init(capi);
             occlusionScheduler = new VoiceOcclusionScheduler(capi);
             capi.Event.PlayerEntitySpawn += PlayerSpawned;
@@ -251,7 +250,6 @@ namespace RPVoiceChat.Audio
 
         public void Dispose()
         {
-            VoiceDiagnostics.Stop();
             occlusionScheduler?.Dispose();
             try
             {

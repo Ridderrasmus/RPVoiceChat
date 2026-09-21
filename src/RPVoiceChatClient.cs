@@ -181,7 +181,10 @@ namespace RPVoiceChat
 
         private void OnAudioReceived(AudioPacket packet)
         {
-            if (!isReady) return;
+            if (!isReady)
+            {
+                return;
+            }
             audioOutputManager.HandleAudioPacket(packet);
         }
 

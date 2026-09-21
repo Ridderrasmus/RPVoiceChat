@@ -55,7 +55,6 @@ namespace RPVoiceChat.Audio
                 double duration = audio.Length * 1000d / (frequency * AudioUtils.ChannelsPerFormat(format) * 2);
                 if (disposed || availableBuffers.Count == 0 || (queuedBuffers.Count > 0 && queuedMilliseconds + duration > maxBufferedMilliseconds))
                 {
-                    VoiceDiagnostics.Count("hardware-backpressure-poll");
                     return false;
                 }
 
@@ -87,8 +86,6 @@ namespace RPVoiceChat.Audio
                 queuedBuffers.Add(currentBuffer);
                 durations[currentBuffer] = duration;
                 queuedMilliseconds += duration;
-                VoiceDiagnostics.Count("hardware-queued");
-                VoiceDiagnostics.Peak("hardware-queue-ms", queuedMilliseconds);
                 return true;
             }
         }
@@ -140,7 +137,6 @@ namespace RPVoiceChat.Audio
                 if (!queuedBuffers.Remove(buffer)) break;
                 if (durations.Remove(buffer, out double duration)) queuedMilliseconds -= duration;
                 availableBuffers.Add(buffer);
-                VoiceDiagnostics.Count("hardware-reclaimed");
             }
         }
 

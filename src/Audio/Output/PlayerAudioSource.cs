@@ -47,7 +47,7 @@ namespace RPVoiceChat.Audio
         private bool dequeueTaskRunning = false; // Prevent multiple concurrent dequeue tasks
         private bool playbackEndCheckRunning = false;
         private volatile bool speakingNotificationActive;
-        private long lastAudioReceivedAt;
+        private long lastPlaybackAt;
         private string currentEffectName;
 
         private IAudioCodec codec;
@@ -431,7 +431,6 @@ namespace RPVoiceChat.Audio
         public void EnqueueAudio(AudioData audio, long sequenceNumber)
         {
             if (IsDisposed) return;
-            Volatile.Write(ref lastAudioReceivedAt, Environment.TickCount64);
             if (!IsSyntheticSource)
             {
                 voiceBuffer.Enqueue(audio, sequenceNumber);
@@ -609,7 +608,6 @@ namespace RPVoiceChat.Audio
                     if (!TryPreparePcm(ref audio)) continue;
                 }
                 long deadline = Environment.TickCount64 + 100;
-                bool queued = false;
                 while (!IsDisposed && Environment.TickCount64 < deadline)
                 {
                     lock (playbackLock)
@@ -618,21 +616,16 @@ namespace RPVoiceChat.Audio
                         if (buffer.TryQueueAudio(audio.data, audio.format, audio.frequency, 120))
                         {
                             EnsurePlaying();
-                            queued = true;
                             break;
                         }
                     }
                     await Task.Delay(5).ConfigureAwait(false);
                 }
-                if (!queued && !IsDisposed) VoiceDiagnostics.Count("hardware-timeout-drop");
             }
         }
 
         private bool TryPreparePcm(ref AudioData audio)
         {
-#if VOICE_DIAGNOSTICS
-            long processingStarted = System.Diagnostics.Stopwatch.GetTimestamp();
-#endif
             currentAudio = audio;
             forceFlatPlayback = audio.forceFlatPlayback;
             UpdateVoiceLevel(audio.voiceLevel);
@@ -679,9 +672,6 @@ namespace RPVoiceChat.Audio
                 }
             }
 
-#if VOICE_DIAGNOSTICS
-            VoiceDiagnostics.Peak("prepare-pcm-ms", System.Diagnostics.Stopwatch.GetElapsedTime(processingStarted).TotalMilliseconds);
-#endif
             return true;
         }
 
@@ -696,8 +686,9 @@ namespace RPVoiceChat.Audio
             if (state != ALSourceState.Playing)
             {
                 StartPlaying();
-                NotifyStartedSpeaking();
+                if (IsPlaying) NotifyStartedSpeaking();
             }
+            SchedulePlaybackEndCheck();
         }
 
         private async void SchedulePlaybackEndCheck()
@@ -708,47 +699,40 @@ namespace RPVoiceChat.Audio
                 playbackEndCheckRunning = true;
             }
 
+            bool failed = false;
             try
             {
-                // Wait until OpenAL naturally drains the last queued buffers.
-                for (int i = 0; i < 20; i++)
+                // Poll playback itself, including while packets continue arriving or
+                // being rejected. Packet arrival is not evidence of audible playback.
+                while (!IsDisposed)
                 {
                     await Task.Delay(75).ConfigureAwait(false);
-
-                    bool hasPendingPackets;
-                    lock (ordering_queue_lock)
-                    {
-                        hasPendingPackets = IsSyntheticSource ? orderingQueue.Count > 0 : voiceBuffer.HasPending;
-                    }
-                    if (hasPendingPackets)
-                    {
-                        DequeueAudio();
-                        return;
-                    }
 
                     lock (playbackLock)
                     {
                         if (IsDisposed || source <= 0) return;
                         var state = OALW.GetSourceState(source);
-                        if (state != ALSourceState.Playing)
+                        if (state == ALSourceState.Playing)
+                        {
+                            lastPlaybackAt = Environment.TickCount64;
+                            NotifyStartedSpeaking();
+                        }
+                        else
                         {
                             // Short 20ms packet underruns are not speech transitions. Rebuilding
                             // nametag textures on each underrun can stall rendering and input.
-                            if (Environment.TickCount64 - Volatile.Read(ref lastAudioReceivedAt) < 150) continue;
+                            if (Environment.TickCount64 - lastPlaybackAt < 150) continue;
                             if (IsSyntheticSource) syntheticPlaybackPrimed = false;
                             OnSourceStop();
-                            return;
+                            break;
                         }
                     }
                 }
 
-                if (IsSyntheticSource)
-                {
-                    syntheticPlaybackPrimed = false;
-                }
             }
             catch (Exception e)
             {
+                failed = true;
                 Logger.client.Warning($"Error while checking playback end: {e.Message}");
             }
             finally
@@ -756,6 +740,13 @@ namespace RPVoiceChat.Audio
                 lock (dequeue_audio_lock)
                 {
                     playbackEndCheckRunning = false;
+                }
+                // Close the restart/monitor-exit race without leaving a stale green tag.
+                lock (playbackLock)
+                {
+                    // A brief restart may already have drained before we get here.
+                    if (!failed && !IsDisposed && (speakingNotificationActive || IsPlaying))
+                        SchedulePlaybackEndCheck();
                 }
             }
         }
@@ -766,6 +757,7 @@ namespace RPVoiceChat.Audio
             if (source <= 0) return; // Source is invalid
 
             OALW.SourcePlay(source);
+            lastPlaybackAt = Environment.TickCount64;
         }
 
         private void NotifyStartedSpeaking()
