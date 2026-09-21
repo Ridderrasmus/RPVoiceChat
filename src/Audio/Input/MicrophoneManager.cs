@@ -480,12 +480,10 @@ namespace RPVoiceChat.Audio
         {
             if (data.captureSampleTime < transmittedSampleEnd)
             {
-                VoiceDiagnostics.Count("capture-duplicate-suppressed");
                 return;
             }
             transmittedSampleEnd = data.captureSampleTime + data.sampleCount;
             OnBufferRecorded?.Invoke(data);
-            VoiceDiagnostics.Count("capture-sent");
         }
 
         private IAudioCapture CreateNewCapture(string deviceName, ALFormat? captureFormat = null)

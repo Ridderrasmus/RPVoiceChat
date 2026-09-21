@@ -1,4 +1,6 @@
-param([switch]$VoiceDiagnostics)
+param(
+    [ValidateSet('Debug', 'Release')][string]$Configuration = 'Release'
+)
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = $PSScriptRoot
@@ -28,23 +30,12 @@ foreach ($relative in (git -C $repoRoot diff HEAD --name-only --diff-filter=D)) 
 }
 
 $version = (Get-Content -LiteralPath "$sourceRoot/modinfo.json" -Raw | ConvertFrom-Json).version
-$suffix = if ($VoiceDiagnostics) { '-diagnostics' } else { '' }
+$suffix = if ($Configuration -eq 'Debug') { '-debug' } else { '' }
 $releasePath = Join-Path $repoRoot "Releases/rpvoicechat_$version$suffix.zip"
 if (Test-Path -LiteralPath $releasePath) { throw "Already exists: $releasePath" }
-$diagnosticValue = $VoiceDiagnostics.IsPresent.ToString().ToLowerInvariant()
-dotnet publish "$sourceRoot/RPVoiceChat.csproj" -c Release "-p:VoiceDiagnostics=$diagnosticValue" -o $packageRoot --nologo
+dotnet publish "$sourceRoot/RPVoiceChat.csproj" -c $Configuration -o $packageRoot --nologo
 if ($LASTEXITCODE -ne 0) { throw 'Publish failed.' }
 Copy-Item -LiteralPath "$sourceRoot/modicon.png" -Destination "$packageRoot/modicon.png"
-if ($VoiceDiagnostics) {
-    Set-Content -LiteralPath "$packageRoot/voice-diagnostics-build.txt" -Value @"
-RPVoiceChat $version diagnostic build
-Built with -p:VoiceDiagnostics=true
-Look for [RPVC-Diagnostics] in client-main.log / server-main.log.
-Summaries every 10 seconds contain cumulative totals and peak milliseconds.
-playback-drained and capture-gap also include normal speech pauses.
-No audio or player identities are recorded. Normal builds omit the counters.
-"@
-}
 Get-ChildItem -LiteralPath "$packageRoot/assets" -Recurse -Filter '*.json' | ForEach-Object {
     Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json | Out-Null
 }

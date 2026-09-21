@@ -13,7 +13,7 @@ namespace RPVoiceChat.Networking
         public NativeNetworkServer(ICoreServerAPI sapi) : base(sapi)
         {
             api = sapi;
-            incoming = new VoicePacketWorker<AudioPacket>(packet => AudioPacketReceived?.Invoke(packet),
+            incoming = new VoicePacketWorker<AudioPacket>(DispatchAudioPacket,
                 error => api.Logger.Warning("[RPVoiceChat] Native voice routing failed: " + error.Message));
             channel = api.Network.GetChannel(ChannelName).SetMessageHandler<AudioPacket>(ReceivedAudioPacketFromClient);
             if (api.Server.IsDedicated == false)
@@ -25,7 +25,6 @@ namespace RPVoiceChat.Networking
 
         public void Launch()
         {
-            VoiceDiagnostics.Start(api.Logger);
         }
 
         public ConnectionInfo GetConnectionInfo()
@@ -40,7 +39,10 @@ namespace RPVoiceChat.Networking
         public bool SendPacket(PreparedNetworkPacket packet, string playerId)
         {
             var player = api.World.PlayerByUid(playerId) as IServerPlayer;
-            if (player == null || player.ConnectionState != EnumClientState.Playing) return false;
+            if (player == null || player.ConnectionState != EnumClientState.Playing)
+            {
+                return false;
+            }
             channel.SendPacket((AudioPacket)packet.Packet, packet.Payload, player);
             return true;
         }
@@ -54,9 +56,13 @@ namespace RPVoiceChat.Networking
             incoming.Enqueue(packet);
         }
 
+        private void DispatchAudioPacket(AudioPacket packet)
+        {
+            AudioPacketReceived?.Invoke(packet);
+        }
+
         public void Dispose()
         {
-            VoiceDiagnostics.Stop();
             incoming.Dispose();
         }
     }

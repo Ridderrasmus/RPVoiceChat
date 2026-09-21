@@ -14,9 +14,6 @@ namespace RPVoiceChat.Networking
                 FullMode = BoundedChannelFullMode.DropOldest,
                 AllowSynchronousContinuations = false
             }
-#if VOICE_DIAGNOSTICS
-            , _ => VoiceDiagnostics.Count("native-overflow-drop")
-#endif
             );
         private volatile bool disposed;
 
@@ -28,9 +25,8 @@ namespace RPVoiceChat.Networking
                 await foreach (var entry in queue.Reader.ReadAllAsync().ConfigureAwait(false))
                 {
                     if (disposed) continue;
-                    VoiceDiagnostics.Peak("native-queue-age-ms", Environment.TickCount64 - entry.Arrived);
                     if (Environment.TickCount64 - entry.Arrived > 200)
-                    { VoiceDiagnostics.Count("native-expired-drop"); continue; }
+                    { continue; }
                     try { handle(entry.Packet); }
                     catch (Exception e)
                     {
