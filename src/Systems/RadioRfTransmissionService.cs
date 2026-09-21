@@ -44,9 +44,19 @@ namespace RPVoiceChat.Systems
         public static List<RadioTransmissionPoint> CollectActiveTransmissionPoints(ICoreServerAPI sapi)
         {
             var points = CollectWiredTransmissionPoints(sapi);
-            if (sapi == null)
+            AppendRepeaterRelays(sapi, points);
+            return points;
+        }
+
+        /// <summary>
+        /// Grows <paramref name="points"/> with active repeaters that can hear any existing source
+        /// (including previously appended repeaters, for short chains).
+        /// </summary>
+        public static void AppendRepeaterRelays(ICoreServerAPI sapi, List<RadioTransmissionPoint> points)
+        {
+            if (sapi == null || points == null)
             {
-                return points;
+                return;
             }
 
             foreach (var repeater in RadioRfPresenceRegistry.GetEmitters())
@@ -75,8 +85,33 @@ namespace RPVoiceChat.Systems
 
                 points.Add(ToTransmissionPoint(repeater, frequency, isRepeaterRelay: true));
             }
+        }
 
-            return points;
+        /// <summary>
+        /// Handheld talkie TX: RF coverage from the talkie plus any repeaters that can hear it.
+        /// Same model as station antennas (<see cref="BuildVoiceRoutesForTransmissionPoints"/>): RF-only routes
+        /// so <see cref="RadioRfReceptionSystem"/> places audio at the listening talkie, not at the transmitter.
+        /// Does not include wired station emitters (talkie is not a network console source).
+        /// </summary>
+        public static List<VoiceRoute> BuildRoutesForHandheldTransmission(
+            ICoreServerAPI sapi,
+            Vec3d emissionPos,
+            int rangeBlocks,
+            int dimension,
+            string frequency)
+        {
+            string normalized = RadioFrequencyUtil.Normalize(frequency);
+            if (emissionPos == null || rangeBlocks <= 0 || normalized.Length == 0)
+            {
+                return new List<VoiceRoute>();
+            }
+
+            var points = new List<RadioTransmissionPoint>
+            {
+                new RadioTransmissionPoint(emissionPos, rangeBlocks, normalized, dimension, isRepeaterRelay: false)
+            };
+            AppendRepeaterRelays(sapi, points);
+            return BuildVoiceRoutesForTransmissionPoints(points);
         }
 
         public static List<VoiceRoute> BuildVoiceRoutesForTransmissionPoints(IEnumerable<RadioTransmissionPoint> points)

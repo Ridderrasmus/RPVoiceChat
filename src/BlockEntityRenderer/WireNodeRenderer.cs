@@ -17,13 +17,15 @@ namespace RPVoiceChat.GameContent.Renderers
         private MeshRef meshRef;
         private Vec3d meshOrigin;
         private bool needsRebuild = true;
+        private readonly Action onConnectionsChanged;
 
         public WireNodeRenderer(BEWireNode node, ICoreClientAPI capi)
         {
             this.node = node;
             this.capi = capi;
 
-            node.OnConnectionsChanged += () => MarkNeedsRebuild();
+            onConnectionsChanged = MarkNeedsRebuild;
+            node.OnConnectionsChanged += onConnectionsChanged;
             capi.Event.RegisterRenderer(this, EnumRenderStage.Opaque, "wirenoderenderer");
         }
 
@@ -78,6 +80,9 @@ namespace RPVoiceChat.GameContent.Renderers
         {
             meshRef?.Dispose();
             meshRef = null;
+            // Always clear the dirty flag: empty / non-owned connection sets must stop redrawing every frame
+            // and must not keep a stale MeshRef after wire cuts.
+            needsRebuild = false;
 
             var connections = node.GetConnections();
             if (connections == null || connections.Count == 0) return;
@@ -93,6 +98,10 @@ namespace RPVoiceChat.GameContent.Renderers
             {
                 BlockPos otherBlockPos = conn.GetOtherBlockPos(node.Pos);
                 if (otherBlockPos == null) continue;
+
+                // Each logical link is stored on both nodes; only one end must own the mesh
+                // or the same wire is drawn twice (often visibly split once attachment ports move).
+                if (!IsCanonicalWireOwner(node.Pos, otherBlockPos)) continue;
 
                 // Always resolve the other BE via the accessor: conn.GetOtherNode can be wrong after chunk unload.
                 var otherBe = capi.World.BlockAccessor.GetBlockEntity(otherBlockPos) as BEWireNode;
@@ -144,12 +153,21 @@ namespace RPVoiceChat.GameContent.Renderers
 
                 meshRef = capi.Render.UploadMesh(combinedMesh);
             }
+        }
 
-            needsRebuild = false;
+        /// <summary>
+        /// Stable owner for a bidirectional edge so only one <see cref="WireNodeRenderer"/> draws it.
+        /// </summary>
+        private static bool IsCanonicalWireOwner(BlockPos self, BlockPos other)
+        {
+            if (self.X != other.X) return self.X < other.X;
+            if (self.Y != other.Y) return self.Y < other.Y;
+            return self.Z < other.Z;
         }
 
         public void Dispose()
         {
+            node.OnConnectionsChanged -= onConnectionsChanged;
             meshRef?.Dispose();
             meshRef = null;
             capi.Event.UnregisterRenderer(this, EnumRenderStage.Opaque);

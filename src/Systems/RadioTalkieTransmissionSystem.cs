@@ -82,21 +82,20 @@ namespace RPVoiceChat.Systems
 
         private void ApplyTalkieRoute(IServerPlayer player, string frequency)
         {
-            if (routing == null || player?.Entity?.Pos == null || string.IsNullOrEmpty(frequency))
+            if (routing == null || sapi == null || player?.Entity?.Pos == null || string.IsNullOrEmpty(frequency))
             {
                 return;
             }
 
             Vec3d emissionPos = player.Entity.Pos.XYZ;
-            routing.SetTalkieRoutes(player.PlayerUID, new[]
-            {
-                new VoiceRoute(
-                    emissionPos,
-                    ServerConfigManager.RadioTalkieRangeBlocks,
-                    player.Entity.Pos.Dimension,
-                    frequency,
-                    acousticEmission: true)
-            });
+            IReadOnlyList<VoiceRoute> routes = RadioRfTransmissionService.BuildRoutesForHandheldTransmission(
+                sapi,
+                emissionPos,
+                ServerConfigManager.RadioTalkieRangeBlocks,
+                player.Entity.Pos.Dimension,
+                frequency);
+
+            routing.SetTalkieRoutes(player.PlayerUID, routes);
         }
     }
 }

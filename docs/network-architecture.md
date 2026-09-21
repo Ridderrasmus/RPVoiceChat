@@ -155,12 +155,22 @@ sequenceDiagram
     Net->>Rx: OnReceivedSignal (client display + sound)
 ```
 
-1. **Client** sends `WireNetworkMessage` on channel `rpvc:wire-network` for each keypress (`BETelegraph.SendSignal`).
+1. **Client** sends `WireNetworkMessage` on channel `rpvc:wire-network` for each keyed **letter** (`BETelegraph.SendSignal`). The payload is always a **Latin** character (even in hardcore Morse input mode).
 2. **Server** resolves routing in `ApplyRoutingOnServer`:
    - `WireRouteMode.All` — every telegraph on the network
    - `WireRouteMode.NamedEndpoint` — `ResolveTelegraphByName(networkId, targetName)` → sets `TargetPos`
 3. **Relay** is hop-by-hop through **loaded** `BEWireNode` instances (with topology fallback for neighbour discovery).
 4. **Receiving telegraphs** update their display and play Morse audio client-side.
+
+### Soft vs hardcore keying (`rpvoicechat-server.json`)
+
+| Setting | Role |
+|---------|------|
+| `TelegraphGenuineMorseCharacters` | `false` (default): soft mode — type Latin letters. `true`: hardcore — display Morse and **press-and-hold** any key to send dots/dashes. |
+| `TelegraphMinDelayBetweenKeysMs` | Soft mode only: minimum delay between typed Latin characters (anti-spam). **Not used** when hardcore is enabled. |
+| `TelegraphMorseKeyThresholdMs` | Hardcore only: hold duration under this value = `.`, at/above = `-` (default `200`). Letter commit after ~3× this silence. |
+
+Hardcore decoding to Latin happens **on the sender** before `SendSignal`; receivers and printers keep the existing Latin-in / Morse-display pipeline.
 
 ### Endpoint identity
 
@@ -454,7 +464,7 @@ Not a wire node — purely structural range extension on the emitter below.
 
 | Device | TX | RX | Range | Notes |
 |--------|----|----|-------|-------|
-| **Talkie** (`ItemRadio`) | Yes | Yes | Very short (server config `RadioTalkieRangeBlocks`, TBD) | Handheld; tune to console frequency; bind via `WirelessTopologyRegistry` |
+| **Talkie** (`ItemRadio`) | Yes | Yes | Short (`RadioTalkieRangeBlocks`, default 32) | Handheld; tune to console frequency; bind via `WirelessTopologyRegistry` |
 | **Radio Receiver** (block) | No | Yes | Configurable listen radius (`RadioReceiverRangeBlocks`, TBD) | Fixed appliance; GUI: frequency tune + volume; no mechanical power required (TBD) |
 | **Radio Emitter** | Yes | No* | `base + antenna parts` | *Repeater mode receives another emitter's RF, then re-transmits |
 
@@ -493,7 +503,7 @@ Planned routing: dedicated `RadioVoiceRoutingSystem` (same hook pattern as `Tele
 | `RadioEmitterBaseRangeBlocks` | 100 | Base wireless TX range |
 | `RadioAntennaPartRangeBonusBlocks` | 50 | Per stacked antenna part |
 | `RadioMicrophoneCaptureDistance` | 2 | Proximity capture at radio microphone |
-| `RadioTalkieRangeBlocks` | 16 | Handheld TX/RX radius |
+| `RadioTalkieRangeBlocks` | 32 | Handheld TX/RX radius |
 | `RadioReceiverRangeBlocks` | 64 | Fixed receiver listen radius |
 
 No in-game command required (same pattern as `SpeakerAudibleDistance`, etc.).

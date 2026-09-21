@@ -254,6 +254,9 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (Api?.World?.BlockAccessor == null) return;
             if (pendingConnectionPositions == null || pendingConnectionPositions.Count == 0) return;
 
+            bool addedAny = false;
+            var touchedPeers = new List<BEWireNode>();
+
             for (int i = pendingConnectionPositions.Count - 1; i >= 0; i--)
             {
                 var otherPos = pendingConnectionPositions[i];
@@ -267,12 +270,25 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 if (otherBe == null) continue;
 
                 var connection = new WireConnection(this, otherBe);
-                AddConnection(connection);
-                otherBe.AddConnection(connection);
+                // Defer visuals until both ends list the link — otherwise the owner mesh can
+                // briefly use the switchboard's fallback mid-block offset (wire appears too low).
+                AddConnection(connection, notifyVisuals: false);
+                otherBe.AddConnection(connection, notifyVisuals: false);
+                touchedPeers.Add(otherBe);
+                addedAny = true;
                 pendingConnectionPositions.RemoveAt(i);
             }
 
             EnsurePendingConnectionRetryListener();
+
+            if (addedAny)
+            {
+                NotifyWireVisualsChanged();
+                foreach (var peer in touchedPeers)
+                {
+                    peer.NotifyWireVisualsChanged();
+                }
+            }
         }
 
         /// <summary>
@@ -305,6 +321,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         public void AddConnection(WireConnection connection)
         {
+            AddConnection(connection, notifyVisuals: true);
+        }
+
+        public void AddConnection(WireConnection connection, bool notifyVisuals)
+        {
             if (connection == null) return;
 
             if (connections.Count >= MaxConnections) return;
@@ -314,7 +335,47 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 connections.Add(connection);
                 RegisterTopologyEdge(connection.GetOtherBlockPos(Pos));
                 MarkForUpdate();
-                OnConnectionsChanged?.Invoke();
+                if (notifyVisuals)
+                {
+                    NotifyWireVisualsChanged();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Rebuild this node's wire mesh and ask connected peers to do the same
+        /// (needed when attachment ports are dynamic, e.g. switchboard).
+        /// </summary>
+        public void NotifyWireVisualsChanged()
+        {
+            OnConnectionsChanged?.Invoke();
+            InvalidatePeerWireMeshes();
+        }
+
+        /// <summary>
+        /// Ask this node's client wire renderer to rebuild (attachment ports or peer mesh ownership).
+        /// </summary>
+        public void InvalidateWireMesh()
+        {
+            if (renderer is WireNodeRenderer wireRenderer)
+            {
+                wireRenderer.MarkNeedsRebuild();
+            }
+        }
+
+        private void InvalidatePeerWireMeshes()
+        {
+            if (Api?.Side != EnumAppSide.Client) return;
+
+            foreach (var connection in connections)
+            {
+                BlockPos otherPos = connection.GetOtherBlockPos(Pos);
+                if (otherPos == null) continue;
+
+                if (Api.World.BlockAccessor.GetBlockEntity(otherPos) is BEWireNode other)
+                {
+                    other.InvalidateWireMesh();
+                }
             }
         }
 
@@ -382,10 +443,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 return false;
             }
 
-            // Adds the connection on both nodes (AddConnection already checks if connection exists and calls MarkForUpdate)
-            connection.Node1.AddConnection(connection);
-            connection.Node2.AddConnection(connection);
-            OnConnectionsChanged?.Invoke();
+            // Add on both ends first, then refresh meshes once ports/offsets are consistent.
+            node1.AddConnection(connection, notifyVisuals: false);
+            node2.AddConnection(connection, notifyVisuals: false);
+            node1.NotifyWireVisualsChanged();
+            node2.NotifyWireVisualsChanged();
 
             if (Api.Side == EnumAppSide.Server)
             {
@@ -569,9 +631,18 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
             if (connections.Remove(connection))
             {
-                WireTopologyRegistry.RemoveEdge(Pos, connection.GetOtherBlockPos(Pos));
+                BlockPos otherPos = connection.GetOtherBlockPos(Pos);
+                WireTopologyRegistry.RemoveEdge(Pos, otherPos);
                 MarkForUpdate();
-                OnConnectionsChanged?.Invoke();
+                NotifyWireVisualsChanged();
+
+                // Removed peer is no longer in connections[], so notify it explicitly (ports may reshuffle).
+                if (Api?.Side == EnumAppSide.Client
+                    && otherPos != null
+                    && Api.World.BlockAccessor.GetBlockEntity(otherPos) is BEWireNode other)
+                {
+                    other.InvalidateWireMesh();
+                }
                 
                 // Recalculate networks if needed (only on server side)
                 if (Api.Side == EnumAppSide.Server)
@@ -943,7 +1014,16 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
 
             if (Api.Side == EnumAppSide.Client)
+            {
                 WireNetworkHandler.ClientSideMessageReceived -= OnReceivedMessage;
+
+                // Avoid leaking registered renderers across chunk unload/reload (duplicate ghost wires).
+                if (renderer is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+                renderer = null;
+            }
         }
 
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldAccessForResolve)
@@ -973,19 +1053,19 @@ namespace RPVoiceChat.GameContent.BlockEntity
             connections.Clear();
             pendingConnectionPositions.Clear();
 
-            if (!tree.HasAttribute("rpvc:connections"))
-                return;
-
-            var connArray = tree["rpvc:connections"] as TreeArrayAttribute;
-            if (connArray?.value == null || connArray.value.Length == 0)
-                return;
-
-            foreach (TreeAttribute connAttr in connArray.value)
+            if (tree.HasAttribute("rpvc:connections"))
             {
-                var otherPos = connAttr.GetBlockPos("otherNodePos");
-                if (otherPos != null && !otherPos.Equals(Pos))
+                var connArray = tree["rpvc:connections"] as TreeArrayAttribute;
+                if (connArray?.value != null)
                 {
-                    pendingConnectionPositions.Add(otherPos);
+                    foreach (TreeAttribute connAttr in connArray.value)
+                    {
+                        var otherPos = connAttr.GetBlockPos("otherNodePos");
+                        if (otherPos != null && !otherPos.Equals(Pos))
+                        {
+                            pendingConnectionPositions.Add(otherPos);
+                        }
+                    }
                 }
             }
 
@@ -993,9 +1073,16 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             // Resolve immediately on client so wires render without needing hover.
             // Chunk preload may call FromTreeAttributes off-thread — defer to main thread.
+            // Always refresh meshes afterward (including empty lists after wire-cutter sync);
+            // otherwise the previous MeshRef keeps drawing ghost cables.
             if (Api?.Side == EnumAppSide.Client && Api is ICoreClientAPI capi)
             {
-                capi.Event.EnqueueMainThreadTask(ResolvePendingConnectionsAndNotify, "rpvoicechat:ResolvePendingWires");
+                capi.Event.EnqueueMainThreadTask(() =>
+                {
+                    ResolvePendingConnectionsAndNotify();
+                    // Always refresh (covers empty lists after wire-cut). Resolve already notifies when it added links.
+                    NotifyWireVisualsChanged();
+                }, "rpvoicechat:ResolvePendingWires");
             }
         }
 
