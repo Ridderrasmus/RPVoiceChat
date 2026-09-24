@@ -14,6 +14,9 @@ namespace RPVoiceChat.Audio
         private List<int> availableBuffers = new List<int>();
         private List<int> queuedBuffers = new List<int>();
         private int[] buffers;
+        private readonly Dictionary<int, double> durations = new();
+        private double queuedMilliseconds;
+        private bool disposed;
         private int source;
         private ALSourceState previousSourceState = ALSourceState.Initial;
         private object buffer_queue_lock = new object();
@@ -37,8 +40,9 @@ namespace RPVoiceChat.Audio
         /// <summary>
         /// Queue PCM into OpenAL. Returns false when all buffers are in use (caller should wait).
         /// </summary>
-        public bool TryQueueAudio(byte[] audio, ALFormat format, int frequency)
+        public bool TryQueueAudio(byte[] audio, ALFormat format, int frequency, double maxBufferedMilliseconds = double.PositiveInfinity)
         {
+            if (disposed) return false;
             FreeProcessedBuffers();
 
             if (availableBuffers.Count == 0)
@@ -48,7 +52,8 @@ namespace RPVoiceChat.Audio
 
             lock (buffer_queue_lock)
             {
-                if (availableBuffers.Count == 0)
+                double duration = audio.Length * 1000d / (frequency * AudioUtils.ChannelsPerFormat(format) * 2);
+                if (disposed || availableBuffers.Count == 0 || (queuedBuffers.Count > 0 && queuedMilliseconds + duration > maxBufferedMilliseconds))
                 {
                     return false;
                 }
@@ -66,6 +71,9 @@ namespace RPVoiceChat.Audio
                     return false;
                 }
 
+                // The source may have drained while BufferData uploaded the new PCM.
+                // Reclaim that finished audio before appending and restarting.
+                if (OALW.GetSourceState(source) == ALSourceState.Stopped) TryDequeueBuffers();
                 OALW.SourceQueueBuffer(source, currentBuffer);
                 var queueError = AL.GetError();
                 if (queueError != ALError.NoError)
@@ -76,6 +84,8 @@ namespace RPVoiceChat.Audio
                 }
 
                 queuedBuffers.Add(currentBuffer);
+                durations[currentBuffer] = duration;
+                queuedMilliseconds += duration;
                 return true;
             }
         }
@@ -90,12 +100,12 @@ namespace RPVoiceChat.Audio
                 var sourceState = OALW.GetSourceState(source);
                 sourceHasStopped = sourceState == ALSourceState.Stopped;
 
-                // Only process buffers once after stopping
-                if (sourceHasStopped && sourceState == previousSourceState) return;
-
-                // Source is Playing or just entered Stopped state
+                // Playback can start AND finish between polls. A repeated Stopped
+                // observation does not mean that the processed buffers are unchanged.
+                bool notifyStopped = sourceHasStopped && sourceState != previousSourceState;
                 previousSourceState = sourceState;
                 TryDequeueBuffers();
+                sourceHasStopped = notifyStopped;
             }
 
             if (sourceHasStopped) OnEmptyingQueue?.Invoke();
@@ -124,8 +134,27 @@ namespace RPVoiceChat.Audio
                     break;
                 }
 
-                queuedBuffers.Remove(buffer);
+                if (!queuedBuffers.Remove(buffer)) break;
+                if (durations.Remove(buffer, out double duration)) queuedMilliseconds -= duration;
                 availableBuffers.Add(buffer);
+            }
+        }
+
+        public void Reset()
+        {
+            lock (buffer_queue_lock)
+            {
+                if (disposed) return;
+                OALW.SourceStop(source);
+                while (queuedBuffers.Count > 0)
+                {
+                    int id = OALW.SourceUnqueueBuffer(source);
+                    if (id == 0 || !queuedBuffers.Remove(id)) break;
+                    availableBuffers.Add(id);
+                }
+                durations.Clear();
+                queuedMilliseconds = 0;
+                previousSourceState = ALSourceState.Initial;
             }
         }
 
@@ -133,23 +162,9 @@ namespace RPVoiceChat.Audio
         {
             lock (buffer_queue_lock)
             {
-                try
-                {
-                    OALW.SourceStop(source);
-
-                    // Dequeue all remaining buffers
-                    while (queuedBuffers.Count > 0)
-                    {
-                        var buffer = OALW.SourceUnqueueBuffer(source);
-                        if (buffer == 0) break;
-                        queuedBuffers.Remove(buffer);
-                    }
-                }
-                catch (Exception e)
-                {
-                    Logger.client.Warning($"Error cleaning up audio buffers: {e.Message}");
-                }
-
+                if (disposed) return;
+                Reset();
+                disposed = true;
                 OALW.DeleteBuffers(buffers);
             }
         }

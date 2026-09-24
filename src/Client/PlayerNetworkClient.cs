@@ -57,6 +57,10 @@ namespace RPVoiceChat.Client
 
         private void OnConnectionRequest(ConnectionRequest connectionRequest)
         {
+            if (RPVoiceChatClient.MicrophoneManagerInstance != null)
+                RPVoiceChatClient.MicrophoneManagerInstance.PacketDurationMs = connectionRequest.VoiceTimingVersion >= 1 ? 20 : 100;
+            if (RPVoiceChatClient.AudioOutputManagerInstance != null)
+                RPVoiceChatClient.AudioOutputManagerInstance.UsesExplicitDeliveryMetadata = connectionRequest.VoiceTimingVersion >= 1;
             serverConnections = connectionRequest.SupportedTransports;
             Connect();
         }
@@ -101,6 +105,7 @@ namespace RPVoiceChat.Client
                 extendedTransport.OnConnectionLost += ConnectionLost;
             }
             clientConnection.Transport = transportID;
+            clientConnection.VoiceTimingVersion = 1;
             clientConnection.DevicesVoiceFeedback = ModConfig.ClientConfig.DevicesVoiceFeedback;
             handshakeChannel.SendPacket(clientConnection);
 

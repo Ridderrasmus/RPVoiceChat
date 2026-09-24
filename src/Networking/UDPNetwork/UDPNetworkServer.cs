@@ -1,6 +1,6 @@
 using RPVoiceChat.Util;
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -10,8 +10,8 @@ namespace RPVoiceChat.Networking
     {
         public event Action<AudioPacket> AudioPacketReceived;
 
-        private Dictionary<string, ConnectionInfo> connectionsByPlayer = new Dictionary<string, ConnectionInfo>();
-        private Dictionary<string, string> playerByAddress = new Dictionary<string, string>();
+        private ConcurrentDictionary<string, IPEndPoint> connectionsByPlayer = new();
+        private ConcurrentDictionary<string, string> playerByAddress = new();
         private IPAddress ip;
         private IPEndPoint ownEndPoint;
         private ConnectionInfo connectionInfo;
@@ -49,12 +49,12 @@ namespace RPVoiceChat.Networking
         }
 
         public bool SendPacket(NetworkPacket packet, string playerId)
-        {
-            ConnectionInfo connectionInfo;
-            if (!connectionsByPlayer.TryGetValue(playerId, out connectionInfo)) return false;
+            => SendPacket(new PreparedNetworkPacket(packet), playerId);
 
-            var data = packet.ToBytes();
-            var destination = NetworkUtils.GetEndPoint(connectionInfo);
+        public bool SendPacket(PreparedNetworkPacket packet, string playerId)
+        {
+            if (!connectionsByPlayer.TryGetValue(playerId, out var destination)) return false;
+            var data = packet.CustomBytes;
 
             UdpClient.Send(data, data.Length, destination);
             return true;
@@ -63,10 +63,11 @@ namespace RPVoiceChat.Networking
         public void PlayerConnected(string playerId, ConnectionInfo connectionInfo)
         {
             if (connectionsByPlayer.TryGetValue(playerId, out var oldConn))
-                playerByAddress.Remove(NetworkUtils.GetEndPoint(oldConn).ToString());
-            var addressKey = NetworkUtils.GetEndPoint(connectionInfo).ToString();
-            if (playerByAddress.ContainsKey(addressKey)) playerByAddress.Remove(addressKey);
-            connectionsByPlayer[playerId] = connectionInfo;
+                playerByAddress.TryRemove(oldConn.ToString(), out _);
+            var endpoint = NetworkUtils.GetEndPoint(connectionInfo);
+            var addressKey = endpoint.ToString();
+            playerByAddress.TryRemove(addressKey, out _);
+            connectionsByPlayer[playerId] = endpoint;
             playerByAddress[addressKey] = playerId;
             logger.VerboseDebug($"{playerId} connected over {_transportID}");
         }
@@ -74,9 +75,9 @@ namespace RPVoiceChat.Networking
         public void PlayerDisconnected(string playerId)
         {
             if (!connectionsByPlayer.TryGetValue(playerId, out var conn)) return;
-            var addressKey = NetworkUtils.GetEndPoint(conn).ToString();
-            connectionsByPlayer.Remove(playerId);
-            playerByAddress.Remove(addressKey);
+            var addressKey = conn.ToString();
+            connectionsByPlayer.TryRemove(playerId, out _);
+            playerByAddress.TryRemove(addressKey, out _);
             logger.VerboseDebug($"{playerId} disconnected from {_transportID} server");
         }
 

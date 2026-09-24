@@ -390,7 +390,7 @@ namespace RPVoiceChat.Systems
 
             for (int i = 0; i < maxPacketsPerTick && pendingPackets.TryDequeue(out AudioPacket packet); i++)
             {
-                gameServer.SendAudioToAllClientsInRange(packet);
+                gameServer.SendProgramAudio(packet);
             }
         }
 
