@@ -45,7 +45,9 @@ namespace RPVoiceChat.Audio
         }
 
         private ConcurrentDictionary<string, PlayerAudioSource> playerSources = new ConcurrentDictionary<string, PlayerAudioSource>();
+        public bool UsesExplicitDeliveryMetadata { get; set; }
         private PlayerAudioSource localPlayerAudioSource;
+        private VoiceOcclusionScheduler occlusionScheduler;
         private ClientSettingsRepository clientSettingsRepo;
 
         public AudioOutputManager(ICoreClientAPI api, ClientSettingsRepository settingsRepository)
@@ -58,6 +60,7 @@ namespace RPVoiceChat.Audio
         public void Launch()
         {
             PlayerListener.Init(capi);
+            occlusionScheduler = new VoiceOcclusionScheduler(capi);
             capi.Event.PlayerEntitySpawn += PlayerSpawned;
             capi.Event.PlayerEntityDespawn += PlayerDespawned;
             ClientLoaded();
@@ -104,57 +107,28 @@ namespace RPVoiceChat.Audio
 
         public void HandleAudioPacket(AudioPacket packet, PlayerAudioSource source)
         {
-            string codec = packet.Codec;
-            int frequency = packet.Frequency;
-            int channels = AudioUtils.ChannelsPerFormat(packet.Format);
             AudioData audioData = AudioData.FromPacket(packet);
-            audioData.forceFlatPlayback = ShouldForceFlatPlayback(packet);
+            if (!UsesExplicitDeliveryMetadata)
+            {
+                // Older servers cannot distinguish group delivery; preserve their existing behavior.
+                var speaker = capi.World.PlayerByUid(packet.PlayerId)?.Entity?.Pos;
+                var listener = capi.World.Player?.Entity?.Pos;
+                audioData.sourceDimension = speaker?.Dimension ?? listener?.Dimension ?? 0;
+                audioData.forceFlatPlayback = packet.IsGlobalBroadcast || speaker == null
+                    || (listener != null && speaker.DistanceTo(listener) > audioData.effectiveRange);
+            }
 
-            // The server has already calculated the effective range and sent packets only to players within range
-            // Here we just need to update the voice level for audio quality
-
-            if (source.voiceLevel != packet.VoiceLevel)
-                source.UpdateVoiceLevel(packet.VoiceLevel);
-
-            source.SetForceFlatPlayback(audioData.forceFlatPlayback);
-            source.PrepareForPacket(audioData);
-            source.UpdatePlayer();
-            source.UpdateAudioFormat(codec, frequency, channels);
+            // Metadata is applied in playback order, not network arrival order.
             source.EnqueueAudio(audioData, packet.SequenceNumber);
-        }
-
-        private bool ShouldForceFlatPlayback(AudioPacket packet)
-        {
-            var listenerPlayer = capi.World.Player;
-            if (listenerPlayer?.Entity?.Pos == null)
-            {
-                return false;
-            }
-
-            var speakerPlayer = capi.World.PlayerByUid(packet.PlayerId);
-            if (speakerPlayer?.Entity?.Pos == null)
-            {
-                return true;
-            }
-
-            int effectiveRange = packet.TransmissionRangeBlocks > 0
-                ? packet.TransmissionRangeBlocks
-                : WorldConfig.GetInt(packet.VoiceLevel);
-
-            if (effectiveRange <= 0)
-            {
-                return true;
-            }
-
-            double distance = speakerPlayer.Entity.Pos.DistanceTo(listenerPlayer.Entity.Pos);
-            return distance > effectiveRange;
         }
 
         public void HandleLoopback(AudioPacket packet)
         {
             if (!IsLoopbackEnabled) return;
 
-            HandleAudioPacket(packet, localPlayerAudioSource);
+            var audio = AudioData.FromPacket(packet);
+            audio.forceFlatPlayback = true;
+            localPlayerAudioSource?.EnqueueAudio(audio, packet.SequenceNumber);
         }
 
         private bool IsOwnTalkieRfReception(AudioPacket packet)
@@ -189,7 +163,7 @@ namespace RPVoiceChat.Audio
 
         private void ClientLoaded()
         {
-            localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, capi, clientSettingsRepo)
+            localPlayerAudioSource = new PlayerAudioSource(capi.World.Player, capi, clientSettingsRepo, null, occlusionScheduler)
             {
                 IsLocational = false,
             };
@@ -215,7 +189,7 @@ namespace RPVoiceChat.Audio
 
         private PlayerAudioSource CreatePlayerSource(IPlayer player)
         {
-            var source = new PlayerAudioSource(player, capi, clientSettingsRepo);
+            var source = new PlayerAudioSource(player, capi, clientSettingsRepo, null, occlusionScheduler);
             playerSources.AddOrUpdate(player.PlayerUID, source, (_, __) => source);
             return source;
         }
@@ -223,7 +197,7 @@ namespace RPVoiceChat.Audio
         private PlayerAudioSource CreateSyntheticSource(string sourceId)
         {
             // Program bus / RF block emission: no real player UID — position comes from packet override.
-            var source = new PlayerAudioSource(capi.World.Player, capi, clientSettingsRepo, sourceId);
+            var source = new PlayerAudioSource(capi.World.Player, capi, clientSettingsRepo, sourceId, occlusionScheduler);
             playerSources.AddOrUpdate(sourceId, source, (_, __) => source);
             return source;
         }
@@ -256,10 +230,10 @@ namespace RPVoiceChat.Audio
         public bool IsPlayerTalking(string playerId)
         {
             if (playerSources.TryGetValue(playerId, out var source))
-                return source.IsPlaying;
+                return source.IsSpeaking;
 
             if (capi.World.Player?.PlayerUID == playerId)
-                return localPlayerAudioSource?.IsPlaying == true;
+                return localPlayerAudioSource?.IsSpeaking == true;
 
             // Group members can be silent, offline, or outside entity range; no source is normal.
             return false;
@@ -276,6 +250,7 @@ namespace RPVoiceChat.Audio
 
         public void Dispose()
         {
+            occlusionScheduler?.Dispose();
             try
             {
                 PlayerListener.Dispose();

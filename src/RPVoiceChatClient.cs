@@ -181,9 +181,14 @@ namespace RPVoiceChat
 
         private void OnAudioReceived(AudioPacket packet)
         {
-            if (!isReady) return;
+            if (!isReady)
+            {
+                return;
+            }
             audioOutputManager.HandleAudioPacket(packet);
         }
+
+        private long lastCaptureSequence;
 
         private void OnBufferRecorded(AudioData audioData)
         {
@@ -192,7 +197,8 @@ namespace RPVoiceChat
             if (audioData.data == null || audioData.data.Length == 0) return;
 
             string sender = capi.World.Player.PlayerUID;
-            var sequenceNumber = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var sequenceNumber = Math.Max(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), lastCaptureSequence + 1);
+            lastCaptureSequence = sequenceNumber;
             AudioPacket packet = new AudioPacket(sender, audioData, sequenceNumber);
             audioOutputManager.HandleLoopback(packet);
 

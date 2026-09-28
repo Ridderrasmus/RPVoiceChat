@@ -26,14 +26,23 @@ namespace RPVoiceChat.Server
 
         // Stored players and their associated listeners
         private long listenerUpdateTickListener = 0;
-        private ConcurrentDictionary<string, HashSet<IPlayer>> playerListeners = new ConcurrentDictionary<string, HashSet<IPlayer>>();
+        private readonly ConcurrentDictionary<string, INetworkServer> preferredTransports = new();
+        private readonly ConcurrentDictionary<string, bool> timedVoiceClients = new();
+        private volatile Dictionary<string, string[]> groupRecipientsByPlayer = new();
+        private sealed class RoutingSnapshot
+        {
+            public Grid Grid = Grid.Empty;
+            public Dictionary<string, MegaphoneInfo> Megaphones = new();
+            public bool OthersHearSpectators;
+            public readonly ConcurrentDictionary<(string Uid, int Range, bool Global), GridPlayer[]> Listeners = new();
+            public readonly ConcurrentDictionary<(int Dimension, double X, double Y, double Z, int Range), GridPlayer[]> Emissions = new();
+        }
+        private volatile RoutingSnapshot routingSnapshot = new();
         private readonly ConcurrentDictionary<string, bool> devicesVoiceFeedbackByPlayer = new ConcurrentDictionary<string, bool>();
         private readonly IReadOnlyList<IVoiceRouteProvider> voiceRouteProviders;
         private readonly IReadOnlyList<IVoiceRecipientExpander> voiceRecipientExpanders;
         private System.Func<AudioPacket, bool> tryConsumeProgramMicAudio;
 
-        private volatile Grid voiceGrid = Grid.Empty;
-        [ThreadStatic] private static List<GridPlayer> tlsGridCandidates;
         [ThreadStatic] private static Dictionary<string, RoutedVoiceRecipient> tlsRoutedRecipients;
 
         public GameServer(
@@ -52,6 +61,7 @@ namespace RPVoiceChat.Server
                 .ToList() ?? new List<IVoiceRecipientExpander>();
             voiceBanManager = new VoiceBanManager(sapi);
             voiceGroupManager = new VoiceGroupManager(sapi);
+            PublishGroupRecipients(voiceGroupManager.BuildStateEntries());
             handshakeChannel = sapi.Network
                 .RegisterChannel("RPVCHandshake")
                 .RegisterMessageType<ConnectionRequest>()
@@ -73,71 +83,25 @@ namespace RPVoiceChat.Server
         private void RebuildVoiceRoutingSnapshot(float gameTick)
         {
             if (voiceGroupManager.ExpireInvitations()) NotifyAllPlayersVoiceGroupsUpdated();
-            Grid newGrid = Grid.Build(api, ServerConfigManager.GridCellSizeBlocks);
-            var newListeners = new ConcurrentDictionary<string, HashSet<IPlayer>>();
-
-            bool othersHearSpectators = WorldConfig.GetBool("others-hear-spectators", true);
-            var candidates = new List<GridPlayer>(64);
-            var players = newGrid.Players;
-
-            for (int i = 0; i < players.Count; i++)
+            var snapshot = new RoutingSnapshot
             {
-                GridPlayer transmittingPlayer = players[i];
-                var megaphoneInfo = GetPlayerMegaphoneInfo(transmittingPlayer.Player);
+                Grid = Grid.Build(api, ServerConfigManager.GridCellSizeBlocks),
+                OthersHearSpectators = WorldConfig.GetBool("others-hear-spectators", true)
+            };
+            foreach (var player in snapshot.Grid.Players)
+                snapshot.Megaphones[player.PlayerUID] = GetPlayerMegaphoneInfo(player.Player);
+            routingSnapshot = snapshot;
+        }
 
-                bool isGlobalBroadcast = megaphoneInfo.HasEnhancedMegaphone;
-                int effectiveDistance = ResolveEffectiveListenerDistance(megaphoneInfo);
-                double squareDistance = isGlobalBroadcast ? double.MaxValue : (double)effectiveDistance * effectiveDistance;
-
-                var listeners = new HashSet<IPlayer>();
-
-                if (isGlobalBroadcast)
-                {
-                    for (int candidateIndex = 0; candidateIndex < players.Count; candidateIndex++)
-                    {
-                        TryAddNormalVoiceListener
-                        (
-                            transmittingPlayer,
-                            players[candidateIndex],
-                            listeners,
-                            isGlobalBroadcast,
-                            squareDistance,
-                            othersHearSpectators
-                        );
-                    }
-                }
-                else
-                {
-                    newGrid.CollectNear
-                    (
-                        transmittingPlayer.Dimension,
-                        transmittingPlayer.X,
-                        transmittingPlayer.Z,
-                        effectiveDistance,
-                        candidates
-                    );
-
-                    for (int candidateIndex = 0; candidateIndex < candidates.Count; candidateIndex++)
-                    {
-                        TryAddNormalVoiceListener
-                        (
-                            transmittingPlayer,
-                            candidates[candidateIndex],
-                            listeners,
-                            isGlobalBroadcast,
-                            squareDistance,
-                            othersHearSpectators
-                        );
-                    }
-
-                    candidates.Clear();
-                }
-
-                newListeners[transmittingPlayer.PlayerUID] = listeners;
-            }
-
-            voiceGrid = newGrid;
-            playerListeners = newListeners;
+        private static GridPlayer[] CollectListeners(RoutingSnapshot snapshot, GridPlayer speaker, int range, bool global)
+        {
+            var candidates = new List<GridPlayer>();
+            if (global) candidates.AddRange(snapshot.Grid.Players);
+            else snapshot.Grid.CollectNear(speaker.Dimension, speaker.X, speaker.Z, range + 10, candidates);
+            double distanceSquared = (double)(range + 10) * (range + 10);
+            return candidates.Where(candidate => candidate.PlayerUID != speaker.PlayerUID
+                && (snapshot.OthersHearSpectators || !speaker.IsSpectator || candidate.IsSpectator)
+                && (global || (candidate.Dimension == speaker.Dimension && SquareDistance(speaker, candidate) <= distanceSquared))).ToArray();
         }
 
         public void Launch()
@@ -165,6 +129,8 @@ namespace RPVoiceChat.Server
 
         public void PlayerLeft(IServerPlayer player)
         {
+            preferredTransports.TryRemove(player.PlayerUID, out _);
+            timedVoiceClients.TryRemove(player.PlayerUID, out _);
             lastGroupRequest.Remove(player.PlayerUID);
             api.Event.EnqueueMainThreadTask(NotifyVoiceGroupUiPlayers, "rpvoicechat:groupPlayerLeft");
             devicesVoiceFeedbackByPlayer.TryRemove(player.PlayerUID, out _);
@@ -182,6 +148,8 @@ namespace RPVoiceChat.Server
 
         public void SendAudioToAllClientsInRange(AudioPacket packet)
         {
+            if (packet == null || string.IsNullOrEmpty(packet.PlayerId) || !timedVoiceClients.ContainsKey(packet.PlayerId)) return;
+            packet.GroupDelivery = false;
             // Check if the player is banned - don't send their audio to other players
             if (voiceBanManager.IsPlayerBanned(packet.PlayerId))
             {
@@ -199,81 +167,87 @@ namespace RPVoiceChat.Server
                 return;
             }
 
-            var recipientUids = new HashSet<string>();
+            RoutingSnapshot snapshot = routingSnapshot;
+            if (!snapshot.Grid.TryGetPlayer(packet.PlayerId, out var speaker)) return;
+            snapshot.Megaphones.TryGetValue(packet.PlayerId, out var megaphone);
+            var outgoing = CloneAudioPacket(packet);
+            outgoing.VoiceLevel = Enum.IsDefined(typeof(VoiceLevel), packet.VoiceLevel) ? packet.VoiceLevel : VoiceLevel.Talking;
+            bool amplifierRequested = packet.TransmissionRangeBlocks > 0 || packet.IsGlobalBroadcast;
+            bool global = amplifierRequested && megaphone.HasEnhancedMegaphone;
+            int range = amplifierRequested && megaphone.HasMegaphone
+                ? ServerConfigManager.MegaphoneAudibleDistance : WorldConfig.GetInt(outgoing.VoiceLevel);
+            range = Math.Clamp(range, 0, 100000);
+            outgoing.TransmissionRangeBlocks = range;
+            outgoing.EffectiveRange = range;
+            outgoing.IsGlobalBroadcast = global;
+            outgoing.IgnoreDistanceReduction = amplifierRequested && megaphone.HasMegaphone && packet.IgnoreDistanceReduction;
+            outgoing.WallThicknessOverride = amplifierRequested && megaphone.HasMegaphone ? packet.WallThicknessOverride : -1;
+            outgoing.HasSourcePositionOverride = false;
+            outgoing.SourceDimension = speaker.Dimension;
+            outgoing.GroupDelivery = false;
 
-            if (playerListeners.TryGetValue(packet.PlayerId, out var listeners))
+            var listeners = snapshot.Listeners.GetOrAdd((packet.PlayerId, range, global),
+                _ => CollectListeners(snapshot, speaker, range, global));
+            var spatialRecipients = new HashSet<string>(listeners.Select(player => player.PlayerUID));
+            var groupRecipients = new HashSet<string>();
+            if (IsVoiceGroupsEnabled() && groupRecipientsByPlayer.TryGetValue(packet.PlayerId, out var members))
             {
-                foreach (var recipient in listeners)
+                foreach (string uid in members)
                 {
-                    recipientUids.Add(recipient.PlayerUID);
+                    if (uid == speaker.PlayerUID || !snapshot.Grid.TryGetPlayer(uid, out var member)) continue;
+                    if (!snapshot.OthersHearSpectators && speaker.IsSpectator && !member.IsSpectator) continue;
+                    // A group member within the audible range keeps positional playback; distant members get an explicit flat delivery.
+                    if (!global && (member.Dimension != speaker.Dimension || SquareDistance(speaker, member) > (double)range * range))
+                    {
+                        spatialRecipients.Remove(uid);
+                        groupRecipients.Add(uid);
+                    }
                 }
             }
-
-            if (IsVoiceGroupsEnabled())
+            var spatialPacket = new PreparedNetworkPacket(outgoing);
+            foreach (string uid in spatialRecipients) SendPacket(spatialPacket, uid);
+            if (groupRecipients.Count > 0)
             {
-                bool restrictSpectatorVoice = !WorldConfig.GetBool("others-hear-spectators", true)
-                    && api.World.PlayerByUid(packet.PlayerId)?.WorldData.CurrentGameMode == EnumGameMode.Spectator;
-                var groupMembers = voiceGroupManager.GetGroupMembersForPlayer(packet.PlayerId);
-                foreach (var memberUid in groupMembers)
-                {
-                    if (memberUid == packet.PlayerId)
-                    {
-                        continue;
-                    }
-
-                    var memberPlayer = api.World.PlayerByUid(memberUid) as IServerPlayer;
-                    if (memberPlayer == null || memberPlayer.ConnectionState != EnumClientState.Playing)
-                    {
-                        continue;
-                    }
-
-                    if (restrictSpectatorVoice && memberPlayer.WorldData.CurrentGameMode != EnumGameMode.Spectator)
-                    {
-                        continue;
-                    }
-
-                    recipientUids.Add(memberUid);
-                }
+                var groupPacket = CloneAudioPacket(outgoing);
+                groupPacket.GroupDelivery = true;
+                var prepared = new PreparedNetworkPacket(groupPacket);
+                foreach (string uid in groupRecipients) SendPacket(prepared, uid);
             }
+        }
 
-            foreach (var recipientUid in recipientUids)
-            {
-                SendPacket(packet, recipientUid);
-            }
+        internal void SendProgramAudio(AudioPacket packet)
+        {
+            if (packet != null && TryResolveVoiceRoutes(packet.PlayerId, out var routes))
+                SendRoutedVoiceAudio(packet, routes);
         }
 
         private void SendRoutedVoiceAudio(AudioPacket packet, IReadOnlyList<VoiceRoute> routes)
         {
             if (routes == null || routes.Count == 0) return;
 
-            Grid grid = voiceGrid ?? Grid.Empty;
-            if (grid.IsEmpty) grid = Grid.Build(api, ServerConfigManager.GridCellSizeBlocks);
+            RoutingSnapshot snapshot = routingSnapshot;
+            Grid grid = snapshot.Grid;
 
             Dictionary<string, RoutedVoiceRecipient> recipients = tlsRoutedRecipients ??= new Dictionary<string, RoutedVoiceRecipient>(64);
-            List<GridPlayer> candidates = tlsGridCandidates ??= new List<GridPlayer>(64);
 
             recipients.Clear();
-            candidates.Clear();
 
             for (int routeIndex = 0; routeIndex < routes.Count; routeIndex++)
             {
                 VoiceRoute route = routes[routeIndex];
                 if (!route.IsAcousticEmission || route.EmissionPos == null || route.RangeBlocks <= 0) continue;
 
-                grid.CollectNear(
-                    route.Dimension,
-                    route.EmissionPos.X,
-                    route.EmissionPos.Z,
-                    route.RangeBlocks,
-                    candidates
-                );
-
-                for (int candidateIndex = 0; candidateIndex < candidates.Count; candidateIndex++)
+                var key = (route.Dimension, route.EmissionPos.X, route.EmissionPos.Y, route.EmissionPos.Z, route.RangeBlocks);
+                var emissionListeners = snapshot.Emissions.GetOrAdd(key, _ =>
                 {
-                    TryAccumulateRoutedRecipient(packet, route, candidates[candidateIndex], recipients);
-                }
+                    var near = new List<GridPlayer>();
+                    grid.CollectNear(route.Dimension, route.EmissionPos.X, route.EmissionPos.Z, route.RangeBlocks, near);
+                    return near.Where(candidate => candidate.Dimension == route.Dimension
+                        && SquareDistance(candidate.X, candidate.Y, candidate.Z, route.EmissionPos) <= (double)route.RangeBlocks * route.RangeBlocks).ToArray();
+                });
+                foreach (var candidate in emissionListeners)
+                    TryAccumulateRoutedRecipient(packet, route, candidate, recipients);
 
-                candidates.Clear();
             }
 
             for (int expanderIndex = 0; expanderIndex < voiceRecipientExpanders.Count; expanderIndex++)
@@ -281,22 +255,30 @@ namespace RPVoiceChat.Server
                 voiceRecipientExpanders[expanderIndex].ExpandRoutedRecipients(packet, routes, recipients);
             }
 
+            var variants = new Dictionary<(int Dimension, double X, double Y, double Z, int Range), PreparedNetworkPacket>();
             foreach (RoutedVoiceRecipient recipient in recipients.Values)
             {
-                var routedPacket = CloneAudioPacket(packet);
-                routedPacket.TransmissionRangeBlocks = recipient.Route.RangeBlocks;
-                routedPacket.HasSourcePositionOverride = true;
-                routedPacket.SourcePosX = recipient.Route.EmissionPos.X;
-                routedPacket.SourcePosY = recipient.Route.EmissionPos.Y;
-                routedPacket.SourcePosZ = recipient.Route.EmissionPos.Z;
-                // Acoustic block emission (speakers/receivers) must use normal distance attenuation.
-                routedPacket.IsGlobalBroadcast = false;
-                routedPacket.IgnoreDistanceReduction = false;
-                SendPacket(routedPacket, recipient.PlayerUID);
+                var route = recipient.Route;
+                var key = (route.Dimension, route.EmissionPos.X, route.EmissionPos.Y, route.EmissionPos.Z, route.RangeBlocks);
+                if (!variants.TryGetValue(key, out var prepared))
+                {
+                    var routedPacket = CloneAudioPacket(packet);
+                    routedPacket.TransmissionRangeBlocks = route.RangeBlocks;
+                    routedPacket.HasSourcePositionOverride = true;
+                    routedPacket.SourcePosX = route.EmissionPos.X;
+                    routedPacket.SourcePosY = route.EmissionPos.Y;
+                    routedPacket.SourcePosZ = route.EmissionPos.Z;
+                    routedPacket.SourceDimension = route.Dimension;
+                    routedPacket.GroupDelivery = false;
+                    routedPacket.IsGlobalBroadcast = false;
+                    routedPacket.IgnoreDistanceReduction = false;
+                    prepared = new PreparedNetworkPacket(routedPacket);
+                    variants.Add(key, prepared);
+                }
+                SendPacket(prepared, recipient.PlayerUID);
             }
 
             recipients.Clear();
-            candidates.Clear();
         }
 
         private static AudioPacket CloneAudioPacket(AudioPacket src)
@@ -310,6 +292,11 @@ namespace RPVoiceChat.Server
                 Frequency = src.Frequency,
                 Format = src.Format,
                 SequenceNumber = src.SequenceNumber,
+                CaptureSampleTime = src.CaptureSampleTime,
+                SampleCount = src.SampleCount,
+                CaptureSession = src.CaptureSession,
+                GroupDelivery = src.GroupDelivery,
+                SourceDimension = src.SourceDimension,
                 Codec = src.Codec,
                 TransmissionRangeBlocks = src.TransmissionRangeBlocks,
                 EffectiveRange = src.EffectiveRange,
@@ -395,6 +382,15 @@ namespace RPVoiceChat.Server
             var playerTransport = playerConnection.Transport;
             if (!serverByTransportID.ContainsKey(playerTransport)) return;
 
+            if (playerConnection.VoiceTimingVersion < 1)
+            {
+                player.SendMessage(0, "Voice chat requires the matching updated RPVoiceChat build (timed audio playback).", EnumChatType.Notification);
+                return;
+            }
+            timedVoiceClients[player.PlayerUID] = true;
+            INetworkServer selected = serverByTransportID[playerTransport];
+            preferredTransports.AddOrUpdate(player.PlayerUID, selected,
+                (_, current) => activeServers.IndexOf(selected) < activeServers.IndexOf(current) ? selected : current);
             devicesVoiceFeedbackByPlayer[player.PlayerUID] = playerConnection.DevicesVoiceFeedback;
 
             var extendedServer = serverByTransportID[playerTransport] as IExtendedNetworkServer;
@@ -413,14 +409,23 @@ namespace RPVoiceChat.Server
             }
         }
 
-        private void SendPacket(NetworkPacket packet, string playerId)
+        private void SendPacket(PreparedNetworkPacket packet, string playerId)
         {
+            if (!timedVoiceClients.ContainsKey(playerId)) return;
+            preferredTransports.TryGetValue(playerId, out var preferred);
+            if (preferred != null)
+            {
+                try { if (preferred.SendPacket(packet, playerId)) return; }
+                catch (Exception e) { Logger.server.VerboseDebug($"Preferred voice transport failed: {e.Message}"); }
+                preferredTransports.TryRemove(playerId, out _);
+            }
             foreach (var server in activeServers)
             {
+                if (server == preferred) continue;
                 try
                 {
                     bool success = server.SendPacket(packet, playerId);
-                    if (success) return;
+                    if (success) { preferredTransports[playerId] = server; return; }
                 }
                 catch (Exception e)
                 {
@@ -441,7 +446,7 @@ namespace RPVoiceChat.Server
                 connectionInfo.Transport = server.GetTransportID();
                 serverConnectionInfos.Add(connectionInfo);
             }
-            connectionRequest = new ConnectionRequest(serverConnectionInfos);
+            connectionRequest = new ConnectionRequest(serverConnectionInfos) { VoiceTimingVersion = 1 };
 
             return connectionRequest;
         }
@@ -474,6 +479,7 @@ namespace RPVoiceChat.Server
             var packet = IsVoiceGroupsEnabled()
                 ? new VoiceGroupStatePacket(voiceGroupManager.BuildStateEntries())
                 : new VoiceGroupStatePacket(new List<VoiceGroupStateEntry>());
+            PublishGroupRecipients(packet.Groups);
 
             foreach (IServerPlayer player in api.World.AllOnlinePlayers)
             {
@@ -482,6 +488,17 @@ namespace RPVoiceChat.Server
                     voiceGroupChannel.SendPacket(packet, player);
                 }
             }
+        }
+
+        private void PublishGroupRecipients(IEnumerable<VoiceGroupStateEntry> groups)
+        {
+            var membership = new Dictionary<string, string[]>();
+            foreach (var group in groups)
+            {
+                var members = group.Members.ToArray();
+                foreach (string uid in members) membership[uid] = members;
+            }
+            groupRecipientsByPlayer = membership;
         }
 
         private void SendVoiceGroupsStateToPlayer(IServerPlayer player)
@@ -519,30 +536,6 @@ namespace RPVoiceChat.Server
         {
             public bool HasMegaphone;
             public bool HasEnhancedMegaphone;
-        }
-
-        private static int ResolveEffectiveListenerDistance(MegaphoneInfo megaphoneInfo)
-        {
-            if (megaphoneInfo.HasEnhancedMegaphone) { return int.MaxValue; }
-            if (megaphoneInfo.HasMegaphone) { return ServerConfigManager.MegaphoneAudibleDistance + 10; }
-
-            return WorldConfig.GetInt(VoiceLevel.Shouting) + 10;
-        }
-
-        private static void TryAddNormalVoiceListener
-        (
-            GridPlayer transmittingPlayer,
-            GridPlayer candidate,
-            HashSet<IPlayer> listeners,
-            bool isGlobalBroadcast,
-            double squareDistance,
-            bool othersHearSpectators
-        )
-        {
-            if (candidate.PlayerUID == transmittingPlayer.PlayerUID)                                        { return; }
-            if (!othersHearSpectators && transmittingPlayer.IsSpectator && !candidate.IsSpectator)            { return; }
-            if (!isGlobalBroadcast && SquareDistance(transmittingPlayer, candidate) > squareDistance)        { return; }
-            listeners.Add(candidate.Player);
         }
 
         private void TryAccumulateRoutedRecipient(AudioPacket packet, VoiceRoute route, GridPlayer candidate, Dictionary<string, RoutedVoiceRecipient> recipients)

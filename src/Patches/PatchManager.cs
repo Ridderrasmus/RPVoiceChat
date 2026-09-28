@@ -33,10 +33,8 @@ namespace RPVoiceChat
 
         private void PatchServer()
         {
-            NetworkAPIPatch.Patch(harmony);
-            TcpNetServerPatch.Patch(harmony);
             HelveHammerPatch.Patch(harmony);
-            }
+        }
 
         public void Unpatch()
         {
