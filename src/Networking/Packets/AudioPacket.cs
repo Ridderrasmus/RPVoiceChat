@@ -26,6 +26,13 @@ namespace RPVoiceChat.Networking
         protected override PacketType Code { get => PacketType.Audio; }
         public bool IsGlobalBroadcast { get; set; } = false;
 
+        // Explicit tags preserve the existing implicit protobuf field numbers.
+        [ProtoMember(120)] public long CaptureSampleTime { get; set; }
+        [ProtoMember(121)] public int SampleCount { get; set; }
+        [ProtoMember(122)] public string CaptureSession { get; set; }
+        [ProtoMember(123)] public bool GroupDelivery { get; set; }
+        [ProtoMember(124)] public int SourceDimension { get; set; }
+
         public AudioPacket() { }
 
         public AudioPacket(string playerId, AudioData audioData, long sequenceNumber)
@@ -42,6 +49,9 @@ namespace RPVoiceChat.Networking
             IgnoreDistanceReduction = audioData.ignoreDistanceReduction;
             WallThicknessOverride = audioData.wallThicknessOverride;
             IsGlobalBroadcast = audioData.isGlobalBroadcast;
+            CaptureSampleTime = audioData.captureSampleTime;
+            SampleCount = audioData.sampleCount;
+            CaptureSession = audioData.captureSession;
         }
     }
 }

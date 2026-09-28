@@ -11,6 +11,7 @@ namespace RPVoiceChat.Networking
         public event Action<AudioPacket> OnAudioReceived;
         private IClientNetworkChannel channel;
         private IClientNetworkChannel singleplayerChannel;
+        private readonly VoicePacketWorker<Packet_CustomPacket> incoming;
 
         private ICoreClientAPI capi;
 
@@ -18,6 +19,9 @@ namespace RPVoiceChat.Networking
         {
             capi = api;
             channel = api.Network.GetChannel(ChannelName).SetMessageHandler<AudioPacket>(HandleAudioPacket);
+            incoming = new VoicePacketWorker<Packet_CustomPacket>(
+                packet => ((NetworkChannel)channel).OnPacket(packet),
+                error => capi.Logger.Warning("[RPVoiceChat] Native voice receive failed: " + error.Message));
             if (api.IsSinglePlayer)
                 singleplayerChannel = api.Network.RegisterChannel(SPChannelName).RegisterMessageType<AudioPacket>();
             SystemNetworkProcessPatch.OnProcessInBackground += ProcessInBackground;
@@ -36,18 +40,13 @@ namespace RPVoiceChat.Networking
         {
 
 
-            if (channel is not NetworkChannel nativeChannel) return false;
+            if (channel is not NetworkChannel) return false;
 
             var expectedChannelId = (int)channelIdField.GetValue(channel);
             if (channelId != expectedChannelId) return false;
-            try
-            {
-                nativeChannel.OnPacket(customPacket);
-            }
-            catch (Exception e)
-            {
-                capi.Logger.Error("Error while processing packet: " + e);
-            }
+            // The game's network thread also delivers world updates. Only hand off here;
+            // protobuf decoding, source creation and playback must not hold it up.
+            incoming.Enqueue(customPacket);
             return true;
         }
 
@@ -59,6 +58,7 @@ namespace RPVoiceChat.Networking
         public void Dispose()
         {
             SystemNetworkProcessPatch.OnProcessInBackground -= ProcessInBackground;
+            incoming.Dispose();
         }
     }
 }
