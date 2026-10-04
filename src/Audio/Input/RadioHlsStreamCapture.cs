@@ -278,10 +278,8 @@ namespace RPVoiceChat.Audio.Input
 
         private static string BuildFfmpegArguments(string streamUrl)
         {
-            // Low-latency demux + realtime pacing in ReadLoop keeps output at 1x (no catch-up bursts).
             return "-hide_banner -loglevel error " +
                    "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 " +
-                   "-fflags nobuffer -flags low_delay -probesize 32k -analyzeduration 0 " +
                    $"-i \"{streamUrl}\" -vn -ac {Channels} -ar {SampleRate} -f s16le pipe:1";
         }
     }
