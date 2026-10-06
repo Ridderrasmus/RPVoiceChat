@@ -1,6 +1,7 @@
 using RPVoiceChat;
 using RPVoiceChat.GameContent.BlockEntity;
 using Vintagestory.API.Common;
+using Vintagestory.API.Client;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent.Mechanics;
 
@@ -136,6 +137,21 @@ namespace RPVoiceChat.GameContent.Block
             if (be != null)
                 return be.OnPlayerRightClick(byPlayer, blockSel);
             return base.OnBlockInteractStart(world, byPlayer, blockSel);
+        }
+
+        public override WorldInteraction[] GetPlacedBlockInteractionHelp(IWorldAccessor world, BlockSelection selection, IPlayer forPlayer)
+        {
+            var gear = world.GetItem(new AssetLocation("game:gear-temporal"));
+            if (gear == null) return base.GetPlacedBlockInteractionHelp(world, selection, forPlayer);
+            return new[]
+            {
+                new WorldInteraction
+                {
+                    ActionLangCode = "rpvoicechat:BellHammer.SwitchClock",
+                    MouseButton = EnumMouseButton.Right,
+                    Itemstacks = new[] { new ItemStack(gear) }
+                }
+            };
         }
 
         // IMechanicalPowerBlock (1.22+): connector is always on the horizontal face opposite to "side" (bell in front, axle on the other side).

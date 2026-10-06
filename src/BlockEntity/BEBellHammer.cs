@@ -1,6 +1,7 @@
 #nullable enable
 
 using System;
+using System.Diagnostics;
 using System.Text;
 using RPVoiceChat;
 using RPVoiceChat.GameContent.BlockEntityBehavior;
@@ -19,7 +20,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
     /// <summary>
     /// Bell hammer: mechanical power consumer, plays animation then triggers adjacent carillon/church bell.
     /// Quern-like: strike rate scales with TrueSpeed (rotational speed). Min 25% speed required.
-    /// At 25% speed: ~1 strike per in-game hour; at 100%: ~60 strikes per in-game hour (≈ 1s IRL). Right-click to enable/disable.
+    /// At 25% speed: one strike per seven game days; at 100%: one per game day. Right-click to enable/disable.
     /// </summary>
     public class BlockEntityBellHammer : Vintagestory.API.Common.BlockEntity
     {
@@ -27,14 +28,15 @@ namespace RPVoiceChat.GameContent.BlockEntity
         private const string GearAnimationCode = "gear";
         /// <summary>Minimum rotational speed (TrueSpeed) required to operate, same as Quern logic.</summary>
         public const float MinSpeedThreshold = 0.25f;
-        /// <summary>Strikes per in-game hour at minimum speed (25%).</summary>
-        public const float StrikeRateAtMinSpeed = 1f;
-        /// <summary>Strikes per in-game hour at max speed (100%).</summary>
-        public const float StrikeRateAtMaxSpeed = 60f;
         public const float AnimationToBellDelaySeconds = 0.4f;
 
         private bool _enabled;
-        private float _strikeProgress;
+        private bool _useRealTime;
+        private long _lastRealTimestamp;
+        private long _lastProgressSaveTimestamp;
+        private long _lastUtcMilliseconds;
+        private bool _restoreTimingPending;
+        private double _strikeProgress;
         private double _lastTotalHours;
         private bool _animationPlaying;
         private bool _hadBellLastTick;
@@ -82,6 +84,12 @@ namespace RPVoiceChat.GameContent.BlockEntity
             }
             if (api.Side == EnumAppSide.Server)
             {
+                if (!_restoreTimingPending)
+                {
+                    _lastTotalHours = api.World.Calendar.TotalHours;
+                    _lastUtcMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                }
+                _lastRealTimestamp = _lastProgressSaveTimestamp = Stopwatch.GetTimestamp();
                 (api as ICoreServerAPI)?.Event.RegisterGameTickListener(OnServerGameTick, 100);
                 TryDiscoverNetwork();
             }
@@ -155,6 +163,11 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
             base.ToTreeAttributes(tree);
             tree.SetBool("enabled", _enabled);
+            tree.SetBool("rpvc:bhRealTime", _useRealTime);
+            tree.SetDouble("rpvc:bhProgress", _strikeProgress);
+            tree.SetLong("rpvc:bhLastUtcMs", _lastUtcMilliseconds);
+            tree.SetDouble("rpvc:bhLastGameHours", _lastTotalHours);
+            tree.SetBool("rpvc:bhHadBell", _hadBellLastTick);
             tree.SetFloat("powerPercent", PowerPercent);
             tree.SetBool("rpvc:bhGearActive", _syncedGearActive);
             tree.SetInt("rpvc:bhStrikeSequence", _strikeSequence);
@@ -164,6 +177,13 @@ namespace RPVoiceChat.GameContent.BlockEntity
         {
             base.FromTreeAttributes(tree, worldForResolving);
             _enabled = tree.GetBool("enabled", false);
+            _useRealTime = tree.GetBool("rpvc:bhRealTime", false);
+            double savedProgress = tree.GetDouble("rpvc:bhProgress", 0);
+            _strikeProgress = double.IsFinite(savedProgress) ? Math.Max(savedProgress, 0d) : 0;
+            _lastUtcMilliseconds = tree.GetLong("rpvc:bhLastUtcMs", 0);
+            _lastTotalHours = tree.GetDouble("rpvc:bhLastGameHours", 0);
+            _hadBellLastTick = tree.GetBool("rpvc:bhHadBell", false);
+            _restoreTimingPending = worldForResolving.Side == EnumAppSide.Server && _lastUtcMilliseconds > 0;
             PowerPercent = tree.GetFloat("powerPercent", 0f);
             _syncedGearActive = tree.GetBool("rpvc:bhGearActive", false);
             _strikeSequence = tree.GetInt("rpvc:bhStrikeSequence", 0);
@@ -199,10 +219,37 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
         private void OnServerGameTick(float dt)
         {
-            if (!_enabled || Block == null) return;
             if (Api?.World?.BlockAccessor?.GetBlockEntity(Pos) != this) return;
+            var calendar = Api.World.Calendar;
+            long realTimestamp = Stopwatch.GetTimestamp();
+            double realHoursThisTick = Stopwatch.GetElapsedTime(_lastRealTimestamp, realTimestamp).TotalHours;
+            _lastRealTimestamp = realTimestamp;
+            double nowTotalHours = calendar.TotalHours;
+            double gameHoursThisTick = nowTotalHours - _lastTotalHours;
+            long utcNow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            if (_restoreTimingPending)
+            {
+                // Mechanical networks do not simulate unloaded chunks. Extrapolate
+                // using the last saved enabled state, bell presence and speed.
+                double unloadedHours = _useRealTime
+                    ? (utcNow - (double)_lastUtcMilliseconds) / 3600000d
+                    : gameHoursThisTick;
+                if (_enabled && _hadBellLastTick && PowerPercent >= MinSpeedThreshold
+                    && double.IsFinite(unloadedHours) && unloadedHours > 0)
+                    _strikeProgress += unloadedHours * ComputeStrikeRatePerHour(PowerPercent,
+                        _useRealTime ? 24d : calendar.HoursPerDay);
+                // Coalesce missed strikes into one on return, keeping fractional progress.
+                if (_strikeProgress >= 1) _strikeProgress = 1 + _strikeProgress % 1;
+                _restoreTimingPending = false;
+                realHoursThisTick = gameHoursThisTick = 0;
+                MarkDirty();
+            }
+            _lastUtcMilliseconds = utcNow;
+            // Always advance the baseline, including while disabled or underpowered.
+            _lastTotalHours = nowTotalHours;
+            if (!_enabled || Block == null) return;
 
-            // Quern-like: use TrueSpeed (rotational speed) directly – more speed = faster strikes
+            // Use the actual rotational speed to interpolate the calendar-based rates.
             float speed = GetTrueSpeed();
             PowerPercent = speed;
 
@@ -225,24 +272,29 @@ namespace RPVoiceChat.GameContent.BlockEntity
             if (bellPos == null)
             {
                 _hadBellLastTick = false;
+                _strikeProgress = 0;
                 return;
             }
             if (!_hadBellLastTick)
             {
                 _hadBellLastTick = true;
-                _lastTotalHours = Api.World.Calendar.TotalHours;
-                _strikeProgress = 0f;
+                gameHoursThisTick = 0;
+                realHoursThisTick = 0;
             }
 
-            if (_animationPlaying) return;
-
-            // Accumulate progress each tick based on current speed (handles speed changes in real time)
-            double nowTotalHours = Api.World.Calendar.TotalHours;
-            float gameHoursThisTick = (float)(nowTotalHours - _lastTotalHours);
-            _lastTotalHours = nowTotalHours;
-            if (gameHoursThisTick > 0 && gameHoursThisTick < 1f) // sanity: ignore huge jumps (e.g. load)
-                _strikeProgress += gameHoursThisTick * ComputeStrikeRatePerGameHour(speed);
-            if (_strikeProgress < 1f) return;
+            // A monotonic real clock ignores calendar acceleration and system clock edits.
+            // Unloaded time is recovered separately from persisted clock readings.
+            double elapsedHours = _useRealTime ? realHoursThisTick : gameHoursThisTick;
+            double hoursPerDay = _useRealTime ? 24d : calendar.HoursPerDay;
+            // Accumulate during the strike animation too, without overlapping strikes.
+            if (double.IsFinite(elapsedHours) && elapsedHours > 0)
+                _strikeProgress += elapsedHours * ComputeStrikeRatePerHour(speed, hoursPerDay);
+            if (Stopwatch.GetElapsedTime(_lastProgressSaveTimestamp, realTimestamp).TotalSeconds >= 60)
+            {
+                _lastProgressSaveTimestamp = realTimestamp;
+                MarkDirty();
+            }
+            if (_animationPlaying || _strikeProgress < 1f) return;
 
             _strikeProgress -= 1f;
             StartStrikeSequence(bellPos);
@@ -259,14 +311,16 @@ namespace RPVoiceChat.GameContent.BlockEntity
         }
 
         /// <summary>
-        /// Strike rate (strikes per game hour) scales linearly with speed.
-        /// At 25% speed: 1/h. At 100%: 60/h. Progress accumulated each tick uses current speed.
+        /// Strike rate in the selected clock's hours scales linearly with speed.
+        /// At 25%: one strike per seven days. At 100%: one per day.
         /// </summary>
-        private static float ComputeStrikeRatePerGameHour(float speed)
+        private static double ComputeStrikeRatePerHour(float speed, double hoursPerDay)
         {
-            if (speed <= MinSpeedThreshold) return StrikeRateAtMinSpeed;
-            float t = (speed - MinSpeedThreshold) / (1f - MinSpeedThreshold);
-            return StrikeRateAtMinSpeed + t * (StrikeRateAtMaxSpeed - StrikeRateAtMinSpeed);
+            if (!double.IsFinite(hoursPerDay) || hoursPerDay <= 0) return 0;
+            double weeklyRate = 1d / (7d * hoursPerDay);
+            double dailyRate = 1d / hoursPerDay;
+            double t = Math.Clamp((speed - MinSpeedThreshold) / (1d - MinSpeedThreshold), 0d, 1d);
+            return weeklyRate + t * (dailyRate - weeklyRate);
         }
 
         private BlockPos? GetAdjacentBellPosition()
@@ -353,12 +407,24 @@ namespace RPVoiceChat.GameContent.BlockEntity
         public bool OnPlayerRightClick(IPlayer byPlayer, BlockSelection blockSel)
         {
             if (Api?.Side != EnumAppSide.Server) return true;
+            var heldCode = byPlayer.InventoryManager.ActiveHotbarSlot?.Itemstack?.Collectible?.Code;
+            if (heldCode?.Domain == "game" && heldCode.Path == "gear-temporal")
+            {
+                _useRealTime = !_useRealTime;
+                _lastTotalHours = Api.World.Calendar.TotalHours;
+                _lastRealTimestamp = Stopwatch.GetTimestamp();
+                _lastUtcMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                _restoreTimingPending = false;
+                MarkDirty();
+                return true;
+            }
             _enabled = !_enabled;
             if (_enabled)
             {
                 TryDiscoverNetwork();
                 _lastTotalHours = Api.World.Calendar.TotalHours;
-                _strikeProgress = 0f;
+                _lastRealTimestamp = Stopwatch.GetTimestamp();
+                _lastUtcMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             }
             else
             {
@@ -430,6 +496,7 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             string enabledStr = _enabled ? UIUtils.I18n("BellHammer.Enabled") : UIUtils.I18n("BellHammer.Disabled");
             dsc.AppendLine(enabledStr);
+            dsc.AppendLine(UIUtils.I18n(_useRealTime ? "BellHammer.RealTime" : "BellHammer.GameTime"));
             dsc.AppendLine(UIUtils.I18n("BellHammer.Power", (int)(PowerPercent * 100)));
 
             if (GetAdjacentBellPosition() == null)
