@@ -82,6 +82,12 @@ https://github.com/Ridderrasmus/RPVoiceChat/wiki/Server-Administration
 Server configuration file location:
 `ModConfig/RPVoiceChat/rpvoicechat-server.json`
 
+Telegraph Morse (soft vs hardcore):
+
+- `TelegraphGenuineMorseCharacters` — `false`: type Latin; `true`: Morse display + press-and-hold dots/dashes on the key.
+- `TelegraphMinDelayBetweenKeysMs` — soft mode only (anti-spam between Latin keystrokes). **Ignored in hardcore.**
+- `TelegraphMorseKeyThresholdMs` — hardcore only: hold under this ms = dot, longer = dash (default `200`).
+
 ### In-game configuration commands
 World-specific `/rpvc` commands are documented here:
 https://github.com/Ridderrasmus/RPVoiceChat/wiki/Server-Administration#in-game-configuration-commands
@@ -99,7 +105,6 @@ Mod developers and contributors:
 ## Maintainers
 Currently maintained by:
 - [Ridderrasmus](https://github.com/Ridderrasmus) - Creator and maintainer
-- [Dmitry221060](https://github.com/Dmitry221060) - Maintainer
 - [RomainOdeval](https://github.com/RomainOdeval) - Maintainer
 - [Faithfulshot](https://github.com/Faithfulshot) - 3D models
 - Nixie - Audio design
@@ -107,6 +112,7 @@ Currently maintained by:
 - [HugoCortell](https://github.com/HugoCortell) - Voice client/server optimizations
 
 Previously maintained by:
+- [Dmitry221060](https://github.com/Dmitry221060) - Maintainer
 - [blakdragan7](https://github.com/blakdragan7) - Maintainer
 
 Want to contribute?

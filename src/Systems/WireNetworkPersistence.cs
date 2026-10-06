@@ -19,17 +19,42 @@ namespace RPVoiceChat.Systems
         public BlockPos Pos;
         public WireNodeKind Kind;
 
+        /// <summary>
+        /// Last known mechanical power ratio (0–1) for switchboards. Used when the SB chunk is unloaded.
+        /// </summary>
+        public float LastKnownPowerPercent;
+
+        /// <summary>
+        /// Last known value of the switchboard "use power requirements" gate.
+        /// </summary>
+        public bool LastKnownPowerGateEnabled = true;
+
         public WireNodeRef() { }
 
         public WireNodeRef(BlockPos pos, WireNodeKind kind)
+            : this(pos, kind, lastKnownPowerPercent: 0f, lastKnownPowerGateEnabled: true)
+        {
+        }
+
+        public WireNodeRef(BlockPos pos, WireNodeKind kind, float lastKnownPowerPercent, bool lastKnownPowerGateEnabled)
         {
             Pos = pos?.Copy();
             Kind = kind;
+            LastKnownPowerPercent = lastKnownPowerPercent;
+            LastKnownPowerGateEnabled = lastKnownPowerGateEnabled;
         }
 
         public bool Matches(BEWireNode node)
         {
             return node != null && Pos != null && Pos.Equals(node.Pos);
+        }
+
+        public bool HasSufficientPowerFor(WireNetworkKind networkKind)
+        {
+            return WireNetworkTypeRules.HasSufficientPower(
+                LastKnownPowerPercent,
+                LastKnownPowerGateEnabled,
+                networkKind);
         }
     }
 
