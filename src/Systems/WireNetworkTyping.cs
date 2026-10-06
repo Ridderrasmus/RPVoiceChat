@@ -89,6 +89,20 @@ namespace RPVoiceChat.GameContent.Systems
                     return new WireNetworkRequirements(0f, 0);
             }
         }
+
+        /// <summary>
+        /// Shared power gate used by live switchboards and persisted last-known snapshots.
+        /// </summary>
+        public static bool HasSufficientPower(float powerPercent, bool powerGateEnabled, WireNetworkKind networkKind)
+        {
+            WireNetworkRequirements requirements = GetRequirements(networkKind);
+            if (powerPercent < requirements.MinPowerPercent)
+            {
+                return false;
+            }
+
+            return powerGateEnabled;
+        }
     }
 
     public interface IWireTypedNode
