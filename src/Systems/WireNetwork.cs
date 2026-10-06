@@ -82,8 +82,12 @@ namespace RPVoiceChat.GameContent.Systems
         /// <summary>Detach a loaded block entity when its chunk unloads. Keeps <see cref="PersistedNodes"/>.</summary>
         public void DetachNode(BEWireNode node)
         {
-            if (node == null || !Nodes.Remove(node))
+            if (node == null || !Nodes.Contains(node))
                 return;
+
+            // Snapshot last-known kind/power before the live BE leaves (critical for unloaded switchboards).
+            UpsertPersistedNode(node);
+            Nodes.Remove(node);
 
             if (node.Api?.Side == EnumAppSide.Server && node is BlockEntityTelegraph detachedTelegraph)
             {
@@ -92,10 +96,8 @@ namespace RPVoiceChat.GameContent.Systems
 
             MarkNodeDirty(node);
 
-            if (Nodes.Count > 0)
-            {
-                RebuildTypedState();
-            }
+            // Always refresh: remaining loaded endpoints must keep managed/powered flags from PersistedNodes.
+            RebuildTypedState();
         }
 
         public void RemoveNode(BEWireNode node)
@@ -118,7 +120,7 @@ namespace RPVoiceChat.GameContent.Systems
             {
                 WireNetworkHandler.RemoveNetwork(this);
             }
-            else if (Nodes.Count > 0)
+            else
             {
                 RebuildTypedState();
             }
@@ -200,7 +202,15 @@ namespace RPVoiceChat.GameContent.Systems
                 kind = typedNode.WireNodeKind;
             }
 
-            return new WireNodeRef(node.Pos.Copy(), kind);
+            float lastKnownPowerPercent = 0f;
+            bool lastKnownPowerGateEnabled = true;
+            if (node is BlockEntitySwitchboard switchboard)
+            {
+                lastKnownPowerPercent = switchboard.PowerPercent;
+                lastKnownPowerGateEnabled = switchboard.UsePowerRequirements;
+            }
+
+            return new WireNodeRef(node.Pos.Copy(), kind, lastKnownPowerPercent, lastKnownPowerGateEnabled);
         }
 
         private static void MarkNodeDirty(BEWireNode node)
@@ -257,10 +267,44 @@ namespace RPVoiceChat.GameContent.Systems
             int radio = 0;
             bool hasSwitchboard = false;
 
-            foreach (var node in Nodes)
+            if (PersistedNodes.Count > 0)
             {
-                if (node is IWireTypedNode typedNode)
+                foreach (var nodeRef in PersistedNodes)
                 {
+                    if (nodeRef == null)
+                    {
+                        continue;
+                    }
+
+                    switch (nodeRef.Kind)
+                    {
+                        case WireNodeKind.Telegraph:
+                            telegraph++;
+                            break;
+                        case WireNodeKind.Telephone:
+                            telephone++;
+                            break;
+                        case WireNodeKind.Radio:
+                        case WireNodeKind.RadioConsole:
+                        case WireNodeKind.RadioEmitter:
+                            radio++;
+                            break;
+                        case WireNodeKind.Switchboard:
+                            hasSwitchboard = true;
+                            break;
+                    }
+                }
+            }
+            else
+            {
+                // Brand-new network before first persist upsert.
+                foreach (var node in Nodes)
+                {
+                    if (node is not IWireTypedNode typedNode)
+                    {
+                        continue;
+                    }
+
                     switch (typedNode.WireNodeKind)
                     {
                         case WireNodeKind.Telegraph:
@@ -322,6 +366,18 @@ namespace RPVoiceChat.GameContent.Systems
                     {
                         HasPoweredSwitchboard = true;
                         break;
+                    }
+                }
+
+                if (!HasPoweredSwitchboard)
+                {
+                    foreach (var nodeRef in PersistedNodes)
+                    {
+                        if (nodeRef?.Kind == WireNodeKind.Switchboard && nodeRef.HasSufficientPowerFor(CurrentType))
+                        {
+                            HasPoweredSwitchboard = true;
+                            break;
+                        }
                     }
                 }
             }

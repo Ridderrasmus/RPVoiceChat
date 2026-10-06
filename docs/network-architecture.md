@@ -14,7 +14,7 @@ RPVoiceChat deliberately separates **three layers**:
 
 Core idea:
 
-> Block entities are **runtime views** that **join** and **detach** from a world-level persistent graph. An unloaded chunk must **not** corrupt topology or network identity.
+> Block entities are **runtime views** that **join** and **detach** from a world-level persistent graph. An unloaded chunk must **not** corrupt topology or network identity. Switchboard **managed/powered** capability also survives unload via last-known power on `PersistedNodes`.
 
 ```mermaid
 flowchart TB
@@ -119,8 +119,8 @@ Pivot file: `BEWireNode.cs`.
 
 | List | Content | On chunk unload |
 |------|---------|-----------------|
-| `Nodes` | Loaded `BEWireNode` references | `DetachNode` |
-| `PersistedNodes` | `WireNodeRef` (position + `WireNodeKind`) | **kept** |
+| `Nodes` | Loaded `BEWireNode` references | `DetachNode` (after snapshotting power/kind into PersistedNodes) |
+| `PersistedNodes` | `WireNodeRef` (position + `WireNodeKind` + last-known SB power) | **kept** — drives `IsManagedBySwitchboard` / `HasPoweredSwitchboard` while unloaded |
 
 A network is removed only when **both lists are empty**.
 
