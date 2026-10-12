@@ -13,11 +13,16 @@ namespace RPVoiceChat.Audio
         public double amplitude;
         public VoiceLevel voiceLevel;
         public string codec;
+        public long captureSampleTime;
+        public int sampleCount;
+        public string captureSession;
+        public int sourceDimension;
         public int transmissionRangeBlocks;
         public int effectiveRange;
         public bool ignoreDistanceReduction { get; set; } = false;
         public float wallThicknessOverride { get; set; } = -1f; // -1 = pas d'override
         public bool isGlobalBroadcast { get; set; } = false;
+        public bool forceFlatPlayback { get; set; } = false;
         public Vec3d sourcePosOverride { get; set; }
 
         public AudioData() { }
@@ -31,6 +36,11 @@ namespace RPVoiceChat.Audio
                 format = audioPacket.Format,
                 voiceLevel = audioPacket.VoiceLevel,
                 codec = audioPacket.Codec,
+                captureSampleTime = audioPacket.CaptureSampleTime,
+                sampleCount = audioPacket.SampleCount,
+                captureSession = audioPacket.CaptureSession,
+                sourceDimension = audioPacket.SourceDimension,
+                forceFlatPlayback = audioPacket.GroupDelivery || audioPacket.IsGlobalBroadcast,
                 transmissionRangeBlocks = audioPacket.TransmissionRangeBlocks,
                 effectiveRange = audioPacket.TransmissionRangeBlocks > 0
                     ? audioPacket.TransmissionRangeBlocks

@@ -376,6 +376,7 @@ namespace RPVoiceChat.Systems
         /// <summary>
         /// Server-only: copies switchboard routing capability from the authoritative in-memory network
         /// onto every telegraph in that network so clients receive it via normal BE sync (no stale client-side inference).
+        /// Works even when the owning switchboard chunk is unloaded (uses PersistedNodes + last-known power).
         /// </summary>
         public static void RefreshTelegraphRoutingSnapshot(long networkId)
         {
@@ -391,7 +392,7 @@ namespace RPVoiceChat.Systems
                 return;
             }
 
-            var activeEndpointOwners = ResolveOwnersForActiveEndpoints(network.Nodes);
+            var ownerRefs = ResolveOwnerRefsForActiveEndpoints(network);
             WireNetworkKind kindForPower = network.CurrentType == WireNetworkKind.None
                 ? WireNetworkKind.Telegraph
                 : network.CurrentType;
@@ -400,21 +401,170 @@ namespace RPVoiceChat.Systems
             {
                 if (node is BlockEntityTelegraph telegraph)
                 {
-                    bool managed = activeEndpointOwners.TryGetValue(telegraph, out BlockEntitySwitchboard owner) && owner != null;
+                    bool managed = ownerRefs.TryGetValue(telegraph, out WireNodeRef ownerRef) && ownerRef != null;
                     bool overCapacity = IsOverCapacityForManagedComponent(network, kindForPower);
-                    bool advanced = managed && !overCapacity && owner.HasSufficientPowerFor(kindForPower);
+                    bool advanced = managed && !overCapacity && IsOwnerPowered(network, ownerRef, kindForPower);
                     string disabledReason = overCapacity ? "Telegraph.Settings.DisabledCapacity" : "Telegraph.Settings.DisabledNoPower";
                     telegraph.ApplyServerRoutingFlags(managed, advanced, disabledReason);
                 }
                 else if (node is BlockEntityTelephone telephone)
                 {
-                    bool managed = activeEndpointOwners.TryGetValue(telephone, out BlockEntitySwitchboard owner) && owner != null;
+                    bool managed = ownerRefs.TryGetValue(telephone, out WireNodeRef ownerRef) && ownerRef != null;
                     bool overCapacity = IsOverCapacityForManagedComponent(network, WireNetworkKind.Telephone);
-                    bool composeEnabled = managed && !overCapacity && owner.HasSufficientPowerFor(WireNetworkKind.Telephone);
+                    bool composeEnabled = managed && !overCapacity && IsOwnerPowered(network, ownerRef, WireNetworkKind.Telephone);
                     string disabledReason = overCapacity ? "Telegraph.Settings.DisabledCapacity" : "Telegraph.Settings.DisabledNoPower";
                     telephone.ApplyServerComposeFlags(managed, composeEnabled, disabledReason);
                 }
             }
+        }
+
+        private static bool IsOwnerPowered(WireNetwork network, WireNodeRef ownerRef, WireNetworkKind kind)
+        {
+            if (ownerRef?.Pos == null)
+            {
+                return false;
+            }
+
+            // Prefer live BE when the switchboard chunk is loaded.
+            foreach (var node in network.Nodes)
+            {
+                if (node is BlockEntitySwitchboard switchboard && node.Pos != null && node.Pos.Equals(ownerRef.Pos))
+                {
+                    return switchboard.HasSufficientPowerFor(kind);
+                }
+            }
+
+            return ownerRef.HasSufficientPowerFor(kind);
+        }
+
+        private static Dictionary<BEWireNode, WireNodeRef> ResolveOwnerRefsForActiveEndpoints(WireNetwork network)
+        {
+            var owners = new Dictionary<BEWireNode, WireNodeRef>();
+            if (network == null)
+            {
+                return owners;
+            }
+
+            var switchboardRefs = network.PersistedNodes
+                .Where(n => n?.Pos != null && n.Kind == WireNodeKind.Switchboard)
+                .ToList();
+
+            // Live switchboards not yet in PersistedNodes (first tick).
+            foreach (var live in network.Nodes.OfType<BlockEntitySwitchboard>())
+            {
+                if (live?.Pos == null)
+                {
+                    continue;
+                }
+
+                if (!switchboardRefs.Any(r => r.Pos.Equals(live.Pos)))
+                {
+                    switchboardRefs.Add(new WireNodeRef(
+                        live.Pos.Copy(),
+                        WireNodeKind.Switchboard,
+                        live.PowerPercent,
+                        live.UsePowerRequirements));
+                }
+            }
+
+            var activeEndpoints = network.Nodes.Where(IsActiveEndpoint).ToList();
+            if (switchboardRefs.Count == 0)
+            {
+                foreach (var endpoint in activeEndpoints)
+                {
+                    owners[endpoint] = null;
+                }
+
+                return owners;
+            }
+
+            foreach (var endpoint in activeEndpoints)
+            {
+                owners[endpoint] = FindNearestSwitchboardRef(endpoint, switchboardRefs);
+            }
+
+            return owners;
+        }
+
+        private static WireNodeRef FindNearestSwitchboardRef(BEWireNode startNode, List<WireNodeRef> switchboardRefs)
+        {
+            if (startNode?.Pos == null || switchboardRefs == null || switchboardRefs.Count == 0)
+            {
+                return null;
+            }
+
+            var switchboardByPos = new Dictionary<(int X, int Y, int Z), WireNodeRef>();
+            foreach (var sbRef in switchboardRefs)
+            {
+                if (sbRef?.Pos == null)
+                {
+                    continue;
+                }
+
+                switchboardByPos[(sbRef.Pos.X, sbRef.Pos.Y, sbRef.Pos.Z)] = sbRef;
+            }
+
+            if (switchboardByPos.Count == 0)
+            {
+                return null;
+            }
+
+            var visited = new HashSet<(int X, int Y, int Z)>();
+            var queue = new Queue<BlockPos>();
+            queue.Enqueue(startNode.Pos.Copy());
+            visited.Add((startNode.Pos.X, startNode.Pos.Y, startNode.Pos.Z));
+
+            while (queue.Count > 0)
+            {
+                int levelCount = queue.Count;
+                var levelCandidates = new List<WireNodeRef>();
+
+                for (int i = 0; i < levelCount; i++)
+                {
+                    var currentPos = queue.Dequeue();
+                    if (switchboardByPos.TryGetValue((currentPos.X, currentPos.Y, currentPos.Z), out WireNodeRef hit))
+                    {
+                        levelCandidates.Add(hit);
+                    }
+
+                    foreach (var neighborPos in WireTopologyRegistry.GetNeighborPositions(currentPos))
+                    {
+                        if (neighborPos == null)
+                        {
+                            continue;
+                        }
+
+                        var key = (neighborPos.X, neighborPos.Y, neighborPos.Z);
+                        if (visited.Add(key))
+                        {
+                            queue.Enqueue(neighborPos.Copy());
+                        }
+                    }
+                }
+
+                if (levelCandidates.Count > 0)
+                {
+                    return levelCandidates
+                        .OrderBy(sb => sb.Pos.X)
+                        .ThenBy(sb => sb.Pos.Y)
+                        .ThenBy(sb => sb.Pos.Z)
+                        .First();
+                }
+            }
+
+            // Disconnected topology fallback: nearest by Manhattan among known switchboards.
+            return switchboardRefs
+                .Where(sb => sb?.Pos != null)
+                .OrderBy(sb => Manhattan(startNode.Pos, sb.Pos))
+                .ThenBy(sb => sb.Pos.X)
+                .ThenBy(sb => sb.Pos.Y)
+                .ThenBy(sb => sb.Pos.Z)
+                .FirstOrDefault();
+        }
+
+        private static int Manhattan(BlockPos a, BlockPos b)
+        {
+            return Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z);
         }
 
         private static Dictionary<BEWireNode, BlockEntitySwitchboard> ResolveOwnersForActiveEndpoints(IEnumerable<BEWireNode> nodes)
@@ -522,7 +672,22 @@ namespace RPVoiceChat.Systems
         public static string GetSubNetworkDisplayName(BEWireNode endpointNode)
         {
             var owner = ResolveOwnerSwitchboard(endpointNode);
-            return owner?.GetNetworkCustomNameForEditor() ?? "";
+            if (owner != null)
+            {
+                return owner.GetNetworkCustomNameForEditor() ?? "";
+            }
+
+            // Switchboard chunk may be unloaded — fall back to persisted network name.
+            if (endpointNode?.NetworkUID != 0)
+            {
+                var network = GetNetwork(endpointNode.NetworkUID);
+                if (!string.IsNullOrWhiteSpace(network?.CustomName))
+                {
+                    return network.CustomName.Trim();
+                }
+            }
+
+            return "";
         }
 
         public static string GetManagedRoutingDisabledReason(long networkId)
@@ -700,7 +865,11 @@ namespace RPVoiceChat.Systems
                 return false;
             }
 
-            int switchboardCount = network.Nodes.Count(n => GetNodeKind(n) == WireNodeKind.Switchboard);
+            int switchboardCount = network.PersistedNodes.Count(n => n != null && n.Kind == WireNodeKind.Switchboard);
+            if (switchboardCount <= 0)
+            {
+                switchboardCount = network.Nodes.Count(n => GetNodeKind(n) == WireNodeKind.Switchboard);
+            }
             if (switchboardCount <= 0) return false;
 
             int endpointCount = kind switch

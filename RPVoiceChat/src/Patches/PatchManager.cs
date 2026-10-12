@@ -15,6 +15,7 @@ namespace RPVoiceChat
 
         public void Patch(ICoreAPI api)
         {
+            BellHammerTemporalGearPatch.Patch(harmony);
             if ((api.Side & EnumAppSide.Client) != 0) PatchClient();
             if ((api.Side & EnumAppSide.Server) != 0) PatchServer();
         }
@@ -33,10 +34,8 @@ namespace RPVoiceChat
 
         private void PatchServer()
         {
-            NetworkAPIPatch.Patch(harmony);
-            TcpNetServerPatch.Patch(harmony);
             HelveHammerPatch.Patch(harmony);
-            }
+        }
 
         public void Unpatch()
         {

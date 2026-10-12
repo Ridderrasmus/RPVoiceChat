@@ -54,11 +54,14 @@ namespace RPVoiceChat.Networking
         }
 
         public bool SendPacket(NetworkPacket packet, string playerId)
+            => SendPacket(new PreparedNetworkPacket(packet), playerId);
+
+        public bool SendPacket(PreparedNetworkPacket packet, string playerId)
         {
             TCPConnection connection = ResolveConnection(playerId);
             if (connection == null) return false;
 
-            var data = packet.ToBytes();
+            var data = packet.CustomBytes;
             connection.Send(data);
 
             return true;

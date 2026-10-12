@@ -22,6 +22,8 @@ namespace RPVoiceChat.Config
             set => TechnologyContent = value;
         }
 
+        public bool VoiceGroupsEnabled { get; set; } = false;
+
         // Audio Performance Settings
         public float MaxAudioGain { get; set; } = 2f;
         public float MaxVolumeLimit { get; set; } = 0.8f;
@@ -35,8 +37,24 @@ namespace RPVoiceChat.Config
         public int TelegraphMaxConnectionDistance { get; set; } = 20;
         public int TelegraphMaxConnectionsPerNode { get; set; } = 4;
         public int TelegraphMaxMessageLength { get; set; } = 100;
+        /// <summary>
+        /// Soft (Latin) keying only: minimum delay between typed characters.
+        /// Ignored when <see cref="TelegraphGenuineMorseCharacters"/> is true (hardcore Morse hold input).
+        /// </summary>
         public int TelegraphMinDelayBetweenKeysMs { get; set; } = 200;
+        /// <summary>
+        /// Hardcore Morse only (<see cref="TelegraphGenuineMorseCharacters"/>): key-hold duration threshold.
+        /// Press shorter than this = dot; longer or equal = dash. Letter commit uses ~3× this value of silence.
+        /// Does not replace <see cref="TelegraphMinDelayBetweenKeysMs"/> in soft mode.
+        /// </summary>
+        public int TelegraphMorseKeyThresholdMs { get; set; } = 200;
         public double BellRingCooldownSeconds { get; set; } = 1.5;
+        /// <summary>
+        /// Hardcore telegraph: show Morse (. / -) on sent/received displays and printers,
+        /// and require press-and-hold Morse keying on the sender (see <see cref="TelegraphMorseKeyThresholdMs"/>).
+        /// Soft mode (false) types Latin with <see cref="TelegraphMinDelayBetweenKeysMs"/> anti-spam.
+        /// Network packets remain Latin either way.
+        /// </summary>
         public bool TelegraphGenuineMorseCharacters { get; set; } = false;
         public int TelegraphMessageDeletionDelaySeconds { get; set; } = 10;
         public int TelegraphNetworkMinPowerPercent { get; set; } = 10;
@@ -81,6 +99,7 @@ namespace RPVoiceChat.Config
             // Features
             AdditionalContent = previousConfig.AdditionalContent;
             TechnologyContent = previousConfig.TechnologyContent;
+            VoiceGroupsEnabled = previousConfig.VoiceGroupsEnabled;
 
             // Audio Performance Settings
             MaxAudioGain = previousConfig.MaxAudioGain;
@@ -96,6 +115,7 @@ namespace RPVoiceChat.Config
             TelegraphMaxConnectionsPerNode = previousConfig.TelegraphMaxConnectionsPerNode;
             TelegraphMaxMessageLength = previousConfig.TelegraphMaxMessageLength;
             TelegraphMinDelayBetweenKeysMs = previousConfig.TelegraphMinDelayBetweenKeysMs;
+            TelegraphMorseKeyThresholdMs = previousConfig.TelegraphMorseKeyThresholdMs;
             BellRingCooldownSeconds = previousConfig.BellRingCooldownSeconds;
             TelegraphGenuineMorseCharacters = previousConfig.TelegraphGenuineMorseCharacters;
             TelegraphMessageDeletionDelaySeconds = previousConfig.TelegraphMessageDeletionDelaySeconds;

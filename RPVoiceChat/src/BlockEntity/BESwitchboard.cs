@@ -130,9 +130,19 @@ namespace RPVoiceChat.GameContent.BlockEntity
                 .Select(RotateLocalOffsetByBlockSide)
                 .ToArray();
 
-            var entries = GetConnections()
+            // Include the queried neighbour even if AddConnection order has not listed it yet,
+            // so peer mesh rebuilds never fall back to the mid-block default (visible "low" flicker).
+            var neighbourPositions = GetConnections()
                 .Select(c => c.GetOtherBlockPos(Pos))
                 .Where(p => p != null)
+                .ToList();
+
+            if (!neighbourPositions.Any(p => p.Equals(otherNodePos)))
+            {
+                neighbourPositions.Add(otherNodePos);
+            }
+
+            var entries = neighbourPositions
                 .Select(p => (
                     Pos: p,
                     LocalCurrent: new Vec3f(
@@ -357,6 +367,12 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             _lastAboveMinPower = aboveMin;
 
+            // Keep world-level last-known power fresh while the SB chunk is still loaded.
+            if (NetworkUID != 0)
+            {
+                WireNetworkHandler.GetNetwork(NetworkUID)?.UpsertPersistedNode(this);
+            }
+
             MarkDirty();
 
             if (NetworkUID != 0)
@@ -484,19 +500,8 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
 
         public bool HasSufficientPowerFor(WireNetworkKind networkKind)
-
         {
-            WireNetworkRequirements requirements = WireNetworkTypeRules.GetRequirements(networkKind);
-
-            // Below mechanical threshold: toggle has no effect — network never counts as "powered" for advanced features.
-            if (PowerPercent < requirements.MinPowerPercent)
-            {
-                return false;
-            }
-
-            // At or above threshold: advanced telegraph options are enabled only when the toggle is on.
-            return usePowerRequirements;
-
+            return WireNetworkTypeRules.HasSufficientPower(PowerPercent, usePowerRequirements, networkKind);
         }
 
 
@@ -628,15 +633,13 @@ namespace RPVoiceChat.GameContent.BlockEntity
 
             usePowerRequirements = enabled;
 
-            MarkDirty(true);
-
             if (NetworkUID != 0)
-
             {
-
+                WireNetworkHandler.GetNetwork(NetworkUID)?.UpsertPersistedNode(this);
                 WireNetworkHandler.RebuildNetworkState(NetworkUID);
-
             }
+
+            MarkDirty(true);
 
             if (IsDialogOpen())
 
