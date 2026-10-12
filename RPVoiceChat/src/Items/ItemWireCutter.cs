@@ -31,20 +31,23 @@ namespace RPVoiceChat.GameContent.Items
 
             handling = EnumHandHandling.PreventDefault;
 
-            if (byEntity.World.Side != EnumAppSide.Server)
-            {
-                return;
-            }
-
             // Count connections before removing them
             int connectionCount = wireNode.GetConnections().Count;
 
-            // Remove all connections (works on both server and client)
+            // Remove on both sides so the client mesh clears immediately (server remains authoritative via MarkDirty sync).
             var connections = new System.Collections.Generic.List<WireConnection>(wireNode.GetConnections());
             
             foreach (var connection in connections)
             {
                 BEWireNode other = connection.GetOtherNode(wireNode);
+                if (other == null)
+                {
+                    BlockPos otherPos = connection.GetOtherBlockPos(wireNode.Pos);
+                    if (otherPos != null)
+                    {
+                        other = byEntity.World.BlockAccessor.GetBlockEntity(otherPos) as BEWireNode;
+                    }
+                }
 
                 if (other != null)
                 {
@@ -55,14 +58,13 @@ namespace RPVoiceChat.GameContent.Items
             }
             wireNode.MarkForUpdate();
 
-            // Damage the item (reduce durability) - only on server side
+            // Damage / loot only on server
             if (byEntity.World.Side == EnumAppSide.Server && connectionCount > 0)
             {
                 DamageItem(byEntity.World, byEntity, slot);
                 DropRecoveredCableLoot(byEntity.World, blockSel.Position, connectionCount);
             }
 
-            // Show message on client side
             if (byEntity?.Api is ICoreClientAPI capi)
             {
                 capi.TriggerChatMessage(UIUtils.I18n("Wire.ConnectionsRemoved", connectionCount));

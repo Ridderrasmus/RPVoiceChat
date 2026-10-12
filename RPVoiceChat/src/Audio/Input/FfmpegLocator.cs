@@ -181,6 +181,8 @@ namespace RPVoiceChat.Audio.Input
             {
                 if (File.Exists(candidate))
                 {
+                    // Zip/unpack often drops +x on Linux/macOS; Windows is a no-op in MakeUnixExecutable.
+                    MakeUnixExecutable(candidate);
                     return candidate;
                 }
             }
@@ -200,6 +202,7 @@ namespace RPVoiceChat.Audio.Input
             string direct = Path.Combine(installDir, executableName);
             if (File.Exists(direct))
             {
+                MakeUnixExecutable(direct);
                 return direct;
             }
 
@@ -207,6 +210,7 @@ namespace RPVoiceChat.Audio.Input
             {
                 foreach (string candidate in Directory.EnumerateFiles(installDir, executableName, SearchOption.AllDirectories))
                 {
+                    MakeUnixExecutable(candidate);
                     return candidate;
                 }
             }
