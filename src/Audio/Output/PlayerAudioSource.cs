@@ -261,7 +261,11 @@ namespace RPVoiceChat.Audio
             }
 
             float gain = GetFinalGain() * GetDistanceAttenuationGain(effectiveSpeakerPos, listenerPos);
-            if (sourceOverride != null && IsTalkieRfAtListener(sourceOverride, listenerPos))
+            // Talkie listen volume applies only to handheld RF replay (route carries RadioFrequency).
+            // Distance-alone matching wrongly muted telephone / wired speaker output within 2 blocks.
+            if (sourceOverride != null
+                && !string.IsNullOrEmpty(currentAudio?.radioFrequency)
+                && IsTalkieRfAtListener(sourceOverride, listenerPos))
             {
                 gain *= ItemRadio.GetLocalTalkieListenVolumeGain(capi);
             }
