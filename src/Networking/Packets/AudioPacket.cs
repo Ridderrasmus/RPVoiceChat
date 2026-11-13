@@ -32,6 +32,7 @@ namespace RPVoiceChat.Networking
         [ProtoMember(122)] public string CaptureSession { get; set; }
         [ProtoMember(123)] public bool GroupDelivery { get; set; }
         [ProtoMember(124)] public int SourceDimension { get; set; }
+        [ProtoMember(125)] public string RadioFrequency { get; set; }
 
         public AudioPacket() { }
 
