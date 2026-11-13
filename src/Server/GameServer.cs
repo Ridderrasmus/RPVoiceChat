@@ -255,11 +255,12 @@ namespace RPVoiceChat.Server
                 voiceRecipientExpanders[expanderIndex].ExpandRoutedRecipients(packet, routes, recipients);
             }
 
-            var variants = new Dictionary<(int Dimension, double X, double Y, double Z, int Range), PreparedNetworkPacket>();
+            var variants = new Dictionary<(int Dimension, double X, double Y, double Z, int Range, string RadioFrequency), PreparedNetworkPacket>();
             foreach (RoutedVoiceRecipient recipient in recipients.Values)
             {
                 var route = recipient.Route;
-                var key = (route.Dimension, route.EmissionPos.X, route.EmissionPos.Y, route.EmissionPos.Z, route.RangeBlocks);
+                string radioFrequency = route.RadioFrequency ?? "";
+                var key = (route.Dimension, route.EmissionPos.X, route.EmissionPos.Y, route.EmissionPos.Z, route.RangeBlocks, radioFrequency);
                 if (!variants.TryGetValue(key, out var prepared))
                 {
                     var routedPacket = CloneAudioPacket(packet);
@@ -269,6 +270,7 @@ namespace RPVoiceChat.Server
                     routedPacket.SourcePosY = route.EmissionPos.Y;
                     routedPacket.SourcePosZ = route.EmissionPos.Z;
                     routedPacket.SourceDimension = route.Dimension;
+                    routedPacket.RadioFrequency = radioFrequency;
                     routedPacket.GroupDelivery = false;
                     routedPacket.IsGlobalBroadcast = false;
                     routedPacket.IgnoreDistanceReduction = false;
@@ -306,7 +308,8 @@ namespace RPVoiceChat.Server
                 HasSourcePositionOverride = src.HasSourcePositionOverride,
                 SourcePosX = src.SourcePosX,
                 SourcePosY = src.SourcePosY,
-                SourcePosZ = src.SourcePosZ
+                SourcePosZ = src.SourcePosZ,
+                RadioFrequency = src.RadioFrequency
             };
         }
 

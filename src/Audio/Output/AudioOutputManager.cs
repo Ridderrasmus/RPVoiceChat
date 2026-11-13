@@ -133,7 +133,11 @@ namespace RPVoiceChat.Audio
 
         private bool IsOwnTalkieRfReception(AudioPacket packet)
         {
-            if (!packet.HasSourcePositionOverride || capi.World.Player == null)
+            // Only handheld RF replay (RadioFrequency set). Telephone / speaker overrides must not
+            // be treated as own-talkie feedback just because emission is within 2 blocks.
+            if (!packet.HasSourcePositionOverride
+                || string.IsNullOrEmpty(packet.RadioFrequency)
+                || capi.World.Player == null)
             {
                 return false;
             }
