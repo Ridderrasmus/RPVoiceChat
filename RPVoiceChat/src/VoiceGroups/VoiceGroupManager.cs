@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ProtoBuf;
 using RPVoiceChat.Networking;
 using RPVoiceChat.Util;
 using Vintagestory.API.Common;
@@ -18,7 +19,8 @@ namespace RPVoiceChat.Server
         private readonly Dictionary<string, VoiceGroup> groupsByName = new Dictionary<string, VoiceGroup>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, string> groupByPlayerUid = new Dictionary<string, string>();
 
-        private sealed class VoiceGroupPersistedEntry
+        [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
+        public class VoiceGroupPersistedEntry
         {
             public string Name { get; set; }
             public string OwnerPlayerUid { get; set; }
@@ -600,7 +602,7 @@ namespace RPVoiceChat.Server
             }
             catch (Exception e)
             {
-                Logger.server.Warning($"Error loading voice groups: {e.Message}");
+                Logger.server.Warning($"Error loading voice groups: {e}");
                 groupsByName.Clear();
                 groupByPlayerUid.Clear();
             }
@@ -627,7 +629,7 @@ namespace RPVoiceChat.Server
             }
             catch (Exception e)
             {
-                Logger.server.Error($"Error saving voice groups: {e.Message}");
+                Logger.server.Error($"Error saving voice groups: {e}");
             }
         }
 

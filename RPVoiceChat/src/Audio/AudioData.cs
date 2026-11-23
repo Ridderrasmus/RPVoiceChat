@@ -24,6 +24,7 @@ namespace RPVoiceChat.Audio
         public bool isGlobalBroadcast { get; set; } = false;
         public bool forceFlatPlayback { get; set; } = false;
         public Vec3d sourcePosOverride { get; set; }
+        public string radioFrequency { get; set; }
 
         public AudioData() { }
 
@@ -50,7 +51,8 @@ namespace RPVoiceChat.Audio
                 isGlobalBroadcast = audioPacket.IsGlobalBroadcast,
                 sourcePosOverride = audioPacket.HasSourcePositionOverride
                     ? new Vec3d(audioPacket.SourcePosX, audioPacket.SourcePosY, audioPacket.SourcePosZ)
-                    : null
+                    : null,
+                radioFrequency = audioPacket.RadioFrequency
             };
         }
     }
