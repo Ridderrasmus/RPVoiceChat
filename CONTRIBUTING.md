@@ -42,6 +42,30 @@ If you want to fix, add enhancement, or to improve the mod in other ways, you ne
 
 Just like with other mods using official mod template, you will need to set `VINTAGE_STORY` environment variable following [this guide](https://wiki.vintagestory.at/index.php/Modding:Setting_up_your_Development_Environment#Setup_the_Environment).
 
+Install the .NET 10 SDK and set `VINTAGE_STORY` to your Vintage Story installation directory (the directory containing `VintagestoryAPI.dll`). Restart your terminal or IDE after changing the environment variable.
+
+Clone your fork and open the repository root in your editor, or open `RPVoiceChat.sln` in Visual Studio or Rider. The solution, mod project, build tooling, and VS Code launch configurations are included in the repository; no separate solution scaffold is needed.
+
+```text
+RPVoiceChat.sln
+RPVoiceChat/        Mod project, source, assets, and native libraries
+CakeBuild/          Release packaging tool
+.vscode/            Build tasks and client/server launch configurations
+docs/              Developer documentation
+```
+
+From the repository root, build both projects with:
+
+```sh
+dotnet build RPVoiceChat.sln -c Debug
+```
+
+To build only the mod, run `dotnet build RPVoiceChat/RPVoiceChat.csproj -c Debug`. Its output is written to `RPVoiceChat/bin/Debug/Mods/mod`.
+
+Create a release package from the repository root with `dotnet run --project CakeBuild/CakeBuild.csproj`. This runs Cake, validates asset JSON, publishes the mod, and creates `Releases/rpvoicechat_<version>.zip`. To package a Debug build, run `dotnet run --project CakeBuild/CakeBuild.csproj -- --configuration=Debug`.
+
+In VS Code, use the included client/server launch configurations. For Visual Studio or Rider, copy `RPVoiceChat/Properties/launchSettings.template.json` to `RPVoiceChat/Properties/launchSettings.json` and adjust the profiles for your installation. The local launch settings file is ignored by Git.
+
 ### Submitting your changes
 
 After you finish making changes, create a Pull Request from your branch to `development`.
